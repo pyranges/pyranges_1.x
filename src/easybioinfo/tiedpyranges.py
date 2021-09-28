@@ -1,5 +1,6 @@
 import os, pyranges, pandas,  pyfaidx
-from easyterm import * ## remove
+
+__all__=['get_faidx_handler', 'pyranges']
 
 ########################################################
 ############ General methods
@@ -323,7 +324,7 @@ pyranges.PyRanges.get_sequence=get_sequence
     
 
 ########################################################
-############ END: methods added to PyRanges
+############ END of methods added to PyRanges
 ########################################################
 
             
