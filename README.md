@@ -1,2 +1,2 @@
 # easybioinfo
-Convenient functions for everyday bioinformatics
+Convenient python functions for bioinformatics

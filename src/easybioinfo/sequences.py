@@ -1,8 +1,5 @@
 import itertools
 __all__=['translate', 'reverse_complement']
-# from Bio.Data import CodonTable
-# from Bio.Seq import Seq, MutableSeq
-# from Bio import SeqIO, AlignIO
 
 ##### reverse complement
 # thanks to Devon Ryan at https://bioinformatics.stackexchange.com/questions/3583/what-is-the-fastest-way-to-get-the-reverse-complement-of-a-dna-sequence-in-pytho
