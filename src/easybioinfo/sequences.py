@@ -83,6 +83,13 @@ def translate(seq, genetic_code='1', unknown='X'):
     unknown : str | None
         codons that are not found in the genetic code table will be translated as this character
         if None, finding an unknown codon will raise an exception instead
+
+    Warning
+    -------
+    This function expects uppercase DNA as input. 
+    'U' or lowercase characters will result in 'X' characters as translation.
+    To provide more flexible input, pre-process input 
+    with ``seq.upper().replace('U', 'T')``
     
     Returns
     -------
@@ -97,7 +104,7 @@ def translate(seq, genetic_code='1', unknown='X'):
         raise Exception(f'translate ERROR genetic_code input not recognized: {genetic_code}')
 
     output=[]
-    for pos in xrange(0, len(seq), 3):
+    for pos in range(0, len(seq), 3):
         codon=seq[pos:pos+3]
         if codon in codon_table:
             output.append( codon_table[codon] )
