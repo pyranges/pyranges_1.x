@@ -78,11 +78,17 @@ def translate(seq, genetic_code='1', unknown='X'):
         nucleotide sequence in DNA format (characters: ATGC)
     genetic_code : str | dict
         string-converted NCBI index for genetic code (see https://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi)
-        or dictionary with keys for each codon, values are amino acids (remember to include gaps '---':'-')
+        or dictionary with keys for each codon, values are amino acids (remember to 
+        include the translation for gaps ``'---':'-'``)
         or string-converted NCBI index with a '+U' suffix to have UGA as selenocysteine (U character)
     unknown : str | None
         codons that are not found in the genetic code table will be translated as this character
         if None, finding an unknown codon will raise an exception instead
+    
+    Returns
+    -------
+    pep : str
+        protein sequence resulting from translation, with gaps as '-' and unknown characters as 'X'
 
     Warning
     -------
@@ -90,11 +96,7 @@ def translate(seq, genetic_code='1', unknown='X'):
     'U' or lowercase characters will result in 'X' characters as translation.
     To provide more flexible input, pre-process input 
     with ``seq.upper().replace('U', 'T')``
-    
-    Returns
-    -------
-    pep : str
-        protein sequence resulting from translation, with gaps as '-' and unknown characters as 'X'
+
     """
     if genetic_code in genetic_codes:
         codon_table=genetic_codes[genetic_code]

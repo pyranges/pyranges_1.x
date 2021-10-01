@@ -8,12 +8,16 @@ Welcome to easybioinfo's documentation!
 
 This module provides convenient functions for bioinformatics.
 
+Installation
+------------
+
+You can install easybioinfo with pip:
+
 .. toctree::
    :maxdepth: 1
    :caption: Contents:
 
    sequences
-   tiedpyranges
 
 
 Indices and tables
