@@ -8,10 +8,19 @@ Welcome to easybioinfo's documentation!
 
 This module provides convenient functions for bioinformatics.
 
+See the currently available modules below.
+
 Installation
 ------------
 
-You can install easybioinfo with pip:
+You can install easybioinfo with conda:
+
+``conda install -c mmariotti easybioinfo``
+
+Or alternatively with pip:
+
+``pip install easybioinfo``
+
 
 .. toctree::
    :maxdepth: 1
