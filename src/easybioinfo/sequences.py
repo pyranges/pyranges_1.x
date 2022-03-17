@@ -258,11 +258,11 @@ def count_coding_changes(cds, cds2, silent=True, cpg=False, nonsense=False):
       Returns
       -------
       counts : tuple of ints
-          With default options, counts contains:                  (nonsyn, syn)
-          If cpg is True (but nonsense is not), counts contains:  (nonsyn, syn, cpg_nonsyn, cpg_syn)
-          If nonsense is True (but cpg is not), counts contains:  (nonsyn, syn, nonsense)
-          If both cpg and nonsense are true, counts contains:     (nonsyn, syn, nonsense, cpg_nonsyn, cpg_syn, cpg_nonsense)
 
+          * With default options, counts contains:                  (nonsyn, syn)
+          * If cpg is True (but nonsense is not), counts contains:  (nonsyn, syn, cpg_nonsyn, cpg_syn)
+          * If nonsense is True (but cpg is not), counts contains:  (nonsyn, syn, nonsense)
+          * If both cpg and nonsense are true, counts contains:     (nonsyn, syn, nonsense, cpg_nonsyn, cpg_syn, cpg_nonsense)
     """
     cds=cds.upper()
     cds2=cds2.upper()  
@@ -345,30 +345,31 @@ def count_coding_changes(cds, cds2, silent=True, cpg=False, nonsense=False):
 def count_unique_changes(cds, other_cds_list, silent=True, cpg=False, nonsense=False):
     """ Counts the number of unique synonymous and non-synonymous changes between one reference CDS sequence and a set of others.
 
-         This function is instrumental for any dN/dS analysis.
-         Sequences should be aligned using gaps "-". Gapped positions are not counted.
-         Codons with any character different from ACTG (for example, N) are skipped and a message is printed to stderr.
-         If the same mutation is observed between cds and multiple sequences in other_cds_list, it is counted only once.
+     This function is instrumental for any dN/dS analysis.
+     Sequences should be aligned using gaps "-". Gapped positions are not counted.
+     Codons with any character different from ACTG (for example, N) are skipped and a message is printed to stderr.
+     If the same mutation is observed between cds and multiple sequences in other_cds_list, it is counted only once.
 
-        silent : bool, defaults to True
-            do not print warning messages for non-ATGC characters
+    silent : bool, defaults to True
+        do not print warning messages for non-ATGC characters
 
-        cpg : bool
-            if True, separate counts for CpG sites only are provided, altering the structure of the returned tuple (see below).
-            Note that only cds is inspected to identity CpG sites, so with cpg=True the output may be different for (cds, cds2) and (cds2, cds)
-            Note that the total counts are still provided. To obtain the number of nonCpG changes, subtract the number of CpG sites from the total number
+    cpg : bool
+        if True, separate counts for CpG sites only are provided, altering the structure of the returned tuple (see below).
+        Note that only cds is inspected to identity CpG sites, so with cpg=True the output may be different for (cds, cds2) and (cds2, cds)
+        Note that the total counts are still provided. To obtain the number of nonCpG changes, subtract the number of CpG sites from the total number
 
-        nonsense : bool
-            if True, non-sense mutations (i.e. stop codons or mutations to a stop codon) are not counted as non-synonymous, and are returned separately, 
-            altering the structure of the returned tuple (see below).
+    nonsense : bool
+        if True, non-sense mutations (i.e. stop codons or mutations to a stop codon) are not counted as non-synonymous, and are returned separately, 
+        altering the structure of the returned tuple (see below).
 
-        Returns
-        -------
-        counts : tuple of ints
-            With default options, counts contains:                  (nonsyn, syn)
-            If cpg is True (but nonsense is not), counts contains:  (nonsyn, syn, cpg_nonsyn, cpg_syn)
-            If nonsense is True (but cpg is not), counts contains:  (nonsyn, syn, nonsense)
-            If both cpg and nonsense are true, counts contains:     (nonsyn, syn, nonsense, cpg_nonsyn, cpg_syn, cpg_nonsense)
+    Returns
+    -------
+    counts : tuple of ints
+
+        * With default options, counts contains:                  (nonsyn, syn)
+        * If cpg is True (but nonsense is not), counts contains:  (nonsyn, syn, cpg_nonsyn, cpg_syn)
+        * If nonsense is True (but cpg is not), counts contains:  (nonsyn, syn, nonsense)
+        * If both cpg and nonsense are true, counts contains:     (nonsyn, syn, nonsense, cpg_nonsyn, cpg_syn, cpg_nonsense)
     """
     cds=cds.upper()
     position_to_change={}  ### hash keeping track of changes we already saw   k: position (0based) -> list of other nts observed in any of other_cds
