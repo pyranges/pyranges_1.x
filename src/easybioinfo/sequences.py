@@ -1,7 +1,7 @@
 import itertools
 import warnings
 
-__all__=['translate', 'reverse_complement', 'count_coding_sites', 'count_coding_changes']
+__all__=['translate', 'reverse_complement', 'count_coding_sites', 'count_coding_changes', 'count_unique_changes']
 
 ##### reverse complement
 # thanks to Devon Ryan at https://bioinformatics.stackexchange.com/questions/3583/what-is-the-fastest-way-to-get-the-reverse-complement-of-a-dna-sequence-in-pytho
@@ -149,10 +149,11 @@ def count_coding_sites(cds, silent=False, cpg=False, nonsense=False):
     Returns
     -------
     counts : tuple of floats
-        With default options, counts contains:                  (nonsyn, syn)
-        If cpg is True (but nonsense is not), counts contains:  (nonsyn, syn, cpg_nonsyn, cpg_syn)
-        If nonsense is True (but cpg is not), counts contains:  (nonsyn, syn, nonsense)
-        If both cpg and nonsense are true, counts contains:     (nonsyn, syn, nonsense, cpg_nonsyn, cpg_syn, cpg_nonsense)
+
+        * With default options, counts contains:                  (nonsyn, syn)
+        * If cpg is True (but nonsense is not), counts contains:  (nonsyn, syn, cpg_nonsyn, cpg_syn)
+        * If nonsense is True (but cpg is not), counts contains:  (nonsyn, syn, nonsense)
+        * If both cpg and nonsense are true, counts contains:     (nonsyn, syn, nonsense, cpg_nonsyn, cpg_syn, cpg_nonsense)
 
     """   
     global codon2sitecount
