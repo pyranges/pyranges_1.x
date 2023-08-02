@@ -306,7 +306,7 @@ def count_coding_changes(cds, cds2, silent=True, cpg=False, nonsense=False):
         if codon!=codon2:
 
             if translate(codon)!=translate(codon2):          
-                if "*" in (transl(codon), transl(codon2)):
+                if "*" in (translate(codon), translate(codon2)):
                     is_nonsyn=2 #nonsense mutation
                 else:
                     is_nonsyn=1
@@ -415,7 +415,7 @@ def count_unique_changes(cds, other_cds_list, silent=True, cpg=False, nonsense=F
             if codon!=codon2:
 
                 if translate(codon)!=translate(codon2):          
-                    if "*" in (transl(codon), transl(codon2)):
+                    if "*" in (translate(codon), translate(codon2)):
                         is_nonsyn=2 #nonsense mutation
                     else:
                         is_nonsyn=1
