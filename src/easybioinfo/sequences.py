@@ -167,7 +167,7 @@ def clear_kmer_memory():
 def get_kmer_codon_table(genetic_code, k):
     if not (genetic_code, k) in kmer_codon_tables:
         all_codons=[c for c in genetic_codes['1'].keys()]
-        codon_table_multik={multicodon : translate(multicodon)
+        codon_table_multik={multicodon : translate(multicodon, genetic_code=genetic_code)
                             for multicodon in map(''.join, itertools.product( *(all_codons for i in range(k))))}
         kmer_codon_tables[(genetic_code, k)]=codon_table_multik
 
