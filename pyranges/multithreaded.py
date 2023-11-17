@@ -171,17 +171,20 @@ def pyrange_apply_single(
         )
         return res
     else:
-        original_index = (
-            self.index.names if self.index.name is None else self.index.names
+        if self.index.name is None and self.index.names == [None]:
+            original_index = None
+        else:
+            original_index = (
+                self.index.names if self.index.name is None else self.index.names
         )
         self = self.reset_index().set_index(
             pd.Series(name=__TEMP_INDEX_COL__, data=range_index), append=False
         )
-        return (
+        res = (
             self.groupby(keys, as_index=False, observed=True)
             .apply(function, **kwargs)
-            .set_index(original_index)
         )
+        return res.reset_index(drop=True) if original_index is None else res.set_index(original_index)
 
 
 def _lengths(df):

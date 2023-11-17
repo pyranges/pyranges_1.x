@@ -50,8 +50,8 @@ def _both_dfs(scdf, ocdf, how=False, **kwargs):
         ocdf = pd.concat([ocdf_matcing, ocdf_missing])
     return scdf.merge(
         ocdf,
-        left_on=scdf.index,
-        right_on=ocdf.index,
+        left_index=True,
+        right_index=True,
         suffixes=("", kwargs["suffix"]),
         how="inner" if how is None else how,
     )

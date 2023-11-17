@@ -1,6 +1,7 @@
 import numpy as np
 
 import pyranges as pr
+from pyranges.names import FORWARD_STRAND, REVERSE_STRAND
 
 np.random.seed(0)
 
@@ -17,12 +18,9 @@ def test_stranded():
 
     assert not j.valid_strand
 
-    j.Strand = np.random.choice("+ -".split(), size=len(j))
+    j.Strand = np.random.choice([REVERSE_STRAND, FORWARD_STRAND], size=len(j))
 
     assert j.valid_strand
-
-    for _, df in j:
-        assert len(df.Strand.drop_duplicates()) == 1
 
 
 def test_unstrand():

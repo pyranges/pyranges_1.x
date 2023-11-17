@@ -1,6 +1,7 @@
 from typing import Dict, Optional
 
 import numpy as np
+import pandas as pd
 
 import pyranges as pr
 from pyranges.names import GENOME_LOC_COLS_WITH_STRAND
@@ -161,5 +162,5 @@ def count_overlaps(
         kwargs["name"] = name
         res = features.apply_pair(gr, _count_overlaps, strandedness, **kwargs)
         features.insert(len(features.columns), name, res)
-    features.loc[:, grs.keys()] = features[grs.keys()].fillna(0)
+    features.loc[:, grs.keys()] = pd.DataFrame(features)[grs.keys()].fillna(0)
     return features.astype({k: int for k in grs.keys()})
