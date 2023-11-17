@@ -45,7 +45,11 @@ def adjust_table_width(
     final_headers = headers[:included_columns] if headers else None
     final_dtypes = dtypes[:included_columns] if dtypes else None
 
-    final_headers = [f"{h}\n{t}" for h, t in zip(final_headers, final_dtypes)] if dtypes else headers
+    final_headers = (
+        [f"{h}\n{t}" for h, t in zip(final_headers, final_dtypes)]
+        if dtypes
+        else headers
+    )
 
     return final_data, final_headers
 

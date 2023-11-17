@@ -29,7 +29,7 @@ from pyranges.multithreaded import (
     pyrange_apply,
     pyrange_apply_single,
 )
-from pyranges.names import STRAND_COL, FORWARD_STRAND, REVERSE_STRAND
+from pyranges.names import STRAND_COL, FORWARD_STRAND, REVERSE_STRAND, GENOME_LOC_COLS
 from pyranges.tostring import adjust_table_width
 
 if TYPE_CHECKING:
@@ -190,6 +190,33 @@ class PyRanges(pd.DataFrame):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        missing_columns = set(GENOME_LOC_COLS) - set(self.columns)
+        if missing_columns:
+            msg = f"Missing required columns: {missing_columns}"
+            raise ValueError(msg)
+        self._check_index_column_names()
+
+    def _check_index_column_names(self):
+        # Check for columns with the same name as the index
+        if self.index.name is not None and self.index.name in self.columns:
+            raise ValueError(
+                f"Index name '{self.index.name}' cannot be the same as a column name."
+            )
+        if isinstance(self.index, pd.MultiIndex):
+            for level in self.index.names:
+                if level in self.columns:
+                    raise ValueError(
+                        f"Index level name '{level}' cannot be the same as a column name."
+                    )
+
+    def set_index(self, *args, **kwargs) -> Optional["PyRanges"]:
+        # Custom behavior for set_index
+        result = super().set_index(*args, **kwargs)
+        if kwargs.get("inplace"):
+            self._check_index_column_names()
+        else:
+            result._check_index_column_names()
+        return result
 
     def __array_ufunc__(self, *args, **kwargs) -> "PyRanges":
         """Apply unary numpy-function.
@@ -1497,9 +1524,7 @@ class PyRanges(pd.DataFrame):
             {"ext": ext, "strand": self.valid_strand, "group_by": group_by}
         )
         func = _extend if group_by is None else _extend_grp
-        dfs = pyrange_apply_single(func, self, **kwargs)
-
-        return pr.from_dfs(dfs)
+        return PyRanges(pyrange_apply_single(func, self, **kwargs))
 
     # # TODO: use subtract code here instead, easier
     # def no_overlap(self, other, **kwargs):
@@ -1571,6 +1596,9 @@ class PyRanges(pd.DataFrame):
         assert self.valid_strand, "Need stranded pyrange to find 5'."
         kwargs = fill_kwargs({"strand": self.valid_strand})
         return pr.from_dfs(pyrange_apply_single(_tss, self, **kwargs))
+
+    def has_strand_column(self) -> bool:
+        return STRAND_COL in self.columns
 
     def head(self, n: int = 8) -> "PyRanges":
         """Return the n first rows.
@@ -1911,7 +1939,7 @@ class PyRanges(pd.DataFrame):
         For printing, the PyRanges was sorted on Chromosome.
         """
 
-        from pyranges.methods.join import _write_both
+        from pyranges.methods.join import _both_dfs
 
         kwargs: Dict[str, Any] = {
             "strandedness": strandedness,
@@ -1923,8 +1951,8 @@ class PyRanges(pd.DataFrame):
         }
         if slack:
             self = self.copy()
-            self.Start__slack = self.Start
-            self.End__slack = self.End
+            self.insert(len(self.columns), "Start__slack", self.Start)
+            self.insert(len(self.columns), "End__slack", self.End)
 
             self = self.extend(slack)
 
@@ -1934,33 +1962,13 @@ class PyRanges(pd.DataFrame):
 
         kwargs = fill_kwargs(kwargs)
 
-        how = kwargs.get("how")
-
-        if how in ["left", "outer"]:
-            kwargs["example_header_other"] = other.head(1).df
-        if how in ["right", "outer"]:
-            kwargs["example_header_self"] = self.head(1).df
-
-        dfs = pyrange_apply(_write_both, self, other, **kwargs)
-        gr = pr.from_dfs(dfs)
+        gr = PyRanges(pyrange_apply(_both_dfs, self, other, **kwargs))
+        print(gr)
 
         if slack and len(gr) > 0:
             gr.Start = gr.Start__slack
             gr.End = gr.End__slack
-            gr = pr.PyRanges(gr.drop(like="(Start|End).*__slack"))
-
-        if not self.valid_strand and other.valid_strand:
-            if apply_strand_suffix is None:
-                import sys
-
-                print(
-                    "join: Strand data from other will be added as strand data to self.\nIf this is undesired use the flag apply_strand_suffix=False.\nTo turn off the warning set apply_strand_suffix to True or False.",
-                    file=sys.stderr,
-                )
-            elif apply_strand_suffix:
-                gr.columns = gr.columns.str.replace(
-                    "Strand", "Strand" + kwargs["suffix"]
-                )
+            gr = pr.PyRanges(gr.drop(["Start__slack", "End__slack"], axis=1))
 
         return gr
 
@@ -3973,9 +3981,7 @@ class PyRanges(pd.DataFrame):
             "tile_size": tile_size,
         }
 
-        df = pyrange_apply_single(_tiles, self, **kwargs)
-
-        return pr.from_dfs(df)
+        return PyRanges(pyrange_apply_single(_tiles, self, **kwargs))
 
     def to_example(self, n: int = 10) -> Dict[str, List[Union[int, str]]]:
         """Return as dict.

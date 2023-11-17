@@ -3,7 +3,7 @@ from typing import Dict, Optional
 import numpy as np
 
 import pyranges as pr
-from pyranges.names import MIN_COLUMNS_WITH_STRAND
+from pyranges.names import GENOME_LOC_COLS_WITH_STRAND
 from pyranges.pyranges_main import PyRanges
 
 
@@ -156,7 +156,7 @@ def count_overlaps(
     from pyranges.methods.intersection import _count_overlaps
 
     for name, gr in grs.items():
-        gr = gr[[c for c in gr.columns if c in MIN_COLUMNS_WITH_STRAND]]
+        gr = gr[[c for c in gr.columns if c in GENOME_LOC_COLS_WITH_STRAND]]
 
         kwargs["name"] = name
         res = features.apply_pair(gr, _count_overlaps, strandedness, **kwargs)

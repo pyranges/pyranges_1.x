@@ -6,7 +6,12 @@ from natsort import natsorted  # type: ignore
 from pandas.core.frame import DataFrame
 
 import pyranges as pr
-from pyranges.names import CHROM_COL, STRAND_COL
+from pyranges.names import (
+    CHROM_COL,
+    STRAND_COL,
+    GENOME_LOC_COLS_WITH_STRAND,
+    __TEMP_INDEX_COL__,
+)
 
 if TYPE_CHECKING:
     from pyranges.pyranges_main import PyRanges
@@ -118,167 +123,65 @@ def pyrange_apply(
 
     if strandedness == "opposite":
         assert (
-                self.valid_strand and other.valid_strand
+            self.valid_strand and other.valid_strand
         ), "Can only do opposite strand operations when both PyRanges contain valid strand info."
 
     results = []
 
-    dummy = pd.DataFrame(columns="Chromosome Start End".split())
+    original_index = self.index.names
+    should_reset_index_self = index_contains_genome_loc_cols(self)
+    should_reset_index_other = index_contains_genome_loc_cols(other)
+    self = self.reset_index() if should_reset_index_self else self
+    other = other.reset_index() if should_reset_index_other else other
 
-    other_chromosomes = other.chromosomes
+    strand_and_chrom = strandedness or (
+        self.valid_strand and other.valid_strand and strandedness is None
+    )
+    grpby_ks = [CHROM_COL, STRAND_COL] if strand_and_chrom else [CHROM_COL]
 
-    results = []
-    if strandedness:
-        grpby_keys = [CHROM_COL, STRAND_COL]
-        others = other.groupby(grpby_keys)
-        for key, gdf in self.groupby(grpby_keys):
-            ogdf = others.get_group(key) if key in others.groups else pr.empty()
-            results.append(
-                function(gdf, ogdf, **kwargs)
-            )
-        return pd.concat(results)
-
-    else:
-        if self.valid_strand and not other.valid_strand:
-            for (c, s), df in self._dfs_with_strand.items():
-                if c not in other_chromosomes:
-                    odf = dummy
-                else:
-                    odf = other._dfs_without_strands[c]
-
-                df, odf = make_binary_sparse(kwargs, df, odf)
-
-                try:
-                    result = function(df, odf, **kwargs)
-                except TypeError:
-                    result = function(df, odf)
-                results.append(result)
-
-        elif not self.valid_strand and other.valid_strand:
-            for c, df in self._dfs_without_strand.items():
-                if c not in other_chromosomes:
-                    odf = dummy
-                else:
-                    odf1 = other._dfs_with_strand.get((c, "+"), dummy)
-                    odf2 = other._dfs_with_strand.get((c, "-"), dummy)
-
-                    odf = merge_dfs(odf1, odf2)
-
-                df, odf = make_binary_sparse(kwargs, df, odf)
-
-                try:
-                    result = function(df, odf, **kwargs)
-                except TypeError:
-                    result = function(df, odf)
-                results.append(result)
-
-        elif self.valid_strand and other.valid_strand:
-            for (c, s), df in self._dfs_with_strand.items():
-                if c not in other_chromosomes:
-                    odfs = [dummy]
-                else:
-                    odfp = other_dfs.get((c, "+"), dummy)  # type: ignore
-                    odfm = other_dfs.get((c, "-"), dummy)  # type: ignore
-
-                    odfs = [odfp, odfm]
-
-                if len(odfs) == 2:
-                    odf = merge_dfs(*odfs)
-                elif len(odfs) == 1:
-                    odf = odfs[0]
-                else:
-                    odf = dummy
-
-                df, odf = make_binary_sparse(kwargs, df, odf)
-
-                try:
-                    result = function(df, odf, **kwargs)
-                except TypeError:
-                    result = function(df, odf)
-                results.append(result)
-
-        else:
-            for c, df in self._dfs_without_strand.items():
-                if c not in other_chromosomes:
-                    odf = dummy
-                else:
-                    odf = other._dfs_without_strand[c]
-
-                df, odf = make_binary_sparse(kwargs, df, odf)
-
-                try:
-                    result = function(df, odf, **kwargs)
-                except TypeError:
-                    result = function(df, odf)
-                results.append(result)
-
-    return process_results(results, keys)
+    others = dict(list(other.groupby(grpby_ks, observed=True)))
+    empty = pr.empty(columns=other.columns, dtype=other.dtypes)
+    for key, gdf in self.groupby(grpby_ks, observed=True):
+        ogdf = others.get(key, empty)
+        results.append(function(gdf, ogdf, **kwargs))
+    result = pd.concat(results)
+    return result.set_index(original_index) if should_reset_index_self else result
 
 
-def pyrange_apply_single(function: Callable, self: "PyRanges", **kwargs) -> Any:
+def pyrange_apply_single(
+    function: Callable, self: "PyRanges", **kwargs
+) -> pd.DataFrame:
     strand = kwargs["strand"]
 
-    if strand:
-        assert (
-            self.valid_strand
-        ), "Can only do stranded operation when PyRange contains strand info"
+    if strand and not STRAND_COL in self.columns:
+        msg = "Can only do stranded operation when PyRange contains strand info"
+        raise ValueError(msg)
 
-    results = []
-
-    keys: List = []
-    if strand:
-        for (c, s), df in self._dfs_with_strand.items():  # type: ignore
-            kwargs["chromosome"] = c
-            _strand = s
-            kwargs["strand"] = _strand
-
-            try:
-                result = function(df, **kwargs)
-            except TypeError:
-                result = function(df)
-            results.append(result)
-
-        keys = self.keys()
-
-    elif not self.valid_strand:
-        print(self.groupby(CHROM_COL).apply(function, **kwargs))
-        raise
-        for c, df in self.groupby(CHROM_COL):
-            kwargs["chromosome"] = c
-            assert isinstance(c, str)
-
-            try:
-                result = function(df, **kwargs)
-            except TypeError:
-                result = function(df)
-
-            results.append(result)
-            keys.append(c)
-
+    if not self.valid_strand:
+        keys = [CHROM_COL]
     else:
-        for c in self.chromosomes:
-            assert isinstance(c, str)
-            kwargs["chromosome"] = c
-
-            dfs = self[c]
-
-            if len(dfs.keys()) == 2:
-                df, df2 = dfs.values()
-                # merge strands
-                df = merge_dfs(df, df2)
-            else:
-                df = dfs.values()[0]
-
-            keys.append(c)
-
-            try:
-                result = function(df, **kwargs)
-            except TypeError:
-                result = function(df)
-
-            results.append(result)
-
-    return process_results(results, keys)
+        keys = [CHROM_COL, STRAND_COL] if strand else [CHROM_COL]
+    range_index = np.arange(len(self))
+    if isinstance(self.index, pd.RangeIndex):
+        self = self.set_index(pd.Series(name=__TEMP_INDEX_COL__, data=range_index))
+        res = (
+            self.groupby(keys, as_index=False, observed=True)
+            .apply(function, **kwargs)
+            .reset_index(drop=True)
+        )
+        return res
+    else:
+        original_index = (
+            self.index.names if self.index.name is None else self.index.names
+        )
+        self = self.reset_index().set_index(
+            pd.Series(name=__TEMP_INDEX_COL__, data=range_index), append=False
+        )
+        return (
+            self.groupby(keys, as_index=False, observed=True)
+            .apply(function, **kwargs)
+            .set_index(original_index)
+        )
 
 
 def _lengths(df):
@@ -397,3 +300,8 @@ def _extend_grp(df: pd.DataFrame, **kwargs):
     ).all(), "Some intervals are negative or zero length after applying extend!"
 
     return df
+
+
+def index_contains_genome_loc_cols(gr: "PyRanges") -> bool:
+    # Reset index if special columns are in the index
+    return bool(set(gr.index.names) & set(GENOME_LOC_COLS_WITH_STRAND))

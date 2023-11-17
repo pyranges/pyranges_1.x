@@ -22,8 +22,7 @@ def concat(
         )
 
     dfs_to_concat = [
-        gr.df.drop(columns="Strand", errors="ignore") if not consider_strand else gr.df
-        for gr in non_empty_pyranges
+        gr.remove_strand() if not consider_strand else gr for gr in non_empty_pyranges
     ]
 
     return pr.PyRanges(pd.concat(dfs_to_concat))

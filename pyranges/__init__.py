@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import pkg_resources
 from natsort import natsorted  # type: ignore
+from pandas import Series
 
 import pyranges as pr
 import pyranges.genomicfeatures as gf  # NOQA: F401
@@ -17,7 +18,14 @@ from pyranges.get_fasta import get_fasta, get_sequence, get_transcript_sequence
 from pyranges.helpers import get_key_from_df, single_value_key
 from pyranges.methods.concat import concat
 from pyranges.multioverlap import count_overlaps
-from pyranges.names import MIN_COLUMNS_WITH_STRAND, MIN_COLUMNS, STRAND_COL, CHROM_COL
+from pyranges.names import (
+    GENOME_LOC_COLS_WITH_STRAND,
+    GENOME_LOC_COLS,
+    STRAND_COL,
+    CHROM_COL,
+    START_COL,
+    END_COL,
+)
 from pyranges.pyranges_main import PyRanges
 from pyranges.readers import read_bam, read_bed, read_bigwig, read_gff3, read_gtf  # NOQA: F401
 
@@ -34,7 +42,24 @@ read_gff = read_gtf
 Chromsizes = Union[Dict[str, int], Dict[Tuple[str, str], int]]
 
 
-def empty(with_strand: bool = False) -> "PyRanges":
+def empty_df(
+    with_strand: bool = False,
+    columns: Optional[Iterable[str]] = None,
+    dtype: Optional[Series] = None,
+) -> pd.DataFrame:
+    empty = pd.DataFrame(
+        columns=columns
+        if list(columns)
+        else (GENOME_LOC_COLS_WITH_STRAND if with_strand else GENOME_LOC_COLS),
+    )
+    return empty.astype(dtype) if dtype is not None else empty
+
+
+def empty(
+    with_strand: bool = False,
+    columns: Optional[Iterable[str]] = None,
+    dtype: Optional[Series] = None,
+) -> "PyRanges":
     """Create an empty PyRanges.
 
     Parameters
@@ -42,9 +67,7 @@ def empty(with_strand: bool = False) -> "PyRanges":
     with_strand : bool, default False
         Whether to create a PyRanges with strand information.
     """
-    return pr.PyRanges(
-        pd.DataFrame(columns=MIN_COLUMNS_WITH_STRAND if with_strand else MIN_COLUMNS)
-    )
+    return pr.PyRanges(empty_df(with_strand=with_strand, columns=columns, dtype=dtype))
 
 
 def from_args(
@@ -59,7 +82,7 @@ def from_args(
         _chromosomes = pd.Series(chromosomes, dtype="category")
 
     columns: List[pd.Series] = [_chromosomes, pd.Series(starts), pd.Series(ends)]
-    colnames = MIN_COLUMNS
+    colnames = GENOME_LOC_COLS[:]
     if strands is not None:
         if isinstance(strands, str):
             _strands = pd.Series([strands] * len(starts), dtype="category")
@@ -87,49 +110,9 @@ def from_args(
         series_to_concat.append(s)
 
     df = pd.concat(series_to_concat, axis=1)
-    df.columns = pd.Index(colnames)
+    df.columns = colnames
 
     return pr.PyRanges(df)
-
-
-def from_dict(d: Dict[str, Iterable]) -> PyRanges:
-    """Create a PyRanges from dict.
-
-    Parameters
-    ----------
-    d : dict of array-like
-
-        Dict with data.
-
-    Warning
-    -------
-
-    On versions of Python prior to 3.6, this function returns a PyRanges with
-    the columns in arbitrary order.
-
-    See Also
-    --------
-
-    pyranges.from_string : create a PyRanges from a multiline string.
-
-    Examples
-    --------
-
-    >>> d = {"Chromosome": [1, 1, 2], "Start": [1, 2, 3], "End": [4, 9, 12], "Strand": ["+", "+", "-"], "ArbitraryValue": ["a", "b", "c"]}
-    >>> pr.from_dict(d)
-    +--------------+-----------+-----------+--------------+------------------+
-    |   Chromosome |     Start |       End | Strand       | ArbitraryValue   |
-    |   (category) |   (int64) |   (int64) | (category)   | (object)         |
-    |--------------+-----------+-----------+--------------+------------------|
-    |            1 |         1 |         4 | +            | a                |
-    |            1 |         2 |         9 | +            | b                |
-    |            2 |         3 |        12 | -            | c                |
-    +--------------+-----------+-----------+--------------+------------------+
-    Stranded PyRanges object has 3 rows and 5 columns from 2 chromosomes.
-    For printing, the PyRanges was sorted on Chromosome and Strand.
-    """
-
-    return PyRanges(pd.DataFrame(d))
 
 
 def from_dfs(

@@ -21,16 +21,10 @@ def expected_result():
 def test_windows():
     f1 = pr.data.f1()
 
-    print(f1)
-
     result = f1.tile(2)
 
-    print(result)
-
-    df = result.df
-
-    assert list(df.Start) == [2, 4, 8, 4, 6]
-    assert list(df.End) == [4, 6, 10, 6, 8]
+    assert list(result.Start) == [2, 4, 8, 4, 6]
+    assert list(result.End) == [4, 6, 10, 6, 8]
 
 
 def test_windows2():
@@ -50,7 +44,5 @@ def test_windows2():
 
     print(result)
 
-    df = result.df
-
-    assert list(df.Start) == [10200, 10400, 51400, 51600, 51800]
-    # assert list(df.End) == [4, 6, 8, 10, 6, 8]
+    assert list(result.Start) == [10200, 10400, 51400, 51600, 51800]
+    assert list(result.End) == [10400, 10600, 51600, 51800, 52000]

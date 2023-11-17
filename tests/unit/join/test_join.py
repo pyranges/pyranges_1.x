@@ -1,3 +1,4 @@
+import numpy as np
 from pandas.testing import assert_series_equal
 
 import pyranges as pr
@@ -9,13 +10,11 @@ def test_join_with_slack():
     gr2 = pr.from_args(chromosomes="chr1", starts=[15], ends=[20], strands="+")
 
     result = gr1.join_overlaps(gr2, slack=10)
-    df = result.df
-    print(df)
-    assert not df.empty
+    assert not result.empty
 
 
 def test_join_without_reordering():
-    f1 = pr.from_dict(
+    f1 = pr.PyRanges(
         {
             "Chromosome": ["chr1", "chr1", "chr1"],
             "Start": [3, 8, 5],
@@ -23,7 +22,7 @@ def test_join_without_reordering():
             "Name": ["interval1", "interval3", "interval2"],
         }
     )
-    f2 = pr.from_dict(
+    f2 = pr.PyRanges(
         {
             "Chromosome": ["chr1", "chr1"],
             "Start": [1, 6],
@@ -32,12 +31,12 @@ def test_join_without_reordering():
         }
     )
 
-    lj = f1.join_overlaps(f2, how="left", preserve_order=True)
+    lj = f1.join_overlaps(f2, how="left")
     assert_series_equal(lj.Name, f1.Name)
 
-    rj = f1.join_overlaps(f2, how="right", preserve_order=True)
+    rj = f1.join_overlaps(f2, how="right")
     assert_series_equal(rj.Name_b, f2.Name, check_names=False)
 
-    oj = f1.join_overlaps(f2, how="outer", preserve_order=True)
-    assert list(oj.Name) == ["interval1", "interval3", "interval2", "-1"]
-    assert list(oj.Name_b) == ["-1", "-1", "b", "a"]
+    oj = f1.join_overlaps(f2, how="outer")
+    assert list(oj.Name.fillna(-1)) == ["interval2", "interval1", "interval3", -1]
+    assert list(oj.Name_b.fillna(-1)) == ["b", -1, -1, "a"]
