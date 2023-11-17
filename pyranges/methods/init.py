@@ -54,7 +54,9 @@ def check_strandedness(df):
 
     contains_more_than_plus_minus_in_strand_col = False
 
-    if str(df.Strand.dtype) == "category" and (set(df.Strand.cat.categories) - set("+-")):
+    if str(df.Strand.dtype) == "category" and (
+        set(df.Strand.cat.categories) - set("+-")
+    ):
         contains_more_than_plus_minus_in_strand_col = True
     elif not ((df.Strand == "+") | (df.Strand == "-")).all():
         contains_more_than_plus_minus_in_strand_col = True

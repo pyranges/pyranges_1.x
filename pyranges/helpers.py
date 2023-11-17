@@ -34,6 +34,9 @@ def get_key_from_df(df: pd.DataFrame) -> Union[str, Tuple[str, str]]:
 
 def single_value_key(df: pd.DataFrame) -> bool:
     if "Strand" in df:
-        return len(df[["Chromosome", "Strand"]].drop_duplicates(["Chromosome", "Strand"])) == 1
+        return (
+            len(df[["Chromosome", "Strand"]].drop_duplicates(["Chromosome", "Strand"]))
+            == 1
+        )
     else:
         return len(df.Chromosome.drop_duplicates()) == 1

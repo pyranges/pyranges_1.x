@@ -64,4 +64,6 @@ def test_read_bed():
 def test_to_rows_keep_duplicates():
     anno = pd.Series(["gene DDX11L1; gene sonic; unique hi"])
     result = to_rows_keep_duplicates(anno)
-    assert result.to_dict(orient="index") == {0: {'gene': 'DDX11L1,sonic', "unique": "hi"}}
+    assert result.to_dict(orient="index") == {
+        0: {"gene": "DDX11L1,sonic", "unique": "hi"}
+    }

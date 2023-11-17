@@ -11,7 +11,9 @@ def pytest_configure(config):
         "bedtools: tests rely on",
     )
 
-    config.addinivalue_line("markers", "explore: functionality not ready for prime-time")
+    config.addinivalue_line(
+        "markers", "explore: functionality not ready for prime-time"
+    )
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -35,7 +37,7 @@ def chip_10(names):
 
     gr = PyRanges(df)
 
-    assert gr.stranded
+    assert gr.valid_strand
 
     return gr
 

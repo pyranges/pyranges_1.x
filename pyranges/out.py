@@ -112,7 +112,10 @@ def _gtf(df: DataFrame, mapping: Dict[str, str]) -> DataFrame:
 
 
 def _to_gtf(
-    self: PyRanges, path: Optional[str] = None, compression: str = "infer", map_cols: Optional[Dict[str, str]] = None
+    self: PyRanges,
+    path: Optional[str] = None,
+    compression: str = "infer",
+    map_cols: Optional[Dict[str, str]] = None,
 ) -> Optional[str]:
     mapping = _gtf_columns.copy()
     if map_cols:
@@ -137,7 +140,14 @@ def _to_gtf(
             mode = "a"
         return None
     else:
-        return "".join([outdf.to_csv(index=False, header=False, sep="\t", quoting=csv.QUOTE_NONE) for outdf in outdfs])
+        return "".join(
+            [
+                outdf.to_csv(
+                    index=False, header=False, sep="\t", quoting=csv.QUOTE_NONE
+                )
+                for outdf in outdfs
+            ]
+        )
 
 
 def _to_csv(
@@ -167,14 +177,20 @@ def _to_csv(
     else:
         return "".join(
             [
-                outdf.to_csv(index=False, header=header, sep=sep, quoting=csv.QUOTE_NONE)
+                outdf.to_csv(
+                    index=False, header=header, sep=sep, quoting=csv.QUOTE_NONE
+                )
                 for _, outdf in sorted(gr.dfs.items())
             ]
         )
 
 
 def _to_bed(
-    self: PyRanges, path: Optional[str] = None, sep: str = "\t", keep: bool = True, compression: str = "infer"
+    self: PyRanges,
+    path: Optional[str] = None,
+    sep: str = "\t",
+    keep: bool = True,
+    compression: str = "infer",
 ) -> Optional[str]:
     gr = self
 
@@ -196,7 +212,14 @@ def _to_bed(
             mode = "a"
         return None
     else:
-        res = "".join([outdf.to_csv(index=False, header=False, sep="\t", quoting=csv.QUOTE_NONE) for outdf in outdfs])
+        res = "".join(
+            [
+                outdf.to_csv(
+                    index=False, header=False, sep="\t", quoting=csv.QUOTE_NONE
+                )
+                for outdf in outdfs
+            ]
+        )
         return res
 
 
@@ -265,7 +288,10 @@ def _to_bigwig(
 
 
 def _to_gff3(
-    self: PyRanges, path: None = None, compression: str = "infer", map_cols: Optional[Dict[str, str]] = None
+    self: PyRanges,
+    path: None = None,
+    compression: str = "infer",
+    map_cols: Optional[Dict[str, str]] = None,
 ) -> str | None:
     mapping = _gff3_columns.copy()
     if map_cols:
@@ -290,7 +316,12 @@ def _to_gff3(
             mode = "a"
     else:
         return "".join(
-            [outdf.to_csv(index=False, header=False, sep="\t", quoting=csv.QUOTE_MINIMAL) for outdf in outdfs]
+            [
+                outdf.to_csv(
+                    index=False, header=False, sep="\t", quoting=csv.QUOTE_MINIMAL
+                )
+                for outdf in outdfs
+            ]
         )
 
 
@@ -326,7 +357,9 @@ def _gff3(df, mapping) -> pd.DataFrame:
             rest_df.loc[~isnull, c] = new_val
             rest_df.loc[isnull, c] = ""
 
-        attribute = rest_df.apply(lambda r: "".join([v for v in r if v]), axis=1).str.replace(";$", "", regex=True)
+        attribute = rest_df.apply(
+            lambda r: "".join([v for v in r if v]), axis=1
+        ).str.replace(";$", "", regex=True)
     outdf.insert(outdf.shape[1], "attribute", attribute)
 
     return outdf

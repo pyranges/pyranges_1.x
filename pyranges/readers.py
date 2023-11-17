@@ -55,9 +55,7 @@ def read_bed(f: Union[str, Path], /, nrows: Optional[int] = None) -> pr.PyRanges
     For printing, the PyRanges was sorted on Chromosome and Strand.
     """
 
-    columns = (
-        "Chromosome Start End Name Score Strand ThickStart ThickEnd ItemRGB BlockCount BlockSizes BlockStarts".split()
-    )
+    columns = "Chromosome Start End Name Score Strand ThickStart ThickEnd ItemRGB BlockCount BlockSizes BlockStarts".split()
     path = Path(f)
     if path.name.endswith(".gz"):
         import gzip
@@ -86,7 +84,9 @@ def read_bed(f: Union[str, Path], /, nrows: Optional[int] = None) -> pr.PyRanges
     return PyRanges(df)
 
 
-def read_bam(f: Union[str, Path], /, sparse=True, mapq=0, required_flag=0, filter_flag=1540) -> pr.PyRanges:
+def read_bam(
+    f: Union[str, Path], /, sparse=True, mapq=0, required_flag=0, filter_flag=1540
+) -> pr.PyRanges:
     """Return bam file as PyRanges.
 
     Parameters
@@ -172,12 +172,16 @@ def read_bam(f: Union[str, Path], /, sparse=True, mapq=0, required_flag=0, filte
         try:
             df = bamread.read_bam_full(path, mapq, required_flag, filter_flag)
         except AttributeError:
-            print("bamread version 0.0.6 or higher is required to read bam non-sparsely.")
+            print(
+                "bamread version 0.0.6 or higher is required to read bam non-sparsely."
+            )
 
     return PyRanges(df)
 
 
-def _fetch_gene_transcript_exon_id(attribute: pd.Series, annotation: Optional[str] = None) -> pd.DataFrame:
+def _fetch_gene_transcript_exon_id(
+    attribute: pd.Series, annotation: Optional[str] = None
+) -> pd.DataFrame:
     no_quotes = attribute.str.replace('"', "").str.replace("'", "")
 
     df = no_quotes.str.extract(
@@ -291,7 +295,9 @@ def read_gtf(
     _skiprows = skiprows(path)
 
     if full:
-        gr = read_gtf_full(path, nrows, _skiprows, duplicate_attr, ignore_bad=ignore_bad)
+        gr = read_gtf_full(
+            path, nrows, _skiprows, duplicate_attr, ignore_bad=ignore_bad
+        )
     else:
         gr = read_gtf_restricted(path, _skiprows, nrows=None)
 
@@ -340,7 +346,10 @@ def read_gtf_full(
 
 def parse_kv_fields(line: str) -> List[List[str]]:
     # rstrip: allows for GFF not having a last ";", or having final spaces
-    return [kv.replace('""', '"NA"').replace('"', "").split(None, 1) for kv in line.rstrip("; ").split("; ")]
+    return [
+        kv.replace('""', '"NA"').replace('"', "").split(None, 1)
+        for kv in line.rstrip("; ").split("; ")
+    ]
 
 
 def to_rows(anno: pd.Series, ignore_bad: bool = False) -> pd.DataFrame:
@@ -349,7 +358,9 @@ def to_rows(anno: pd.Series, ignore_bad: bool = False) -> pd.DataFrame:
         for entry in row:
             str(entry).replace('"', "").replace(";", "").split()
     except AttributeError:
-        raise Exception(f"Invalid attribute string: {entry}. If the file is in GFF3 format, use pr.read_gff3 instead.")
+        raise Exception(
+            f"Invalid attribute string: {entry}. If the file is in GFF3 format, use pr.read_gff3 instead."
+        )
 
     rowdicts = []
     try:
@@ -357,7 +368,9 @@ def to_rows(anno: pd.Series, ignore_bad: bool = False) -> pd.DataFrame:
             rowdicts.append({k: v for k, v in parse_kv_fields(line)})
     except ValueError:
         if not ignore_bad:
-            print(f"The following line is not parseable as gtf:\n{line}\n\nTo ignore bad lines use ignore_bad=True.")
+            print(
+                f"The following line is not parseable as gtf:\n{line}\n\nTo ignore bad lines use ignore_bad=True."
+            )
             raise
 
     return pd.DataFrame.from_records(rowdicts)
@@ -376,16 +389,25 @@ def to_rows_keep_duplicates(anno: pd.Series, ignore_bad: bool = False) -> pd.Dat
                 else:
                     rowdict[k].append(v)
 
-            rowdicts.append({k: ",".join(v) if isinstance(v, list) else v for k, v in rowdict.items()})
+            rowdicts.append(
+                {
+                    k: ",".join(v) if isinstance(v, list) else v
+                    for k, v in rowdict.items()
+                }
+            )
     except ValueError:
         if not ignore_bad:
-            print(f"The following line is not parseable as gtf:\n\n{line}\n\nTo ignore bad lines use ignore_bad=True.")
+            print(
+                f"The following line is not parseable as gtf:\n\n{line}\n\nTo ignore bad lines use ignore_bad=True."
+            )
             raise
 
     return pd.DataFrame.from_records(rowdicts)
 
 
-def read_gtf_restricted(f: Union[str, Path], skiprows: Optional[int], nrows: Optional[int] = None) -> pr.PyRanges:
+def read_gtf_restricted(
+    f: Union[str, Path], skiprows: Optional[int], nrows: Optional[int] = None
+) -> pr.PyRanges:
     """seqname - name of the chromosome or scaffold; chromosome names can be given with or without the 'chr' prefix. Important note: the seqname must be one used within Ensembl, i.e. a standard chromosome name or an Ensembl identifier such as a scaffold ID, without any additional content such as species or assembly. See the example GFF output below.
     # source - name of the program that generated this feature, or the data source (database or project name)
     feature - feature type name, e.g. Gene, Variation, Similarity
@@ -447,7 +469,12 @@ def to_rows_gff3(anno) -> pd.DataFrame:
     return pd.DataFrame.from_records(rowdicts).set_index(anno.index)
 
 
-def read_gff3(f: Union[str, Path], full: bool = True, as_df: bool = False, nrows: Optional[int] = None) -> pr.PyRanges:
+def read_gff3(
+    f: Union[str, Path],
+    full: bool = True,
+    as_df: bool = False,
+    nrows: Optional[int] = None,
+) -> pr.PyRanges:
     """Read files in the General Feature Format.
 
     Parameters

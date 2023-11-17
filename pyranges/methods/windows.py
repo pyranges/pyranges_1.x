@@ -5,7 +5,9 @@ from sorted_nearest import maketiles, makewindows  # type: ignore
 def _windows(df, **kwargs):
     window_size = kwargs["window_size"]
 
-    idxs, starts, ends = makewindows(df.index.values, df.Start.values, df.End.values, window_size)
+    idxs, starts, ends = makewindows(
+        df.index.values, df.Start.values, df.End.values, window_size
+    )
 
     df = df.reindex(idxs)
     df.loc[:, "Start"] = starts
@@ -31,7 +33,9 @@ def _tiles(df, **kwargs):
 
     window_size = kwargs["tile_size"]
 
-    idxs, starts, ends = maketiles(df.index.values, df.Start.values, df.End.values, window_size)
+    idxs, starts, ends = maketiles(
+        df.index.values, df.Start.values, df.End.values, window_size
+    )
 
     df = df.reindex(idxs)
     df.loc[:, "Start"] = starts

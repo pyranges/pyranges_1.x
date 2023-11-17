@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 from ncls import NCLS  # type: ignore
 
+from pyranges.names import START_COL, END_COL
+
 
 def _intersection(scdf, ocdf, **kwargs):
     how = kwargs["how"]
@@ -21,7 +23,9 @@ def _intersection(scdf, ocdf, **kwargs):
     if not how or how is None:
         _self_indexes, _other_indexes = oncls.all_overlaps_both(starts, ends, indexes)
     elif how == "containment":
-        _self_indexes, _other_indexes = oncls.all_containments_both(starts, ends, indexes)
+        _self_indexes, _other_indexes = oncls.all_containments_both(
+            starts, ends, indexes
+        )
     elif how == "first":
         _self_indexes, _other_indexes = oncls.first_overlap_both(starts, ends, indexes)
     elif how == "last":
@@ -57,6 +61,9 @@ def _intersection(scdf, ocdf, **kwargs):
 
 def _overlap(scdf, ocdf, **kwargs):
     return_indexes = kwargs.get("return_indexes", False)
+    print(ocdf.values)
+    print(len(ocdf))
+    print("empty", ocdf.empty)
 
     if scdf.empty or ocdf.empty:
         return None
@@ -68,7 +75,8 @@ def _overlap(scdf, ocdf, **kwargs):
     ends = scdf.End.values
     indexes = scdf.index.values
 
-    it = NCLS(ocdf.Start.values, ocdf.End.values, ocdf.index.values)
+    print(ocdf)
+    it = NCLS(ocdf[START_COL].values, ocdf[END_COL].values, ocdf.index.values)
 
     if not how:
         _indexes = it.all_overlaps_self(starts, ends, indexes)
@@ -83,39 +91,11 @@ def _overlap(scdf, ocdf, **kwargs):
     return scdf.reindex(_indexes)
 
 
-def _count_overlaps(scdf, ocdf, **kwargs):
+def _count_overlaps(scdf, ocdf, **kwargs) -> "pd.Series[int]":
     # FIXME: Modifies in-place.
     kwargs["return_indexes"] = True
     idx = _overlap(scdf, ocdf, **kwargs)
 
     sx = pd.DataFrame(np.zeros(len(scdf), dtype=np.int32), index=scdf.index)
 
-    vc = pd.Series(idx, dtype=np.int32).value_counts(sort=False)
-
-    sx.loc[vc.index, 0] = vc.values
-
-    scdf.insert(scdf.shape[1], kwargs["name"], sx)
-
-    return scdf
-
-
-# def _first_df(scdf, ocdf, kwargs):
-
-#     if scdf.empty or ocdf.empty:
-#         return None
-
-#     how = kwargs["how"]
-
-#     assert how in "containment first".split() + [False, None]
-#     starts = scdf.Start.values
-#     ends = scdf.End.values
-#     indexes = scdf.index.values
-
-#     it = NCLS(ocdf.Start.values, ocdf.End.values, ocdf.index.values)
-
-#     if not how:
-#         _indexes = it.has_overlaps(starts, ends, indexes)
-#     elif how == "containment":
-#         _indexes = it.has_containment(starts, ends, indexes)
-
-#     return scdf.reindex(_indexes)
+    return pd.Series(idx, dtype=np.int32).value_counts(sort=False)

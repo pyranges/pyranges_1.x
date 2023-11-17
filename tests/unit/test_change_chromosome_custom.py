@@ -4,7 +4,9 @@ import pyranges as pr
 
 
 def test_change_chromosomes():
-    df1 = pd.DataFrame({"Chromosome": ["chr1", "chr2"], "Start": [100, 200], "End": [150, 201]})
+    df1 = pd.DataFrame(
+        {"Chromosome": ["chr1", "chr2"], "Start": [100, 200], "End": [150, 201]}
+    )
     py1 = pr.PyRanges(df1)
 
     def modify_chrom_series(df):

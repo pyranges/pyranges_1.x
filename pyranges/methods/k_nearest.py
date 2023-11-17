@@ -1,6 +1,9 @@
 import numpy as np  # NOQA: E402
 import pandas as pd
-from sorted_nearest import k_nearest_next_nonoverlapping, k_nearest_previous_nonoverlapping  # type: ignore
+from sorted_nearest import (
+    k_nearest_next_nonoverlapping,
+    k_nearest_previous_nonoverlapping,
+)  # type: ignore
 
 
 def nearest_previous_idx(d1, d2, k, ties=None):
@@ -18,7 +21,9 @@ def nearest_previous_idx(d1, d2, k, ties=None):
 
     d1s = d1s.iloc[valid]
 
-    lidx, ridx_pos, dist = k_nearest_previous_nonoverlapping(d1s.values, d2e.values, d1s.index.values, ix, k, ties)
+    lidx, ridx_pos, dist = k_nearest_previous_nonoverlapping(
+        d1s.values, d2e.values, d1s.index.values, ix, k, ties
+    )
 
     dist += 1
 
@@ -44,7 +49,9 @@ def nearest_next_idx(d1, d2, k, ties=None):
 
     d1e = d1e.iloc[valid]
 
-    lidx, ridx_pos, dist = k_nearest_next_nonoverlapping(d1e.values, d2s.values, d1e.index.values, ix, k, ties)
+    lidx, ridx_pos, dist = k_nearest_next_nonoverlapping(
+        d1e.values, d2s.values, d1e.index.values, ix, k, ties
+    )
 
     dist += 1
 

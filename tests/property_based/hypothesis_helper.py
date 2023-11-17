@@ -22,7 +22,9 @@ datatype = st.sampled_from([pd.Series, np.array, list])
 
 feature_data = st.sampled_from(["ensembl_gtf", "gencode_gtf", "ucsc_bed"])
 
-chromosomes = st.sampled_from(["chr{}".format(str(e)) for e in list(range(1, 23)) + "X Y M".split()])
+chromosomes = st.sampled_from(
+    ["chr{}".format(str(e)) for e in list(range(1, 23)) + "X Y M".split()]
+)
 chromosomes_small = st.sampled_from(["chr1"])
 cs = st.one_of(chromosomes, chromosomes_small)
 

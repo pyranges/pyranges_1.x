@@ -45,11 +45,15 @@ __all__ = [
 
 
 def get_example_path(basename) -> Path:
-    full_path = pkg_resources.resource_filename("pyranges", "example_data/{}".format(basename))
+    full_path = pkg_resources.resource_filename(
+        "pyranges", "example_data/{}".format(basename)
+    )
 
     if full_path.endswith(".bam"):
         # hack to load index too
-        pkg_resources.resource_filename("pyranges", "example_data/{}.bai".format(basename))
+        pkg_resources.resource_filename(
+            "pyranges", "example_data/{}.bai".format(basename)
+        )
 
     return Path(full_path)
 
@@ -232,7 +236,9 @@ def cpg() -> "pr.PyRanges":
 
     full_path = get_example_path("cpg.bed")
 
-    df = pd.read_csv(full_path, sep="\t", header=None, names="Chromosome Start End CpG".split())
+    df = pd.read_csv(
+        full_path, sep="\t", header=None, names="Chromosome Start End CpG".split()
+    )
 
     return pr.PyRanges(df)
 

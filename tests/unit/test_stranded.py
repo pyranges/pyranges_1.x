@@ -11,15 +11,15 @@ def test_stranded():
 
     j = cpg.join_overlaps(exons)
 
-    assert j.stranded
+    assert j.valid_strand
 
     j.Strand = "."
 
-    assert not j.stranded
+    assert not j.valid_strand
 
     j.Strand = np.random.choice("+ -".split(), size=len(j))
 
-    assert j.stranded
+    assert j.valid_strand
 
     for _, df in j:
         assert len(df.Strand.drop_duplicates()) == 1
@@ -32,7 +32,7 @@ def test_unstrand():
     print(exons)
     print(exons.columns)
     x = exons.remove_strand()
-    print(x.stranded)
+    print(x.valid_strand)
     print(x)
     print(x.columns)
     for _, df in x:

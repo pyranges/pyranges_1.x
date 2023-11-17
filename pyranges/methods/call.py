@@ -22,7 +22,9 @@ def _handle_eval_return(self, result, col, as_pyranges, subset):
                 self.__setattr__(col, result)
                 return self
             else:
-                raise Exception("Cannot return PyRanges when function returns a Series! Use as_pyranges=False.")
+                raise Exception(
+                    "Cannot return PyRanges when function returns a Series! Use as_pyranges=False."
+                )
         return pr.PyRanges(result)
     else:
         return result
@@ -30,9 +32,9 @@ def _handle_eval_return(self, result, col, as_pyranges, subset):
 
 def _call(self, f, strand=None, as_pyranges=True, **kwargs):
     if strand is None:
-        strand = self.stranded
+        strand = self.valid_strand
 
-    if self.stranded and not strand:
+    if self.valid_strand and not strand:
         self = self.remove_strand()
 
     result = self.apply(f, strand=strand, as_pyranges=False, **kwargs)

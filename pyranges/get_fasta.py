@@ -13,7 +13,11 @@ if TYPE_CHECKING:
     import pyfaidx  # type: ignore
 
 
-def get_sequence(gr: PyRanges, path: Optional[Path] = None, pyfaidx_fasta: Optional["pyfaidx.Fasta"] = None) -> Series:
+def get_sequence(
+    gr: PyRanges,
+    path: Optional[Path] = None,
+    pyfaidx_fasta: Optional["pyfaidx.Fasta"] = None,
+) -> Series:
     """Get the sequence of the intervals from a fasta file
 
     Parameters
@@ -109,7 +113,9 @@ def get_sequence(gr: PyRanges, path: Optional[Path] = None, pyfaidx_fasta: Optio
 
     if pyfaidx_fasta is None:
         if path is None:
-            raise Exception("ERROR get_sequence : you must provide a fasta path or pyfaidx_fasta object")
+            raise Exception(
+                "ERROR get_sequence : you must provide a fasta path or pyfaidx_fasta object"
+            )
         pyfaidx_fasta = pyfaidx.Fasta(path, read_ahead=int(1e5))
 
     seqs = []
@@ -137,7 +143,10 @@ def get_fasta(*args, **kwargs):
 
 
 def get_transcript_sequence(
-    gr: PyRanges, group_by: str, path: Optional[Path] = None, pyfaidx_fasta: Optional["pyfaidx.Fasta"] = None
+    gr: PyRanges,
+    group_by: str,
+    path: Optional[Path] = None,
+    pyfaidx_fasta: Optional["pyfaidx.Fasta"] = None,
 ) -> DataFrame:
     """Get the sequence of mRNAs, e.g. joining intervals corresponding to exons of the same transcript
 
@@ -224,7 +233,7 @@ def get_transcript_sequence(
     #         fw.write(f'>{row.transcript}\\n{s}\\n')
     """
 
-    if gr.stranded:
+    if gr.valid_strand:
         gr = gr.sort("5")
     else:
         gr = gr.sort()

@@ -36,13 +36,10 @@ chr1 10 20  + 2 2 1
 chr1 20 30  + 0 2 0
 chr1 30 40  - 0 0 1"""
     )
-
     res = pr.count_overlaps(grs, features, strandedness="same")
-    res = res.apply(lambda df: df.astype({"a": np.int64, "b": np.int64, "c": np.int64}))
+    print(res)
 
-    res.print(merge_position=True)
-
-    assert_df_equal(res.df, expected_result.df)
+    assert_df_equal(res, expected_result)
 
 
 # def test_strand_vs_strand_opposite():

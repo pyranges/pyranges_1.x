@@ -5,6 +5,9 @@ import pandas as pd
 from natsort import natsorted  # type: ignore
 from pandas.core.frame import DataFrame
 
+import pyranges as pr
+from pyranges.names import CHROM_COL, STRAND_COL
+
 if TYPE_CHECKING:
     from pyranges.pyranges_main import PyRanges
 
@@ -22,7 +25,9 @@ def merge_dfs(df1: DataFrame, df2: DataFrame) -> DataFrame:
         return df1
 
 
-def process_results(results: List[Any], keys: Union[List[str], List[Tuple[str, str]]]) -> dict:
+def process_results(
+    results: List[Any], keys: Union[List[str], List[Tuple[str, str]]]
+) -> dict:
     results_dict = {k: r for k, r in zip(keys, results) if r is not None}
 
     try:
@@ -70,7 +75,9 @@ def make_sparse(df: DataFrame) -> DataFrame:
     return df[cols]
 
 
-def make_binary_sparse(kwargs: Dict[str, Any], df: DataFrame, odf: DataFrame) -> Tuple[DataFrame, DataFrame]:
+def make_binary_sparse(
+    kwargs: Dict[str, Any], df: DataFrame, odf: DataFrame
+) -> Tuple[DataFrame, DataFrame]:
     sparse = kwargs.get("sparse")
 
     if not sparse:
@@ -92,8 +99,11 @@ def make_unary_sparse(kwargs: Dict[str, Any], df: DataFrame) -> DataFrame:
 
 
 def pyrange_apply(
-    function: Callable, self: "PyRanges", other: "PyRanges", **kwargs
-) -> Union[Dict[Tuple[str, str], Any], Dict[str, Any]]:
+    function: Callable,
+    self: "PyRanges",
+    other: "PyRanges",
+    **kwargs,
+) -> pd.DataFrame:
     strandedness = kwargs["strandedness"]
 
     other_strand = {"+": "-", "-": "+"}
@@ -106,41 +116,30 @@ def pyrange_apply(
 
     assert strandedness in ["same", "opposite", False, None]
 
-    if strandedness:
+    if strandedness == "opposite":
         assert (
-            self.stranded and other.stranded
-        ), "Can only do stranded operations when both PyRanges contain strand info"
+                self.valid_strand and other.valid_strand
+        ), "Can only do opposite strand operations when both PyRanges contain valid strand info."
 
     results = []
-
-    keys = natsorted(self.dfs.keys())
 
     dummy = pd.DataFrame(columns="Chromosome Start End".split())
 
     other_chromosomes = other.chromosomes
-    other_dfs = other.dfs
 
+    results = []
     if strandedness:
-        for c, s in self.chromosomes_and_strands:
-            df = self._dfs_with_strand[c, s]
-            os = strand_dict[s]
-
-            if not (c, os) in other.keys() or len(other[c, os].values()) == 0:
-                odf = dummy
-            else:
-                odf = other[c, os].values()[0]
-
-            df, odf = make_binary_sparse(kwargs, df, odf)
-
-            try:
-                result = function(df, odf, **kwargs)
-            except TypeError:
-                result = function(df, odf)
-
-            results.append(result)
+        grpby_keys = [CHROM_COL, STRAND_COL]
+        others = other.groupby(grpby_keys)
+        for key, gdf in self.groupby(grpby_keys):
+            ogdf = others.get_group(key) if key in others.groups else pr.empty()
+            results.append(
+                function(gdf, ogdf, **kwargs)
+            )
+        return pd.concat(results)
 
     else:
-        if self.stranded and not other.stranded:
+        if self.valid_strand and not other.valid_strand:
             for (c, s), df in self._dfs_with_strand.items():
                 if c not in other_chromosomes:
                     odf = dummy
@@ -155,7 +154,7 @@ def pyrange_apply(
                     result = function(df, odf)
                 results.append(result)
 
-        elif not self.stranded and other.stranded:
+        elif not self.valid_strand and other.valid_strand:
             for c, df in self._dfs_without_strand.items():
                 if c not in other_chromosomes:
                     odf = dummy
@@ -173,7 +172,7 @@ def pyrange_apply(
                     result = function(df, odf)
                 results.append(result)
 
-        elif self.stranded and other.stranded:
+        elif self.valid_strand and other.valid_strand:
             for (c, s), df in self._dfs_with_strand.items():
                 if c not in other_chromosomes:
                     odfs = [dummy]
@@ -220,7 +219,9 @@ def pyrange_apply_single(function: Callable, self: "PyRanges", **kwargs) -> Any:
     strand = kwargs["strand"]
 
     if strand:
-        assert self.stranded, "Can only do stranded operation when PyRange contains strand info"
+        assert (
+            self.valid_strand
+        ), "Can only do stranded operation when PyRange contains strand info"
 
     results = []
 
@@ -239,8 +240,10 @@ def pyrange_apply_single(function: Callable, self: "PyRanges", **kwargs) -> Any:
 
         keys = self.keys()
 
-    elif not self.stranded:
-        for c, df in self._dfs_without_strand.items():
+    elif not self.valid_strand:
+        print(self.groupby(CHROM_COL).apply(function, **kwargs))
+        raise
+        for c, df in self.groupby(CHROM_COL):
             kwargs["chromosome"] = c
             assert isinstance(c, str)
 
@@ -321,7 +324,9 @@ def _extend(df: DataFrame, **kwargs) -> DataFrame:
     dtype = df.Start.dtype
     slack = kwargs["ext"]
 
-    assert isinstance(slack, (int, dict)), "Extend parameter must be integer or dict, is {}".format(type(slack))
+    assert isinstance(
+        slack, (int, dict)
+    ), "Extend parameter must be integer or dict, is {}".format(type(slack))
 
     if isinstance(slack, int):
         df.loc[:, "Start"] = df.Start - slack
@@ -344,7 +349,9 @@ def _extend(df: DataFrame, **kwargs) -> DataFrame:
 
     df = df.astype({"Start": dtype, "End": dtype})
 
-    assert (df.Start < df.End).all(), "Some intervals are negative or zero length after applying extend!"
+    assert (
+        df.Start < df.End
+    ).all(), "Some intervals are negative or zero length after applying extend!"
 
     return df
 
@@ -356,7 +363,9 @@ def _extend_grp(df: pd.DataFrame, **kwargs):
     by = kwargs["group_by"]
     g = df.groupby(by)
 
-    assert isinstance(slack, (int, dict)), "Extend parameter must be integer or dict, is {}".format(type(slack))
+    assert isinstance(
+        slack, (int, dict)
+    ), "Extend parameter must be integer or dict, is {}".format(type(slack))
 
     minstarts_pos = g.Start.idxmin()
     maxends_pos = g.End.idxmax()
@@ -383,6 +392,8 @@ def _extend_grp(df: pd.DataFrame, **kwargs):
 
     df = df.astype({"Start": dtype, "End": dtype})
 
-    assert (df.Start < df.End).all(), "Some intervals are negative or zero length after applying extend!"
+    assert (
+        df.Start < df.End
+    ).all(), "Some intervals are negative or zero length after applying extend!"
 
     return df

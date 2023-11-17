@@ -3,7 +3,13 @@ from typing import Dict, Optional
 import numpy as np
 
 import pyranges as pr
+from pyranges.names import MIN_COLUMNS_WITH_STRAND
 from pyranges.pyranges_main import PyRanges
+
+
+# def count_overlaps(*args, **kwargs):
+#     print(args)
+#     print(kwargs)
 
 
 def count_overlaps(
@@ -141,7 +147,6 @@ def count_overlaps(
         "as_pyranges": False,
         "how": how,
     }
-    names = list(grs.keys())
 
     if features is None:
         features = pr.concat(list(grs.values())).split(between=True)
@@ -151,15 +156,10 @@ def count_overlaps(
     from pyranges.methods.intersection import _count_overlaps
 
     for name, gr in grs.items():
-        gr = gr.drop()
+        gr = gr[[c for c in gr.columns if c in MIN_COLUMNS_WITH_STRAND]]
 
         kwargs["name"] = name
-        features.apply_pair(gr, _count_overlaps, strandedness, **kwargs)  # count overlaps modifies the ranges in-place
-
-    def to_int(df):
-        df[names] = df[names].astype(np.int64)
-        return df
-
-    features = features.apply(to_int)
-
-    return features
+        res = features.apply_pair(gr, _count_overlaps, strandedness, **kwargs)
+        features.insert(len(features.columns), name, res)
+    features.loc[:, grs.keys()] = features[grs.keys()].fillna(0)
+    return features.astype({k: int for k in grs.keys()})

@@ -11,7 +11,14 @@ from natsort import natsorted  # type: ignore
 
 import pyranges as pr
 from tests.helpers import assert_df_equal
-from tests.property_based.hypothesis_helper import deadline, df_data, dfs_min, dfs_min_with_id, max_examples, selector
+from tests.property_based.hypothesis_helper import (
+    deadline,
+    df_data,
+    dfs_min,
+    dfs_min_with_id,
+    max_examples,
+    selector,
+)
 
 # if environ.get("TRAVIS"):
 #     max_examples = 100
@@ -44,7 +51,9 @@ def test_merge(gr, strand):
         print(cmd)
 
         # ignoring bandit security warning. All strings created by test suite
-        result = subprocess.check_output(cmd, shell=True, executable="/bin/bash").decode()  # nosec  # nosec
+        result = subprocess.check_output(
+            cmd, shell=True, executable="/bin/bash"
+        ).decode()  # nosec  # nosec
 
         print("result" * 10)
         print(result)
@@ -74,7 +83,7 @@ def test_merge(gr, strand):
 
     if not bedtools_df.empty:
         # need to sort because bedtools sometimes gives the result in non-natsorted chromosome order!
-        if result.stranded:
+        if result.valid_strand:
             assert_df_equal(
                 result.df.sort_values("Chromosome Start Strand".split()),
                 bedtools_df.sort_values("Chromosome Start Strand".split()),
@@ -112,7 +121,9 @@ def test_cluster(gr, strand):
         print(cmd)
 
         # ignoring bandit security warning. All strings created by test suite
-        result = subprocess.check_output(cmd, shell=True, executable="/bin/bash").decode()  # nosec  # nosec
+        result = subprocess.check_output(
+            cmd, shell=True, executable="/bin/bash"
+        ).decode()  # nosec  # nosec
 
         bedtools_df = pd.read_csv(
             StringIO(result),
@@ -131,7 +142,7 @@ def test_cluster(gr, strand):
 
     if not bedtools_df.empty:
         # need to sort because bedtools sometimes gives the result in non-natsorted chromosome order!
-        if result.stranded:
+        if result.valid_strand:
             sort_values = "Chromosome Start Strand".split()
         else:
             sort_values = "Chromosome Start".split()
@@ -152,7 +163,9 @@ def test_cluster(gr, strand):
         result_df.Cluster.replace(cluster_ids, inplace=True)
 
         bedtools_df.Cluster = bedtools_df.Cluster.astype("int32")
-        assert_df_equal(result_df.drop("Cluster", axis=1), bedtools_df.drop("Cluster", axis=1))
+        assert_df_equal(
+            result_df.drop("Cluster", axis=1), bedtools_df.drop("Cluster", axis=1)
+        )
     else:
         assert bedtools_df.empty == result.df.empty
 
@@ -245,7 +258,9 @@ def test_windows(gr):
         print(cmd)
 
         # ignoring bandit security warning. All strings created by test suite
-        result = subprocess.check_output(cmd, shell=True, executable="/bin/bash").decode()  # nosec  # nosec
+        result = subprocess.check_output(
+            cmd, shell=True, executable="/bin/bash"
+        ).decode()  # nosec  # nosec
 
         bedtools_df = pd.read_csv(
             StringIO(result),

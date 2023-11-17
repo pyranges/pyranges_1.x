@@ -81,7 +81,9 @@ def fdr(p_vals: Series) -> Series:
     return fdr
 
 
-def fisher_exact(tp: Series, fp: Series, fn: Series, tn: Series, pseudocount: int = 0) -> DataFrame:
+def fisher_exact(
+    tp: Series, fp: Series, fn: Series, tn: Series, pseudocount: int = 0
+) -> DataFrame:
     """Fisher's exact for contingency tables.
 
     Computes the hypotheses two-sided, less and greater at the same time.
@@ -161,7 +163,9 @@ def fisher_exact(tp: Series, fp: Series, fn: Series, tn: Series, pseudocount: in
 
     left, right, twosided = pvalue_npy(_tp, _fp, _fn, _tn)
 
-    OR = ((_tp + pseudocount) / (_fp + pseudocount)) / ((_fn + pseudocount) / (_tn + pseudocount))
+    OR = ((_tp + pseudocount) / (_fp + pseudocount)) / (
+        (_fn + pseudocount) / (_tn + pseudocount)
+    )
 
     df = pd.DataFrame({"OR": OR, "P": twosided, "PLeft": left, "PRight": right})
 
@@ -239,7 +243,13 @@ def mcc(
         _genome = genome
         genome_length = int(_genome.End.sum())
     else:
-        _genome = pd.DataFrame({"Chromosome": list(genome.keys()), "Start": 0, "End": list(genome.values())})
+        _genome = pd.DataFrame(
+            {
+                "Chromosome": list(genome.keys()),
+                "Start": 0,
+                "End": list(genome.values()),
+            }
+        )
         genome_length = sum(genome.values())
 
     if labels is None:
@@ -292,7 +302,9 @@ def mcc(
                 fn = 0
                 tn = genome_length - tp
                 fp = 0
-                rowdicts.append({"T": lt, "F": lf, "TP": tp, "FP": fp, "TN": tn, "FN": fn, "MCC": 1})
+                rowdicts.append(
+                    {"T": lt, "F": lf, "TP": tp, "FP": fp, "TN": tn, "FN": fn, "MCC": 1}
+                )
             else:
                 for _strand in "+ -".split():
                     tp = t[strand].length
@@ -428,7 +440,9 @@ def rowbased_spearman(x: ndarray, y: ndarray) -> ndarray:
     return rowbased_pearson(rx, ry)
 
 
-def rowbased_pearson(x: Union[ndarray, DataFrame], y: Union[ndarray, DataFrame]) -> ndarray:
+def rowbased_pearson(
+    x: Union[ndarray, DataFrame], y: Union[ndarray, DataFrame]
+) -> ndarray:
     """Fast row-based Pearson's correlation.
 
     Parameters
@@ -531,7 +545,9 @@ def rowbased_rankdata(data: ndarray) -> DataFrame:
 
     obs = np.column_stack([np.ones(len(res), dtype=bool), res])
 
-    dense = pd.DataFrame(np.take_along_axis(np.apply_along_axis(np.cumsum, 1, obs), inv, 1))
+    dense = pd.DataFrame(
+        np.take_along_axis(np.apply_along_axis(np.cumsum, 1, obs), inv, 1)
+    )
 
     len_r = obs.shape[1]
 
@@ -544,7 +560,11 @@ def rowbased_rankdata(data: ndarray) -> DataFrame:
         _count = np.column_stack([nz, np.ones(len(nz)) * len_r])
         _dense = dense.reindex(nzdf.index).values
 
-        _result = 0.5 * (np.take_along_axis(_count, _dense, 1) + np.take_along_axis(_count, _dense - 1, 1) + 1)
+        _result = 0.5 * (
+            np.take_along_axis(_count, _dense, 1)
+            + np.take_along_axis(_count, _dense - 1, 1)
+            + 1
+        )
 
         result = pd.DataFrame(_result, index=nzdf.index)
         _ranks.append(result)
@@ -680,7 +700,11 @@ def chromsizes_as_int(chromsizes: Union[PyRanges, DataFrame, Dict[Any, int]]) ->
     elif isinstance(chromsizes, (pd.DataFrame, pr.PyRanges)):
         _chromsizes = chromsizes.End.sum()
     else:
-        raise TypeError("chromsizes must be dict, DataFrame or PyRanges, was {}".format(type(chromsizes)))
+        raise TypeError(
+            "chromsizes must be dict, DataFrame or PyRanges, was {}".format(
+                type(chromsizes)
+            )
+        )
 
     return _chromsizes
 
@@ -750,7 +774,9 @@ class StatisticsMethods:
         reference_length = self.pr.merge_overlaps(strand=strand).length
         query_length = other.merge_overlaps(strand=strand).length
 
-        intersection_sum = self.pr.set_intersect(other, strandedness=strandedness).lengths().sum()
+        intersection_sum = (
+            self.pr.set_intersect(other, strandedness=strandedness).lengths().sum()
+        )
 
         forbes = _chromsizes * intersection_sum / (reference_length * query_length)
 

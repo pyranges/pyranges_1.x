@@ -17,6 +17,7 @@ from pyranges.get_fasta import get_fasta, get_sequence, get_transcript_sequence
 from pyranges.helpers import get_key_from_df, single_value_key
 from pyranges.methods.concat import concat
 from pyranges.multioverlap import count_overlaps
+from pyranges.names import MIN_COLUMNS_WITH_STRAND, MIN_COLUMNS, STRAND_COL, CHROM_COL
 from pyranges.pyranges_main import PyRanges
 from pyranges.readers import read_bam, read_bed, read_bigwig, read_gff3, read_gtf  # NOQA: F401
 
@@ -31,12 +32,6 @@ get_transcript_sequence = get_transcript_sequence
 read_gff = read_gtf
 
 Chromsizes = Union[Dict[str, int], Dict[Tuple[str, str], int]]
-CHROM_COL = "Chromosome"
-START_COL = "Start"
-END_COL = "End"
-STRAND_COL = "Strand"
-MIN_COLUMNS = [CHROM_COL, START_COL, END_COL]
-MIN_COLUMNS_WITH_STRAND = [*MIN_COLUMNS, STRAND_COL]
 
 
 def empty(with_strand: bool = False) -> "PyRanges":
@@ -47,7 +42,9 @@ def empty(with_strand: bool = False) -> "PyRanges":
     with_strand : bool, default False
         Whether to create a PyRanges with strand information.
     """
-    return pr.PyRanges(pd.DataFrame(MIN_COLUMNS_WITH_STRAND if with_strand else MIN_COLUMNS))
+    return pr.PyRanges(
+        pd.DataFrame(columns=MIN_COLUMNS_WITH_STRAND if with_strand else MIN_COLUMNS)
+    )
 
 
 def from_args(
@@ -62,7 +59,7 @@ def from_args(
         _chromosomes = pd.Series(chromosomes, dtype="category")
 
     columns: List[pd.Series] = [_chromosomes, pd.Series(starts), pd.Series(ends)]
-    colnames = [CHROM_COL, START_COL, "End"]
+    colnames = MIN_COLUMNS
     if strands is not None:
         if isinstance(strands, str):
             _strands = pd.Series([strands] * len(starts), dtype="category")
@@ -70,10 +67,12 @@ def from_args(
             _strands = pd.Series(strands, dtype="category")
 
         columns.append(_strands)
-        colnames.append("Strand")
+        colnames.append(STRAND_COL)
 
     lengths = list(str(len(s)) for s in columns)
-    assert len(set(lengths)) == 1, "[{colnames} must be of equal length. But are {columns}".format(
+    assert (
+        len(set(lengths)) == 1
+    ), "[{colnames} must be of equal length. But are {columns}".format(
         colnames=", ".join(colnames), columns=", ".join(lengths)
     )
 
@@ -133,7 +132,9 @@ def from_dict(d: Dict[str, Iterable]) -> PyRanges:
     return PyRanges(pd.DataFrame(d))
 
 
-def from_dfs(dfs: Union[Dict[str, pd.DataFrame], Dict[Tuple[str, str], pd.DataFrame]]) -> "PyRanges":
+def from_dfs(
+    dfs: Union[Dict[str, pd.DataFrame], Dict[Tuple[str, str], pd.DataFrame]]
+) -> "PyRanges":
     df: pd.DataFrame
     empty_removed = {k: v.copy() for k, v in dfs.items() if not v.empty}
 
@@ -148,7 +149,9 @@ def from_dfs(dfs: Union[Dict[str, pd.DataFrame], Dict[Tuple[str, str], pd.DataFr
             _strand_valid = _strand_valid and (_key[1] in ["+", "-"])
 
         if _strand_valid and not _key_same:
-            raise ValueError(f"All keys must be the same, but df has {_key} and dict had {key}.")
+            raise ValueError(
+                f"All keys must be the same, but df has {_key} and dict had {key}."
+            )
 
     if not _strand_valid:
         df = pd.concat(empty_removed.values()).reset_index(drop=True)
@@ -297,15 +300,11 @@ def itergrs(prs: Iterable[PyRanges], strand=None, keys=False):
     2          3     21   25      -
     """
 
-    if strand is None:
-        strand = all([gr.stranded for gr in prs])
+    # Determine if all prs are stranded only if strand is None, otherwise use the provided value.
+    strand = all(gr.valid_strand for gr in prs) if strand is None else strand
 
-    if strand is False and any([gr.stranded for gr in prs]):
-        prs = [gr.remove_strand() for gr in prs]
-
-    grs_per_chromosome = defaultdict(list)
-    keys = [gr.dfs.keys() for gr in prs]
-    set_keys: Union[Set[str], Set[Tuple[str, str]]] = set(itertools.chain.from_iterable(keys))
+    # If strand is False and any PyRanges are stranded, remove strand information.
+    prs = [gr.remove_strand() for gr in prs if gr.valid_strand] if not strand else prs
 
     empty_dfs = [pd.DataFrame(columns=gr.columns) for gr in prs]
     for gr, empty in zip(prs, empty_dfs):
@@ -313,10 +312,9 @@ def itergrs(prs: Iterable[PyRanges], strand=None, keys=False):
             df = gr.dfs.get(k, empty)  # type: ignore
             grs_per_chromosome[k].append(df)
 
-    if not keys:
-        return iter(grs_per_chromosome.values())
-    else:
-        return iter(natsorted(grs_per_chromosome.items()))
+    # Iterate through each key and PyRanges object, collecting DataFrames.
+    for key in set_keys:
+        yield key, [gr.dfs.get(key, pd.DataFrame(columns=gr.columns)) for gr in prs]
 
 
 def random(
@@ -398,13 +396,19 @@ def random(
     if chromsizes is None:
         df = data.chromsizes().df
     elif isinstance(chromsizes, dict):
-        df = pd.DataFrame({CHROM_COL: list(chromsizes.keys()), "End": list(chromsizes.values())})
+        df = pd.DataFrame(
+            {CHROM_COL: list(chromsizes.keys()), "End": list(chromsizes.values())}
+        )
     else:
         df = chromsizes.df
 
     p = df.End / df.End.sum()
 
-    n_per_chrom = pd.Series(np.random.choice(df.index, size=n, p=p)).value_counts(sort=False).to_frame()
+    n_per_chrom = (
+        pd.Series(np.random.choice(df.index, size=n, p=p))
+        .value_counts(sort=False)
+        .to_frame()
+    )
     n_per_chrom.insert(1, CHROM_COL, df.loc[n_per_chrom.index].Chromosome)
     n_per_chrom.columns = pd.Index("Count Chromosome".split())
 

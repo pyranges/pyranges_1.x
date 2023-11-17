@@ -44,14 +44,20 @@ def _introns_correct(full, genes, exons, introns, by):
     """
     id_column = by_to_id[by]
     if len(introns):
-        assert (introns.Start < introns.End).all(), str(introns[(introns.Start >= introns.End)])
+        assert (introns.Start < introns.End).all(), str(
+            introns[(introns.Start >= introns.End)]
+        )
 
     expected_results = {}
     based_on = {}
-    for gene_id, gdf in full.groupby(id_column):  # #[full.gene_id.isin(["ENSG00000078808.16"])]
+    for gene_id, gdf in full.groupby(
+        id_column
+    ):  # #[full.gene_id.isin(["ENSG00000078808.16"])]
         # print("gdf " * 10)
         # print(gdf)
-        if not len(gdf[gdf.Feature == "gene"]) or not len(gdf[gdf.Feature == "transcript"]):
+        if not len(gdf[gdf.Feature == "gene"]) or not len(
+            gdf[gdf.Feature == "transcript"]
+        ):
             continue
         expected_results[gene_id] = compute_introns_single(gdf, by)
 
@@ -67,7 +73,11 @@ def _introns_correct(full, genes, exons, introns, by):
         if gene_id not in expected_results:
             continue
         expected = expected_results[gene_id]
-        exons = pr.PyRanges(based_on[gene_id]).subset(lambda df: df.Feature == "exon").merge_overlaps(by=id_column)
+        exons = (
+            pr.PyRanges(based_on[gene_id])
+            .subset(lambda df: df.Feature == "exon")
+            .merge_overlaps(by=id_column)
+        )
         genes = pr.PyRanges(based_on[gene_id]).subset(lambda df: df.Feature == by)
         _introns = pr.PyRanges(idf)
         assert len(exons.intersect(_introns)) == 0
