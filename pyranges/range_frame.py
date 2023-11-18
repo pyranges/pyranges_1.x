@@ -1,5 +1,6 @@
 import shutil
-from typing import Literal
+from functools import cached_property
+from typing import Literal, Iterable
 
 import pandas as pd
 from tabulate import tabulate
@@ -11,10 +12,13 @@ from pyranges.tostring import adjust_table_width
 
 class RangeFrame(pd.DataFrame):
     """Class for range based operations"""
+    @cached_property
+    def _required_columns(self) -> Iterable[str]:
+        return RANGE_COLS[:]
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        missing_columns = set(RANGE_COLS) - set(self.columns)
+        missing_columns = set(self._required_columns) - set(self.columns)
         if missing_columns:
             msg = f"Missing required columns: {missing_columns}"
             raise ValueError(msg)
@@ -33,29 +37,42 @@ class RangeFrame(pd.DataFrame):
                         f"Index level name '{level}' cannot be the same as a column name."
                     )
 
-    def __str__(self) -> str:
+    def __str__(self, max_col_width: int | None = None, max_total_width: int | None = None) -> str:
         """Return string representation."""
 
         if len(self) >= 8:
             head = [list(v) for _, v in self.head(4).iterrows()]
             tail = [list(v) for _, v in self.tail(4).iterrows()]
-            data = head + tail
+            data = head + [["..."] * self.shape[1]] + tail if len(self) > 8 else head + tail
         else:
             data = [list(v) for _, v in self.iterrows()]
 
-        terminal_size = shutil.get_terminal_size()
-
-        adjusted_data, adjusted_headers = adjust_table_width(
+        adjusted_data = adjust_table_width(
             data=data,
             headers=list(self.columns),
             dtypes=[str(t) for t in self.dtypes],
-            max_col_width=None,
-            max_total_width=terminal_size.columns,
+            max_col_width=max_col_width,
+            max_total_width=shutil.get_terminal_size().columns if max_total_width is None else max_total_width,
         )
-        return tabulate(adjusted_data, adjusted_headers)
+        columns_not_shown = "."
+        truncated_data = adjusted_data.truncated_data
+        truncated_headers = adjusted_data.truncated_headers
+        truncated_dtypes = adjusted_data.truncated_dtypes
+        if not len(adjusted_data.truncated_headers) == len(self.columns):
+            num_not_shown = len(self.columns) - len(truncated_headers)
+            not_shown = [f'"{e}"' for e in self.columns[adjusted_data.included_columns:adjusted_data.included_columns + 3]]
+            if num_not_shown > 3:
+                not_shown.append("...")
+            columns_not_shown = f" ({num_not_shown} columns not shown: {", ".join(not_shown)})."
+            truncated_data = [row + ["..."] for row in truncated_data]
+            truncated_headers += ["..."]
+            truncated_dtypes += ["..."]
+        headers_with_dtype = [f"{h}\n{d}" for h, d in zip(truncated_headers, truncated_dtypes)]
+        class_and_shape_info = f"{self.__class__.__name__} with {self.shape[0]} rows and {self.shape[1]} columns"
+        return f"{tabulate(truncated_data, headers_with_dtype)}\n{class_and_shape_info}{columns_not_shown}"
 
-    def __repr__(self):
-        return str(self)
+    def __repr__(self, max_col_width: int | None = None, max_total_width: int | None = None) -> str:
+        return self.__str__(max_col_width=max_col_width, max_total_width=max_total_width)
 
     def overlap(
         self,

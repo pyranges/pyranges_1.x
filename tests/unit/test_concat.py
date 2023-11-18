@@ -9,8 +9,8 @@ def assert_equal_length_before_after(gr1, gr2):
     l2 = len(gr2)
     c = pr.concat([gr1, gr2])
 
-    if not gr1.valid_strand or not gr2.valid_strand:
-        assert not c.valid_strand
+    if not gr1.strand_values_valid or not gr2.strand_values_valid:
+        assert not c.strand_values_valid
 
     lc = len(c)
     assert l1 + l2 == lc

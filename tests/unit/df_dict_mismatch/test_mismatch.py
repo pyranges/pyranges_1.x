@@ -23,7 +23,7 @@ def test_has_bad_strand_and_strand_key():
 
     gr = pr.from_dfs(dfs)
 
-    assert not gr.valid_strand
+    assert not gr.strand_values_valid
 
 
 def test_has_strand_but_is_not_stranded():

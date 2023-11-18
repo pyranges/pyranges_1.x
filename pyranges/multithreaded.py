@@ -115,10 +115,11 @@ def _group_keys(
 ) -> bool:
     include_strand = True
     if strand_behavior == STRAND_BEHAVIOR_AUTO:
-        include_strand = self.valid_strand and other.valid_strand
+        include_strand = self.strand_values_valid and other.strand_values_valid
     elif strand_behavior == STRAND_BEHAVIOR_IGNORE:
         include_strand = False
     return [CHROM_COL, STRAND_COL] if include_strand else [CHROM_COL]
+
 
 def pyrange_apply(
     function: Callable,
@@ -162,7 +163,7 @@ def ensure_strand_options_valid(other, self, strand_behavior):
         raise ValueError(msg)
     if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
         assert (
-            self.valid_strand and other.valid_strand
+                self.strand_values_valid and other.strand_values_valid
         ), "Can only do opposite strand operations when both PyRanges contain valid strand info."
 
 
@@ -170,13 +171,12 @@ def pyrange_apply_single(
     function: Callable, self: "PyRanges", **kwargs
 ) -> pd.DataFrame:
     strand = kwargs["strand"]
-    print(strand)
 
     if strand and not STRAND_COL in self.columns:
         msg = "Can only do stranded operation when PyRange contains strand info"
         raise ValueError(msg)
 
-    if not self.valid_strand:
+    if not self.strand_values_valid:
         keys = [CHROM_COL]
     else:
         keys = [CHROM_COL, STRAND_COL] if strand else [CHROM_COL]

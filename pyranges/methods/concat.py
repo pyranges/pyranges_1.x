@@ -13,10 +13,10 @@ def concat(
         return pr.empty()
 
     consider_strand = (
-        all(gr.valid_strand for gr in non_empty_pyranges) if strand is None else strand
+        all(gr.strand_values_valid for gr in non_empty_pyranges) if strand is None else strand
     )
 
-    if consider_strand and not all(gr.valid_strand for gr in non_empty_pyranges):
+    if consider_strand and not all(gr.strand_values_valid for gr in non_empty_pyranges):
         raise ValueError(
             "Cannot do stranded concat, not all pyranges contain strand info."
         )

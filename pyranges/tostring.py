@@ -1,57 +1,61 @@
+from dataclasses import dataclass
 from typing import Optional, Any
 
 from tabulate import tabulate
 
 
+@dataclass
+class AdjustedTableData:
+    truncated_data: list[list[str]]
+    truncated_headers: list[str]
+    truncated_dtypes: list[str]
+    included_columns: int
+
+
 def adjust_table_width(
     data: list,
     headers: list,
-    dtypes: Optional[list] = None,
+    dtypes: list,
     max_total_width: int | None = None,
     max_col_width: int | None = None,
-) -> tuple[list[list[str]], list[str]]:
+) -> AdjustedTableData:
     # Truncate individual columns to max_col_width
-    truncated_data = []
-    for row in data:
-        new_row = []
-        for item in row:
-            item_str = str(item)
-            if max_col_width is not None:
-                new_row.append(item_str[:max_col_width])
-            else:
-                new_row.append(item_str)
-        truncated_data.append(new_row)
-
-    # Adjust column widths for headers if provided
-    if headers and max_col_width is not None:
-        headers = [h[:max_col_width] for h in headers]
-
-    if dtypes and max_col_width is not None:
-        dtypes = [d[:max_col_width] for d in dtypes]
+    truncated_headers = truncate_data([headers], max_col_width)
+    truncated_dtypes = truncate_data([dtypes], max_col_width)
+    truncated_data = truncate_data(data, max_col_width)
 
     # Calculate the cumulative width of the columns after truncation
     cumulative_width = 0
     included_columns = 0
-    for index, item in enumerate(zip(*truncated_data)):
-        column_width = max(len(str(x)) for x in item) + 2  # Add 2 for padding
-        if cumulative_width + column_width <= max_total_width:
-            cumulative_width += column_width
+    for index, column in enumerate(zip(*(truncated_data + truncated_dtypes + truncated_headers))):
+        column_width = max(len(str(x)) + 4 for x in column)
+        if (new_width := cumulative_width + column_width) <= max_total_width:
+            cumulative_width = new_width
             included_columns = index + 1
         else:
             break
 
     # Slice the data and headers to include only the columns that fit into the max_total_width
     final_data = [row[:included_columns] for row in truncated_data]
-    final_headers = headers[:included_columns] if headers else None
-    final_dtypes = dtypes[:included_columns] if dtypes else None
+    final_headers = truncated_headers[0][:included_columns]
+    final_dtypes = truncated_dtypes[0][:included_columns]
 
-    final_headers = (
-        [f"{h}\n{t}" for h, t in zip(final_headers, final_dtypes)]
-        if dtypes
-        else headers
-    )
+    return AdjustedTableData(final_data, final_headers, final_dtypes, included_columns)
 
-    return final_data, final_headers
+
+def truncate_data(data, max_col_width):
+    truncated_data = []
+    for row in data:
+        new_row = []
+        for item in row:
+            item_str = str(item)
+            if max_col_width is not None:
+                new_row.append(
+                    item_str[:max_col_width - 3] + "..." if len(item_str) > max_col_width else item_str[:max_col_width])
+            else:
+                new_row.append(item_str)
+        truncated_data.append(new_row)
+    return truncated_data
 
 
 # Define your data

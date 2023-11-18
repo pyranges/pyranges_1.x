@@ -233,7 +233,7 @@ def get_transcript_sequence(
     #         fw.write(f'>{row.transcript}\\n{s}\\n')
     """
 
-    if gr.valid_strand:
+    if gr.strand_values_valid:
         gr = gr.sort("5")
     else:
         gr = gr.sort()

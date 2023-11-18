@@ -1,6 +1,10 @@
 """Data structure for genomic intervals and their annotation."""
+import heapq
+import itertools
 import shutil
 import typing
+from collections import defaultdict
+from functools import cached_property
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -36,7 +40,8 @@ from pyranges.names import (
     GENOME_LOC_COLS,
     GENOME_LOC_COLS_WITH_STRAND,
     VALID_GENOMIC_STRAND_INFO,
-    VALID_STRAND_BEHAVIOR_TYPE, VALID_OVERLAP_TYPE,
+    VALID_STRAND_BEHAVIOR_TYPE,
+    VALID_OVERLAP_TYPE, CHROM_COL,
 )
 from pyranges.tostring import adjust_table_width
 
@@ -191,13 +196,107 @@ class PyRanges(pr.RangeFrame):
     pyranges.stats.StatisticsMethods : namespace for statistics
     """
 
+    @cached_property
+    def _required_columns(self) -> Iterable[str]:
+        return GENOME_LOC_COLS[:]
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        missing_columns = set(GENOME_LOC_COLS) - set(self.columns)
+        missing_columns = set(self._required_columns) - set(self.columns)
         if missing_columns:
             msg = f"Missing required columns: {missing_columns}"
             raise ValueError(msg)
         self._check_index_column_names()
+
+    def _chrom_and_strand_info(self) -> str:
+        num_chrom = self[CHROM_COL].nunique()
+        strand_info = ""
+
+        if self.has_strand_column():
+            num_strands = self[STRAND_COL].nunique()
+            strands = f" and {num_strands} strands"
+            if not self.strand_values_valid:
+                nongenomic_strands = sorted(set(self[STRAND_COL]).difference(VALID_GENOMIC_STRAND_INFO))
+                example_strands = ", ".join(
+                    [str(s) for s in nongenomic_strands[:7]] + (["..."] if len(nongenomic_strands) > 7 else []))
+                strands += f" (including non-genomic strands: {example_strands})"
+            strand_info = strands
+
+        return f"Contains {num_chrom} chromosomes{strand_info}"
+
+    def __str__(self, max_col_width: int | None = None, max_total_width: int | None = None) -> str:
+        """
+        Return string representation.
+
+        Examples
+        --------
+        >>> gr = pr.PyRanges({"Chromosome": [3, 2, 1], "Start": [0, 100, 250], "End": [10, 125, 251]})
+        >>> gr
+          Chromosome    Start      End
+               int64    int64    int64
+        ------------  -------  -------
+                   3        0       10
+                   2      100      125
+                   1      250      251
+        PyRanges with 3 rows and 3 columns.
+        Contains 3 chromosomes.
+        >>> gr.insert(3, "Strand", ["+", "-", "+"])
+        >>> gr
+          Chromosome    Start      End  Strand
+               int64    int64    int64  object
+        ------------  -------  -------  --------
+                   3        0       10  +
+                   2      100      125  -
+                   1      250      251  +
+        PyRanges with 3 rows and 4 columns.
+        Contains 3 chromosomes and 2 strands.
+        >>> gr.loc[:, "Strand"] = [".", "^", "/"]
+        >>> gr
+          Chromosome    Start      End  Strand
+               int64    int64    int64  object
+        ------------  -------  -------  --------
+                   3        0       10  .
+                   2      100      125  ^
+                   1      250      251  /
+        PyRanges with 3 rows and 4 columns.
+        Contains 3 chromosomes and 3 strands (including non-genomic strands: ., /, ^).
+        >>> gr = pr.concat([gr, gr, gr])
+        >>> gr  # If a PyRanges has more than eight rows the repr is truncated in the middle.
+        Chromosome    Start    End      Strand
+        int64         int64    int64    object
+        ------------  -------  -------  --------
+        3             0        10       .
+        2             100      125      ^
+        1             250      251      /
+        3             0        10       .
+        ...           ...      ...      ...
+        1             250      251      /
+        3             0        10       .
+        2             100      125      ^
+        1             250      251      /
+        PyRanges with 9 rows and 4 columns.
+        Contains 3 chromosomes and 3 strands (including non-genomic strands: ., /, ^).
+        >>> gr = PyRanges({"Chromosome": [1], "Start": [1], "End": [2], "Strand": ["+"], "Name": ["Sonic The Hedgehog"], "gene_id": ["ENSG00000188976"], "short_gene_name": ["SHH"], "type": ["transcript"]})
+        >>> str_repr = gr.__str__(max_col_width=10, max_total_width=80)
+        >>> print(str_repr)
+          Chromosome    Start      End  Strand    Name        gene_id     ...
+               int64    int64    int64  object    object      object      ...
+        ------------  -------  -------  --------  ----------  ----------  -----
+                   1        1        2  +         Sonic T...  ENSG000...  ...
+        PyRanges with 1 rows and 8 columns (2 columns not shown: "short_gene_name", "type").
+        Contains 1 chromosomes and 1 strands.
+        >>> gr.insert(gr.shape[1], "Score", int(1e100))
+        >>> gr.insert(gr.shape[1], "Score2", int(1e100))
+        >>> str_repr = gr.__str__(max_col_width=10, max_total_width=80)
+        >>> print(str_repr)
+          Chromosome    Start      End  Strand    Name        gene_id     ...
+               int64    int64    int64  object    object      object      ...
+        ------------  -------  -------  --------  ----------  ----------  -----
+                   1        1        2  +         Sonic T...  ENSG000...  ...
+        PyRanges with 1 rows and 10 columns (4 columns not shown: "short_gene_name", "type", "Score", ...).
+        Contains 1 chromosomes and 1 strands.
+        """
+        return f"{super().__str__(max_total_width=max_total_width, max_col_width=max_col_width)}\n{self._chrom_and_strand_info()}."
 
     def _check_index_column_names(self):
         # Check for columns with the same name as the index
@@ -214,7 +313,7 @@ class PyRanges(pr.RangeFrame):
 
     def set_index(self, *args, **kwargs) -> Optional["PyRanges"]:
         # Custom behavior for set_index
-        result = super().set_index(*args, **kwargs)
+        result = PyRanges(super().set_index(*args, **kwargs))
         if kwargs.get("inplace"):
             self._check_index_column_names()
         else:
@@ -425,37 +524,6 @@ class PyRanges(pr.RangeFrame):
 
         return iter(self.items())
 
-    def __str__(self) -> str:
-        """Return string representation."""
-
-        if len(self) >= 8:
-            head = [list(v) for _, v in self.head(4).iterrows()]
-            tail = [list(v) for _, v in self.tail(4).iterrows()]
-            data = head + tail
-        else:
-            data = [list(v) for _, v in self.iterrows()]
-
-        terminal_size = shutil.get_terminal_size()
-
-        adjusted_data, adjusted_headers = adjust_table_width(
-            data=data,
-            headers=list(self.columns),
-            dtypes=[str(t) for t in self.dtypes],
-            max_col_width=None,
-            max_total_width=terminal_size.columns,
-        )
-        return tabulate(adjusted_data, adjusted_headers)
-
-    def __repr__(self) -> str:
-        """Return REPL representation."""
-
-        return str(self)
-
-    def _repr_html_(self) -> str | None:
-        """Return REPL HTML representation for Jupyter Noteboooks."""
-
-        return self._repr_html_()
-
     def apply_general(
         self, f: Callable, strand: Optional[bool] = None, **kwargs
     ) -> Union[Dict[str, Any], Dict[Tuple[str, str], Any]]:
@@ -505,7 +573,7 @@ class PyRanges(pr.RangeFrame):
         """
 
         if strand is None:
-            strand = self.valid_strand
+            strand = self.strand_values_valid
 
         kwargs.update({"strand": strand})
         kwargs.update(kwargs.get("kwargs", {}))
@@ -773,7 +841,7 @@ class PyRanges(pr.RangeFrame):
         self = self.copy()
 
         if strand is None:
-            strand = self.valid_strand
+            strand = self.strand_values_valid
 
         kwargs["strand"] = strand
         kwargs = fill_kwargs(kwargs)
@@ -862,7 +930,7 @@ class PyRanges(pr.RangeFrame):
         """
         from pyranges.methods.boundaries import _bounds
 
-        kwargs = {"group_by": group_by, "agg": agg, "strand": self.valid_strand}
+        kwargs = {"group_by": group_by, "agg": agg, "strand": self.strand_values_valid}
         kwargs = fill_kwargs(kwargs)
 
         result = pyrange_apply_single(_bounds, self, **kwargs)
@@ -957,7 +1025,7 @@ class PyRanges(pr.RangeFrame):
     def chromosomes(self) -> List[str]:
         """Return chromosomes in natsorted order."""
 
-        if self.valid_strand:
+        if self.strand_values_valid:
             return natsorted(set([k[0] for k in self.keys()]))
         else:
             return natsorted(set([k for k in self.keys()]))
@@ -966,7 +1034,7 @@ class PyRanges(pr.RangeFrame):
     def chromosomes_and_strands(self) -> List[Tuple[str, str]]:
         """Return chromosomes and strands in natsorted order."""
 
-        if not self.valid_strand:
+        if not self.strand_values_valid:
             raise ValueError("PyRanges is not stranded.")
         else:
             return natsorted(set(self.keys()))
@@ -1093,12 +1161,12 @@ class PyRanges(pr.RangeFrame):
         """
         _self = self.copy()
         if strand is None:
-            strand = _self.valid_strand
+            strand = _self.strand_values_valid
 
         kwargs = {"strand": strand, "slack": slack, "count": count, "by": by}
         kwargs = fill_kwargs(kwargs)
 
-        _stranded = _self.valid_strand
+        _stranded = _self.strand_values_valid
         if not strand and _stranded:
             _self.__Strand__ = _self.Strand
             _self = _self.remove_strand()
@@ -1420,12 +1488,12 @@ class PyRanges(pr.RangeFrame):
         from pyranges.methods.drop_duplicates import _drop_duplicate_positions
 
         if strand is None:
-            strand = self.valid_strand
+            strand = self.strand_values_valid
 
         kwargs = {
             "sparse": {"self": False},
             "keep": keep,
-            "strand": strand and self.valid_strand,
+            "strand": strand and self.strand_values_valid,
         }
         kwargs = fill_kwargs(kwargs)
         return pr.PyRanges(
@@ -1520,11 +1588,11 @@ class PyRanges(pr.RangeFrame):
 
         if isinstance(ext, dict):
             assert (
-                self.valid_strand
+                self.strand_values_valid
             ), "PyRanges must be stranded to add 5/3-end specific extend."
 
         kwargs = fill_kwargs(
-            {"ext": ext, "strand": self.valid_strand, "group_by": group_by}
+            {"ext": ext, "strand": self.strand_values_valid, "group_by": group_by}
         )
         func = _extend if group_by is None else _extend_grp
         return PyRanges(pyrange_apply_single(func, self, **kwargs))
@@ -1596,8 +1664,8 @@ class PyRanges(pr.RangeFrame):
         For printing, the PyRanges was sorted on Chromosome and Strand.
         """
 
-        assert self.valid_strand, "Need stranded pyrange to find 5'."
-        kwargs = fill_kwargs({"strand": self.valid_strand})
+        assert self.strand_values_valid, "Need stranded pyrange to find 5'."
+        kwargs = fill_kwargs({"strand": self.strand_values_valid})
         return pr.PyRanges(pyrange_apply_single(_tss, self, **kwargs))
 
     def has_strand_column(self) -> bool:
@@ -1947,7 +2015,6 @@ class PyRanges(pr.RangeFrame):
         kwargs = fill_kwargs(kwargs)
 
         gr = PyRanges(pyrange_apply(_both_dfs, self, other, **kwargs))
-        print(gr)
 
         if slack and len(gr) > 0:
             gr.Start = gr.Start__slack
@@ -2098,7 +2165,7 @@ class PyRanges(pr.RangeFrame):
         """
 
         if strand is None:
-            strand = self.valid_strand
+            strand = self.strand_values_valid
 
         kwargs = {"strand": strand, "slack": slack}
         kwargs = fill_kwargs(kwargs)
@@ -2236,7 +2303,7 @@ class PyRanges(pr.RangeFrame):
         """
 
         if strand is None:
-            strand = self.valid_strand
+            strand = self.strand_values_valid
 
         kwargs: Dict[str, Any] = {
             "strand": strand,
@@ -2383,12 +2450,12 @@ class PyRanges(pr.RangeFrame):
         }
         kwargs = fill_kwargs(kwargs)
         if kwargs.get("how") in "upstream downstream".split():
-            assert other.valid_strand, "If doing upstream or downstream nearest, other pyranges must be stranded"
+            assert other.strand_values_valid, "If doing upstream or downstream nearest, other pyranges must be stranded"
 
         dfs = pyrange_apply(_nearest, self, other, **kwargs)
         gr = pr.PyRanges(dfs)
 
-        if not self.valid_strand and other.valid_strand:
+        if not self.strand_values_valid and other.strand_values_valid:
             if apply_strand_suffix is None:
                 import sys
 
@@ -2603,51 +2670,29 @@ class PyRanges(pr.RangeFrame):
         Examples
         --------
 
-        >>> gr = pr.PyRanges({"Chromosome": ["chr1", "chr2", "chr1"], "Start": [1, 4, 10],
-        ...                    "End": [3, 9, 11], "ID": ["a", "b", "c"]})
-        >>> gr2 = pr.PyRanges({"Chromosome": ["chr1", "chr1", "chr2"], "Start": [2, 2, 9], "End": [3, 9, 10]})
-        >>> gr.overlap(gr2)
-        +--------------+-----------+-----------+------------+
-        | Chromosome   |     Start |       End | ID         |
-        | (category)   |   (int64) |   (int64) | (object)   |
-        |--------------+-----------+-----------+------------|
-        | chr1         |         1 |         3 | a          |
-        | chr1         |         4 |         9 | b          |
-        +--------------+-----------+-----------+------------+
-        Unstranded PyRanges object has 2 rows and 4 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
-
-        >>> gr.overlap(gr2, how=None)
-        +--------------+-----------+-----------+------------+
-        | Chromosome   |     Start |       End | ID         |
-        | (category)   |   (int64) |   (int64) | (object)   |
-        |--------------+-----------+-----------+------------|
-        | chr1         |         1 |         3 | a          |
-        | chr1         |         1 |         3 | a          |
-        | chr1         |         4 |         9 | b          |
-        +--------------+-----------+-----------+------------+
-        Unstranded PyRanges object has 3 rows and 4 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
+        >>> gr = pr.PyRanges({"Chromosome": ["chr1", "chr1", "chr2", "chr1", "chr3"], "Start": [1, 1, 4, 10, 0],
+        ...                    "End": [3, 3, 9, 11, 1], "ID": ["A", "a", "b", "c", "d"]})
+        >>> gr2 = pr.PyRanges({"Chromosome": ["chr1", "chr1", "chr2"], "Start": [2, 2, 1], "End": [3, 9, 10]})
+        >>> gr.overlap(gr2, how="first")
+        Chromosome      Start      End  ID
+        object          int64    int64  object
+        ------------  -------  -------  --------
+        chr1                1        3  A
+        chr1                1        3  a
+        chr2                4        9  b
 
         >>> gr.overlap(gr2, how="containment")
-        +--------------+-----------+-----------+------------+
-        | Chromosome   |     Start |       End | ID         |
-        | (category)   |   (int64) |   (int64) | (object)   |
-        |--------------+-----------+-----------+------------|
-        | chr1         |         4 |         9 | b          |
-        +--------------+-----------+-----------+------------+
-        Unstranded PyRanges object has 1 rows and 4 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
+        Chromosome      Start      End  ID
+        object          int64    int64  object
+        ------------  -------  -------  --------
+        chr2                4        9  b
 
         >>> gr.overlap(gr2, invert=True)
-        +--------------+-----------+-----------+------------+
-        | Chromosome   |     Start |       End | ID         |
-        | (category)   |   (int64) |   (int64) | (object)   |
-        |--------------+-----------+-----------+------------|
-        | chr1         |        10 |        11 | c          |
-        +--------------+-----------+-----------+------------+
-        Unstranded PyRanges object has 1 rows and 4 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
+        Chromosome      Start      End  ID
+        object          int64    int64  object
+        ------------  -------  -------  --------
+        chr1               10       11  c
+        chr3                0        1  d
         """
         return PyRanges(
             pyrange_apply(
@@ -2962,11 +3007,11 @@ class PyRanges(pr.RangeFrame):
 
         from pyranges.methods.sort import _sort
 
-        kwargs = {"strand": self.valid_strand, "sparse": {"self": False}}
+        kwargs = {"strand": self.strand_values_valid, "sparse": {"self": False}}
         if by:
             assert "5" not in by or (
                 ((type(by) is str and by == "5") or (type(by) is not str and "5" in by))
-                and self.valid_strand
+                and self.strand_values_valid
             ), "Only stranded PyRanges can be sorted by 5'! "
             kwargs["by"] = by
 
@@ -3131,13 +3176,13 @@ class PyRanges(pr.RangeFrame):
 
         from pyranges.methods.spliced_subsequence import _spliced_subseq
 
-        if strand and not self.valid_strand:
+        if strand and not self.strand_values_valid:
             raise Exception(
                 "spliced_subsequence: you can use strand=True only for stranded PyRanges!"
             )
 
         if strand is None:
-            strand = True if self.valid_strand else False
+            strand = True if self.strand_values_valid else False
 
         kwargs.update({"strand": strand, "by": by, "start": start, "end": end})
         kwargs = fill_kwargs(kwargs)
@@ -3254,7 +3299,7 @@ class PyRanges(pr.RangeFrame):
         """
 
         if strand is None:
-            strand = self.valid_strand
+            strand = self.strand_values_valid
 
         kwargs = fill_kwargs({"strand": strand})
 
@@ -3270,7 +3315,7 @@ class PyRanges(pr.RangeFrame):
         return split
 
     @property
-    def valid_strand(self) -> bool:
+    def strand_values_valid(self) -> bool:
         """Whether PyRanges has (valid) strand info.
 
         Note
@@ -3301,7 +3346,7 @@ class PyRanges(pr.RangeFrame):
         For printing, the PyRanges was sorted on Chromosome.
         Considered unstranded due to these Strand values: '.'
 
-        >>> gr.valid_strand
+        >>> gr.strand_values_valid  # invalid strand value: '.'
         False
 
         >>> "Strand" in gr.columns
@@ -3354,7 +3399,7 @@ class PyRanges(pr.RangeFrame):
         ['+', '-']
         """
 
-        if not self.valid_strand:
+        if not self.strand_values_valid:
             return []
 
         return natsorted(set([k[1] for k in self.keys()]))
@@ -3433,9 +3478,9 @@ class PyRanges(pr.RangeFrame):
         kwargs = fill_kwargs(kwargs)
 
         if strand is None:
-            strand = self.valid_strand
+            strand = self.strand_values_valid
 
-        if self.valid_strand and not strand:
+        if self.strand_values_valid and not strand:
             self = self.remove_strand()
 
         kwargs.update({"strand": strand})
@@ -3586,7 +3631,7 @@ class PyRanges(pr.RangeFrame):
         from pyranges.methods.subsequence import _subseq
 
         if strand is None:
-            strand = True if self.valid_strand else False
+            strand = True if self.strand_values_valid else False
 
         kwargs.update({"strand": strand, "by": by, "start": start, "end": end})
         kwargs = fill_kwargs(kwargs)
@@ -3917,7 +3962,7 @@ class PyRanges(pr.RangeFrame):
         from pyranges.methods.windows import _tiles
 
         if strand is None:
-            strand = self.valid_strand
+            strand = self.strand_values_valid
 
         kwargs = {
             "strand": strand,
@@ -4040,7 +4085,7 @@ class PyRanges(pr.RangeFrame):
 
         """
 
-        assert self.valid_strand, "Need stranded pyrange to find 3'."
+        assert self.strand_values_valid, "Need stranded pyrange to find 3'."
         kwargs = fill_kwargs({"strand": True})
         return pr.PyRanges(pyrange_apply_single(_tes, self, **kwargs))
 
@@ -4601,7 +4646,7 @@ class PyRanges(pr.RangeFrame):
         """
 
         if strand is None:
-            strand = self.valid_strand
+            strand = self.strand_values_valid
 
         from pyranges.methods.to_rle import _to_rle
 
@@ -4703,12 +4748,25 @@ class PyRanges(pr.RangeFrame):
                    1     1095     1259
 
 
-        >>> gr2 = pr.data.ensembl_gtf()[["Feature", "gene_name"]]
+        >>> gr2 = pr.data.ensembl_gtf().get_with_loc_columns(["Feature", "gene_name"])
         >>> gr2
+        Chromosome    Start    End      Strand      Feature     gene_name
+        category      int64    int64    category    category    object
+        ------------  -------  -------  ----------  ----------  -----------
+        1             11868    14409    +           gene        DDX11L1
+        1             11868    14409    +           transcript  DDX11L1
+        1             11868    12227    +           exon        DDX11L1
+        1             12612    12721    +           exon        DDX11L1
+        ...           ...      ...      ...         ...         ...
+        1             1173055  1179555  -           gene        TTLL10-AS1
+        1             1173055  1179555  -           transcript  TTLL10-AS1
+        1             1179364  1179555  -           exon        TTLL10-AS1
+        1             1173055  1176396  -           exon        TTLL10-AS1
 
 
 
-        >>> gr2 = pr.data.ensembl_gtf()[["Feature", "gene_name"]]
+
+        >>> gr2 = pr.data.ensembl_gtf().get_with_loc_columns(["Feature", "gene_name"])
         >>> gr2.window(1000)
         +--------------+--------------+-----------+-----------+--------------+-------------+
         | Chromosome   | Feature      | Start     | End       | Strand       | gene_name   |
@@ -4731,7 +4789,7 @@ class PyRanges(pr.RangeFrame):
         from pyranges.methods.windows import _windows
 
         if strand is None:
-            strand = self.valid_strand
+            strand = self.strand_values_valid
 
         kwargs = {
             "strand": strand,
@@ -4740,10 +4798,9 @@ class PyRanges(pr.RangeFrame):
         }
 
         df = pyrange_apply_single(_windows, self, **kwargs)
-        print(df)
         return PyRanges(df)
 
-    def get_cols(self, key: str | Iterable[str]) -> "pr.PyRanges":
+    def get_with_loc_columns(self, key: str | Iterable[str]) -> "pr.PyRanges":
         """
         Return the requested columns and the genome location columns.
 
@@ -4759,12 +4816,12 @@ class PyRanges(pr.RangeFrame):
             PyRanges with the requested columns.
 
         >>> gr = pr.PyRanges({"Chromosome": [1], "Start": [895], "End": [1259], "Strand": ["+"], "Score": [1], "Score2": [2]})
-        >>> gr["Score2"]
+        >>> gr.get_with_loc_columns("Score2")
           Chromosome    Start      End  Strand      Score2
                int64    int64    int64  object       int64
         ------------  -------  -------  --------  --------
                    1      895     1259  +                2
-        >>> gr[["Score2"]]
+        >>> gr.get_with_loc_columns(["Score2"])
           Chromosome    Start      End  Strand      Score2
                int64    int64    int64  object       int64
         ------------  -------  -------  --------  --------
@@ -4808,13 +4865,13 @@ class PyRanges(pr.RangeFrame):
     @property
     def _dfs_without_strand(self) -> Dict[str, pd.DataFrame]:
         """Return a dictionary of stranded dataframes."""
-        assert not self.valid_strand, "PyRanges object is stranded"
+        assert not self.strand_values_valid, "PyRanges object is stranded"
         return {k: v for k, v in self.dfs.items() if isinstance(k, str)}
 
     @property
     def _dfs_with_strand(self) -> Dict[Tuple[str, str], pd.DataFrame]:
         """Return a dictionary of stranded dataframes."""
-        assert self.valid_strand, "PyRanges object is not stranded"
+        assert self.strand_values_valid, "PyRanges object is not stranded"
         return {k: v for k, v in self.dfs.items() if isinstance(k, tuple)}
 
 

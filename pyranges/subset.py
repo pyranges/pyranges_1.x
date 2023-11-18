@@ -29,7 +29,7 @@ def get_slice(
 ) -> Union[Dict[str, DataFrame], Dict[Tuple[str, str], DataFrame]]:
     # 100:999
 
-    if self.valid_strand:
+    if self.strand_values_valid:
         sd = {}
         for sk, sdf in self._dfs_with_strand.items():
             start = val.start or 0
@@ -51,7 +51,7 @@ def get_string(
     self: PyRanges, val: str
 ) -> Union[Dict[Tuple[str, str], DataFrame], Dict[str, DataFrame]]:
     if val in self.chromosomes:
-        if self.valid_strand:
+        if self.strand_values_valid:
             return {k: df for k, df in self._dfs_with_strand.items() if k[0] == val}
         else:
             return {val: df for k, df in self._dfs_without_strand.items() if k == val}
@@ -80,7 +80,7 @@ def get_chromosome_and_slice(
 ) -> Union[Dict[str, DataFrame], Dict[Tuple[str, str], DataFrame]]:
     if chromosome in self.chromosomes:
         start = loc.start or 0
-        if self.valid_strand:
+        if self.strand_values_valid:
             dfs = [
                 df for (c, _), df in self._dfs_with_strand.items() if c == chromosome
             ]

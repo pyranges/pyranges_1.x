@@ -83,7 +83,7 @@ def test_merge(gr, strand):
 
     if not bedtools_df.empty:
         # need to sort because bedtools sometimes gives the result in non-natsorted chromosome order!
-        if result.valid_strand:
+        if result.strand_values_valid:
             assert_df_equal(
                 result.df.sort_values("Chromosome Start Strand".split()),
                 bedtools_df.sort_values("Chromosome Start Strand".split()),
@@ -142,7 +142,7 @@ def test_cluster(gr, strand):
 
     if not bedtools_df.empty:
         # need to sort because bedtools sometimes gives the result in non-natsorted chromosome order!
-        if result.valid_strand:
+        if result.strand_values_valid:
             sort_values = "Chromosome Start Strand".split()
         else:
             sort_values = "Chromosome Start".split()

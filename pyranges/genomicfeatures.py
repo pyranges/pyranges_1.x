@@ -73,7 +73,7 @@ class GenomicFeaturesMethods:
 
         pr = self.pr
 
-        if not pr.valid_strand:
+        if not pr.strand_values_valid:
             raise Exception(
                 "Cannot compute TSSes or TESes without strand info. Perhaps use extend() or subsequence() or spliced_subsequence() instead?"
             )
@@ -137,7 +137,7 @@ class GenomicFeaturesMethods:
 
         pr = self.pr
 
-        if not pr.valid_strand:
+        if not pr.strand_values_valid:
             raise Exception(
                 "Cannot compute TSSes or TESes without strand info. Perhaps use extend() or subsequence() or spliced_subsequence() instead?"
             )

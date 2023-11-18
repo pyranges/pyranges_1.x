@@ -16,7 +16,7 @@ def _drop(self, drop=None, like=None):
         and drop == "Strand"
         or (isinstance(drop, list) and "Strand" in drop)
     )
-    if not self.valid_strand or want_to_drop_strand:
+    if not self.strand_values_valid or want_to_drop_strand:
         always_keep = "Chromosome Start End".split()
     else:
         always_keep = "Chromosome Start End Strand".split()
@@ -40,7 +40,7 @@ def _drop(self, drop=None, like=None):
     _to_drop = set(_to_drop) - set(always_keep)
 
     # need to use unstrand to remove "+"/"-" from dict
-    if "Strand" in _to_drop and self.valid_strand:
+    if "Strand" in _to_drop and self.strand_values_valid:
         self = self.remove_strand()
         _to_drop = [d for d in _to_drop if not d == "Strand"]
 
@@ -49,7 +49,7 @@ def _drop(self, drop=None, like=None):
 
 def _keep(self, keep):
     columns = self.columns
-    if not self.valid_strand:
+    if not self.strand_values_valid:
         always_keep = "Chromosome Start End".split()
     else:
         always_keep = "Chromosome Start End Strand".split()

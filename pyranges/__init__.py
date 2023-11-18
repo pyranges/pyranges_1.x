@@ -44,6 +44,49 @@ read_gff = read_gtf
 Chromsizes = Union[Dict[str, int], Dict[Tuple[str, str], int]]
 
 
+def concat(grs: Iterable[PyRanges], *args, **kwargs) -> "PyRanges":
+    """
+    Concatenate PyRanges.
+
+    Parameters
+    ----------
+    grs
+
+    Returns
+    -------
+    pyranges.PyRanges
+
+    Examples:
+    ---------
+    >>> gr1 = pr.data.f2()
+    >>> gr2 = pr.data.f1()
+    >>> pr.concat([gr1, gr2])
+    Chromosome      Start      End  Name         Score  Strand
+    object          int64    int64  object       int64  object
+    ------------  -------  -------  ---------  -------  --------
+    chr1                1        2  a                0  +
+    chr1                6        7  b                0  -
+    chr1                3        6  interval1        0  +
+    chr1                5        7  interval2        0  -
+    chr1                8        9  interval3        0  +
+    PyRanges with 5 rows and 6 columns.
+    Contains 1 chromosomes and 2 strands.
+
+    >>> pr.concat([gr1, gr2.remove_strand()])
+    Chromosome      Start      End  Name         Score  Strand
+    object          int64    int64  object       int64  object
+    ------------  -------  -------  ---------  -------  --------
+    chr1                1        2  a                0  +
+    chr1                6        7  b                0  -
+    chr1                3        6  interval1        0  nan
+    chr1                5        7  interval2        0  nan
+    chr1                8        9  interval3        0  nan
+    PyRanges with 5 rows and 6 columns.
+    Contains 1 chromosomes and 2 strands (including non-genomic strands: nan).
+    """
+    return PyRanges(pd.concat(grs, *args, **kwargs))
+
+
 def empty_df(
     with_strand: bool = False,
     columns: Optional[Iterable[str]] = None,
@@ -286,10 +329,10 @@ def itergrs(prs: Iterable[PyRanges], strand=None, keys=False):
     """
 
     # Determine if all prs are stranded only if strand is None, otherwise use the provided value.
-    strand = all(gr.valid_strand for gr in prs) if strand is None else strand
+    strand = all(gr.strand_values_valid for gr in prs) if strand is None else strand
 
     # If strand is False and any PyRanges are stranded, remove strand information.
-    prs = [gr.remove_strand() for gr in prs if gr.valid_strand] if not strand else prs
+    prs = [gr.remove_strand() for gr in prs if gr.strand_values_valid] if not strand else prs
 
     empty_dfs = [pd.DataFrame(columns=gr.columns) for gr in prs]
     for gr, empty in zip(prs, empty_dfs):

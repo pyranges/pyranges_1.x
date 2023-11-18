@@ -37,7 +37,7 @@ def chip_10(names):
 
     gr = PyRanges(df)
 
-    assert gr.valid_strand
+    assert gr.strand_values_valid
 
     return gr
 

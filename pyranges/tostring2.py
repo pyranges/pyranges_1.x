@@ -105,7 +105,7 @@ def _get_df(self: "PyRanges", n: int, sort: bool) -> DataFrame:
         if sort:
             df = df.sort_values(sort_cols)
     else:
-        if self.valid_strand:
+        if self.strand_values_valid:
             top = _get_stranded_f(self, half_entries, "head", sort)
             bottom = _get_stranded_f(self, half_entries, "tail", sort)
         else:
@@ -253,7 +253,7 @@ grow_string_representation = functools.partial(
 
 def untraditional_strand_info(self: "PyRanges", str_repr_width: int) -> str:
     _ustr = ""
-    if "Strand" in self.columns and not self.valid_strand:
+    if "Strand" in self.columns and not self.strand_values_valid:
         strands = []
         for _, df in self:
             strands.extend(list(df.Strand.drop_duplicates()))
@@ -305,7 +305,7 @@ def add_text_to_str_repr(
     n_intervals = len(self)
     n_chromosomes = len(self.chromosomes)
 
-    stranded = "Stranded" if self.valid_strand else "Unstranded"
+    stranded = "Stranded" if self.strand_values_valid else "Unstranded"
     str1 = (
         "{} PyRanges object has {:,} rows and {:,} columns from {} chromosomes.".format(
             stranded, n_intervals, len(self.columns), n_chromosomes
@@ -323,7 +323,7 @@ def add_text_to_str_repr(
         (True, False): "Chromosome, Start, End and Strand.",
         (False, False): "Chromosome.",
         (False, True): "Chromosome and Strand.",
-    }[sort, self.valid_strand]
+    }[sort, self.strand_values_valid]
 
     order = "For printing, the PyRanges was sorted on " + order
 
