@@ -218,7 +218,7 @@ class PyRanges(pr.RangeFrame):
             if not self.strand_values_valid:
                 nongenomic_strands = sorted(set(self[STRAND_COL]).difference(VALID_GENOMIC_STRAND_INFO))
                 example_strands = ", ".join(
-                    [str(s) for s in nongenomic_strands[:7]] + (["..."] if len(nongenomic_strands) > 7 else []))
+                    [str(s) for s in nongenomic_strands[:3]] + (["..."] if len(nongenomic_strands) > 3 else []))
                 strands += f" (including non-genomic strands: {example_strands})"
             strand_info = strands
 
@@ -260,14 +260,16 @@ class PyRanges(pr.RangeFrame):
                    1      250      251  /
         PyRanges with 3 rows and 4 columns.
         Contains 3 chromosomes and 3 strands (including non-genomic strands: ., /, ^).
-        >>> gr = pr.concat([gr, gr, gr])
+        >>> gr2 = gr.copy()
+        >>> gr2.loc[:, "Strand"] = ["+", "-", "X"]
+        >>> gr = pr.concat([gr2, gr, gr])
         >>> gr  # If a PyRanges has more than eight rows the repr is truncated in the middle.
         Chromosome    Start    End      Strand
         int64         int64    int64    object
         ------------  -------  -------  --------
-        3             0        10       .
-        2             100      125      ^
-        1             250      251      /
+        3             0        10       +
+        2             100      125      -
+        1             250      251      X
         3             0        10       .
         ...           ...      ...      ...
         1             250      251      /
@@ -275,7 +277,7 @@ class PyRanges(pr.RangeFrame):
         2             100      125      ^
         1             250      251      /
         PyRanges with 9 rows and 4 columns.
-        Contains 3 chromosomes and 3 strands (including non-genomic strands: ., /, ^).
+        Contains 3 chromosomes and 6 strands (including non-genomic strands: ., /, X, ...).
         >>> gr = PyRanges({"Chromosome": [1], "Start": [1], "End": [2], "Strand": ["+"], "Name": ["Sonic The Hedgehog"], "gene_id": ["ENSG00000188976"], "short_gene_name": ["SHH"], "type": ["transcript"]})
         >>> str_repr = gr.__str__(max_col_width=10, max_total_width=80)
         >>> print(str_repr)
