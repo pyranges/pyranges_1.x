@@ -26,6 +26,7 @@ def _both_indexes(scdf, ocdf, how=False, **kwargs):
 
     return _self_indexes, _other_indexes
 
+
 def _both_dfs(scdf, ocdf, how=False, **kwargs):
     _self_indexes, _other_indexes = _both_indexes(scdf, ocdf, how, **kwargs)
     if how == "left":

@@ -110,7 +110,6 @@ def compare_results_nearest(bedtools_df, result):
     max_examples=max_examples,
     deadline=deadline,
     print_blob=True,
-    suppress_health_check=HealthCheck.all(),
 )
 @given(gr=dfs_min(), gr2=dfs_min())  # pylint: disable=no-value-for-parameter
 def test_set_intersect(gr, gr2, strandedness):
@@ -130,7 +129,6 @@ def test_set_intersect(gr, gr2, strandedness):
     max_examples=max_examples,
     deadline=deadline,
     print_blob=True,
-    suppress_health_check=HealthCheck.all(),
 )
 @given(gr=dfs_min(), gr2=dfs_min())  # pylint: disable=no-value-for-parameter
 # @reproduce_failure('4.15.0', b'AXicY2RAA4zoAgAAVQAD')
@@ -151,7 +149,6 @@ def test_set_union(gr, gr2, strandedness):
     max_examples=max_examples,
     deadline=deadline,
     print_blob=True,
-    suppress_health_check=HealthCheck.all(),
 )
 @given(gr=dfs_min(), gr2=dfs_min())  # pylint: disable=no-value-for-parameter
 # @reproduce_failure('4.32.2', b'AXicY2RAA4wQzIgiCAAAgAAF')
@@ -179,7 +176,6 @@ def test_overlap(gr, gr2, strandedness):
     max_examples=max_examples,
     deadline=deadline,
     print_blob=True,
-    suppress_health_check=HealthCheck.all(),
 )
 @given(gr=dfs_min(), gr2=dfs_min())  # pylint: disable=no-value-for-parameter
 def test_intersect(gr, gr2, strandedness):
@@ -205,7 +201,6 @@ def test_intersect(gr, gr2, strandedness):
     max_examples=max_examples,
     print_blob=True,
     deadline=deadline,
-    suppress_health_check=HealthCheck.all(),
 )
 @given(gr=dfs_min(), gr2=dfs_min())  # pylint: disable=no-value-for-parameter
 # @reproduce_failure('4.15.0', b'AXicY2RABoxghAoAAGkABA==')
@@ -283,7 +278,6 @@ def test_coverage(gr, gr2, strandedness):
     max_examples=max_examples,
     deadline=deadline,
     print_blob=True,
-    suppress_health_check=HealthCheck.all(),
 )
 @given(gr=dfs_min(), gr2=dfs_min())  # pylint: disable=no-value-for-parameter
 # @reproduce_failure('4.5.7', b'AXicLYaJCQAACIS0/YfuuQRRAbVG94Dk5LHSBgJ3ABU=')
@@ -323,7 +317,6 @@ overlaps = [True, False]
     max_examples=max_examples,
     deadline=deadline,
     print_blob=True,
-    suppress_health_check=HealthCheck.all(),
 )
 @given(gr=dfs_min(), gr2=dfs_min())  # pylint: disable=no-value-for-parameter
 def test_nearest(gr, gr2, nearest_how, overlap, strandedness):
@@ -387,7 +380,6 @@ def test_jaccard(gr, gr2, strandedness):
     max_examples=max_examples,
     deadline=deadline,
     print_blob=True,
-    suppress_health_check=HealthCheck.all(),
 )
 @given(gr=dfs_min(), gr2=dfs_min())  # pylint: disable=no-value-for-parameter
 def test_join(gr, gr2, strandedness):
@@ -416,7 +408,6 @@ def test_join(gr, gr2, strandedness):
     max_examples=max_examples,
     deadline=deadline,
     print_blob=True,
-    suppress_health_check=HealthCheck.all(),
 )
 @given(gr=dfs_min2(), gr2=dfs_min2())  # pylint: disable=no-value-for-parameter
 def test_reldist(gr, gr2):

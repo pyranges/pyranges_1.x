@@ -1,5 +1,7 @@
 from __future__ import print_function
 
+from pyranges.range_frame import RangeFrame
+
 import itertools
 import sys
 from collections import defaultdict

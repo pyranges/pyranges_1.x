@@ -29,7 +29,15 @@ from pyranges.multithreaded import (
     pyrange_apply,
     pyrange_apply_single,
 )
-from pyranges.names import STRAND_COL, FORWARD_STRAND, REVERSE_STRAND, GENOME_LOC_COLS
+from pyranges.names import (
+    STRAND_COL,
+    FORWARD_STRAND,
+    REVERSE_STRAND,
+    GENOME_LOC_COLS,
+    GENOME_LOC_COLS_WITH_STRAND,
+    VALID_GENOMIC_STRAND_INFO,
+    VALID_STRAND_BEHAVIOR_TYPE, VALID_OVERLAP_TYPE,
+)
 from pyranges.tostring import adjust_table_width
 
 if TYPE_CHECKING:
@@ -48,7 +56,7 @@ def fill_kwargs(kwargs: Dict[str, Any]) -> Dict[str, Any]:
     """Give the kwargs dict default options."""
 
     defaults = {
-        "strandedness": None,
+        "strand_behavior": None,
         "overlap": True,
         "how": None,
         "invert": None,
@@ -63,7 +71,7 @@ def fill_kwargs(kwargs: Dict[str, Any]) -> Dict[str, Any]:
     return defaults
 
 
-class PyRanges(pd.DataFrame):
+class PyRanges(pr.RangeFrame):
 
     """Two-dimensional representation of genomic intervals and their annotations.
 
@@ -104,7 +112,6 @@ class PyRanges(pd.DataFrame):
     pyranges.read_bam: read bam-file into PyRanges
     pyranges.read_gff: read gff-file into PyRanges
     pyranges.read_gtf: read gtf-file into PyRanges
-    pyranges.from_dict: create PyRanges from dict of columns
     pyranges.from_string: create PyRanges from multiline string
 
     Notes
@@ -149,7 +156,7 @@ class PyRanges(pd.DataFrame):
     For printing, the PyRanges was sorted on Chromosome.
 
 
-    >>> gr = pr.from_dict({"Chromosome": [1, 1], "Strand": ["+", "-"], "Start": [1, 4], "End": [2, 27],
+    >>> gr = pr.PyRanges({"Chromosome": [1, 1], "Strand": ["+", "-"], "Start": [1, 4], "End": [2, 27],
     ...                    "TP": [0, 1], "FP": [12, 11], "TN": [10, 9], "FN": [2, 3]})
     >>> gr
     +--------------+--------------+-----------+-----------+-----------+-----------+-----------+-----------+
@@ -183,10 +190,6 @@ class PyRanges(pd.DataFrame):
     pyranges.statistics : namespace for statistics
     pyranges.stats.StatisticsMethods : namespace for statistics
     """
-
-    @property
-    def _constructor(self):
-        return PyRanges
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -233,7 +236,7 @@ class PyRanges(pd.DataFrame):
         Examples
         --------
 
-        >>> gr = pr.from_dict({"Chromosome": [1, 2, 3], "Start": [1, 2, 3],
+        >>> gr = pr.PyRanges({"Chromosome": [1, 2, 3], "Start": [1, 2, 3],
         ... "End": [2, 3, 4], "Score": [9, 16, 25], "Score2": [121, 144, 169],
         ... "Name": ["n1", "n2", "n3"]})
         >>> gr
@@ -405,7 +408,7 @@ class PyRanges(pd.DataFrame):
 
         Examples
         --------
-        >>> gr = pr.from_dict({"Chromosome": [1, 1, 1], "Start": [0, 100, 250],
+        >>> gr = pr.PyRanges({"Chromosome": [1, 1, 1], "Start": [0, 100, 250],
         ...                   "End": [10, 125, 251], "Strand": ["+", "+", "-"]})
 
         >>> for k, v in gr:
@@ -491,7 +494,7 @@ class PyRanges(pd.DataFrame):
         Examples
         --------
 
-        >>> gr = pr.from_dict({"Chromosome": [1, 1, 2, 2], "Strand": ["+", "+", "-", "+"],
+        >>> gr = pr.PyRanges({"Chromosome": [1, 1, 2, 2], "Strand": ["+", "+", "-", "+"],
         ...                    "Start": [1, 4, 2, 9], "End": [2, 27, 13, 10]})
 
         >>> gr.apply_general(lambda df: len(df))
@@ -514,7 +517,7 @@ class PyRanges(pd.DataFrame):
         self,
         other: "PyRanges",
         f: Callable,
-        strandedness: Optional[str] = None,
+        strand_behavior: Optional[str] = None,
         **kwargs,
     ) -> "PyRanges":
         """Apply a function to a pair of PyRanges.
@@ -529,7 +532,7 @@ class PyRanges(pd.DataFrame):
 
         other : PyRanges
 
-        strandedness : {None, "same", "opposite", False}, default None, i.e. auto
+        strand_behavior : {None, "same", "opposite", False}, default None, i.e. auto
 
             Whether to compare PyRanges on the same strand, the opposite or ignore strand
             information. The default, None, means use "same" if both PyRanges are strande,
@@ -605,14 +608,14 @@ class PyRanges(pd.DataFrame):
         For printing, the PyRanges was sorted on Chromosome and Strand.
         """
 
-        kwargs.update({"strandedness": strandedness})
+        kwargs.update({"strand_behavior": strand_behavior})
         kwargs.update(kwargs.get("kwargs", {}))
         kwargs = fill_kwargs(kwargs)
 
         return pyrange_apply(f, self, other, **kwargs)
 
     def apply_pair_general(
-        self, other: "PyRanges", f: Callable, strandedness: None = None, **kwargs
+        self, other: "PyRanges", f: Callable, strand_behavior: None = None, **kwargs
     ) -> Union[Dict[str, Any], Dict[Tuple[str, str], Any]]:
         """Apply a function to a pair of PyRanges.
 
@@ -626,7 +629,7 @@ class PyRanges(pd.DataFrame):
 
         other : PyRanges
 
-        strandedness : {None, "same", "opposite", False}, default None, i.e. auto
+        strand_behavior : {None, "same", "opposite", False}, default None, i.e. auto
 
             Whether to compare PyRanges on the same strand, the opposite or ignore strand
             information. The default, None, means use "same" if both PyRanges are strande,
@@ -686,7 +689,7 @@ class PyRanges(pd.DataFrame):
         {('chr1', '+'): (2, 2), ('chr1', '-'): (1, 2)}
         """
 
-        kwargs.update({"strandedness": strandedness})
+        kwargs.update({"strand_behavior": strand_behavior})
         kwargs.update(kwargs.get("kwargs", {}))
         kwargs = fill_kwargs(kwargs)
 
@@ -727,7 +730,7 @@ class PyRanges(pd.DataFrame):
         Examples
         --------
 
-        >>> gr = pr.from_dict({"Chromosome": [1, 1], "Start": [1, 2], "End": [3, 5],
+        >>> gr = pr.PyRanges({"Chromosome": [1, 1], "Start": [1, 2], "End": [3, 5],
         ... "Name": ["a", "b"]})
         >>> gr
         +--------------+-----------+-----------+------------+
@@ -820,7 +823,7 @@ class PyRanges(pd.DataFrame):
         --------
 
         >>> d = {"Chromosome": [1, 1, 1], "Start": [1, 60, 110], "End": [40, 68, 130], "transcript_id": ["tr1", "tr1", "tr2"], "meta": ["a", "b", "c"]}
-        >>> gr = pr.from_dict(d)
+        >>> gr = pr.PyRanges(d)
         >>> gr.length=gr.lengths()
         >>> gr
         +--------------+-----------+-----------+-----------------+------------+-----------+
@@ -863,7 +866,7 @@ class PyRanges(pd.DataFrame):
         kwargs = fill_kwargs(kwargs)
 
         result = pyrange_apply_single(_bounds, self, **kwargs)
-        return pr.from_dfs(result)
+        return pr.PyRanges(result)
 
     def calculate_frame(self, by: Union[str, List[str]]) -> "PyRanges":
         """Calculate the frame of each genomic interval, assuming all are coding sequences (CDS), and add it as column inplace.
@@ -885,7 +888,7 @@ class PyRanges(pd.DataFrame):
 
         Examples
         --------
-        >>> p = pr.from_dict({"Chromosome": [1,1,1,2,2],
+        >>> p = pr.PyRanges({"Chromosome": [1,1,1,2,2],
         ...                   "Strand": ["+","+","+","-","-"],
         ...                   "Start": [1,31,52,101,201],
         ...                   "End": [10,45,90,130,218],
@@ -1013,7 +1016,7 @@ class PyRanges(pd.DataFrame):
         Examples
         --------
 
-        >>> gr = pr.from_dict({"Chromosome": [1, 1, 1, 1], "Start": [1, 2, 3, 9],
+        >>> gr = pr.PyRanges({"Chromosome": [1, 1, 1, 1], "Start": [1, 2, 3, 9],
         ...                    "End": [3, 3, 10, 12], "Gene": [1, 2, 3, 3]})
         >>> gr
         +--------------+-----------+-----------+-----------+
@@ -1110,7 +1113,7 @@ class PyRanges(pd.DataFrame):
             kwargs["by"] = by
             df = pyrange_apply_single(_cluster_by, _self, **kwargs)
 
-        gr = pr.from_dfs(df)
+        gr = pr.PyRanges(df)
 
         # each chromosome got overlapping ids (0 to len). Need to make unique!
         new_dfs = {}
@@ -1142,7 +1145,7 @@ class PyRanges(pd.DataFrame):
     def count_overlaps(
         self,
         other: "PyRanges",
-        strandedness: None = None,
+        strand_behavior: None = None,
         keep_nonoverlapping: bool = True,
         overlap_col: str = "NumberOverlaps",
     ) -> "PyRanges":
@@ -1152,7 +1155,7 @@ class PyRanges(pd.DataFrame):
 
         Parameters
         ----------
-        strandedness : {"same", "opposite", None, False}, default None, i.e. auto
+        strand_behavior : {"same", "opposite", None, False}, default None, i.e. auto
 
             Whether to perform the operation on the same, opposite or no strand. Use False to
             ignore the strand. None means use "same" if both PyRanges are stranded, otherwise
@@ -1217,7 +1220,7 @@ class PyRanges(pd.DataFrame):
         """
 
         kwargs = {
-            "strandedness": strandedness,
+            "strand_behavior": strand_behavior,
             "keep_nonoverlapping": keep_nonoverlapping,
             "overlap_col": overlap_col,
         }
@@ -1227,12 +1230,12 @@ class PyRanges(pd.DataFrame):
 
         counts = pyrange_apply(_number_overlapping, self, other, **kwargs)
 
-        return pr.from_dfs(counts)
+        return pr.PyRanges(counts)
 
     def coverage(
         self,
         other: "PyRanges",
-        strandedness: None = None,
+        strand_behavior: None = None,
         keep_nonoverlapping: bool = True,
         overlap_col: str = "NumberOverlaps",
         fraction_col: str = "FractionOverlaps",
@@ -1243,7 +1246,7 @@ class PyRanges(pd.DataFrame):
 
         Parameters
         ----------
-        strandedness : {"same", "opposite", None, False}, default None, i.e. auto
+        strand_behavior : {"same", "opposite", None, False}, default None, i.e. auto
 
             Whether to perform the operation on the same, opposite or no strand. Use False to
             ignore the strand. None means use "same" if both PyRanges are stranded, otherwise
@@ -1273,7 +1276,7 @@ class PyRanges(pd.DataFrame):
 
         Examples
         --------
-        >>> f1 = pr.from_dict({"Chromosome": [1, 1, 1], "Start": [3, 8, 5],
+        >>> f1 = pr.PyRanges({"Chromosome": [1, 1, 1], "Start": [3, 8, 5],
         ...                    "End": [6,  9, 7]})
         >>> f1
         +--------------+-----------+-----------+
@@ -1286,7 +1289,7 @@ class PyRanges(pd.DataFrame):
         +--------------+-----------+-----------+
         Unstranded PyRanges object has 3 rows and 3 columns from 1 chromosomes.
         For printing, the PyRanges was sorted on Chromosome.
-        >>> f2 = pr.from_dict({"Chromosome": [1, 1], "Start": [1, 6],
+        >>> f2 = pr.PyRanges({"Chromosome": [1, 1], "Start": [1, 6],
         ...                    "End": [2, 7]})
         >>> f2
         +--------------+-----------+-----------+
@@ -1313,7 +1316,7 @@ class PyRanges(pd.DataFrame):
         """
 
         kwargs = {
-            "strandedness": strandedness,
+            "strand_behavior": strand_behavior,
             "keep_nonoverlapping": keep_nonoverlapping,
             "overlap_col": overlap_col,
             "fraction_col": fraction_col,
@@ -1324,15 +1327,15 @@ class PyRanges(pd.DataFrame):
             other,
             keep_nonoverlapping=True,
             overlap_col=overlap_col,
-            strandedness=strandedness,
+            strand_behavior=strand_behavior,
         )
 
-        strand = True if kwargs["strandedness"] else False
+        strand = True if kwargs["strand_behavior"] else False
         other = other.merge_overlaps(count=True, strand=strand)
 
         from pyranges.methods.coverage import _coverage
 
-        counts = pr.from_dfs(pyrange_apply(_coverage, counts, other, **kwargs))
+        counts = pr.PyRanges(pyrange_apply(_coverage, counts, other, **kwargs))
 
         return counts
 
@@ -1425,7 +1428,7 @@ class PyRanges(pd.DataFrame):
             "strand": strand and self.valid_strand,
         }
         kwargs = fill_kwargs(kwargs)
-        return pr.from_dfs(
+        return pr.PyRanges(
             pyrange_apply_single(_drop_duplicate_positions, self, **kwargs)
         )
 
@@ -1460,7 +1463,7 @@ class PyRanges(pd.DataFrame):
 
         >>> d = {'Chromosome': ['chr1', 'chr1', 'chr1'], 'Start': [3, 8, 5], 'End': [6, 9, 7],
         ...      'Strand': ['+', '+', '-']}
-        >>> gr = pr.from_dict(d)
+        >>> gr = pr.PyRanges(d)
         >>> gr
         +--------------+-----------+-----------+--------------+
         | Chromosome   |     Start |       End | Strand       |
@@ -1533,11 +1536,11 @@ class PyRanges(pd.DataFrame):
     #     kwargs["invert"] = True
     #     kwargs["sparse"] = {"self": False, "other": True}
 
-    #     # if kwargs["strandedness"] in ["same", "opposite"]:
-    #     #     kwargs["strandedness"] = {
+    #     # if kwargs["strand_behavior"] in ["same", "opposite"]:
+    #     #     kwargs["strand_behavior"] = {
     #     #         "same": "opposite",
     #     #         "opposite": "same"
-    #     #     }[kwargs["strandedness"]]
+    #     #     }[kwargs["strand_behavior"]]
     #     dfs = pyrange_apply(_overlap, self, other, **kwargs)
 
     #     return PyRanges(dfs)
@@ -1568,7 +1571,7 @@ class PyRanges(pd.DataFrame):
         Examples
         --------
 
-        >>> gr = pr.from_dict({'Chromosome': ['chr1', 'chr1'], 'Start': [3, 5], 'End': [9, 7],
+        >>> gr = pr.PyRanges({'Chromosome': ['chr1', 'chr1'], 'Start': [3, 5], 'End': [9, 7],
         ...                    'Strand': ["+", "-"]})
         >>> gr
         +--------------+-----------+-----------+--------------+
@@ -1595,7 +1598,7 @@ class PyRanges(pd.DataFrame):
 
         assert self.valid_strand, "Need stranded pyrange to find 5'."
         kwargs = fill_kwargs({"strand": self.valid_strand})
-        return pr.from_dfs(pyrange_apply_single(_tss, self, **kwargs))
+        return pr.PyRanges(pyrange_apply_single(_tss, self, **kwargs))
 
     def has_strand_column(self) -> bool:
         return STRAND_COL in self.columns
@@ -1664,7 +1667,7 @@ class PyRanges(pd.DataFrame):
     def intersect(
         self,
         other: "PyRanges",
-        strandedness: Optional[bool] = None,
+        strand_behavior: Optional[bool] = None,
         how: Optional[str] = None,
         invert: bool = False,
     ) -> "PyRanges":
@@ -1678,7 +1681,7 @@ class PyRanges(pd.DataFrame):
 
             PyRanges to intersect.
 
-        strandedness : {None, "same", "opposite", False}, default None, i.e. auto
+        strand_behavior : {None, "same", "opposite", False}, default None, i.e. auto
 
             Whether to compare PyRanges on the same strand, the opposite or ignore strand
             information. The default, None, means use "same" if both PyRanges are strande,
@@ -1708,70 +1711,51 @@ class PyRanges(pd.DataFrame):
         Examples
         --------
 
-        >>> gr = pr.from_dict({"Chromosome": ["chr1"] * 3, "Start": [1, 4, 10],
+        >>> gr = pr.PyRanges({"Chromosome": ["chr1"] * 3, "Start": [1, 4, 10],
         ...                    "End": [3, 9, 11], "ID": ["a", "b", "c"]})
         >>> gr
-        +--------------+-----------+-----------+------------+
-        | Chromosome   |     Start |       End | ID         |
-        | (category)   |   (int64) |   (int64) | (object)   |
-        |--------------+-----------+-----------+------------|
-        | chr1         |         1 |         3 | a          |
-        | chr1         |         4 |         9 | b          |
-        | chr1         |        10 |        11 | c          |
-        +--------------+-----------+-----------+------------+
-        Unstranded PyRanges object has 3 rows and 4 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
+        Chromosome      Start      End  ID
+        object          int64    int64  object
+        ------------  -------  -------  --------
+        chr1                1        3  a
+        chr1                4        9  b
+        chr1               10       11  c
 
-        >>> gr2 = pr.from_dict({"Chromosome": ["chr1"] * 3, "Start": [2, 2, 9], "End": [3, 9, 10]})
+
+        >>> gr2 = pr.PyRanges({"Chromosome": ["chr1"] * 3, "Start": [2, 2, 9], "End": [3, 9, 10]})
         >>> gr2
-        +--------------+-----------+-----------+
-        | Chromosome   |     Start |       End |
-        | (category)   |   (int64) |   (int64) |
-        |--------------+-----------+-----------|
-        | chr1         |         2 |         3 |
-        | chr1         |         2 |         9 |
-        | chr1         |         9 |        10 |
-        +--------------+-----------+-----------+
-        Unstranded PyRanges object has 3 rows and 3 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
+        Chromosome      Start      End
+        object          int64    int64
+        ------------  -------  -------
+        chr1                2        3
+        chr1                2        9
+        chr1                9       10
 
         >>> gr.intersect(gr2)
-        +--------------+-----------+-----------+------------+
-        | Chromosome   |     Start |       End | ID         |
-        | (category)   |   (int64) |   (int64) | (object)   |
-        |--------------+-----------+-----------+------------|
-        | chr1         |         2 |         3 | a          |
-        | chr1         |         2 |         3 | a          |
-        | chr1         |         4 |         9 | b          |
-        +--------------+-----------+-----------+------------+
-        Unstranded PyRanges object has 3 rows and 4 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
+        Chromosome      Start      End  ID
+        object          int64    int64  object
+        ------------  -------  -------  --------
+        chr1                2        3  a
+        chr1                2        3  a
+        chr1                4        9  b
 
         >>> gr.intersect(gr2, how="first")
-        +--------------+-----------+-----------+------------+
-        | Chromosome   |     Start |       End | ID         |
-        | (category)   |   (int64) |   (int64) | (object)   |
-        |--------------+-----------+-----------+------------|
-        | chr1         |         2 |         3 | a          |
-        | chr1         |         4 |         9 | b          |
-        +--------------+-----------+-----------+------------+
-        Unstranded PyRanges object has 2 rows and 4 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
+        Chromosome      Start      End  ID
+        object          int64    int64  object
+        ------------  -------  -------  --------
+        chr1                2        3  a
+        chr1                4        9  b
 
         >>> gr.intersect(gr2, how="containment")
-        +--------------+-----------+-----------+------------+
-        | Chromosome   |     Start |       End | ID         |
-        | (category)   |   (int64) |   (int64) | (object)   |
-        |--------------+-----------+-----------+------------|
-        | chr1         |         4 |         9 | b          |
-        +--------------+-----------+-----------+------------+
-        Unstranded PyRanges object has 1 rows and 4 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
+        Chromosome      Start      End  ID
+        object          int64    int64  object
+        ------------  -------  -------  --------
+        chr1                4        9  b
         """
 
         kwargs = {
             "how": how,
-            "strandedness": strandedness,
+            "strand_behavior": strand_behavior,
             "sparse": {"self": False, "other": True},
         }
         kwargs = fill_kwargs(kwargs)
@@ -1782,8 +1766,8 @@ class PyRanges(pd.DataFrame):
         if invert:
             self.__ix__ = np.arange(len(self))
 
-        dfs = pyrange_apply(_intersection, self, other, **kwargs)
-        result = pr.from_dfs(dfs)
+        df = pyrange_apply(_intersection, self, other, **kwargs)
+        result = pr.PyRanges(df)
 
         if invert:
             found_idxs = getattr(result, "__ix__", [])
@@ -1795,7 +1779,7 @@ class PyRanges(pd.DataFrame):
     def join_overlaps(
         self,
         other: "PyRanges",
-        strandedness: Optional[str] = None,
+        strand_behavior: Optional[str] = None,
         how: Optional[str] = None,
         report_overlap: bool = False,
         slack: int = 0,
@@ -1811,7 +1795,7 @@ class PyRanges(pd.DataFrame):
 
             PyRanges to join.
 
-        strandedness : {None, "same", "opposite", False}, default None, i.e. auto
+        strand_behavior : {None, "same", "opposite", False}, default None, i.e. auto
 
             Whether to compare PyRanges on the same strand, the opposite or ignore strand
             information. The default, None, means use "same" if both PyRanges are strande,
@@ -1866,7 +1850,7 @@ class PyRanges(pd.DataFrame):
         Examples
         --------
 
-        >>> f1 = pr.from_dict({'Chromosome': ['chr1', 'chr1', 'chr1'], 'Start': [3, 8, 5],
+        >>> f1 = pr.PyRanges({'Chromosome': ['chr1', 'chr1', 'chr1'], 'Start': [3, 8, 5],
         ...                    'End': [6, 9, 7], 'Name': ['interval1', 'interval3', 'interval2']})
         >>> f1
         +--------------+-----------+-----------+------------+
@@ -1880,7 +1864,7 @@ class PyRanges(pd.DataFrame):
         Unstranded PyRanges object has 3 rows and 4 columns from 1 chromosomes.
         For printing, the PyRanges was sorted on Chromosome.
 
-        >>> f2 = pr.from_dict({'Chromosome': ['chr1', 'chr1'], 'Start': [1, 6],
+        >>> f2 = pr.PyRanges({'Chromosome': ['chr1', 'chr1'], 'Start': [1, 6],
         ...                    'End': [2, 7], 'Name': ['a', 'b']})
         >>> f2
         +--------------+-----------+-----------+------------+
@@ -1942,7 +1926,7 @@ class PyRanges(pd.DataFrame):
         from pyranges.methods.join import _both_dfs
 
         kwargs: Dict[str, Any] = {
-            "strandedness": strandedness,
+            "strand_behavior": strand_behavior,
             "how": how,
             "report_overlap": report_overlap,
             "suffix": suffix,
@@ -2123,7 +2107,7 @@ class PyRanges(pd.DataFrame):
 
         dfs = pyrange_apply_single(_max_disjoint, self, **kwargs)
 
-        return pr.from_dfs(dfs)
+        return pr.PyRanges(dfs)
 
     def merge_overlaps(
         self,
@@ -2273,12 +2257,12 @@ class PyRanges(pd.DataFrame):
 
             df = pyrange_apply_single(_merge_by, self, **kwargs)
 
-        return pr.from_dfs(df)
+        return pr.PyRanges(df)
 
     def nearest(
         self,
         other: "PyRanges",
-        strandedness: None = None,
+        strand_behavior: None = None,
         overlap: bool = True,
         how: Optional[str] = None,
         suffix: str = "_b",
@@ -2292,7 +2276,7 @@ class PyRanges(pd.DataFrame):
 
             PyRanges to find nearest interval in.
 
-        strandedness : {None, "same", "opposite", False}, default None, i.e. auto
+        strand_behavior : {None, "same", "opposite", False}, default None, i.e. auto
 
             Whether to compare PyRanges on the same strand, the opposite or ignore strand
             information. The default, None, means use "same" if both PyRanges are strande,
@@ -2336,7 +2320,7 @@ class PyRanges(pd.DataFrame):
         Examples
         --------
 
-        >>> f1 = pr.from_dict({'Chromosome': ['chr1', 'chr1', 'chr1'], 'Start': [3, 8, 5],
+        >>> f1 = pr.PyRanges({'Chromosome': ['chr1', 'chr1', 'chr1'], 'Start': [3, 8, 5],
         ...                    'End': [6, 9, 7], 'Strand': ['+', '+', '-']})
         >>> f1
         +--------------+-----------+-----------+--------------+
@@ -2350,7 +2334,7 @@ class PyRanges(pd.DataFrame):
         Stranded PyRanges object has 3 rows and 4 columns from 1 chromosomes.
         For printing, the PyRanges was sorted on Chromosome and Strand.
 
-        >>> f2 = pr.from_dict({'Chromosome': ['chr1', 'chr1'], 'Start': [1, 6],
+        >>> f2 = pr.PyRanges({'Chromosome': ['chr1', 'chr1'], 'Start': [1, 6],
         ...                    'End': [2, 7], 'Strand': ['+', '-']})
         >>> f2
         +--------------+-----------+-----------+--------------+
@@ -2391,7 +2375,7 @@ class PyRanges(pd.DataFrame):
         from pyranges.methods.nearest import _nearest
 
         kwargs = {
-            "strandedness": strandedness,
+            "strand_behavior": strand_behavior,
             "how": how,
             "overlap": overlap,
             "suffix": suffix,
@@ -2402,7 +2386,7 @@ class PyRanges(pd.DataFrame):
             assert other.valid_strand, "If doing upstream or downstream nearest, other pyranges must be stranded"
 
         dfs = pyrange_apply(_nearest, self, other, **kwargs)
-        gr = pr.from_dfs(dfs)
+        gr = pr.PyRanges(dfs)
 
         if not self.valid_strand and other.valid_strand:
             if apply_strand_suffix is None:
@@ -2452,7 +2436,7 @@ class PyRanges(pd.DataFrame):
         Examples
         --------
 
-        >>> gr = pr.from_dict({'Chromosome': ['chr1', 'chr1', 'chr1'],
+        >>> gr = pr.PyRanges({'Chromosome': ['chr1', 'chr1', 'chr1'],
         ...                    'Start': [3, 8, 5], 'End': [6, 9, 7]})
         >>> gr
         +--------------+-----------+-----------+
@@ -2466,7 +2450,7 @@ class PyRanges(pd.DataFrame):
         Unstranded PyRanges object has 3 rows and 3 columns from 1 chromosomes.
         For printing, the PyRanges was sorted on Chromosome.
 
-        >>> gr2 = pr.from_dict({'Chromosome': ['chr1', 'chr1'], 'Start': [1, 6],
+        >>> gr2 = pr.PyRanges({'Chromosome': ['chr1', 'chr1'], 'Start': [1, 6],
         ...                     'End': [4, 7]})
         >>> gr2
         +--------------+-----------+-----------+
@@ -2524,7 +2508,7 @@ class PyRanges(pd.DataFrame):
         Unstranded PyRanges object has 2 rows and 5 columns from 1 chromosomes.
         For printing, the PyRanges was sorted on Chromosome.
 
-        >>> j2 = pr.from_dict({"Chromosome": [1], "Start": [3],
+        >>> j2 = pr.PyRanges({"Chromosome": [1], "Start": [3],
         ...                   "End": [4], "A": [1], "B": [3], "C": [2], "D": [5]})
         >>> j2
         +--------------+-----------+-----------+-----------+-----------+-----------+-----------+
@@ -2570,13 +2554,13 @@ class PyRanges(pd.DataFrame):
 
         dfs = pyrange_apply_single(_new_position, self, **kwargs)
 
-        return pr.from_dfs(dfs)
+        return pr.PyRanges(dfs)
 
     def overlap(
         self,
         other: "PyRanges",
-        strandedness: Optional[Union[bool, str]] = None,
-        how: Optional[str] = "first",
+        strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
+        how: VALID_OVERLAP_TYPE = "first",
         invert: bool = False,
     ) -> "PyRanges":
         """Return overlapping intervals.
@@ -2589,7 +2573,7 @@ class PyRanges(pd.DataFrame):
 
             PyRanges to find overlaps with.
 
-        strandedness : {None, "same", "opposite", False}, default None, i.e. auto
+        strand_behavior : {None, "same", "opposite", False}, default None, i.e. auto
 
             Whether to compare PyRanges on the same strand, the opposite or ignore strand
             information. The default, None, means use "same" if both PyRanges are strande,
@@ -2619,33 +2603,9 @@ class PyRanges(pd.DataFrame):
         Examples
         --------
 
-        >>> gr = pr.from_dict({"Chromosome": ["chr1"] * 3, "Start": [1, 4, 10],
+        >>> gr = pr.PyRanges({"Chromosome": ["chr1", "chr2", "chr1"], "Start": [1, 4, 10],
         ...                    "End": [3, 9, 11], "ID": ["a", "b", "c"]})
-        >>> gr
-        +--------------+-----------+-----------+------------+
-        | Chromosome   |     Start |       End | ID         |
-        | (category)   |   (int64) |   (int64) | (object)   |
-        |--------------+-----------+-----------+------------|
-        | chr1         |         1 |         3 | a          |
-        | chr1         |         4 |         9 | b          |
-        | chr1         |        10 |        11 | c          |
-        +--------------+-----------+-----------+------------+
-        Unstranded PyRanges object has 3 rows and 4 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
-
-        >>> gr2 = pr.from_dict({"Chromosome": ["chr1"] * 3, "Start": [2, 2, 9], "End": [3, 9, 10]})
-        >>> gr2
-        +--------------+-----------+-----------+
-        | Chromosome   |     Start |       End |
-        | (category)   |   (int64) |   (int64) |
-        |--------------+-----------+-----------|
-        | chr1         |         2 |         3 |
-        | chr1         |         2 |         9 |
-        | chr1         |         9 |        10 |
-        +--------------+-----------+-----------+
-        Unstranded PyRanges object has 3 rows and 3 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
-
+        >>> gr2 = pr.PyRanges({"Chromosome": ["chr1", "chr1", "chr2"], "Start": [2, 2, 9], "End": [3, 9, 10]})
         >>> gr.overlap(gr2)
         +--------------+-----------+-----------+------------+
         | Chromosome   |     Start |       End | ID         |
@@ -2689,31 +2649,16 @@ class PyRanges(pd.DataFrame):
         Unstranded PyRanges object has 1 rows and 4 columns from 1 chromosomes.
         For printing, the PyRanges was sorted on Chromosome.
         """
-
-        kwargs = {
-            "strandedness": strandedness,
-            "sparse": {"self": False, "other": True},
-            "how": how,
-            "invert": invert,
-        }
-        kwargs = fill_kwargs(kwargs)
-
-        if len(self) == 0:
-            return self
-
-        if invert:
-            self = self.copy()
-            self.__ix__ = np.arange(len(self))
-
-        dfs = pyrange_apply(_overlap, self, other, **kwargs)
-        result = pr.from_dfs(dfs)
-
-        if invert:
-            found_idxs = getattr(result, "__ix__", [])
-            _result = self[~self.__ix__.isin(found_idxs)]  # type: ignore
-            return PyRanges(_result.drop("__ix__"))
-
-        return PyRanges(result)
+        return PyRanges(
+            pyrange_apply(
+                _overlap,
+                self,
+                other,
+                invert=invert,
+                how=how,
+                strand_behavior=strand_behavior,
+            )
+        )
 
     def sample(self, *args, **kwargs) -> "PyRanges":
         return PyRanges(super().sample(*args, **kwargs))
@@ -2721,7 +2666,7 @@ class PyRanges(pd.DataFrame):
     def set_intersect(
         self,
         other: "PyRanges",
-        strandedness: Optional[str] = None,
+        strand_behavior: Optional[str] = None,
         how: Optional[str] = None,
         new_pos: bool = False,
     ) -> "PyRanges":
@@ -2735,7 +2680,7 @@ class PyRanges(pd.DataFrame):
 
             PyRanges to set-intersect.
 
-        strandedness : {None, "same", "opposite", False}, default None, i.e. auto
+        strand_behavior : {None, "same", "opposite", False}, default None, i.e. auto
 
             Whether to compare PyRanges on the same strand, the opposite or ignore strand
             information. The default, None, means use "same" if both PyRanges are strande,
@@ -2761,7 +2706,7 @@ class PyRanges(pd.DataFrame):
         Examples
         --------
 
-        >>> gr = pr.from_dict({"Chromosome": ["chr1"] * 3, "Start": [1, 4, 10],
+        >>> gr = pr.PyRanges({"Chromosome": ["chr1"] * 3, "Start": [1, 4, 10],
         ...                    "End": [3, 9, 11], "ID": ["a", "b", "c"]})
         >>> gr
         +--------------+-----------+-----------+------------+
@@ -2775,7 +2720,7 @@ class PyRanges(pd.DataFrame):
         Unstranded PyRanges object has 3 rows and 4 columns from 1 chromosomes.
         For printing, the PyRanges was sorted on Chromosome.
 
-        >>> gr2 = pr.from_dict({"Chromosome": ["chr1"] * 3, "Start": [2, 2, 9], "End": [3, 9, 10]})
+        >>> gr2 = pr.PyRanges({"Chromosome": ["chr1"] * 3, "Start": [2, 2, 9], "End": [3, 9, 10]})
         >>> gr2
         +--------------+-----------+-----------+
         | Chromosome   |     Start |       End |
@@ -2824,19 +2769,19 @@ class PyRanges(pd.DataFrame):
         """
 
         kwargs = {
-            "strandedness": strandedness,
+            "strand_behavior": strand_behavior,
             "how": how,
             "new_pos": new_pos,
         }
         kwargs = fill_kwargs(kwargs)
-        strand = True if strandedness else False
+        strand = True if strand_behavior else False
         self_clusters = self.merge_overlaps(strand=strand)
         other_clusters = other.merge_overlaps(strand=strand)
         dfs = pyrange_apply(_intersection, self_clusters, other_clusters, **kwargs)
 
-        return pr.from_dfs(dfs)
+        return pr.PyRanges(dfs)
 
-    def set_union(self, other: "PyRanges", strandedness: None = None) -> "PyRanges":
+    def set_union(self, other: "PyRanges", strand_behavior: None = None) -> "PyRanges":
         """Return set-theoretical union.
 
         Parameters
@@ -2845,7 +2790,7 @@ class PyRanges(pd.DataFrame):
 
             PyRanges to do union with.
 
-        strandedness : {None, "same", "opposite", False}, default None, i.e. auto
+        strand_behavior : {None, "same", "opposite", False}, default None, i.e. auto
 
             Whether to compare PyRanges on the same strand, the opposite or ignore strand
             information. The default, None, means use "same" if both PyRanges are strande,
@@ -2866,7 +2811,7 @@ class PyRanges(pd.DataFrame):
         Examples
         --------
 
-        >>> gr = pr.from_dict({"Chromosome": ["chr1"] * 3, "Start": [1, 4, 10],
+        >>> gr = pr.PyRanges({"Chromosome": ["chr1"] * 3, "Start": [1, 4, 10],
         ...                    "End": [3, 9, 11], "ID": ["a", "b", "c"]})
         >>> gr
         +--------------+-----------+-----------+------------+
@@ -2880,7 +2825,7 @@ class PyRanges(pd.DataFrame):
         Unstranded PyRanges object has 3 rows and 4 columns from 1 chromosomes.
         For printing, the PyRanges was sorted on Chromosome.
 
-        >>> gr2 = pr.from_dict({"Chromosome": ["chr1"] * 3, "Start": [2, 2, 9], "End": [3, 9, 10]})
+        >>> gr2 = pr.PyRanges({"Chromosome": ["chr1"] * 3, "Start": [2, 2, 9], "End": [3, 9, 10]})
         >>> gr2
         +--------------+-----------+-----------+
         | Chromosome   |     Start |       End |
@@ -2907,13 +2852,13 @@ class PyRanges(pd.DataFrame):
         if self.empty and other.empty:
             return pr.PyRanges()
 
-        strand = True if strandedness else False
+        strand = True if strand_behavior else False
 
         if not strand:
             self = self.remove_strand()
             other = other.remove_strand()
 
-        if strandedness == "opposite" and len(other):
+        if strand_behavior == "opposite" and len(other):
             other = other.copy()
             other.Strand = other.Strand.replace({"+": "-", "-": "+"})
 
@@ -2953,7 +2898,7 @@ class PyRanges(pd.DataFrame):
         Examples
         --------
 
-        >>> p  = pr.from_dict({"Chromosome": [1, 1, 1, 1, 1, 1],
+        >>> p  = pr.PyRanges({"Chromosome": [1, 1, 1, 1, 1, 1],
         ...                    "Strand": ["+", "+", "-", "-", "+", "+"],
         ...                    "Start": [40, 1, 10, 70, 140, 160],
         ...                    "End": [60, 11, 25, 80, 152, 190],
@@ -3026,7 +2971,7 @@ class PyRanges(pd.DataFrame):
             kwargs["by"] = by
 
         kwargs = fill_kwargs(kwargs)
-        return pr.from_dfs(pyrange_apply_single(_sort, self, **kwargs))
+        return pr.PyRanges(pyrange_apply_single(_sort, self, **kwargs))
 
     def sp(self, n=30, formatting=None):
         """Sort on location and print.
@@ -3109,7 +3054,7 @@ class PyRanges(pd.DataFrame):
 
         Examples
         --------
-        >>> p  = pr.from_dict({"Chromosome": [1, 1, 2, 2, 3],
+        >>> p  = pr.PyRanges({"Chromosome": [1, 1, 2, 2, 3],
         ...                   "Strand": ["+", "+", "-", "-", "+"],
         ...                   "Start": [1, 40, 10, 70, 140],
         ...                   "End": [11, 60, 25, 80, 152],
@@ -3204,7 +3149,7 @@ class PyRanges(pd.DataFrame):
 
         result = pyrange_apply_single(_spliced_subseq, sorted_p, **kwargs)
 
-        return pr.from_dfs(result)
+        return pr.PyRanges(result)
 
     def split(self, strand: Optional[bool] = None, between: bool = False) -> "PyRanges":
         """Split into non-overlapping intervals.
@@ -3235,7 +3180,7 @@ class PyRanges(pd.DataFrame):
 
         >>> d = {'Chromosome': ['chr1', 'chr1', 'chr1', 'chr1'], 'Start': [3, 5, 5, 11],
         ...       'End': [6, 9, 7, 12], 'Strand': ['+', '+', '-', '-']}
-        >>> gr = pr.from_dict(d)
+        >>> gr = pr.PyRanges(d)
         >>> gr
         +--------------+-----------+-----------+--------------+
         | Chromosome   |     Start |       End | Strand       |
@@ -3317,10 +3262,10 @@ class PyRanges(pd.DataFrame):
 
         df = pyrange_apply_single(_split, self, **kwargs)
 
-        split = pr.from_dfs(df)
+        split = pr.PyRanges(df)
         if not between:
-            strandedness: Union[str, bool] = "same" if strand else False
-            split = split.overlap(self, strandedness=strandedness)
+            strand_behavior: Union[str, bool] = "same" if strand else False
+            split = split.overlap(self, strand_behavior=strand_behavior)
 
         return split
 
@@ -3343,7 +3288,7 @@ class PyRanges(pd.DataFrame):
 
         >>> d =  {'Chromosome': ['chr1', 'chr1'], 'Start': [1, 6],
         ...       'End': [5, 8], 'Strand': ['+', '.']}
-        >>> gr = pr.from_dict(d)
+        >>> gr = pr.PyRanges(d)
         >>> gr
         +--------------+-----------+-----------+--------------+
         | Chromosome   |     Start |       End | Strand       |
@@ -3365,7 +3310,7 @@ class PyRanges(pd.DataFrame):
         if STRAND_COL not in self.columns and len(self) > 0:
             return False
         else:
-            return self[STRAND_COL].isin([FORWARD_STRAND, REVERSE_STRAND]).all()
+            return self[STRAND_COL].isin(VALID_GENOMIC_STRAND_INFO).all()
 
     @property
     def strands(self) -> List[Union[Any, str]]:
@@ -3385,7 +3330,7 @@ class PyRanges(pd.DataFrame):
         --------
         >>> d =  {'Chromosome': ['chr1', 'chr1'], 'Start': [1, 6],
         ...       'End': [5, 8], 'Strand': ['+', '.']}
-        >>> gr = pr.from_dict(d)
+        >>> gr = pr.PyRanges(d)
         >>> gr
         +--------------+-----------+-----------+--------------+
         | Chromosome   |     Start |       End | Strand       |
@@ -3566,7 +3511,7 @@ class PyRanges(pd.DataFrame):
 
         Examples
         --------
-        >>> p  = pr.from_dict({"Chromosome": [1, 1, 2, 2, 3],
+        >>> p  = pr.PyRanges({"Chromosome": [1, 1, 2, 2, 3],
         ...                   "Strand": ["+", "+", "-", "-", "+"],
         ...                   "Start": [1, 40, 2, 30, 140],
         ...                   "End": [20, 60, 13, 45, 155],
@@ -3648,16 +3593,16 @@ class PyRanges(pd.DataFrame):
 
         result = pyrange_apply_single(_subseq, self, **kwargs)
 
-        return pr.from_dfs(result)
+        return pr.PyRanges(result)
 
     def range_subtract(
-        self, other: "PyRanges", strandedness: None = None
+        self, other: "PyRanges", strand_behavior: None = None
     ) -> "PyRanges":
         """Subtract intervals.
 
         Parameters
         ----------
-        strandedness : {None, "same", "opposite", False}, default None, i.e. auto
+        strand_behavior : {None, "same", "opposite", False}, default None, i.e. auto
 
             Whether to compare PyRanges on the same strand, the opposite or ignore strand
             information. The default, None, means use "same" if both PyRanges are strande,
@@ -3670,9 +3615,9 @@ class PyRanges(pd.DataFrame):
         Examples
         --------
 
-        >>> gr = pr.from_dict({"Chromosome": ["chr1"] * 3, "Start": [1, 4, 10],
+        >>> gr = pr.PyRanges({"Chromosome": ["chr1"] * 3, "Start": [1, 4, 10],
         ...                    "End": [3, 9, 11], "ID": ["a", "b", "c"]})
-        >>> gr2 = pr.from_dict({"Chromosome": ["chr1"] * 3, "Start": [2, 2, 9], "End": [3, 9, 10]})
+        >>> gr2 = pr.PyRanges({"Chromosome": ["chr1"] * 3, "Start": [2, 2, 9], "End": [3, 9, 10]})
         >>> gr
         +--------------+-----------+-----------+------------+
         | Chromosome   |     Start |       End | ID         |
@@ -3712,23 +3657,23 @@ class PyRanges(pd.DataFrame):
         from pyranges.methods.subtraction import _subtraction
 
         kwargs = {
-            "strandedness": strandedness,
+            "strand_behavior": strand_behavior,
             "sparse": {"self": False, "other": True},
         }
         kwargs = fill_kwargs(kwargs)
 
-        strand = True if strandedness else False
+        strand = True if strand_behavior else False
         other_clusters = other.merge_overlaps(strand=strand)
 
         _self = self.copy()
 
         _self = _self.count_overlaps(
-            other_clusters, strandedness=strandedness, overlap_col="__num__"
+            other_clusters, strand_behavior=strand_behavior, overlap_col="__num__"
         )
 
         result = pyrange_apply(_subtraction, _self, other_clusters, **kwargs)
 
-        return PyRanges(pr.from_dfs(result).drop("__num__"))
+        return PyRanges(pr.PyRanges(result).drop("__num__"))
 
     def summary(
         self, to_stdout: bool = True, return_df: bool = False
@@ -3996,7 +3941,7 @@ class PyRanges(pd.DataFrame):
         See Also
         --------
 
-        PyRanges.from_dict : create PyRanges from dict
+        PyRanges.PyRanges : create PyRanges from dict
 
         Examples
         --------
@@ -4023,7 +3968,7 @@ class PyRanges(pd.DataFrame):
         >>> d = gr.to_example(n=4)
         >>> d
         {'Chromosome': ['chr1', 'chr1', 'chrY', 'chrY'], 'Start': [212609534, 169887529, 8010951, 7405376], 'End': [212609559, 169887554, 8010976, 7405401], 'Name': ['U0', 'U0', 'U0', 'U0'], 'Score': [0, 0, 0, 0], 'Strand': ['+', '+', '-', '-']}
-        >>> pr.from_dict(d)
+        >>> pr.PyRanges(d)
         +--------------+-----------+-----------+------------+-----------+--------------+
         | Chromosome   |     Start |       End | Name       |     Score | Strand       |
         | (category)   |   (int64) |   (int64) | (object)   |   (int64) | (category)   |
@@ -4070,7 +4015,7 @@ class PyRanges(pd.DataFrame):
 
         >>> d =  {'Chromosome': ['chr1', 'chr1'], 'Start': [1, 6],
         ...       'End': [5, 8], 'Strand': ['+', '-']}
-        >>> gr = pr.from_dict(d)
+        >>> gr = pr.PyRanges(d)
         >>> gr
         +--------------+-----------+-----------+--------------+
         | Chromosome   |     Start |       End | Strand       |
@@ -4097,7 +4042,7 @@ class PyRanges(pd.DataFrame):
 
         assert self.valid_strand, "Need stranded pyrange to find 3'."
         kwargs = fill_kwargs({"strand": True})
-        return pr.from_dfs(pyrange_apply_single(_tes, self, **kwargs))
+        return pr.PyRanges(pyrange_apply_single(_tes, self, **kwargs))
 
     #     def to_bam(self, path=None, header=None, chromosome_sizes=None, chain=False):
 
@@ -4176,7 +4121,7 @@ class PyRanges(pd.DataFrame):
 
         >>> d =  {'Chromosome': ['chr1', 'chr1'], 'Start': [1, 6],
         ...       'End': [5, 8], 'Strand': ['+', '-'], "Gene": [1, 2]}
-        >>> gr = pr.from_dict(d)
+        >>> gr = pr.PyRanges(d)
         >>> gr
         +--------------+-----------+-----------+--------------+-----------+
         | Chromosome   |     Start |       End | Strand       |      Gene |
@@ -4279,7 +4224,7 @@ class PyRanges(pd.DataFrame):
         >>> d =  {'Chromosome': ['chr1', 'chr1', 'chr1'], 'Start': [1, 4, 6],
         ...       'End': [7, 8, 10], 'Strand': ['+', '-', '-'],
         ...       'Value': [10, 20, 30]}
-        >>> gr = pr.from_dict(d)
+        >>> gr = pr.PyRanges(d)
         >>> gr
         +--------------+-----------+-----------+--------------+-----------+
         | Chromosome   |     Start |       End | Strand       |     Value |
@@ -4408,7 +4353,7 @@ class PyRanges(pd.DataFrame):
         --------
 
         >>> d = {"Chromosome": [1] * 3, "Start": [1, 3, 5], "End": [4, 6, 9], "Feature": ["gene", "exon", "exon"]}
-        >>> gr = pr.from_dict(d)
+        >>> gr = pr.PyRanges(d)
         >>> gr.to_gff3()
         '1\\t.\\tgene\\t2\\t4\\t.\\t.\\t.\\t\\n1\\t.\\texon\\t4\\t6\\t.\\t.\\t.\\t\\n1\\t.\\texon\\t6\\t9\\t.\\t.\\t.\\t\\n'
 
@@ -4516,7 +4461,7 @@ class PyRanges(pd.DataFrame):
         --------
 
         >>> d = {"Chromosome": [1] * 3, "Start": [1, 3, 5], "End": [4, 6, 9], "Feature": ["gene", "exon", "exon"]}
-        >>> gr = pr.from_dict(d)
+        >>> gr = pr.PyRanges(d)
         >>> gr.to_gtf()  # the raw string output
         '1\\t.\\tgene\\t2\\t4\\t.\\t.\\t.\\t\\n1\\t.\\texon\\t4\\t6\\t.\\t.\\t.\\t\\n1\\t.\\texon\\t6\\t9\\t.\\t.\\t.\\t\\n'
 
@@ -4583,7 +4528,7 @@ class PyRanges(pd.DataFrame):
 
         >>> d = {'Chromosome': ['chr1', 'chr1', 'chr1'], 'Start': [3, 8, 5],
         ...      'End': [6, 9, 7], 'Score': [0.1, 5, 3.14], 'Strand': ['+', '+', '-']}
-        >>> gr = pr.from_dict(d)
+        >>> gr = pr.PyRanges(d)
         >>> gr.to_rle()
         chr1 +
         --
@@ -4680,7 +4625,7 @@ class PyRanges(pd.DataFrame):
 
         >>> d =  {'Chromosome': ['chr1', 'chr1'], 'Start': [1, 6],
         ...       'End': [5, 8], 'Strand': ['+', '-']}
-        >>> gr = pr.from_dict(d)
+        >>> gr = pr.PyRanges(d)
         >>> gr
         +--------------+-----------+-----------+--------------+
         | Chromosome   |     Start |       End | Strand       |
@@ -4742,46 +4687,26 @@ class PyRanges(pd.DataFrame):
         --------
 
         >>> import pyranges as pr
-        >>> gr = pr.from_dict({"Chromosome": [1], "Start": [895], "End": [1259]})
+        >>> gr = pr.PyRanges({"Chromosome": [1], "Start": [895], "End": [1259]})
         >>> gr
-        +--------------+-----------+-----------+
-        |   Chromosome |     Start |       End |
-        |   (category) |   (int64) |   (int64) |
-        |--------------+-----------+-----------|
-        |            1 |       895 |      1259 |
-        +--------------+-----------+-----------+
-        Unstranded PyRanges object has 1 rows and 3 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
+          Chromosome    Start      End
+               int64    int64    int64
+        ------------  -------  -------
+                   1      895     1259
+
 
         >>> gr.window(200)
-        +--------------+-----------+-----------+
-        |   Chromosome |     Start |       End |
-        |   (category) |   (int64) |   (int64) |
-        |--------------+-----------+-----------|
-        |            1 |       895 |      1095 |
-        |            1 |      1095 |      1259 |
-        +--------------+-----------+-----------+
-        Unstranded PyRanges object has 2 rows and 3 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
+          Chromosome    Start      End
+               int64    int64    int64
+        ------------  -------  -------
+                   1      895     1095
+                   1     1095     1259
+
 
         >>> gr2 = pr.data.ensembl_gtf()[["Feature", "gene_name"]]
         >>> gr2
-        +--------------+--------------+-----------+-----------+--------------+-------------+
-        | Chromosome   | Feature      | Start     | End       | Strand       | gene_name   |
-        | (category)   | (category)   | (int64)   | (int64)   | (category)   | (object)    |
-        |--------------+--------------+-----------+-----------+--------------+-------------|
-        | 1            | gene         | 11868     | 14409     | +            | DDX11L1     |
-        | 1            | transcript   | 11868     | 14409     | +            | DDX11L1     |
-        | 1            | exon         | 11868     | 12227     | +            | DDX11L1     |
-        | 1            | exon         | 12612     | 12721     | +            | DDX11L1     |
-        | ...          | ...          | ...       | ...       | ...          | ...         |
-        | 1            | gene         | 1173055   | 1179555   | -            | TTLL10-AS1  |
-        | 1            | transcript   | 1173055   | 1179555   | -            | TTLL10-AS1  |
-        | 1            | exon         | 1179364   | 1179555   | -            | TTLL10-AS1  |
-        | 1            | exon         | 1173055   | 1176396   | -            | TTLL10-AS1  |
-        +--------------+--------------+-----------+-----------+--------------+-------------+
-        Stranded PyRanges object has 2,446 rows and 6 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
+
+
 
         >>> gr2 = pr.data.ensembl_gtf()[["Feature", "gene_name"]]
         >>> gr2.window(1000)
@@ -4814,9 +4739,46 @@ class PyRanges(pd.DataFrame):
             "window_size": window_size,
         }
 
-        dfs = pyrange_apply_single(_windows, self, **kwargs)
+        df = pyrange_apply_single(_windows, self, **kwargs)
+        print(df)
+        return PyRanges(df)
 
-        return pr.from_dfs(dfs)
+    def get_cols(self, key: str | Iterable[str]) -> "pr.PyRanges":
+        """
+        Return the requested columns and the genome location columns.
+
+        Parameters
+        ----------
+        key
+            Columns to return. Either a string or an iterable of strings.
+
+        Returns
+        -------
+        PyRanges
+
+            PyRanges with the requested columns.
+
+        >>> gr = pr.PyRanges({"Chromosome": [1], "Start": [895], "End": [1259], "Strand": ["+"], "Score": [1], "Score2": [2]})
+        >>> gr["Score2"]
+          Chromosome    Start      End  Strand      Score2
+               int64    int64    int64  object       int64
+        ------------  -------  -------  --------  --------
+                   1      895     1259  +                2
+        >>> gr[["Score2"]]
+          Chromosome    Start      End  Strand      Score2
+               int64    int64    int64  object       int64
+        ------------  -------  -------  --------  --------
+                   1      895     1259  +                2
+        """
+        keys = [key] if isinstance(key, str) else key
+
+        missing_loc_cols = [
+            col
+            for col in GENOME_LOC_COLS_WITH_STRAND
+            if col not in keys and col in self.columns
+        ]
+
+        return PyRanges(super().__getitem__(missing_loc_cols + keys))
 
     def __getstate__(self):
         return self.dfs
@@ -4837,11 +4799,11 @@ class PyRanges(pd.DataFrame):
         if strand:
             for k in keys:
                 assert isinstance(k, tuple)
-            return pr.from_dfs(dict(zip(keys, dfs)))
+            return pr.PyRanges(dict(zip(keys, dfs)))
         else:
             for k in keys:
                 assert isinstance(k, str)
-            return pr.from_dfs(dict(zip(keys, dfs)))
+            return pr.PyRanges(dict(zip(keys, dfs)))
 
     @property
     def _dfs_without_strand(self) -> Dict[str, pd.DataFrame]:

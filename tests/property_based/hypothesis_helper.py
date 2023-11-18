@@ -119,7 +119,7 @@ def dfs_min2(draw):  # nosec
 
 
 @st.composite
-def dfs_min(draw):  # nosec
+def dfs_min(draw):
     df = draw(better_dfs_min)
     # strand = draw(use_strand)
     df.loc[:, "End"] += df.Start
@@ -127,23 +127,8 @@ def dfs_min(draw):  # nosec
     df.insert(3, "Name", "a")
     df.insert(4, "Score", 0)
 
-    # df.Start = df.Start.astype(np.int32)
-    # df.End = df.End.astype(np.int32)
-    # print(df.dtypes)
-    # stranded = draw(st.booleans())
-    # if not strand:
-    #     df = df.drop("Strand", axis=1)
-
-    gr = PyRanges(df)
-    # print(gr)
-    # raise
-    # gr = PyRanges(df)
-
-    # do not sort like this, use pyranges sort
-    # np.random.seed(draw(st.integers(min_value=0, max_value=int(1e6))))
-    # gr.df = df.reindex(np.random.permutation(df.index.values))
-
-    return gr
+    print(df)
+    return PyRanges(df)
 
 
 @st.composite

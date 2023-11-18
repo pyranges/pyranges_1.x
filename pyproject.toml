@@ -38,3 +38,8 @@ inputs = ['pyranges']
 
 [project.urls]
 Homepage="http://github.com/pyranges/pyranges"
+
+# [tool.pytest.ini_options]
+# markers = [
+#     "bedtools: requires bedtools"
+# ]

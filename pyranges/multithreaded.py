@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Tuple, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Tuple, Union, Literal
 
 import numpy as np
 import pandas as pd
@@ -11,6 +11,11 @@ from pyranges.names import (
     STRAND_COL,
     GENOME_LOC_COLS_WITH_STRAND,
     __TEMP_INDEX_COL__,
+    VALID_STRAND_BEHAVIOR_OPTIONS,
+    STRAND_BEHAVIOR_OPPOSITE,
+    VALID_STRAND_BEHAVIOR_TYPE,
+    STRAND_BEHAVIOR_AUTO,
+    STRAND_BEHAVIOR_IGNORE,
 )
 
 if TYPE_CHECKING:
@@ -103,28 +108,34 @@ def make_unary_sparse(kwargs: Dict[str, Any], df: DataFrame) -> DataFrame:
     return make_sparse(df) if sparse else df
 
 
+def _group_keys(
+    self: "PyRanges",
+    other: "PyRanges",
+    strand_behavior: VALID_STRAND_BEHAVIOR_TYPE,
+) -> bool:
+    include_strand = True
+    if strand_behavior == STRAND_BEHAVIOR_AUTO:
+        include_strand = self.valid_strand and other.valid_strand
+    elif strand_behavior == STRAND_BEHAVIOR_IGNORE:
+        include_strand = False
+    return [CHROM_COL, STRAND_COL] if include_strand else [CHROM_COL]
+
 def pyrange_apply(
     function: Callable,
     self: "PyRanges",
     other: "PyRanges",
+    strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
     **kwargs,
 ) -> pd.DataFrame:
-    strandedness = kwargs["strandedness"]
-
     other_strand = {"+": "-", "-": "+"}
     same_strand = {"+": "+", "-": "-"}
 
-    if strandedness == "opposite":
+    if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
         strand_dict = other_strand
     else:
         strand_dict = same_strand
 
-    assert strandedness in ["same", "opposite", False, None]
-
-    if strandedness == "opposite":
-        assert (
-            self.valid_strand and other.valid_strand
-        ), "Can only do opposite strand operations when both PyRanges contain valid strand info."
+    ensure_strand_options_valid(other, self, strand_behavior)
 
     results = []
 
@@ -134,10 +145,7 @@ def pyrange_apply(
     self = self.reset_index() if should_reset_index_self else self
     other = other.reset_index() if should_reset_index_other else other
 
-    strand_and_chrom = strandedness or (
-        self.valid_strand and other.valid_strand and strandedness is None
-    )
-    grpby_ks = [CHROM_COL, STRAND_COL] if strand_and_chrom else [CHROM_COL]
+    grpby_ks = _group_keys(self, other, strand_behavior)
 
     others = dict(list(other.groupby(grpby_ks, observed=True)))
     empty = pr.empty(columns=other.columns, dtype=other.dtypes)
@@ -148,10 +156,21 @@ def pyrange_apply(
     return result.set_index(original_index) if should_reset_index_self else result
 
 
+def ensure_strand_options_valid(other, self, strand_behavior):
+    if strand_behavior not in VALID_STRAND_BEHAVIOR_OPTIONS:
+        msg = f"{VALID_STRAND_BEHAVIOR_OPTIONS} are the only valid values for strand_behavior."
+        raise ValueError(msg)
+    if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
+        assert (
+            self.valid_strand and other.valid_strand
+        ), "Can only do opposite strand operations when both PyRanges contain valid strand info."
+
+
 def pyrange_apply_single(
     function: Callable, self: "PyRanges", **kwargs
 ) -> pd.DataFrame:
     strand = kwargs["strand"]
+    print(strand)
 
     if strand and not STRAND_COL in self.columns:
         msg = "Can only do stranded operation when PyRange contains strand info"
@@ -176,15 +195,18 @@ def pyrange_apply_single(
         else:
             original_index = (
                 self.index.names if self.index.name is None else self.index.names
-        )
+            )
         self = self.reset_index().set_index(
             pd.Series(name=__TEMP_INDEX_COL__, data=range_index), append=False
         )
-        res = (
-            self.groupby(keys, as_index=False, observed=True)
-            .apply(function, **kwargs)
+        res = self.groupby(keys, as_index=False, observed=True).apply(
+            function, **kwargs
         )
-        return res.reset_index(drop=True) if original_index is None else res.set_index(original_index)
+        return (
+            res.reset_index(drop=True)
+            if original_index is None
+            else res.set_index(original_index)
+        )
 
 
 def _lengths(df):
