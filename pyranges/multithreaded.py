@@ -131,10 +131,7 @@ def pyrange_apply(
     other_strand = {"+": "-", "-": "+"}
     same_strand = {"+": "+", "-": "-"}
 
-    if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
-        strand_dict = other_strand
-    else:
-        strand_dict = same_strand
+    strand_dict = other_strand if strand_behavior == STRAND_BEHAVIOR_OPPOSITE else same_strand
 
     ensure_strand_options_valid(other, self, strand_behavior)
 
@@ -151,6 +148,8 @@ def pyrange_apply(
     others = dict(list(other.groupby(grpby_ks, observed=True)))
     empty = pr.empty(columns=other.columns, dtype=other.dtypes)
     for key, gdf in self.groupby(grpby_ks, observed=True):
+        if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
+            key = key[0], strand_dict[key[1]]
         ogdf = others.get(key, empty)
         results.append(function(gdf, ogdf, **kwargs))
     result = pd.concat(results)

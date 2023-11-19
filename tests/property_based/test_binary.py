@@ -169,32 +169,6 @@ def test_overlap(gr, gr2, strandedness):
 
     compare_results(bedtools_df, result)
 
-
-@pytest.mark.bedtools
-@pytest.mark.parametrize("strandedness", strandedness)
-@settings(
-    max_examples=max_examples,
-    deadline=deadline,
-    print_blob=True,
-)
-@given(gr=dfs_min(), gr2=dfs_min())  # pylint: disable=no-value-for-parameter
-def test_intersect(gr, gr2, strandedness):
-    intersect_command = "bedtools intersect {strand} -a {f1} -b {f2}"
-
-    bedtools_result = run_bedtools(intersect_command, gr, gr2, strandedness)
-
-    bedtools_df = pd.read_csv(
-        StringIO(bedtools_result),
-        header=None,
-        names="Chromosome Start End Name Score Strand".split(),
-        sep="\t",
-    )
-
-    result = gr.intersect(gr2, strandedness=strandedness)
-
-    compare_results(bedtools_df, result)
-
-
 @pytest.mark.bedtools
 @pytest.mark.parametrize("strandedness", strandedness)
 @settings(

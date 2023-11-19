@@ -154,7 +154,7 @@ def count_overlaps(
     else:
         features = features.copy()
 
-    from pyranges.methods.intersection import _count_overlaps
+    from pyranges.methods.overlap import _count_overlaps
 
     for name, gr in grs.items():
         gr = gr[[c for c in gr.columns if c in GENOME_LOC_COLS_WITH_STRAND]]

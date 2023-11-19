@@ -5,7 +5,7 @@ from typing import Literal, Iterable
 import pandas as pd
 from tabulate import tabulate
 
-from pyranges.methods.intersection import _overlap
+from pyranges.methods.overlap import _overlap
 from pyranges.names import RANGE_COLS
 from pyranges.tostring import adjust_table_width, tostring
 
