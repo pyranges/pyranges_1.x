@@ -22,6 +22,7 @@ For printing, the PyRanges was sorted on Chromosome and Strand.
 """
 import io
 import tempfile
+from functools import cached_property
 from pathlib import Path
 
 import pandas as pd
@@ -47,7 +48,7 @@ __all__ = [
 
 
 class ExampleData:
-    @property
+    @cached_property
     def ensembl_gtf(self) -> "pr.PyRanges":
         """Example gtf file from Ensembl."""
 

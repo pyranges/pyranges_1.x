@@ -42,7 +42,7 @@ from pyranges.names import (
     VALID_GENOMIC_STRAND_INFO,
     VALID_STRAND_BEHAVIOR_TYPE,
     VALID_OVERLAP_TYPE,
-    CHROM_COL,
+    CHROM_COL, RANGE_COLS,
 )
 from pyranges.tostring import adjust_table_width
 
@@ -279,7 +279,7 @@ class PyRanges(pr.RangeFrame):
         Contains 3 chromosomes and 6 strands (including non-genomic strands: ., /, X, ...).
         >>> gr = PyRanges({"Chromosome": [1], "Start": [1], "End": [2], "Strand": ["+"], "Name": ["Sonic The Hedgehog"], "gene_id": ["ENSG00000188976"], "short_gene_name": ["SHH"], "type": ["transcript"]})
         >>> str_repr = gr.__str__(max_col_width=10, max_total_width=80)
-        >>> print(str_repr)
+        >>> print(str_repr)  # using print to show \\n as actual newlines
           Chromosome    Start      End  Strand    Name        gene_id     ...
                int64    int64    int64  object    object      object      ...
         ------------  -------  -------  --------  ----------  ----------  -----
@@ -323,7 +323,6 @@ class PyRanges(pr.RangeFrame):
 
     def __array_ufunc__(self, *args, **kwargs) -> "PyRanges":
         """Apply unary numpy-function.
-
 
         Apply function to all columns which are not index, i.e. Chromosome,
         Start, End nor Strand.
@@ -1615,96 +1614,35 @@ class PyRanges(pr.RangeFrame):
         >>> gr = pr.PyRanges({'Chromosome': ['chr1', 'chr1'], 'Start': [3, 5], 'End': [9, 7],
         ...                    'Strand': ["+", "-"]})
         >>> gr
-        +--------------+-----------+-----------+--------------+
-        | Chromosome   |     Start |       End | Strand       |
-        | (category)   |   (int64) |   (int64) | (category)   |
-        |--------------+-----------+-----------+--------------|
-        | chr1         |         3 |         9 | +            |
-        | chr1         |         5 |         7 | -            |
-        +--------------+-----------+-----------+--------------+
-        Stranded PyRanges object has 2 rows and 4 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
+        Chromosome      Start      End  Strand
+        object          int64    int64  object
+        ------------  -------  -------  --------
+        chr1                3        9  +
+        chr1                5        7  -
+        PyRanges with 2 rows and 4 columns.
+        Contains 1 chromosomes and 2 strands.
 
         >>> gr.five_end()
-        +--------------+-----------+-----------+--------------+
-        | Chromosome   |     Start |       End | Strand       |
-        | (category)   |   (int64) |   (int64) | (category)   |
-        |--------------+-----------+-----------+--------------|
-        | chr1         |         3 |         4 | +            |
-        | chr1         |         6 |         7 | -            |
-        +--------------+-----------+-----------+--------------+
-        Stranded PyRanges object has 2 rows and 4 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
+        Chromosome      Start      End  Strand
+        object          int64    int64  object
+        ------------  -------  -------  --------
+        chr1                3        4  +
+        chr1                6        7  -
+        PyRanges with 2 rows and 4 columns.
+        Contains 1 chromosomes and 2 strands.
         """
 
-        assert self.strand_values_valid, "Need stranded pyrange to find 5'."
-        kwargs = fill_kwargs({"strand": self.strand_values_valid})
-        return pr.PyRanges(pyrange_apply_single(_tss, self, **kwargs))
+        if not (self.has_strand_column and self.strand_values_valid):
+            msg = f"Need PyRanges with valid strands ({VALID_GENOMIC_STRAND_INFO}) to find 5'."
+            raise AssertionError(msg)
+        return pr.PyRanges(pyrange_apply_single(_tss, self, strand=True))
 
     @property
     def has_strand_column(self) -> bool:
         return STRAND_COL in self.columns
 
-    def head(self, n: int = 8) -> "PyRanges":
-        """Return the n first rows.
-
-        Parameters
-        ----------
-
-        n : int, default 8
-
-            Return n rows.
-
-        Returns
-        -------
-        PyRanges
-
-            PyRanges with the n first rows.
-
-        See Also
-        --------
-
-        PyRanges.tail : return the last rows
-        PyRanges.sample : return random rows
-
-        Examples
-        --------
-
-        >>> gr = pr.data.chipseq()
-        >>> gr
-        +--------------+-----------+-----------+------------+-----------+--------------+
-        | Chromosome   | Start     | End       | Name       | Score     | Strand       |
-        | (category)   | (int64)   | (int64)   | (object)   | (int64)   | (category)   |
-        |--------------+-----------+-----------+------------+-----------+--------------|
-        | chr1         | 212609534 | 212609559 | U0         | 0         | +            |
-        | chr1         | 169887529 | 169887554 | U0         | 0         | +            |
-        | chr1         | 216711011 | 216711036 | U0         | 0         | +            |
-        | chr1         | 144227079 | 144227104 | U0         | 0         | +            |
-        | ...          | ...       | ...       | ...        | ...       | ...          |
-        | chrY         | 15224235  | 15224260  | U0         | 0         | -            |
-        | chrY         | 13517892  | 13517917  | U0         | 0         | -            |
-        | chrY         | 8010951   | 8010976   | U0         | 0         | -            |
-        | chrY         | 7405376   | 7405401   | U0         | 0         | -            |
-        +--------------+-----------+-----------+------------+-----------+--------------+
-        Stranded PyRanges object has 10,000 rows and 6 columns from 24 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
-
-        >>> gr.head(3)
-        +--------------+-----------+-----------+------------+-----------+--------------+
-        | Chromosome   |     Start |       End | Name       |     Score | Strand       |
-        | (category)   |   (int64) |   (int64) | (object)   |   (int64) | (category)   |
-        |--------------+-----------+-----------+------------+-----------+--------------|
-        | chr1         | 212609534 | 212609559 | U0         |         0 | +            |
-        | chr1         | 169887529 | 169887554 | U0         |         0 | +            |
-        | chr1         | 216711011 | 216711036 | U0         |         0 | +            |
-        +--------------+-----------+-----------+------------+-----------+--------------+
-        Stranded PyRanges object has 3 rows and 6 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
-        """
-
-        subsetter = np.zeros(len(self), dtype=np.bool_)
-        subsetter[:n] = True
-        return self[subsetter]
+    def head(self, *args, **kwargs) -> "PyRanges":
+        return PyRanges(super().head(*args, **kwargs))
 
     def intersect(
         self,
@@ -2887,6 +2825,16 @@ class PyRanges(pr.RangeFrame):
 
         return gr
 
+    def sort_by_5_prime_ascending_and_3_prime_descending(self):
+        positive_by = RANGE_COLS
+        negative_by = RANGE_COLS[::-1]
+        return pd.concat(
+            [
+                self[self.Strand == "+"].sort_values(by=positive_by, ascending=True),
+                self[self.Strand == "-"].sort_values(by=negative_by, ascending=False),
+            ]
+        )
+
     def sort(self, by: Optional[str] = None) -> "PyRanges":
         """Sort by position or columns.
 
@@ -3777,66 +3725,8 @@ class PyRanges(pr.RangeFrame):
 
         return _summary(self, to_stdout, return_df)
 
-    def tail(self, n: int = 8) -> "PyRanges":
-        """Return the n last rows.
-
-        Parameters
-        ----------
-
-        n : int, default 8
-
-            Return n rows.
-
-        Returns
-        -------
-        PyRanges
-
-            PyRanges with the n last rows.
-
-        See Also
-        --------
-
-        PyRanges.head : return the first rows
-        PyRanges.sample : return random rows
-
-        Examples
-        --------
-
-        >>> gr = pr.data.chipseq()
-        >>> gr
-        +--------------+-----------+-----------+------------+-----------+--------------+
-        | Chromosome   | Start     | End       | Name       | Score     | Strand       |
-        | (category)   | (int64)   | (int64)   | (object)   | (int64)   | (category)   |
-        |--------------+-----------+-----------+------------+-----------+--------------|
-        | chr1         | 212609534 | 212609559 | U0         | 0         | +            |
-        | chr1         | 169887529 | 169887554 | U0         | 0         | +            |
-        | chr1         | 216711011 | 216711036 | U0         | 0         | +            |
-        | chr1         | 144227079 | 144227104 | U0         | 0         | +            |
-        | ...          | ...       | ...       | ...        | ...       | ...          |
-        | chrY         | 15224235  | 15224260  | U0         | 0         | -            |
-        | chrY         | 13517892  | 13517917  | U0         | 0         | -            |
-        | chrY         | 8010951   | 8010976   | U0         | 0         | -            |
-        | chrY         | 7405376   | 7405401   | U0         | 0         | -            |
-        +--------------+-----------+-----------+------------+-----------+--------------+
-        Stranded PyRanges object has 10,000 rows and 6 columns from 24 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
-
-        >>> gr.tail(3)
-        +--------------+-----------+-----------+------------+-----------+--------------+
-        | Chromosome   |     Start |       End | Name       |     Score | Strand       |
-        | (category)   |   (int64) |   (int64) | (object)   |   (int64) | (category)   |
-        |--------------+-----------+-----------+------------+-----------+--------------|
-        | chrY         |  13517892 |  13517917 | U0         |         0 | -            |
-        | chrY         |   8010951 |   8010976 | U0         |         0 | -            |
-        | chrY         |   7405376 |   7405401 | U0         |         0 | -            |
-        +--------------+-----------+-----------+------------+-----------+--------------+
-        Stranded PyRanges object has 3 rows and 6 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
-        """
-
-        subsetter = np.zeros(len(self), dtype=np.bool_)
-        subsetter[(len(self) - n) :] = True
-        return self[subsetter]
+    def tail(self, *args, **kwargs) -> "PyRanges":
+        return PyRanges(super().tail(*args, **kwargs))
 
     def tile(
         self, tile_size: int, *, overlap_column: str | None = None, strand: bool | None = None,
@@ -4030,32 +3920,28 @@ class PyRanges(pr.RangeFrame):
         ...       'End': [5, 8], 'Strand': ['+', '-']}
         >>> gr = pr.PyRanges(d)
         >>> gr
-        +--------------+-----------+-----------+--------------+
-        | Chromosome   |     Start |       End | Strand       |
-        | (category)   |   (int64) |   (int64) | (category)   |
-        |--------------+-----------+-----------+--------------|
-        | chr1         |         1 |         5 | +            |
-        | chr1         |         6 |         8 | -            |
-        +--------------+-----------+-----------+--------------+
-        Stranded PyRanges object has 2 rows and 4 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
+        Chromosome      Start      End  Strand
+        object          int64    int64  object
+        ------------  -------  -------  --------
+        chr1                1        5  +
+        chr1                6        8  -
+        PyRanges with 2 rows and 4 columns.
+        Contains 1 chromosomes and 2 strands.
 
         >>> gr.three_end()
-        +--------------+-----------+-----------+--------------+
-        | Chromosome   |     Start |       End | Strand       |
-        | (category)   |   (int64) |   (int64) | (category)   |
-        |--------------+-----------+-----------+--------------|
-        | chr1         |         4 |         5 | +            |
-        | chr1         |         6 |         7 | -            |
-        +--------------+-----------+-----------+--------------+
-        Stranded PyRanges object has 2 rows and 4 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
-
+        Chromosome      Start      End  Strand
+        object          int64    int64  object
+        ------------  -------  -------  --------
+        chr1                4        5  +
+        chr1                6        7  -
+        PyRanges with 2 rows and 4 columns.
+        Contains 1 chromosomes and 2 strands.
         """
 
-        assert self.strand_values_valid, "Need stranded pyrange to find 3'."
-        kwargs = fill_kwargs({"strand": True})
-        return pr.PyRanges(pyrange_apply_single(_tes, self, **kwargs))
+        if not (self.has_strand_column and self.strand_values_valid):
+            msg = f"Need PyRanges with valid strands ({VALID_GENOMIC_STRAND_INFO}) to find 3'."
+            raise AssertionError(msg)
+        return pr.PyRanges(pyrange_apply_single(_tes, self, strand=True))
 
     #     def to_bam(self, path=None, header=None, chromosome_sizes=None, chain=False):
 
@@ -4721,7 +4607,7 @@ class PyRanges(pr.RangeFrame):
         Contains 1 chromosomes.
 
 
-        >>> gr2 = pr.data.ensembl_gtf().get_with_loc_columns(["Feature", "gene_name"])
+        >>> gr2 = pr.data.ensembl_gtf.get_with_loc_columns(["Feature", "gene_name"])
         >>> gr2
         Chromosome    Start    End      Strand      Feature     gene_name
         category      int64    int64    category    category    object
@@ -4739,7 +4625,7 @@ class PyRanges(pr.RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
 
-        >>> gr2 = pr.data.ensembl_gtf().get_with_loc_columns(["Feature", "gene_name"])
+        >>> gr2 = pr.data.ensembl_gtf.get_with_loc_columns(["Feature", "gene_name"])
         >>> gr2.window(1000)
         Chromosome    Start    End      Strand      Feature     gene_name
         category      int64    int64    category    category    object
