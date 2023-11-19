@@ -332,7 +332,11 @@ def itergrs(prs: Iterable[PyRanges], strand=None, keys=False):
     strand = all(gr.strand_values_valid for gr in prs) if strand is None else strand
 
     # If strand is False and any PyRanges are stranded, remove strand information.
-    prs = [gr.remove_strand() for gr in prs if gr.strand_values_valid] if not strand else prs
+    prs = (
+        [gr.remove_strand() for gr in prs if gr.strand_values_valid]
+        if not strand
+        else prs
+    )
 
     empty_dfs = [pd.DataFrame(columns=gr.columns) for gr in prs]
     for gr, empty in zip(prs, empty_dfs):

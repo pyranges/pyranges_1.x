@@ -12,6 +12,7 @@ from pyranges.tostring import adjust_table_width, tostring
 
 class RangeFrame(pd.DataFrame):
     """Class for range based operations"""
+
     @cached_property
     def _required_columns(self) -> Iterable[str]:
         return RANGE_COLS[:]
@@ -37,12 +38,20 @@ class RangeFrame(pd.DataFrame):
                         f"Index level name '{level}' cannot be the same as a column name."
                     )
 
-    def __str__(self, max_col_width: int | None = None, max_total_width: int | None = None) -> str:
+    def __str__(
+        self, max_col_width: int | None = None, max_total_width: int | None = None
+    ) -> str:
         """Return string representation."""
-        return tostring(self, max_col_width=max_col_width, max_total_width=max_total_width)
+        return tostring(
+            self, max_col_width=max_col_width, max_total_width=max_total_width
+        )
 
-    def __repr__(self, max_col_width: int | None = None, max_total_width: int | None = None) -> str:
-        return self.__str__(max_col_width=max_col_width, max_total_width=max_total_width)
+    def __repr__(
+        self, max_col_width: int | None = None, max_total_width: int | None = None
+    ) -> str:
+        return self.__str__(
+            max_col_width=max_col_width, max_total_width=max_total_width
+        )
 
     def overlap(
         self,

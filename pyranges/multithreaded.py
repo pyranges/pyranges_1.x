@@ -163,7 +163,7 @@ def ensure_strand_options_valid(other, self, strand_behavior):
         raise ValueError(msg)
     if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
         assert (
-                self.strand_values_valid and other.strand_values_valid
+            self.strand_values_valid and other.strand_values_valid
         ), "Can only do opposite strand operations when both PyRanges contain valid strand info."
 
 
