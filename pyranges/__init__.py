@@ -90,12 +90,12 @@ def concat(grs: Iterable[PyRanges], *args, **kwargs) -> "PyRanges":
 
 def empty_df(
     with_strand: bool = False,
-    columns: Optional[Iterable[str]] = None,
-    dtype: Optional[Series] = None,
+    columns: Iterable[str] | None = None,
+    dtype: Series | None = None,
 ) -> pd.DataFrame:
     empty = pd.DataFrame(
-        columns=columns
-        if list(columns)
+        columns=list(columns)
+        if columns is not None
         else (GENOME_LOC_COLS_WITH_STRAND if with_strand else GENOME_LOC_COLS),
     )
     return empty.astype(dtype) if dtype is not None else empty
@@ -103,8 +103,8 @@ def empty_df(
 
 def empty(
     with_strand: bool = False,
-    columns: Optional[Iterable[str]] = None,
-    dtype: Optional[Series] = None,
+    columns: Iterable[str] | None = None,
+    dtype: Series | None = None,
 ) -> "PyRanges":
     """Create an empty PyRanges.
 
@@ -114,51 +114,6 @@ def empty(
         Whether to create a PyRanges with strand information.
     """
     return pr.PyRanges(empty_df(with_strand=with_strand, columns=columns, dtype=dtype))
-
-
-def from_args(
-    chromosomes: Union[Sequence[str], Sequence[int]],
-    starts: Sequence[int],
-    ends: Sequence[int],
-    strands: Optional[Union[str, Sequence[str]]] = None,
-) -> "PyRanges":
-    if isinstance(chromosomes, str) or isinstance(chromosomes, int):
-        _chromosomes = pd.Series([chromosomes] * len(starts), dtype="category")
-    else:
-        _chromosomes = pd.Series(chromosomes, dtype="category")
-
-    columns: List[pd.Series] = [_chromosomes, pd.Series(starts), pd.Series(ends)]
-    colnames = GENOME_LOC_COLS[:]
-    if strands is not None:
-        if isinstance(strands, str):
-            _strands = pd.Series([strands] * len(starts), dtype="category")
-        else:
-            _strands = pd.Series(strands, dtype="category")
-
-        columns.append(_strands)
-        colnames.append(STRAND_COL)
-
-    lengths = list(str(len(s)) for s in columns)
-    assert (
-        len(set(lengths)) == 1
-    ), "[{colnames} must be of equal length. But are {columns}".format(
-        colnames=", ".join(colnames), columns=", ".join(lengths)
-    )
-
-    idx = range(len(starts))
-    series_to_concat = []
-    for s in columns:
-        if isinstance(s, pd.Series):
-            s = pd.Series(s.values, index=idx)
-        else:
-            s = pd.Series(s, index=idx)
-
-        series_to_concat.append(s)
-
-    df = pd.concat(series_to_concat, axis=1)
-    df.columns = colnames
-
-    return pr.PyRanges(df)
 
 
 def from_dfs(

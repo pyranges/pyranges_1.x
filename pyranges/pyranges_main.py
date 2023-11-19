@@ -130,19 +130,18 @@ class PyRanges(pr.RangeFrame):
     --------
 
     >>> pr.PyRanges()
-    Empty PyRanges
+    Chromosome    Start      End
+    float64       float64    float64
+    ------------  ---------  ---------
+    PyRanges with 0 rows and 3 columns.
+    Contains 0 chromosomes.
 
-    >>> pr.from_args(chromosomes="chr1", starts=(1, 5), ends=[3, 149],
-    ...             strands=("+", "-"))
-    +--------------+-----------+-----------+--------------+
-    | Chromosome   |     Start |       End | Strand       |
-    | (category)   |   (int64) |   (int64) | (category)   |
-    |--------------+-----------+-----------+--------------|
-    | chr1         |         1 |         3 | +            |
-    | chr1         |         5 |       149 | -            |
-    +--------------+-----------+-----------+--------------+
-    Stranded PyRanges object has 2 rows and 4 columns from 1 chromosomes.
-    For printing, the PyRanges was sorted on Chromosome and Strand.
+    >>> pr.PyRanges(strand=True)
+    Chromosome    Start      End        Strand
+    float64       float64    float64    float64
+    ------------  ---------  ---------  ---------
+    PyRanges with 0 rows and 4 columns.
+    Contains 0 chromosomes and 0 strands.
 
     >>> df = pd.DataFrame({"Chromosome": ["chr1", "chr2"], "Start": [100, 200],
     ...                    "End": [150, 201]})
@@ -151,33 +150,25 @@ class PyRanges(pr.RangeFrame):
     0       chr1    100  150
     1       chr2    200  201
     >>> pr.PyRanges(df)
-    +--------------+-----------+-----------+
-    | Chromosome   |     Start |       End |
-    | (category)   |   (int64) |   (int64) |
-    |--------------+-----------+-----------|
-    | chr1         |       100 |       150 |
-    | chr2         |       200 |       201 |
-    +--------------+-----------+-----------+
-    Unstranded PyRanges object has 2 rows and 3 columns from 2 chromosomes.
-    For printing, the PyRanges was sorted on Chromosome.
-
+    Chromosome      Start      End
+    object          int64    int64
+    ------------  -------  -------
+    chr1              100      150
+    chr2              200      201
+    PyRanges with 2 rows and 3 columns.
+    Contains 2 chromosomes.
 
     >>> gr = pr.PyRanges({"Chromosome": [1, 1], "Strand": ["+", "-"], "Start": [1, 4], "End": [2, 27],
     ...                    "TP": [0, 1], "FP": [12, 11], "TN": [10, 9], "FN": [2, 3]})
     >>> gr
-    +--------------+--------------+-----------+-----------+-----------+-----------+-----------+-----------+
-    |   Chromosome | Strand       |     Start |       End |        TP |        FP |        TN |        FN |
-    |   (category) | (category)   |   (int64) |   (int64) |   (int64) |   (int64) |   (int64) |   (int64) |
-    |--------------+--------------+-----------+-----------+-----------+-----------+-----------+-----------|
-    |            1 | +            |         1 |         2 |         0 |        12 |        10 |         2 |
-    |            1 | -            |         4 |        27 |         1 |        11 |         9 |         3 |
-    +--------------+--------------+-----------+-----------+-----------+-----------+-----------+-----------+
-    Stranded PyRanges object has 2 rows and 8 columns from 1 chromosomes.
-    For printing, the PyRanges was sorted on Chromosome and Strand.
+      Chromosome  Strand      Start      End       TP       FP       TN       FN
+           int64  object      int64    int64    int64    int64    int64    int64
+    ------------  --------  -------  -------  -------  -------  -------  -------
+               1  +               1        2        0       12       10        2
+               1  -               4       27        1       11        9        3
+    PyRanges with 2 rows and 8 columns.
+    Contains 1 chromosomes and 2 strands.
     """
-
-    dfs: Union[Dict[str, pd.DataFrame], Dict[Tuple[str, str], pd.DataFrame]]
-    """Dict mapping chromosomes or chromosome/strand pairs to pandas pd.DataFrames."""
 
     features = None
     """Namespace for genomic-features methods.
@@ -202,11 +193,12 @@ class PyRanges(pr.RangeFrame):
         return GENOME_LOC_COLS[:]
 
     def __init__(self, *args, **kwargs) -> None:
+        if not args and not "data" in kwargs:
+            kwargs["data"] = {k: [] for k in (GENOME_LOC_COLS_WITH_STRAND if kwargs.get("strand") else GENOME_LOC_COLS)}
+            if "strand" in kwargs:
+                del kwargs["strand"]
+
         super().__init__(*args, **kwargs)
-        missing_columns = set(self._required_columns) - set(self.columns)
-        if missing_columns:
-            msg = f"Missing required columns: {missing_columns}"
-            raise ValueError(msg)
         self._check_index_column_names()
 
     def _chrom_and_strand_info(self) -> str:

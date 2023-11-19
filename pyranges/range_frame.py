@@ -19,7 +19,7 @@ class RangeFrame(pd.DataFrame):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        missing_columns = set(self._required_columns) - set(self.columns)
+        missing_columns = [c for c in self._required_columns if c not in self.columns]
         if missing_columns:
             msg = f"Missing required columns: {missing_columns}"
             raise ValueError(msg)
