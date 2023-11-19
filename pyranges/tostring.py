@@ -13,14 +13,22 @@ class AdjustedTableData:
     included_columns: int
 
 
-def tostring(self: "pr.RangeFrame", max_col_width: int | None = None, max_total_width: int | None = None) -> str:
+def tostring(
+    self: "pr.RangeFrame",
+    max_col_width: int | None = None,
+    max_total_width: int | None = None,
+) -> str:
     """Return string representation."""
 
     truncation_marker = ["..."]
     if len(self) >= 8:
         head = [list(v) for _, v in self.head(4).iterrows()]
         tail = [list(v) for _, v in self.tail(4).iterrows()]
-        data = head + [truncation_marker * self.shape[1]] + tail if len(self) > 8 else head + tail
+        data = (
+            head + [truncation_marker * self.shape[1]] + tail
+            if len(self) > 8
+            else head + tail
+        )
     else:
         data = [list(v) for _, v in self.iterrows()]
 
@@ -29,7 +37,9 @@ def tostring(self: "pr.RangeFrame", max_col_width: int | None = None, max_total_
         headers=list(self.columns),
         dtypes=[str(t) for t in self.dtypes],
         max_col_width=max_col_width,
-        max_total_width=shutil.get_terminal_size().columns if max_total_width is None else max_total_width,
+        max_total_width=shutil.get_terminal_size().columns
+        if max_total_width is None
+        else max_total_width,
     )
     columns_not_shown = "."
     truncated_data = adjusted_data.truncated_data
@@ -37,14 +47,23 @@ def tostring(self: "pr.RangeFrame", max_col_width: int | None = None, max_total_
     truncated_dtypes = adjusted_data.truncated_dtypes
     if not len(adjusted_data.truncated_headers) == len(self.columns):
         num_not_shown = len(self.columns) - len(truncated_headers)
-        not_shown = [f'"{e}"' for e in self.columns[adjusted_data.included_columns:adjusted_data.included_columns + 3]]
+        not_shown = [
+            f'"{e}"'
+            for e in self.columns[
+                adjusted_data.included_columns : adjusted_data.included_columns + 3
+            ]
+        ]
         if num_not_shown > 3:
             not_shown.append("...")
-        columns_not_shown = f" ({num_not_shown} columns not shown: {", ".join(not_shown)})."
+        columns_not_shown = (
+            f" ({num_not_shown} columns not shown: {", ".join(not_shown)})."
+        )
         truncated_data = [row + truncation_marker for row in truncated_data]
         truncated_headers += truncation_marker
         truncated_dtypes += truncation_marker
-    headers_with_dtype = [f"{h}\n{d}" for h, d in zip(truncated_headers, truncated_dtypes)]
+    headers_with_dtype = [
+        f"{h}\n{d}" for h, d in zip(truncated_headers, truncated_dtypes)
+    ]
     class_and_shape_info = f"{self.__class__.__name__} with {self.shape[0]} rows and {self.shape[1]} columns"
     return f"{tabulate(truncated_data, headers_with_dtype)}\n{class_and_shape_info}{columns_not_shown}"
 
@@ -64,7 +83,9 @@ def adjust_table_width(
     # Calculate the cumulative width of the columns after truncation
     cumulative_width = 0
     included_columns = 0
-    for index, column in enumerate(zip(*(truncated_data + truncated_dtypes + truncated_headers))):
+    for index, column in enumerate(
+        zip(*(truncated_data + truncated_dtypes + truncated_headers))
+    ):
         column_width = max(len(str(x)) + 4 for x in column)
         if (new_width := cumulative_width + column_width) <= max_total_width:
             cumulative_width = new_width
@@ -88,7 +109,10 @@ def truncate_data(data, max_col_width):
             item_str = str(item)
             if max_col_width is not None:
                 new_row.append(
-                    item_str[:max_col_width - 3] + "..." if len(item_str) > max_col_width else item_str[:max_col_width])
+                    item_str[: max_col_width - 3] + "..."
+                    if len(item_str) > max_col_width
+                    else item_str[:max_col_width]
+                )
             else:
                 new_row.append(item_str)
         truncated_data.append(new_row)

@@ -41,7 +41,8 @@ from pyranges.names import (
     GENOME_LOC_COLS_WITH_STRAND,
     VALID_GENOMIC_STRAND_INFO,
     VALID_STRAND_BEHAVIOR_TYPE,
-    VALID_OVERLAP_TYPE, CHROM_COL,
+    VALID_OVERLAP_TYPE,
+    CHROM_COL,
 )
 from pyranges.tostring import adjust_table_width
 
@@ -212,19 +213,25 @@ class PyRanges(pr.RangeFrame):
         num_chrom = self[CHROM_COL].nunique()
         strand_info = ""
 
-        if self.has_strand_column():
+        if self.has_strand_column:
             num_strands = self[STRAND_COL].nunique()
             strands = f" and {num_strands} strands"
             if not self.strand_values_valid:
-                nongenomic_strands = sorted(set(self[STRAND_COL]).difference(VALID_GENOMIC_STRAND_INFO))
+                nongenomic_strands = sorted(
+                    set(self[STRAND_COL]).difference(VALID_GENOMIC_STRAND_INFO)
+                )
                 example_strands = ", ".join(
-                    [str(s) for s in nongenomic_strands[:3]] + (["..."] if len(nongenomic_strands) > 3 else []))
+                    [str(s) for s in nongenomic_strands[:3]]
+                    + (["..."] if len(nongenomic_strands) > 3 else [])
+                )
                 strands += f" (including non-genomic strands: {example_strands})"
             strand_info = strands
 
         return f"Contains {num_chrom} chromosomes{strand_info}"
 
-    def __str__(self, max_col_width: int | None = None, max_total_width: int | None = None) -> str:
+    def __str__(
+        self, max_col_width: int | None = None, max_total_width: int | None = None
+    ) -> str:
         """
         Return string representation.
 
@@ -401,26 +408,24 @@ class PyRanges(pr.RangeFrame):
         >>> list(gr.columns)
         ['Chromosome', 'Source', 'Feature', 'Start', 'End', 'Score', 'Strand', 'Frame', 'gene_biotype', 'gene_id', 'gene_name', 'gene_source', 'gene_version', 'tag', 'transcript_biotype', 'transcript_id', 'transcript_name', 'transcript_source', 'transcript_support_level', 'transcript_version', 'exon_id', 'exon_number', 'exon_version', '(assigned', 'previous', 'protein_id', 'protein_version', 'ccds_id']
 
-        >>> gr = gr[["Source", "Feature", "gene_id"]]
+        >>> gr = gr.get_with_loc_columns(["Source", "Feature", "gene_id"])
         >>> gr
-        +--------------+------------+--------------+-----------+-----------+--------------+-----------------+
-        | Chromosome   | Source     | Feature      | Start     | End       | Strand       | gene_id         |
-        | (category)   | (object)   | (category)   | (int64)   | (int64)   | (category)   | (object)        |
-        |--------------+------------+--------------+-----------+-----------+--------------+-----------------|
-        | 1            | havana     | gene         | 11868     | 14409     | +            | ENSG00000223972 |
-        | 1            | havana     | transcript   | 11868     | 14409     | +            | ENSG00000223972 |
-        | 1            | havana     | exon         | 11868     | 12227     | +            | ENSG00000223972 |
-        | 1            | havana     | exon         | 12612     | 12721     | +            | ENSG00000223972 |
-        | ...          | ...        | ...          | ...       | ...       | ...          | ...             |
-        | 1            | havana     | gene         | 1173055   | 1179555   | -            | ENSG00000205231 |
-        | 1            | havana     | transcript   | 1173055   | 1179555   | -            | ENSG00000205231 |
-        | 1            | havana     | exon         | 1179364   | 1179555   | -            | ENSG00000205231 |
-        | 1            | havana     | exon         | 1173055   | 1176396   | -            | ENSG00000205231 |
-        +--------------+------------+--------------+-----------+-----------+--------------+-----------------+
-        Stranded PyRanges object has 2,446 rows and 7 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
+        Chromosome    Start    End      Strand      Source    Feature     gene_id
+        category      int64    int64    category    object    category    object
+        ------------  -------  -------  ----------  --------  ----------  ---------------
+        1             11868    14409    +           havana    gene        ENSG00000223972
+        1             11868    14409    +           havana    transcript  ENSG00000223972
+        1             11868    12227    +           havana    exon        ENSG00000223972
+        1             12612    12721    +           havana    exon        ENSG00000223972
+        ...           ...      ...      ...         ...       ...         ...
+        1             1173055  1179555  -           havana    gene        ENSG00000205231
+        1             1173055  1179555  -           havana    transcript  ENSG00000205231
+        1             1179364  1179555  -           havana    exon        ENSG00000205231
+        1             1173055  1176396  -           havana    exon        ENSG00000205231
+        PyRanges with 2446 rows and 7 columns.
+        Contains 1 chromosomes and 2 strands.
 
-        Create boolean pd.Series and use it to subset:
+        # Create boolean pd.Series and use it to subset:
 
         >>> s = (gr.Feature == "gene") | (gr.gene_id == "ENSG00000223972")
         >>> gr[s]
@@ -499,32 +504,6 @@ class PyRanges(pr.RangeFrame):
         from pyranges.methods.getitem import _getitem
 
         return _getitem(self, val)
-
-    def __iter__(self):
-        """Iterate over the keys and values.
-
-        See Also
-        --------
-        pyranges.iter : iterate over multiple PyRanges
-
-        Examples
-        --------
-        >>> gr = pr.PyRanges({"Chromosome": [1, 1, 1], "Start": [0, 100, 250],
-        ...                   "End": [10, 125, 251], "Strand": ["+", "+", "-"]})
-
-        >>> for k, v in gr:
-        ...     print(k)
-        ...     print(v)
-        ('1', '+')
-          Chromosome  Start  End Strand
-        0          1      0   10      +
-        1          1    100  125      +
-        ('1', '-')
-          Chromosome  Start  End Strand
-        2          1    250  251      -
-        """
-
-        return iter(self.items())
 
     def apply_general(
         self, f: Callable, strand: Optional[bool] = None, **kwargs
@@ -1670,6 +1649,7 @@ class PyRanges(pr.RangeFrame):
         kwargs = fill_kwargs({"strand": self.strand_values_valid})
         return pr.PyRanges(pyrange_apply_single(_tss, self, **kwargs))
 
+    @property
     def has_strand_column(self) -> bool:
         return STRAND_COL in self.columns
 
@@ -4740,6 +4720,9 @@ class PyRanges(pr.RangeFrame):
                int64    int64    int64
         ------------  -------  -------
                    1      895     1259
+        PyRanges with 1 rows and 3 columns.
+        Contains 1 chromosomes.
+
 
 
         >>> gr.window(200)
@@ -4748,6 +4731,8 @@ class PyRanges(pr.RangeFrame):
         ------------  -------  -------
                    1      895     1095
                    1     1095     1259
+        PyRanges with 2 rows and 3 columns.
+        Contains 1 chromosomes.
 
 
         >>> gr2 = pr.data.ensembl_gtf().get_with_loc_columns(["Feature", "gene_name"])
@@ -4764,28 +4749,26 @@ class PyRanges(pr.RangeFrame):
         1             1173055  1179555  -           transcript  TTLL10-AS1
         1             1179364  1179555  -           exon        TTLL10-AS1
         1             1173055  1176396  -           exon        TTLL10-AS1
-
-
+        PyRanges with 2446 rows and 6 columns.
+        Contains 1 chromosomes and 2 strands.
 
 
         >>> gr2 = pr.data.ensembl_gtf().get_with_loc_columns(["Feature", "gene_name"])
         >>> gr2.window(1000)
-        +--------------+--------------+-----------+-----------+--------------+-------------+
-        | Chromosome   | Feature      | Start     | End       | Strand       | gene_name   |
-        | (category)   | (category)   | (int64)   | (int64)   | (category)   | (object)    |
-        |--------------+--------------+-----------+-----------+--------------+-------------|
-        | 1            | gene         | 11868     | 12868     | +            | DDX11L1     |
-        | 1            | gene         | 12868     | 13868     | +            | DDX11L1     |
-        | 1            | gene         | 13868     | 14409     | +            | DDX11L1     |
-        | 1            | transcript   | 11868     | 12868     | +            | DDX11L1     |
-        | ...          | ...          | ...       | ...       | ...          | ...         |
-        | 1            | exon         | 1173055   | 1174055   | -            | TTLL10-AS1  |
-        | 1            | exon         | 1174055   | 1175055   | -            | TTLL10-AS1  |
-        | 1            | exon         | 1175055   | 1176055   | -            | TTLL10-AS1  |
-        | 1            | exon         | 1176055   | 1176396   | -            | TTLL10-AS1  |
-        +--------------+--------------+-----------+-----------+--------------+-------------+
-        Stranded PyRanges object has 7,516 rows and 6 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
+        Chromosome    Start    End      Strand      Feature     gene_name
+        category      int64    int64    category    category    object
+        ------------  -------  -------  ----------  ----------  -----------
+        1             11868    12868    +           gene        DDX11L1
+        1             12868    13868    +           gene        DDX11L1
+        1             13868    14409    +           gene        DDX11L1
+        1             11868    12868    +           transcript  DDX11L1
+        ...           ...      ...      ...         ...         ...
+        1             1173055  1174055  -           exon        TTLL10-AS1
+        1             1174055  1175055  -           exon        TTLL10-AS1
+        1             1175055  1176055  -           exon        TTLL10-AS1
+        1             1176055  1176396  -           exon        TTLL10-AS1
+        PyRanges with 7516 rows and 6 columns.
+        Contains 1 chromosomes and 2 strands.
         """
 
         from pyranges.methods.windows import _windows
@@ -4802,7 +4785,16 @@ class PyRanges(pr.RangeFrame):
         df = pyrange_apply_single(_windows, self, **kwargs)
         return PyRanges(df)
 
-    def get_with_loc_columns(self, key: str | Iterable[str]) -> "pr.PyRanges":
+    @property
+    def _loc_columns(self) -> list[str]:
+        """Return list of columns that denote the genome location."""
+        return (
+            GENOME_LOC_COLS_WITH_STRAND if self.has_strand_column else GENOME_LOC_COLS
+        )
+
+    def get_with_loc_columns(
+        self, key: str | Iterable[str], *, preserve_loc_order: bool = False
+    ) -> "pr.PyRanges":
         """
         Return the requested columns and the genome location columns.
 
@@ -4817,27 +4809,56 @@ class PyRanges(pr.RangeFrame):
 
             PyRanges with the requested columns.
 
-        >>> gr = pr.PyRanges({"Chromosome": [1], "Start": [895], "End": [1259], "Strand": ["+"], "Score": [1], "Score2": [2]})
-        >>> gr.get_with_loc_columns("Score2")
-          Chromosome    Start      End  Strand      Score2
-               int64    int64    int64  object       int64
-        ------------  -------  -------  --------  --------
-                   1      895     1259  +                2
-        >>> gr.get_with_loc_columns(["Score2"])
-          Chromosome    Start      End  Strand      Score2
-               int64    int64    int64  object       int64
-        ------------  -------  -------  --------  --------
-                   1      895     1259  +                2
+        >>> gr = pr.PyRanges({"Chromosome": [1], "Start": [895], "Strand": ["+"], "Score": [1], "Score2": [2], "End": [1259]})
+        >>> gr
+          Chromosome    Start  Strand      Score    Score2      End
+               int64    int64  object      int64     int64    int64
+        ------------  -------  --------  -------  --------  -------
+                   1      895  +               1         2     1259
+        PyRanges with 1 rows and 6 columns.
+        Contains 1 chromosomes and 1 strands.
+        >>> gr.get_with_loc_columns(["Score2", "Score", "Score2"]) # moves loc columns to the left by default
+          Chromosome    Start      End  Strand      Score2    Score    Score2
+               int64    int64    int64  object       int64    int64     int64
+        ------------  -------  -------  --------  --------  -------  --------
+                   1      895     1259  +                2        1         2
+        PyRanges with 1 rows and 7 columns.
+        Contains 1 chromosomes and 1 strands.
+        >>> gr.get_with_loc_columns(["Score2", "Score"], preserve_loc_order=True)
+          Chromosome    Start  Strand      Score2    Score      End
+               int64    int64  object       int64    int64    int64
+        ------------  -------  --------  --------  -------  -------
+                   1      895  +                2        1     1259
+        PyRanges with 1 rows and 6 columns.
+        Contains 1 chromosomes and 1 strands.
+
+        >>> gr.get_with_loc_columns(["Score2", "Score", "Score2"], preserve_loc_order=True)
+        Traceback (most recent call last):
+        ...
+        ValueError: Duplicate keys not allowed when preserve_loc_order is True.
         """
         keys = [key] if isinstance(key, str) else key
 
-        missing_loc_cols = [
-            col
-            for col in GENOME_LOC_COLS_WITH_STRAND
-            if col not in keys and col in self.columns
-        ]
+        def _reorder_according_to_b(a, b):
+            for pos, val in zip(sorted([a.index(x) for x in b]), b):
+                a[pos] = val
+            return a
 
-        return PyRanges(super().__getitem__(missing_loc_cols + keys))
+        if preserve_loc_order:
+            if len(set(keys)) != len(keys):
+                msg = "Duplicate keys not allowed when preserve_loc_order is True."
+                raise ValueError(msg)
+            cols_to_include = {*keys, *GENOME_LOC_COLS_WITH_STRAND}
+            cols_to_include_genome_loc_correct_order = [
+                col for col in self.columns if col in cols_to_include
+            ]
+            cols_to_include_genome_loc_correct_order = _reorder_according_to_b(
+                cols_to_include_genome_loc_correct_order, keys
+            )
+        else:
+            cols_to_include_genome_loc_correct_order = self._loc_columns + keys
+
+        return PyRanges(super().__getitem__(cols_to_include_genome_loc_correct_order))
 
     def __getstate__(self):
         return self.dfs
