@@ -4793,7 +4793,7 @@ class PyRanges(pr.RangeFrame):
         )
 
     def get_with_loc_columns(
-        self, key: str | Iterable[str], *, preserve_loc_order: bool = False
+        self, key: str | Iterable[str], *, preserve_loc_order: bool = False,
     ) -> "pr.PyRanges":
         """
         Return the requested columns and the genome location columns.
@@ -4802,6 +4802,10 @@ class PyRanges(pr.RangeFrame):
         ----------
         key
             Columns to return. Either a string or an iterable of strings.
+
+        preserve_loc_order
+            Whether to preserve the order of the genome location columns.
+            If False, the genome location columns will be moved to the left.
 
         Returns
         -------
