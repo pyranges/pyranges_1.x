@@ -3847,7 +3847,7 @@ class PyRanges(pr.RangeFrame):
         return self[subsetter]
 
     def tile(
-        self, tile_size: int, overlap: bool = False, strand: Optional[bool] = None
+        self, tile_size: int, *, overlap_column: str | None = None, strand: bool | None = None,
     ) -> "PyRanges":
         """Return overlapping genomic tiles.
 
@@ -3859,9 +3859,9 @@ class PyRanges(pr.RangeFrame):
         tile_size : int
             Length of the tiles.
 
-        overlap : bool, default False
+        overlap_column
 
-            Add column of nucleotide overlap to each tile.
+            Name of column to add with the overlap between each bookended tile.
 
         strand : bool, default None, i.e. auto
 
@@ -3885,60 +3885,54 @@ class PyRanges(pr.RangeFrame):
         Examples
         --------
 
-        >>> gr = pr.data.ensembl_gtf()[["Feature", "gene_name"]]
+        >>> gr = pr.data.ensembl_gtf.get_with_loc_columns(["Feature", "gene_name"])
         >>> gr
-        +--------------+--------------+-----------+-----------+--------------+-------------+
-        | Chromosome   | Feature      | Start     | End       | Strand       | gene_name   |
-        | (category)   | (category)   | (int64)   | (int64)   | (category)   | (object)    |
-        |--------------+--------------+-----------+-----------+--------------+-------------|
-        | 1            | gene         | 11868     | 14409     | +            | DDX11L1     |
-        | 1            | transcript   | 11868     | 14409     | +            | DDX11L1     |
-        | 1            | exon         | 11868     | 12227     | +            | DDX11L1     |
-        | 1            | exon         | 12612     | 12721     | +            | DDX11L1     |
-        | ...          | ...          | ...       | ...       | ...          | ...         |
-        | 1            | gene         | 1173055   | 1179555   | -            | TTLL10-AS1  |
-        | 1            | transcript   | 1173055   | 1179555   | -            | TTLL10-AS1  |
-        | 1            | exon         | 1179364   | 1179555   | -            | TTLL10-AS1  |
-        | 1            | exon         | 1173055   | 1176396   | -            | TTLL10-AS1  |
-        +--------------+--------------+-----------+-----------+--------------+-------------+
-        Stranded PyRanges object has 2,446 rows and 6 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
+        Chromosome    Start    End      Strand      Feature     gene_name
+        category      int64    int64    category    category    object
+        ------------  -------  -------  ----------  ----------  -----------
+        1             11868    14409    +           gene        DDX11L1
+        1             11868    14409    +           transcript  DDX11L1
+        1             11868    12227    +           exon        DDX11L1
+        1             12612    12721    +           exon        DDX11L1
+        ...           ...      ...      ...         ...         ...
+        1             120724   133723   -           transcript  AL627309.1
+        1             133373   133723   -           exon        AL627309.1
+        1             129054   129223   -           exon        AL627309.1
+        1             120873   120932   -           exon        AL627309.1
+        PyRanges with 11 rows and 6 columns.
+        Contains 1 chromosomes and 2 strands.
 
         >>> gr.tile(200)
-        +--------------+--------------+-----------+-----------+--------------+-------------+
-        | Chromosome   | Feature      | Start     | End       | Strand       | gene_name   |
-        | (category)   | (category)   | (int64)   | (int64)   | (category)   | (object)    |
-        |--------------+--------------+-----------+-----------+--------------+-------------|
-        | 1            | gene         | 11800     | 12000     | +            | DDX11L1     |
-        | 1            | gene         | 12000     | 12200     | +            | DDX11L1     |
-        | 1            | gene         | 12200     | 12400     | +            | DDX11L1     |
-        | 1            | gene         | 12400     | 12600     | +            | DDX11L1     |
-        | ...          | ...          | ...       | ...       | ...          | ...         |
-        | 1            | exon         | 1175600   | 1175800   | -            | TTLL10-AS1  |
-        | 1            | exon         | 1175800   | 1176000   | -            | TTLL10-AS1  |
-        | 1            | exon         | 1176000   | 1176200   | -            | TTLL10-AS1  |
-        | 1            | exon         | 1176200   | 1176400   | -            | TTLL10-AS1  |
-        +--------------+--------------+-----------+-----------+--------------+-------------+
-        Stranded PyRanges object has 30,538 rows and 6 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
+        Chromosome    Start    End      Strand      Feature     gene_name
+        category      int64    int64    category    category    object
+        ------------  -------  -------  ----------  ----------  -----------
+        1             11800    12000    +           gene        DDX11L1
+        1             12000    12200    +           gene        DDX11L1
+        1             12200    12400    +           gene        DDX11L1
+        1             12400    12600    +           gene        DDX11L1
+        ...           ...      ...      ...         ...         ...
+        1             133600   133800   -           exon        AL627309.1
+        1             129000   129200   -           exon        AL627309.1
+        1             129200   129400   -           exon        AL627309.1
+        1             120800   121000   -           exon        AL627309.1
+        PyRanges with 116 rows and 6 columns.
+        Contains 1 chromosomes and 2 strands.
 
-        >>> gr.tile(100, overlap=True)
-        +--------------+--------------+-----------+-----------+--------------+-------------+---------------+
-        | Chromosome   | Feature      | Start     | End       | Strand       | gene_name   | TileOverlap   |
-        | (category)   | (category)   | (int64)   | (int64)   | (category)   | (object)    | (int64)       |
-        |--------------+--------------+-----------+-----------+--------------+-------------+---------------|
-        | 1            | gene         | 11800     | 11900     | +            | DDX11L1     | 32            |
-        | 1            | gene         | 11900     | 12000     | +            | DDX11L1     | 100           |
-        | 1            | gene         | 12000     | 12100     | +            | DDX11L1     | 100           |
-        | 1            | gene         | 12100     | 12200     | +            | DDX11L1     | 100           |
-        | ...          | ...          | ...       | ...       | ...          | ...         | ...           |
-        | 1            | exon         | 1176000   | 1176100   | -            | TTLL10-AS1  | 100           |
-        | 1            | exon         | 1176100   | 1176200   | -            | TTLL10-AS1  | 100           |
-        | 1            | exon         | 1176200   | 1176300   | -            | TTLL10-AS1  | 100           |
-        | 1            | exon         | 1176300   | 1176400   | -            | TTLL10-AS1  | 96            |
-        +--------------+--------------+-----------+-----------+--------------+-------------+---------------+
-        Stranded PyRanges object has 58,516 rows and 7 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
+        >>> gr.tile(100, overlap_column="TileOverlap")
+        Chromosome    Start    End      Strand      Feature     gene_name    TileOverlap
+        category      int64    int64    category    category    object       int64
+        ------------  -------  -------  ----------  ----------  -----------  -------------
+        1             11800    11900    +           gene        DDX11L1      32
+        1             11900    12000    +           gene        DDX11L1      100
+        1             12000    12100    +           gene        DDX11L1      100
+        1             12100    12200    +           gene        DDX11L1      100
+        ...           ...      ...      ...         ...         ...          ...
+        1             129100   129200   -           exon        AL627309.1   100
+        1             129200   129300   -           exon        AL627309.1   23
+        1             120800   120900   -           exon        AL627309.1   27
+        1             120900   121000   -           exon        AL627309.1   32
+        PyRanges with 223 rows and 7 columns.
+        Contains 1 chromosomes and 2 strands.
         """
 
         from pyranges.methods.windows import _tiles
@@ -3948,7 +3942,7 @@ class PyRanges(pr.RangeFrame):
 
         kwargs = {
             "strand": strand,
-            "overlap": overlap,
+            "overlap_column": overlap_column,
             "sparse": {"self": False},
             "tile_size": tile_size,
         }

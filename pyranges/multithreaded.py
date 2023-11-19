@@ -10,7 +10,7 @@ from pyranges.names import (
     CHROM_COL,
     STRAND_COL,
     GENOME_LOC_COLS_WITH_STRAND,
-    __TEMP_INDEX_COL__,
+    TEMP_INDEX_COL,
     VALID_STRAND_BEHAVIOR_OPTIONS,
     STRAND_BEHAVIOR_OPPOSITE,
     VALID_STRAND_BEHAVIOR_TYPE,
@@ -182,7 +182,7 @@ def pyrange_apply_single(
         keys = [CHROM_COL, STRAND_COL] if strand else [CHROM_COL]
     range_index = np.arange(len(self))
     if isinstance(self.index, pd.RangeIndex):
-        self = self.set_index(pd.Series(name=__TEMP_INDEX_COL__, data=range_index))
+        self = self.set_index(pd.Series(name=TEMP_INDEX_COL, data=range_index))
         res = (
             self.groupby(keys, as_index=False, observed=True)
             .apply(function, **kwargs)
@@ -197,7 +197,7 @@ def pyrange_apply_single(
                 self.index.names if self.index.name is None else self.index.names
             )
         self = self.reset_index().set_index(
-            pd.Series(name=__TEMP_INDEX_COL__, data=range_index), append=False
+            pd.Series(name=TEMP_INDEX_COL, data=range_index), append=False
         )
         res = self.groupby(keys, as_index=False, observed=True).apply(
             function, **kwargs

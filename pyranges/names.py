@@ -33,4 +33,7 @@ VALID_OVERLAP_TYPE = Literal["first"] | Literal["containment"] | Literal["all"]
 VALID_OVERLAP_OPTIONS = [OVERLAP_FIRST, OVERLAP_CONTAINMENT, OVERLAP_ALL]
 
 
-__TEMP_INDEX_COL__ = "__temp_index__"
+TEMP_INDEX_COL = "__temp_index__"
+TEMP_START_COL = "__temp_start__"
+TEMP_END_COL = "__temp_end__"
+TEMP_NAME_COL = "__temp_name__"

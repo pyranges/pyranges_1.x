@@ -15,7 +15,8 @@ from pandas import Series
 
 import pyranges as pr
 import pyranges.genomicfeatures as gf  # NOQA: F401
-from pyranges import data, statistics
+from pyranges.example_data import ExampleData
+from pyranges import example_data, statistics
 from pyranges.get_fasta import get_fasta, get_sequence, get_transcript_sequence
 from pyranges.helpers import get_key_from_df, single_value_key
 from pyranges.methods.concat import concat
@@ -33,7 +34,7 @@ from pyranges.readers import read_bam, read_bed, read_bigwig, read_gff3, read_gt
 
 __version__ = pkg_resources.get_distribution("pyranges").version
 
-get_example_path = data.get_example_path
+data = ExampleData()
 stats = statistics
 get_fasta = get_fasta
 get_sequence = get_sequence
