@@ -57,6 +57,7 @@ class RangeFrame(pd.DataFrame):
         self,
         other: "RangeFrame",
         how: Literal["first", "containment", "all"] = "first",
+        by: str | list[str] | None = None,
         **_,
     ) -> "RangeFrame":
         """
@@ -69,6 +70,8 @@ class RangeFrame(pd.DataFrame):
         how
             How to find overlaps. "first" finds the first overlap, "containment" finds all overlaps
             where self is contained in other, and "all" finds all overlaps.
+        by:
+            Grouping columns. If None, all columns are used.
 
         Returns
         -------
@@ -78,23 +81,42 @@ class RangeFrame(pd.DataFrame):
         Examples
         --------
         >>> import pyranges as pr
-        >>> r = pr.RangeFrame({"Start": [1, 1, 2, 2], "End": [3, 3, 5, 4], "Id": list("abcd")})
-        >>> r2 = pr.RangeFrame({"Start": [0, 2], "End": [1, 20]})
+        >>> r = pr.RangeFrame({"Start": [1, 1, 2, 2], "End": [3, 3, 5, 4], "Id": list("abad")})
+        >>> r
+          Start      End  Id
+          int64    int64  object
+        -------  -------  --------
+              1        3  a
+              1        3  b
+              2        5  a
+              2        4  d
+        RangeFrame with 4 rows and 3 columns.
+        >>> r2 = pr.RangeFrame({"Start": [0, 2], "End": [1, 20], "Id": list("ad")})
+        >>> r2
+          Start      End  Id
+          int64    int64  object
+        -------  -------  --------
+              0        1  a
+              2       20  d
+        RangeFrame with 2 rows and 3 columns.
+
         >>> r.overlap(r2, how="first")
           Start      End  Id
           int64    int64  object
         -------  -------  --------
               1        3  a
               1        3  b
-              2        5  c
+              2        5  a
               2        4  d
+        RangeFrame with 4 rows and 3 columns.
 
         >>> r.overlap(r2, how="containment")
           Start      End  Id
           int64    int64  object
         -------  -------  --------
-              2        5  c
+              2        5  a
               2        4  d
+        RangeFrame with 2 rows and 3 columns.
 
         >>> r.overlap(r2, how="all")
           Start      End  Id
@@ -102,7 +124,38 @@ class RangeFrame(pd.DataFrame):
         -------  -------  --------
               1        3  a
               1        3  b
-              2        5  c
+              2        5  a
               2        4  d
+        RangeFrame with 4 rows and 3 columns.
+
+        >>> r.overlap(r2, how="all", by="Id")
+          Start      End  Id
+          int64    int64  object
+        -------  -------  --------
+              2        4  d
+        RangeFrame with 1 rows and 3 columns.
         """
-        return RangeFrame(_overlap(self, other, how))
+        return self._pair_apply(other, _overlap, how=how, by=by)
+
+    def _pair_apply(self, other, function, by, **kwargs):
+        if by is None:
+            return RangeFrame(function(self, other, **kwargs))
+
+        """
+        If opposite
+
+        add temp column to match on
+
+        run super method with added column
+
+        remove temp column afterwards
+        """
+
+        results = []
+        others = other.groupby(by)
+        empty = RangeFrame(columns=other.columns)
+
+        for key, sdf in self.groupby(by):
+            odf = others.get_group(key) if key in others.groups else empty
+            results.append(function(sdf, odf, **kwargs))
+        return RangeFrame(pd.concat(results))
