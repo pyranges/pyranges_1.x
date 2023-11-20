@@ -21,7 +21,8 @@ class LociGetter:
 
     def __getitem__(
         self,
-        key: str | int
+        key: str
+        | int
         | tuple[str | int, str]
         | tuple[str | int, slice]
         | tuple[str | int, str, slice],

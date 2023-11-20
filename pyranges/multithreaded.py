@@ -22,103 +22,17 @@ if TYPE_CHECKING:
     from pyranges.pyranges_main import PyRanges
 
 
-def merge_dfs(df1: DataFrame, df2: DataFrame) -> DataFrame:
-    if not df1.empty and not df2.empty:
-        return pd.concat([df1, df2], sort=False).reset_index(drop=True)
-
-    elif df1.empty and df2.empty:
-        # can this happen?
-        return pd.DataFrame()
-    elif df1.empty:
-        return df2
-    else:
-        return df1
-
-
-def process_results(
-    results: List[Any], keys: Union[List[str], List[Tuple[str, str]]]
-) -> dict:
-    results_dict = {k: r for k, r in zip(keys, results) if r is not None}
-
-    try:
-        next(iter(results_dict.values()))
-    except StopIteration:  # empty collection
-        return results_dict
-
-    # An arbitrary operation might make the keys in the dict and df out of sync.
-    # This fixes that by having the PyRanges initializer find the correct keys again..
-    try:
-        if all(isinstance(v, pd.DataFrame) for v in results_dict.values()):
-            df = pd.concat(results_dict.values())
-            import pyranges as pr
-
-            _results_dict = pr.PyRanges(df).dfs
-        else:
-            return results_dict
-    except (ValueError, TypeError):
-        return results_dict
-
-    to_delete = []
-    # to ensure no duplicate indexes and no empty dataframes
-    for k in results_dict:
-        if results_dict[k] is None or results_dict[k].empty:
-            to_delete.append(k)
-        else:
-            # pandas might make a df that is not always C-contiguous
-            # copying fixes this
-            # TODO: better to only fix columns that are not C-contiguous?
-            results_dict[k] = results_dict[k].copy(deep=True)
-            results_dict[k].index = range(len(results_dict[k]))
-
-    for k in to_delete:
-        del results_dict[k]
-
-    return _results_dict
-
-
-def make_sparse(df: DataFrame) -> DataFrame:
-    if "Strand" in df:
-        cols = "Chromosome Start End Strand".split()
-    else:
-        cols = "Chromosome Start End".split()
-
-    return df[cols]
-
-
-def make_binary_sparse(
-    kwargs: Dict[str, Any], df: DataFrame, odf: DataFrame
-) -> Tuple[DataFrame, DataFrame]:
-    sparse = kwargs.get("sparse")
-
-    if not sparse:
-        return df, odf
-
-    if sparse.get("self"):
-        df = make_sparse(df)
-
-    if sparse.get("other"):
-        odf = make_sparse(odf)
-
-    return df, odf
-
-
-def make_unary_sparse(kwargs: Dict[str, Any], df: DataFrame) -> DataFrame:
-    sparse = kwargs.get("sparse", {}).get("self")
-
-    return make_sparse(df) if sparse else df
-
-
 def _group_keys(
     self: "PyRanges",
     other: "PyRanges",
     strand_behavior: VALID_STRAND_BEHAVIOR_TYPE,
-) -> bool:
+) -> tuple[str] | tuple[str, str]:
     include_strand = True
     if strand_behavior == STRAND_BEHAVIOR_AUTO:
         include_strand = self.strand_values_valid and other.strand_values_valid
     elif strand_behavior == STRAND_BEHAVIOR_IGNORE:
         include_strand = False
-    return [CHROM_COL, STRAND_COL] if include_strand else [CHROM_COL]
+    return (CHROM_COL, STRAND_COL) if include_strand else (CHROM_COL,)
 
 
 def pyrange_apply(
@@ -126,10 +40,13 @@ def pyrange_apply(
     self: "PyRanges",
     other: "PyRanges",
     strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
+    by: str | list[str] | None = None,
     **kwargs,
 ) -> pd.DataFrame:
     other_strand = {"+": "-", "-": "+"}
     same_strand = {"+": "+", "-": "-"}
+
+    _by = by if by is not None else []
 
     strand_dict = (
         other_strand if strand_behavior == STRAND_BEHAVIOR_OPPOSITE else same_strand
@@ -145,7 +62,7 @@ def pyrange_apply(
     self = self.reset_index() if should_reset_index_self else self
     other = other.reset_index() if should_reset_index_other else other
 
-    grpby_ks = _group_keys(self, other, strand_behavior)
+    grpby_ks = _group_keys(self, other, strand_behavior) + _by
 
     others = dict(list(other.groupby(grpby_ks, observed=True)))
     empty = pr.empty(columns=other.columns, dtype=other.dtypes)

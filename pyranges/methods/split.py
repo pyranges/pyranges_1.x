@@ -1,9 +1,9 @@
 import pandas as pd
 
+from pyranges.names import VALID_STRAND_OPTIONS, RANGE_COLS
 
-def _split(df, **kwargs):
-    strand = kwargs.get("strand", False)
 
+def _split(df, strand: VALID_STRAND_OPTIONS = "auto"):
     dtype = df.Start.dtype
 
     starts = df.Start
@@ -15,7 +15,7 @@ def _split(df, **kwargs):
     points = points.iloc[:-1]
     _ends = _ends.iloc[:-1]
     features = pd.concat([points, _ends], axis=1).astype(dtype)
-    features.columns = "Start End".split()
+    features.columns = RANGE_COLS
 
     features.insert(0, "Chromosome", df.Chromosome.iloc[0])
     if strand and "Strand" in df:
