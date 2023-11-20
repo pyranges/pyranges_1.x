@@ -326,7 +326,7 @@ def mcc(
             continue
 
         else:
-            j = t.join_overlaps(f, strandedness=strandedness)
+            j = t.interval_join(f, strandedness=strandedness)
             tp_gr = j.new_position("intersection").merge_overlaps(strand=strand)
             if strand:
                 for _strand in "+ -".split():

@@ -1,9 +1,4 @@
 """Data structure for genomic intervals and their annotation."""
-import heapq
-import itertools
-import shutil
-import typing
-from collections import defaultdict
 from functools import cached_property
 from typing import (
     TYPE_CHECKING,
@@ -13,7 +8,6 @@ from typing import (
     Iterable,
     List,
     Optional,
-    Self,
     Tuple,
     Union,
 )
@@ -21,9 +15,9 @@ from typing import (
 import numpy as np
 import pandas as pd
 from natsort import natsorted  # type: ignore
-from tabulate import tabulate
 
 import pyranges as pr
+from pyranges.loci_getter import LociGetter
 from pyranges.methods.overlap import _overlap
 from pyranges.multithreaded import (
     _extend,
@@ -35,21 +29,17 @@ from pyranges.multithreaded import (
 )
 from pyranges.names import (
     STRAND_COL,
-    FORWARD_STRAND,
-    REVERSE_STRAND,
     GENOME_LOC_COLS,
     GENOME_LOC_COLS_WITH_STRAND,
     VALID_GENOMIC_STRAND_INFO,
     VALID_STRAND_BEHAVIOR_TYPE,
     VALID_OVERLAP_TYPE,
-    CHROM_COL, RANGE_COLS,
+    CHROM_COL,
+    RANGE_COLS,
+    VALID_JOIN_TYPE,
 )
-from pyranges.tostring import adjust_table_width
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
-    from pandas.core.indexes.base import Index
     from pyrle.rledict import RleDict  # type: ignore
 
 __all__ = ["PyRanges"]
@@ -187,18 +177,141 @@ class PyRanges(pr.RangeFrame):
     pyranges.stats.StatisticsMethods : namespace for statistics
     """
 
+    @property
+    def loci(self) -> LociGetter:
+        """
+        Get or set items in pyranges using .loci accessor.
+
+        Notes
+        -----
+        In case of a 2-tuple with (val, slice), the method will first check if the val is in
+        the chromosome col, and if so, it will subset on the matching rows. If val is not in
+        the chromosome col it will look in the strand col.
+
+        Parameters
+        ----------
+        key
+            Genomic location (one or more of Chromosome, Strand, and Range),
+
+        Returns
+        -------
+        PyRanges
+            PyRanges with rows matching the location.
+
+        Examples
+        --------
+        >>> import pyranges as pr
+        >>> gr = pr.data.ensembl_gtf.get_with_loc_columns(["gene_id", "gene_name"])
+        >>> gr
+        Chromosome    Start    End      Strand      gene_id          gene_name
+        category      int64    int64    category    object           object
+        ------------  -------  -------  ----------  ---------------  -----------
+        1             11868    14409    +           ENSG00000223972  DDX11L1
+        1             11868    14409    +           ENSG00000223972  DDX11L1
+        1             11868    12227    +           ENSG00000223972  DDX11L1
+        1             12612    12721    +           ENSG00000223972  DDX11L1
+        ...           ...      ...      ...         ...              ...
+        1             120724   133723   -           ENSG00000238009  AL627309.1
+        1             133373   133723   -           ENSG00000238009  AL627309.1
+        1             129054   129223   -           ENSG00000238009  AL627309.1
+        1             120873   120932   -           ENSG00000238009  AL627309.1
+        PyRanges with 11 rows and 6 columns.
+        Contains 1 chromosomes and 2 strands.
+
+        >>> gr.loci[1, "+", 12227:13000]
+          Chromosome    Start      End  Strand      gene_id          gene_name
+            category    int64    int64  category    object           object
+        ------------  -------  -------  ----------  ---------------  -----------
+                   1    11868    14409  +           ENSG00000223972  DDX11L1
+                   1    11868    14409  +           ENSG00000223972  DDX11L1
+                   1    12612    12721  +           ENSG00000223972  DDX11L1
+        PyRanges with 3 rows and 6 columns.
+        Contains 1 chromosomes and 1 strands.
+        >>> gr.loci[1, 14408:120000]
+          Chromosome    Start      End  Strand      gene_id          gene_name
+            category    int64    int64  category    object           object
+        ------------  -------  -------  ----------  ---------------  -----------
+                   1    11868    14409  +           ENSG00000223972  DDX11L1
+                   1    11868    14409  +           ENSG00000223972  DDX11L1
+                   1    13220    14409  +           ENSG00000223972  DDX11L1
+                   1   112699   112804  -           ENSG00000238009  AL627309.1
+                   1   110952   111357  -           ENSG00000238009  AL627309.1
+        PyRanges with 5 rows and 6 columns.
+        Contains 1 chromosomes and 2 strands.
+
+        >>> gr.loci[1, "-"]
+          Chromosome    Start      End  Strand      gene_id          gene_name
+            category    int64    int64  category    object           object
+        ------------  -------  -------  ----------  ---------------  -----------
+                   1   112699   112804  -           ENSG00000238009  AL627309.1
+                   1   110952   111357  -           ENSG00000238009  AL627309.1
+                   1   120724   133723  -           ENSG00000238009  AL627309.1
+                   1   133373   133723  -           ENSG00000238009  AL627309.1
+                   1   129054   129223  -           ENSG00000238009  AL627309.1
+                   1   120873   120932  -           ENSG00000238009  AL627309.1
+        PyRanges with 6 rows and 6 columns.
+        Contains 1 chromosomes and 1 strands.
+
+        >>> gr2 = pr.PyRanges({"Chromosome": ["chr1", "chr2"], "Start": [1, 2], "End": [4, 5], "Score": [9, 14], "Id": ["a", "b"]})
+        >>> gr2.loci["chr2"]
+        Chromosome      Start      End    Score  Id
+        object          int64    int64    int64  object
+        ------------  -------  -------  -------  --------
+        chr2                2        5       14  b
+        PyRanges with 1 rows and 5 columns.
+        Contains 1 chromosomes.
+
+        >>> gr2.loci["chr2"] = gr2.loci["chr2"].assign(Chromosome="chr1")
+        >>> gr2
+        Chromosome      Start      End    Score  Id
+        object          int64    int64    int64  object
+        ------------  -------  -------  -------  --------
+        chr1                1        4        9  a
+        chr1                2        5       14  b
+        PyRanges with 2 rows and 5 columns.
+        Contains 1 chromosomes.
+
+        >>> gr2.loci["chr3"]
+        Traceback (most recent call last):
+        ...
+        KeyError: 'Chromosome or strand "chr3" not found in PyRanges.'
+
+        >>> gr2.loci["chr3", 1:2]
+        Traceback (most recent call last):
+        ...
+        KeyError: 'Chromosome or strand chr3 not found in PyRanges.'
+        >>> gr2.loci["Score"]
+        Traceback (most recent call last):
+        ...
+        KeyError: 'Chromosome or strand "Score" not found in PyRanges.'
+
+        >>> gr2.loci[["Score", "Id"]]
+        Traceback (most recent call last):
+        ...
+        TypeError: The loci accessor does not accept a list. If you meant to retrieve columns, use .gloc instead.
+        """
+        return self._loci
+
     @cached_property
     def _required_columns(self) -> Iterable[str]:
         return GENOME_LOC_COLS[:]
 
     def __init__(self, *args, **kwargs) -> None:
         if not args and not "data" in kwargs:
-            kwargs["data"] = {k: [] for k in (GENOME_LOC_COLS_WITH_STRAND if kwargs.get("strand") else GENOME_LOC_COLS)}
+            kwargs["data"] = {
+                k: []
+                for k in (
+                    GENOME_LOC_COLS_WITH_STRAND
+                    if kwargs.get("strand")
+                    else GENOME_LOC_COLS
+                )
+            }
             if "strand" in kwargs:
                 del kwargs["strand"]
 
         super().__init__(*args, **kwargs)
         self._check_index_column_names()
+        self._loci = LociGetter(self)
 
     def _chrom_and_strand_info(self) -> str:
         num_chrom = self[CHROM_COL].nunique()
@@ -491,7 +604,7 @@ class PyRanges(pr.RangeFrame):
         Empty PyRanges
         """
 
-        from pyranges.methods.getitem import _getitem
+        from pyranges.getters_and_setters.getitem import _getitem
 
         return _getitem(self, val)
 
@@ -677,104 +790,6 @@ class PyRanges(pr.RangeFrame):
 
         result = pyrange_apply(f, self, other, **kwargs)
         return result
-
-    def assign(
-        self, col: str, f: Callable, strand: Optional[bool] = None, **kwargs
-    ) -> "PyRanges":
-        """Add or replace a column.
-
-        Does not change the original PyRanges.
-
-        Parameters
-        ----------
-
-        col : str
-
-            Name of column.
-
-        f : function
-            Function to create new column.
-
-        strand : Optional[bool], default None, i.e. auto
-
-            Whether to do operations on chromosome/strand pairs or chromosomes. If None, will use
-            chromosome/strand pairs if the PyRanges is stranded.
-
-        **kwargs
-            Additional keyword arguments to pass as keyword arguments to `f`
-
-
-        Returns
-        -------
-        PyRanges
-            A copy of the PyRanges with the column inserted.
-
-        Examples
-        --------
-
-        >>> gr = pr.PyRanges({"Chromosome": [1, 1], "Start": [1, 2], "End": [3, 5],
-        ... "Name": ["a", "b"]})
-        >>> gr
-        +--------------+-----------+-----------+------------+
-        |   Chromosome |     Start |       End | Name       |
-        |   (category) |   (int64) |   (int64) | (object)   |
-        |--------------+-----------+-----------+------------|
-        |            1 |         1 |         3 | a          |
-        |            1 |         2 |         5 | b          |
-        +--------------+-----------+-----------+------------+
-        Unstranded PyRanges object has 2 rows and 4 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
-
-        >>> gr.assign("Blabla", lambda df: df.Chromosome.astype(str) + "_yadayada")
-        +--------------+-----------+-----------+------------+------------+
-        |   Chromosome |     Start |       End | Name       | Blabla     |
-        |   (category) |   (int64) |   (int64) | (object)   | (object)   |
-        |--------------+-----------+-----------+------------+------------|
-        |            1 |         1 |         3 | a          | 1_yadayada |
-        |            1 |         2 |         5 | b          | 1_yadayada |
-        +--------------+-----------+-----------+------------+------------+
-        Unstranded PyRanges object has 2 rows and 5 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
-
-        Note that assigning to an existing name replaces the column:
-
-        >>> gr.assign("Name",
-        ... lambda df, **kwargs: df.Start.astype(str) + kwargs["sep"] +
-        ... df.Name.str.capitalize(), sep="_")
-        +--------------+-----------+-----------+------------+
-        |   Chromosome |     Start |       End | Name       |
-        |   (category) |   (int64) |   (int64) | (object)   |
-        |--------------+-----------+-----------+------------|
-        |            1 |         1 |         3 | 1_A        |
-        |            1 |         2 |         5 | 2_B        |
-        +--------------+-----------+-----------+------------+
-        Unstranded PyRanges object has 2 rows and 4 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
-        """
-
-        self = self.copy()
-
-        if strand is None:
-            strand = self.strand_values_valid
-
-        kwargs["strand"] = strand
-        kwargs = fill_kwargs(kwargs)
-
-        result = pyrange_apply_single(f, self, **kwargs)
-
-        first_result = next(iter(result.values()))
-
-        assert isinstance(
-            first_result, pd.Series
-        ), "result of assign function must be pd.Series, but is {}".format(
-            type(first_result)
-        )
-
-        # do a deepcopy of object
-        new_self = self.copy()
-        new_self.__setattr__(col, result)
-
-        return new_self
 
     def boundaries(
         self, group_by: str, agg: Optional[Dict[str, Union[str, Callable]]] = None
@@ -1123,6 +1138,9 @@ class PyRanges(pr.RangeFrame):
             return PyRanges._zip_locationkey_and_data(
                 new_dfs.keys(), new_dfs.values(), strand=strand
             )
+
+    def copy(self, *args, **kwargs) -> "pr.PyRanges":
+        return pr.PyRanges(super().copy(*args, **kwargs))
 
     def count_overlaps(
         self,
@@ -1584,11 +1602,11 @@ class PyRanges(pr.RangeFrame):
     def head(self, *args, **kwargs) -> "PyRanges":
         return PyRanges(super().head(*args, **kwargs))
 
-    def join_overlaps(
+    def interval_join(
         self,
         other: "PyRanges",
-        strand_behavior: Optional[str] = None,
-        how: Optional[str] = None,
+        strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
+        join_type: VALID_JOIN_TYPE = "inner",
         report_overlap: bool = False,
         slack: int = 0,
         suffix: str = "_b",
@@ -1609,7 +1627,7 @@ class PyRanges(pr.RangeFrame):
             information. The default, None, means use "same" if both PyRanges are strande,
             otherwise ignore the strand information.
 
-        how : {None, "left", "right"}, default None, i.e. "inner"
+        join_type : {None, "left", "right"}, default None, i.e. "inner"
 
             How to handle intervals without overlap. None means only keep overlapping intervals.
             "left" keeps all intervals in self, "right" keeps all intervals in other.
@@ -1659,67 +1677,58 @@ class PyRanges(pr.RangeFrame):
         --------
 
         >>> f1 = pr.PyRanges({'Chromosome': ['chr1', 'chr1', 'chr1'], 'Start': [3, 8, 5],
-        ...                    'End': [6, 9, 7], 'Name': ['interval1', 'interval3', 'interval2']})
+        ...                   'End': [6, 9, 7], 'Name': ['interval1', 'interval3', 'interval2']})
         >>> f1
-        +--------------+-----------+-----------+------------+
-        | Chromosome   |     Start |       End | Name       |
-        | (category)   |   (int64) |   (int64) | (object)   |
-        |--------------+-----------+-----------+------------|
-        | chr1         |         3 |         6 | interval1  |
-        | chr1         |         8 |         9 | interval3  |
-        | chr1         |         5 |         7 | interval2  |
-        +--------------+-----------+-----------+------------+
-        Unstranded PyRanges object has 3 rows and 4 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
+        Chromosome      Start      End  Name
+        object          int64    int64  object
+        ------------  -------  -------  ---------
+        chr1                3        6  interval1
+        chr1                8        9  interval3
+        chr1                5        7  interval2
+        PyRanges with 3 rows and 4 columns.
+        Contains 1 chromosomes.
 
         >>> f2 = pr.PyRanges({'Chromosome': ['chr1', 'chr1'], 'Start': [1, 6],
         ...                    'End': [2, 7], 'Name': ['a', 'b']})
         >>> f2
-        +--------------+-----------+-----------+------------+
-        | Chromosome   |     Start |       End | Name       |
-        | (category)   |   (int64) |   (int64) | (object)   |
-        |--------------+-----------+-----------+------------|
-        | chr1         |         1 |         2 | a          |
-        | chr1         |         6 |         7 | b          |
-        +--------------+-----------+-----------+------------+
-        Unstranded PyRanges object has 2 rows and 4 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
+        Chromosome      Start      End  Name
+        object          int64    int64  object
+        ------------  -------  -------  --------
+        chr1                1        2  a
+        chr1                6        7  b
+        PyRanges with 2 rows and 4 columns.
+        Contains 1 chromosomes.
 
-        >>> f1.join_overlaps(f2)
-        +--------------+-----------+-----------+------------+-----------+-----------+------------+
-        | Chromosome   |     Start |       End | Name       |   Start_b |     End_b | Name_b     |
-        | (category)   |   (int64) |   (int64) | (object)   |   (int64) |   (int64) | (object)   |
-        |--------------+-----------+-----------+------------+-----------+-----------+------------|
-        | chr1         |         5 |         7 | interval2  |         6 |         7 | b          |
-        +--------------+-----------+-----------+------------+-----------+-----------+------------+
-        Unstranded PyRanges object has 1 rows and 7 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
+        >>> f1.interval_join(f2)
+        Chromosome      Start      End  Name       Chromosome_b      Start_b    End_b  Name_b
+        object          int64    int64  object     object              int64    int64  object
+        ------------  -------  -------  ---------  --------------  ---------  -------  --------
+        chr1                5        7  interval2  chr1                    6        7  b
+        PyRanges with 1 rows and 8 columns.
+        Contains 1 chromosomes.
 
-        >>> f1.join_overlaps(f2, how="right")
-        +--------------+-----------+-----------+------------+-----------+-----------+------------+
-        | Chromosome   |     Start |       End | Name       |   Start_b |     End_b | Name_b     |
-        | (category)   |   (int64) |   (int64) | (object)   |   (int64) |   (int64) | (object)   |
-        |--------------+-----------+-----------+------------+-----------+-----------+------------|
-        | chr1         |         5 |         7 | interval2  |         6 |         7 | b          |
-        | chr1         |        -1 |        -1 | -1         |         1 |         2 | a          |
-        +--------------+-----------+-----------+------------+-----------+-----------+------------+
-        Unstranded PyRanges object has 2 rows and 7 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
+        >>> f1.interval_join(f2, join_type="right")
+        Chromosome        Start        End  Name       Chromosome_b      Start_b    End_b  Name_b
+        object          float64    float64  object     object              int64    int64  object
+        ------------  ---------  ---------  ---------  --------------  ---------  -------  --------
+        nan                 nan        nan  nan        chr1                    1        2  a
+        chr1                  5          7  interval2  chr1                    6        7  b
+        PyRanges with 2 rows and 8 columns.
+        Contains 1 chromosomes.
 
         With slack 1, bookended features are joined (see row 1):
 
-        >>> f1.join_overlaps(f2, slack=1)
-        +--------------+-----------+-----------+------------+-----------+-----------+------------+
-        | Chromosome   |     Start |       End | Name       |   Start_b |     End_b | Name_b     |
-        | (category)   |   (int64) |   (int64) | (object)   |   (int64) |   (int64) | (object)   |
-        |--------------+-----------+-----------+------------+-----------+-----------+------------|
-        | chr1         |         3 |         6 | interval1  |         6 |         7 | b          |
-        | chr1         |         5 |         7 | interval2  |         6 |         7 | b          |
-        +--------------+-----------+-----------+------------+-----------+-----------+------------+
-        Unstranded PyRanges object has 2 rows and 7 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
+        >>> f1.interval_join(f2, slack=1)
+        Chromosome      Start      End  Name       Chromosome_b      Start_b    End_b  Name_b
+        object          int64    int64  object     object              int64    int64  object
+        ------------  -------  -------  ---------  --------------  ---------  -------  --------
+        chr1                3        6  interval1  chr1                    6        7  b
+        chr1                5        7  interval2  chr1                    6        7  b
+        PyRanges with 2 rows and 8 columns.
+        Contains 1 chromosomes.
 
-        >>> f1.join_overlaps(f2, how="right", preserve_order=True)
+
+        >>> f1.interval_join(f2, join_type="right", preserve_order=True)
         +--------------+-----------+-----------+------------+-----------+-----------+------------+
         | Chromosome   |     Start |       End | Name       |   Start_b |     End_b | Name_b     |
         | (category)   |   (int64) |   (int64) | (object)   |   (int64) |   (int64) | (object)   |
@@ -1735,7 +1744,7 @@ class PyRanges(pr.RangeFrame):
 
         kwargs: Dict[str, Any] = {
             "strand_behavior": strand_behavior,
-            "how": how,
+            "join_type": join_type,
             "report_overlap": report_overlap,
             "suffix": suffix,
             "apply_strand_suffix": apply_strand_suffix,
@@ -2242,7 +2251,9 @@ class PyRanges(pr.RangeFrame):
         PyRanges with 3 rows and 5 columns.
         Contains 1 chromosomes and 2 strands.
         """
-        return self.get_with_loc_columns([c for c in self.columns if c not in self._loc_columns])
+        return self.get_with_loc_columns(
+            [c for c in self.columns if c not in self._loc_columns]
+        )
 
     def overlap(
         self,
@@ -2559,7 +2570,9 @@ class PyRanges(pr.RangeFrame):
 
         return gr
 
-    def stable_sort_multiple(self, by: list[str], *, ascending: bool | list[bool] = True) -> "PyRanges":
+    def stable_sort_multiple(
+        self, by: list[str], *, ascending: bool | list[bool] = True
+    ) -> "PyRanges":
         """Stably sort by multiple columns.
 
         Parameters
@@ -2598,12 +2611,16 @@ class PyRanges(pr.RangeFrame):
         if isinstance(by, list) and isinstance(ascending, list):
             # Both are lists, ensure they are of the same length
             if len(by) != len(ascending):
-                raise ValueError("The 'by' and 'ascending' lists must be of the same length.")
+                raise ValueError(
+                    "The 'by' and 'ascending' lists must be of the same length."
+                )
         elif isinstance(by, list) and isinstance(ascending, bool):
             ascending = [ascending] * len(by)
         else:
             # One is a list and the other is not, which is not allowed
-            raise TypeError("The arguments 'by' and 'ascending' must both be lists or neither should be a list.")
+            raise TypeError(
+                "The arguments 'by' and 'ascending' must both be lists or neither should be a list."
+            )
 
         _self = self.copy()
         for c, a in reversed(list((zip(by, ascending)))):
@@ -2611,7 +2628,9 @@ class PyRanges(pr.RangeFrame):
 
         return PyRanges(_self)
 
-    def sort_by_5_prime_ascending_and_3_prime_descending(self, *, reverse: bool = False) -> "PyRanges":
+    def sort_by_5_prime_ascending_and_3_prime_descending(
+        self, *, reverse: bool = False
+    ) -> "PyRanges":
         """
         Sort by 5' end ascending and 3' end descending.
 
@@ -2663,17 +2682,26 @@ class PyRanges(pr.RangeFrame):
         PyRanges with 7 rows and 5 columns.
         Contains 2 chromosomes and 2 strands.
         """
-        def _sort_by_5_prime_ascending_and_3_prime_descending(df: "pr.PyRanges", **_) -> pd.DataFrame:
+
+        def _sort_by_5_prime_ascending_and_3_prime_descending(
+            df: "pr.PyRanges", **_
+        ) -> pd.DataFrame:
             positive_by = RANGE_COLS
             negative_by = RANGE_COLS[::-1]
             return pd.concat(
                 [
-                    df[df.Strand == "+"].sort_values(by=positive_by, ascending=not reverse),
+                    df[df.Strand == "+"].sort_values(
+                        by=positive_by, ascending=not reverse
+                    ),
                     df[df.Strand == "-"].sort_values(by=negative_by, ascending=reverse),
                 ]
             )
 
-        return PyRanges(pyrange_apply_single(_sort_by_5_prime_ascending_and_3_prime_descending, self, strand=True))
+        return PyRanges(
+            pyrange_apply_single(
+                _sort_by_5_prime_ascending_and_3_prime_descending, self, strand=True
+            )
+        )
 
     def slack(self, slack):
         """Deprecated: this function has been moved to Pyranges.extend"""
@@ -3441,7 +3469,11 @@ class PyRanges(pr.RangeFrame):
         return PyRanges(super().tail(*args, **kwargs))
 
     def tile(
-        self, tile_size: int, *, overlap_column: str | None = None, strand: bool | None = None,
+        self,
+        tile_size: int,
+        *,
+        overlap_column: str | None = None,
+        strand: bool | None = None,
     ) -> "PyRanges":
         """Return overlapping genomic tiles.
 
@@ -4375,7 +4407,10 @@ class PyRanges(pr.RangeFrame):
         )
 
     def get_with_loc_columns(
-        self, key: str | Iterable[str], *, preserve_loc_order: bool = False,
+        self,
+        key: str | Iterable[str],
+        *,
+        preserve_loc_order: bool = False,
     ) -> "pr.PyRanges":
         """
         Return the requested columns and the genome location columns.

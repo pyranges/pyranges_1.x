@@ -3,9 +3,15 @@ import pandas as pd
 from ncls import NCLS  # type: ignore
 
 from pyranges import empty_df
+from pyranges.names import VALID_JOIN_TYPE, JOIN_INNER, JOIN_RIGHT
 
 
-def _both_indexes(scdf, ocdf, how=False, **kwargs):
+def _both_indexes(
+    scdf,
+    ocdf,
+    join_type: VALID_JOIN_TYPE,
+    **_,
+):
     if ocdf.empty:
         return scdf.index, np.array([], dtype=np.int64)
 
@@ -15,27 +21,22 @@ def _both_indexes(scdf, ocdf, how=False, **kwargs):
 
     it = NCLS(ocdf.Start.values, ocdf.End.values, ocdf.index.values)
 
-    if not how or how in ["outer", "left", "right"]:
-        _self_indexes, _other_indexes = it.all_overlaps_both(starts, ends, indexes)
-    elif how == "containment":
-        _self_indexes, _other_indexes = it.all_containments_both(starts, ends, indexes)
-    elif how == "first":
-        _self_indexes, _other_indexes = it.first_overlap_both(starts, ends, indexes)
-    elif how == "last":
-        _self_indexes, _other_indexes = it.last_overlap_both(starts, ends, indexes)
-
-    return _self_indexes, _other_indexes
+    return it.all_overlaps_both(starts, ends, indexes)
 
 
-def _both_dfs(scdf, ocdf, how=False, **kwargs):
-    _self_indexes, _other_indexes = _both_indexes(scdf, ocdf, how, **kwargs)
-    if how == "left":
+def _both_dfs(scdf, ocdf, join_type: VALID_JOIN_TYPE, **kwargs):
+    _self_indexes, _other_indexes = _both_indexes(scdf, ocdf, join_type, **kwargs)
+    if join_type == "inner":
+        scdf = scdf.reindex(_self_indexes)
         ocdf = ocdf.reindex(_other_indexes)
         ocdf.index = _self_indexes
-    elif how == "right":
+    elif join_type == "left":
+        ocdf = ocdf.reindex(_other_indexes)
+        ocdf.index = _self_indexes
+    elif join_type == "right":
         scdf = scdf.reindex(_self_indexes)
         scdf.index = _other_indexes
-    elif how == "outer":
+    elif join_type == "outer":
         missing_indices_self = scdf.index.difference(_self_indexes)
         missing_indices_other = ocdf.index.difference(_other_indexes)
         scdf_matching = scdf.reindex(_self_indexes)
@@ -54,5 +55,5 @@ def _both_dfs(scdf, ocdf, how=False, **kwargs):
         left_index=True,
         right_index=True,
         suffixes=("", kwargs["suffix"]),
-        how="inner" if how is None else how,
+        how="inner" if join_type is None else join_type,
     )

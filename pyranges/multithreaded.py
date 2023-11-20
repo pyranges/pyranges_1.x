@@ -131,7 +131,9 @@ def pyrange_apply(
     other_strand = {"+": "-", "-": "+"}
     same_strand = {"+": "+", "-": "-"}
 
-    strand_dict = other_strand if strand_behavior == STRAND_BEHAVIOR_OPPOSITE else same_strand
+    strand_dict = (
+        other_strand if strand_behavior == STRAND_BEHAVIOR_OPPOSITE else same_strand
+    )
 
     ensure_strand_options_valid(other, self, strand_behavior)
 

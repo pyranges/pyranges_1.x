@@ -29,7 +29,7 @@ def _insert_distance(ocdf, dist, suffix):
 def _overlapping_for_nearest(scdf, ocdf, suffix):
     nearest_df = pd.DataFrame(columns="Chromosome Start End Strand".split())
 
-    scdf2, ocdf2 = _both_dfs(scdf, ocdf, how="first")
+    scdf2, ocdf2 = _both_dfs(scdf, ocdf, join_type="first")
 
     if not ocdf2.empty:
         original_idx = scdf.index
@@ -45,7 +45,7 @@ def _overlapping_for_nearest(scdf, ocdf, suffix):
         odf.index = idxs
         sdf = scdf.reindex(idxs)
 
-        nearest_df = sdf.join_overlaps(odf, rsuffix=suffix)
+        nearest_df = sdf.interval_join(odf, rsuffix=suffix)
         nearest_df = _insert_distance(nearest_df, 0, suffix)
     else:
         df_to_find_nearest_in = scdf
@@ -135,7 +135,7 @@ def _nearest(scdf, ocdf, **kwargs):
         r_idx = pd.Series(r_idx, index=ocdf.index)
         df_to_find_nearest_in = df_to_find_nearest_in.drop(r_idx.loc[r_idx == -1].index)
 
-        df = df_to_find_nearest_in.join_overlaps(ocdf, rsuffix=suffix)
+        df = df_to_find_nearest_in.interval_join(ocdf, rsuffix=suffix)
 
     if overlap and "df" in locals() and not df.empty and not nearest_df.empty:
         df = pd.concat([nearest_df, df], sort=False)

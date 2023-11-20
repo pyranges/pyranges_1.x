@@ -169,6 +169,7 @@ def test_overlap(gr, gr2, strandedness):
 
     compare_results(bedtools_df, result)
 
+
 @pytest.mark.bedtools
 @pytest.mark.parametrize("strandedness", strandedness)
 @settings(
@@ -369,7 +370,7 @@ def test_join(gr, gr2, strandedness):
         dtype={"Chromosome": "category", "Strand": "category"},
     ).drop("Chromosome_b Overlap".split(), axis=1)
 
-    result = gr.join_overlaps(gr2, strandedness=strandedness)
+    result = gr.interval_join(gr2, strandedness=strandedness)
 
     if result.df.empty:
         assert bedtools_df.empty

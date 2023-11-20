@@ -32,6 +32,14 @@ OVERLAP_ALL = "all"
 VALID_OVERLAP_TYPE = Literal["first"] | Literal["containment"] | Literal["all"]
 VALID_OVERLAP_OPTIONS = [OVERLAP_FIRST, OVERLAP_CONTAINMENT, OVERLAP_ALL]
 
+JOIN_OUTER = "outer"
+JOIN_INNER = "inner"
+JOIN_RIGHT = "right"
+JOIN_LEFT = "left"
+VALID_JOIN_TYPE = (
+    Literal["inner"] | Literal["left"] | Literal["outer"] | Literal["right"]
+)
+VALID_JOIN_OPTIONS = [JOIN_INNER, JOIN_LEFT, JOIN_OUTER, JOIN_RIGHT]
 
 TEMP_INDEX_COL = "__temp_index__"
 TEMP_START_COL = "__temp_start__"

@@ -9,7 +9,7 @@ def test_join_with_slack():
     gr1 = pr.from_args(chromosomes="chr1", starts=[0], ends=[10], strands="+")
     gr2 = pr.from_args(chromosomes="chr1", starts=[15], ends=[20], strands="+")
 
-    result = gr1.join_overlaps(gr2, slack=10)
+    result = gr1.interval_join(gr2, slack=10)
     assert not result.empty
 
 
@@ -31,12 +31,12 @@ def test_join_without_reordering():
         }
     )
 
-    lj = f1.join_overlaps(f2, how="left")
+    lj = f1.interval_join(f2, join_type="left")
     assert_series_equal(lj.Name, f1.Name)
 
-    rj = f1.join_overlaps(f2, how="right")
+    rj = f1.interval_join(f2, join_type="right")
     assert_series_equal(rj.Name_b, f2.Name, check_names=False)
 
-    oj = f1.join_overlaps(f2, how="outer")
+    oj = f1.interval_join(f2, join_type="outer")
     assert list(oj.Name.fillna(-1)) == ["interval2", "interval1", "interval3", -1]
     assert list(oj.Name_b.fillna(-1)) == ["b", -1, -1, "a"]
