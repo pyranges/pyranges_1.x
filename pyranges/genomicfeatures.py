@@ -6,7 +6,6 @@ from pandas.core.frame import DataFrame
 from sorted_nearest.src.introns import find_introns  # type: ignore
 
 import pyranges as pr
-from pyranges.multithreaded import pyrange_apply
 from pyranges.pyranges_main import PyRanges
 
 __all__ = ["genome_bounds", "tile_genome", "GenomicFeaturesMethods"]

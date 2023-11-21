@@ -19,7 +19,6 @@ from pyranges.multithreaded import (
     _extend_grp,
     _tes,
     _tss,
-    pyrange_apply,
     pyrange_apply_single,
 )
 from pyranges.names import (
@@ -34,7 +33,8 @@ from pyranges.names import (
     VALID_JOIN_TYPE,
     VALID_STRAND_OPTIONS,
     STRAND_BEHAVIOR_SAME,
-    STRAND_AUTO,
+    STRAND_AUTO, VALID_STRAND_BEHAVIOR_OPTIONS, STRAND_BEHAVIOR_OPPOSITE, STRAND_BEHAVIOR_AUTO, STRAND_BEHAVIOR_IGNORE,
+    TEMP_STRAND_COL,
 )
 
 if TYPE_CHECKING:
@@ -469,17 +469,45 @@ class PyRanges(pr.RangeFrame):
     def apply_pair(
         self,
         other: "PyRanges",
-        f: Callable,
-        strand_behavior: str | None = None,
+        function: Callable[["PyRanges", "PyRanges", dict], "PyRanges"],
+        strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
+        by: str | list[str] | None = None,
         **kwargs,
-    ) -> "PyRanges":
-        """Apply a function to a pair of PyRanges.
+    ) -> "pr.PyRanges":
+        """Apply function to pairs of overlapping intervals, by chromosome and optionally strand.
 
-        The function is applied to each chromosome or chromosome/strand pair found in at least one
-        of the PyRanges.
+        Parameters
+        ----------
+        other : PyRanges
+
+        function : Callable
+            Function that takes two PyRanges - and optionally kwargs - and returns a PyRanges.
+
+        strand_behavior: str
+            "auto", "same", "opposite" (default: "auto")
+
+        by : str or list of str or None
+            Additional columns - in addition to chromosome and strand - to group by.
+
+        kwargs : dict
         """
+        _by = [] if by is None else ([by] if isinstance(by, str) else [*by])
 
-        return pyrange_apply(f, self, other, strand_behavior=strand_behavior)
+        self._ensure_strand_behavior_options_valid(other, strand_behavior)
+
+        if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
+            self.insert(self.shape[1], TEMP_STRAND_COL, self[STRAND_COL].replace({"+": "-", "-": "+"}))
+            other.insert(other.shape[1], TEMP_STRAND_COL, other[STRAND_COL])
+
+        grpby_ks = self._group_keys(other, strand_behavior) + _by
+
+        res = super(PyRanges, self).apply_pair(other, function, grpby_ks, **kwargs)
+
+        if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
+            other.drop(TEMP_STRAND_COL, axis="columns", inplace=True)
+            return res.drop(TEMP_STRAND_COL, axis="columns")
+
+        return res
 
     def boundaries(
         self,
@@ -1978,10 +2006,9 @@ class PyRanges(pr.RangeFrame):
         Contains 1 chromosomes and 1 strands.
         """
         return PyRanges(
-            pyrange_apply(
-                _overlap,
-                self,
+            self.apply_pair(
                 other,
+                _overlap,
                 invert=invert,
                 how=how,
                 strand_behavior=strand_behavior,
@@ -4121,3 +4148,26 @@ class PyRanges(pr.RangeFrame):
         if strand == STRAND_AUTO:
             return self.strand_values_valid
         return strand
+
+    def _ensure_strand_behavior_options_valid(self, other, strand_behavior):
+        if strand_behavior not in VALID_STRAND_BEHAVIOR_OPTIONS:
+            msg = f"{VALID_STRAND_BEHAVIOR_OPTIONS} are the only valid values for strand_behavior."
+            raise ValueError(msg)
+        if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
+            assert (
+                    self.strand_values_valid and other.strand_values_valid
+            ), "Can only do opposite strand operations when both PyRanges contain valid strand info."
+
+    def _group_keys(
+        self,
+        other: "PyRanges",
+        strand_behavior: VALID_STRAND_BEHAVIOR_TYPE,
+    ) -> list[str]:
+        include_strand = True
+        if strand_behavior == STRAND_BEHAVIOR_AUTO:
+            include_strand = self.strand_values_valid and other.strand_values_valid
+        elif strand_behavior == STRAND_BEHAVIOR_IGNORE:
+            include_strand = False
+        elif strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
+            return [CHROM_COL, TEMP_STRAND_COL]
+        return [CHROM_COL, STRAND_COL] if include_strand else [CHROM_COL]

@@ -1,13 +1,11 @@
-import shutil
 from functools import cached_property
 from typing import Literal, Iterable
 
 import pandas as pd
-from tabulate import tabulate
 
 from pyranges.methods.overlap import _overlap
 from pyranges.names import RANGE_COLS
-from pyranges.tostring import adjust_table_width, tostring
+from pyranges.tostring import tostring
 
 
 class RangeFrame(pd.DataFrame):
@@ -135,9 +133,9 @@ class RangeFrame(pd.DataFrame):
               2        4  d
         RangeFrame with 1 rows and 3 columns.
         """
-        return self._pair_apply(other, _overlap, how=how, by=by)
+        return self.apply_pair(other, _overlap, how=how, by=by)
 
-    def _pair_apply(self, other, function, by, **kwargs):
+    def apply_pair(self, other, function, by, **kwargs):
         if by is None:
             return RangeFrame(function(self, other, **kwargs))
 
@@ -152,10 +150,10 @@ class RangeFrame(pd.DataFrame):
         """
 
         results = []
-        others = other.groupby(by)
         empty = RangeFrame(columns=other.columns)
+        others = {k: v for k, v in other.groupby(by)}
 
         for key, sdf in self.groupby(by):
-            odf = others.get_group(key) if key in others.groups else empty
+            odf = others.get(key, empty)
             results.append(function(sdf, odf, **kwargs))
         return RangeFrame(pd.concat(results))

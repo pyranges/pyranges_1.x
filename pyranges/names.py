@@ -46,5 +46,6 @@ VALID_JOIN_OPTIONS = [JOIN_INNER, JOIN_LEFT, JOIN_OUTER, JOIN_RIGHT]
 
 TEMP_INDEX_COL = "__temp_index__"
 TEMP_START_COL = "__temp_start__"
+TEMP_STRAND_COL = "__temp_strand__"
 TEMP_END_COL = "__temp_end__"
 TEMP_NAME_COL = "__temp_name__"

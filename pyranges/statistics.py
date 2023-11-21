@@ -12,7 +12,6 @@ from pandas.core.series import Series
 
 import pyranges as pr
 from pyranges.methods.statistics import _relative_distance
-from pyranges.multithreaded import pyrange_apply
 from pyranges.pyranges_main import PyRanges
 
 __all__ = [

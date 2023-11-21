@@ -22,69 +22,6 @@ if TYPE_CHECKING:
     from pyranges.pyranges_main import PyRanges
 
 
-def _group_keys(
-    self: "PyRanges",
-    other: "PyRanges",
-    strand_behavior: VALID_STRAND_BEHAVIOR_TYPE,
-) -> tuple[str] | tuple[str, str]:
-    include_strand = True
-    if strand_behavior == STRAND_BEHAVIOR_AUTO:
-        include_strand = self.strand_values_valid and other.strand_values_valid
-    elif strand_behavior == STRAND_BEHAVIOR_IGNORE:
-        include_strand = False
-    return (CHROM_COL, STRAND_COL) if include_strand else (CHROM_COL,)
-
-
-def pyrange_apply(
-    function: Callable,
-    self: "PyRanges",
-    other: "PyRanges",
-    strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
-    by: str | list[str] | None = None,
-    **kwargs,
-) -> pd.DataFrame:
-    other_strand = {"+": "-", "-": "+"}
-    same_strand = {"+": "+", "-": "-"}
-
-    _by = by if by is not None else []
-
-    strand_dict = (
-        other_strand if strand_behavior == STRAND_BEHAVIOR_OPPOSITE else same_strand
-    )
-
-    ensure_strand_options_valid(other, self, strand_behavior)
-
-    results = []
-
-    original_index = self.index.names
-    should_reset_index_self = index_contains_genome_loc_cols(self)
-    should_reset_index_other = index_contains_genome_loc_cols(other)
-    self = self.reset_index() if should_reset_index_self else self
-    other = other.reset_index() if should_reset_index_other else other
-
-    grpby_ks = _group_keys(self, other, strand_behavior) + _by
-
-    others = dict(list(other.groupby(grpby_ks, observed=True)))
-    empty = pr.empty(columns=other.columns, dtype=other.dtypes)
-    for key, gdf in self.groupby(grpby_ks, observed=True):
-        if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
-            key = key[0], strand_dict[key[1]]
-        ogdf = others.get(key, empty)
-        results.append(function(gdf, ogdf, **kwargs))
-    result = pd.concat(results)
-    return result.set_index(original_index) if should_reset_index_self else result
-
-
-def ensure_strand_options_valid(other, self, strand_behavior):
-    if strand_behavior not in VALID_STRAND_BEHAVIOR_OPTIONS:
-        msg = f"{VALID_STRAND_BEHAVIOR_OPTIONS} are the only valid values for strand_behavior."
-        raise ValueError(msg)
-    if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
-        assert (
-            self.strand_values_valid and other.strand_values_valid
-        ), "Can only do opposite strand operations when both PyRanges contain valid strand info."
-
-
 def pyrange_apply_single(
     function: Callable, self: "PyRanges", **kwargs
 ) -> pd.DataFrame:
