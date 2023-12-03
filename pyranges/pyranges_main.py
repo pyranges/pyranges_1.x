@@ -33,8 +33,16 @@ from pyranges.names import (
     VALID_JOIN_TYPE,
     VALID_STRAND_OPTIONS,
     STRAND_BEHAVIOR_SAME,
-    STRAND_AUTO, VALID_STRAND_BEHAVIOR_OPTIONS, STRAND_BEHAVIOR_OPPOSITE, STRAND_BEHAVIOR_AUTO, STRAND_BEHAVIOR_IGNORE,
+    STRAND_AUTO,
+    VALID_STRAND_BEHAVIOR_OPTIONS,
+    STRAND_BEHAVIOR_OPPOSITE,
+    STRAND_BEHAVIOR_AUTO,
+    STRAND_BEHAVIOR_IGNORE,
     TEMP_STRAND_COL,
+    TEMP_INDEX_COL,
+    TEMP_CUMSUM_COL,
+    TEMP_LENGTH_COL,
+    FRAME_COL,
 )
 
 if TYPE_CHECKING:
@@ -496,8 +504,8 @@ class PyRanges(pr.RangeFrame):
         self._ensure_strand_behavior_options_valid(other, strand_behavior)
 
         if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
-            self.insert(self.shape[1], TEMP_STRAND_COL, self[STRAND_COL].replace({"+": "-", "-": "+"}))
-            other.insert(other.shape[1], TEMP_STRAND_COL, other[STRAND_COL])
+            self.col[TEMP_STRAND_COL] = self[STRAND_COL].replace({"+": "-", "-": "+"})
+            other.col[TEMP_STRAND_COL] = other[STRAND_COL]
 
         grpby_ks = self._group_keys(other, strand_behavior) + _by
 
@@ -541,48 +549,47 @@ class PyRanges(pr.RangeFrame):
 
         >>> d = {"Chromosome": [1, 1, 1], "Start": [1, 60, 110], "End": [40, 68, 130], "transcript_id": ["tr1", "tr1", "tr2"], "meta": ["a", "b", "c"]}
         >>> gr = pr.PyRanges(d)
-        >>> gr.length = gr.lengths()
+        >>> gr.insert(gr.shape[-1], "Length", gr.lengths())
         >>> gr
-        +--------------+-----------+-----------+-----------------+------------+-----------+
-        |   Chromosome |     Start |       End | transcript_id   | meta       |    length |
-        |   (category) |   (int64) |   (int64) | (object)        | (object)   |   (int64) |
-        |--------------+-----------+-----------+-----------------+------------+-----------|
-        |            1 |         1 |        40 | tr1             | a          |        39 |
-        |            1 |        60 |        68 | tr1             | b          |         8 |
-        |            1 |       110 |       130 | tr2             | c          |        20 |
-        +--------------+-----------+-----------+-----------------+------------+-----------+
-        Unstranded PyRanges object has 3 rows and 6 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
+          Chromosome    Start      End  transcript_id    meta        Length
+               int64    int64    int64  object           object       int64
+        ------------  -------  -------  ---------------  --------  --------
+                   1        1       40  tr1              a               39
+                   1       60       68  tr1              b                8
+                   1      110      130  tr2              c               20
+        PyRanges with 3 rows and 6 columns.
+        Contains 1 chromosomes.
+
 
         >>> gr.boundaries("transcript_id")
-        +--------------+-----------+-----------+-----------------+
-        |   Chromosome |     Start |       End | transcript_id   |
-        |   (category) |   (int64) |   (int64) | (object)        |
-        |--------------+-----------+-----------+-----------------|
-        |            1 |         1 |        68 | tr1             |
-        |            1 |       110 |       130 | tr2             |
-        +--------------+-----------+-----------+-----------------+
-        Unstranded PyRanges object has 2 rows and 4 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
+          Chromosome    Start      End  transcript_id
+               int64    int64    int64  object
+        ------------  -------  -------  ---------------
+                   1        1       68  tr1
+                   1      110      130  tr2
+        PyRanges with 2 rows and 4 columns.
+        Contains 1 chromosomes.
 
-        >>> gr.boundaries("transcript_id", agg={"length":"sum", "meta": ",".join})
-        +--------------+-----------+-----------+-----------------+------------+-----------+
-        |   Chromosome |     Start |       End | transcript_id   | meta       |    length |
-        |   (category) |   (int64) |   (int64) | (object)        | (object)   |   (int64) |
-        |--------------+-----------+-----------+-----------------+------------+-----------|
-        |            1 |         1 |        68 | tr1             | a,b        |        47 |
-        |            1 |       110 |       130 | tr2             | c          |        20 |
-        +--------------+-----------+-----------+-----------------+------------+-----------+
-        Unstranded PyRanges object has 2 rows and 6 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
+
+        >>> gr.boundaries("transcript_id", agg={"Length":"sum", "meta": ",".join})
+          Chromosome    Start      End  transcript_id    meta        Length
+               int64    int64    int64  object           object       int64
+        ------------  -------  -------  ---------------  --------  --------
+                   1        1       68  tr1              a,b             47
+                   1      110      130  tr2              c               20
+        PyRanges with 2 rows and 6 columns.
+        Contains 1 chromosomes.
 
         """
         from pyranges.methods.boundaries import _bounds
 
-        kwargs = {"group_by": group_by, "agg": agg, "strand": self.strand_values_valid}
-        kwargs = fill_kwargs(kwargs)
-
-        result = pyrange_apply_single(_bounds, self, **kwargs)
+        result = pyrange_apply_single(
+            _bounds,
+            self,
+            group_by=group_by,
+            agg=agg,
+            strand=self.strand_values_valid,
+        )
         return pr.PyRanges(result)
 
     def calculate_frame(self, by: str | list[str]) -> "PyRanges":
@@ -611,64 +618,60 @@ class PyRanges(pr.RangeFrame):
         ...                   "End": [10,45,90,130,218],
         ...                   "transcript_id": ["t1","t1","t1","t2","t2"]})
         >>> p
-        +--------------+--------------+-----------+-----------+-----------------+
-        |   Chromosome | Strand       |     Start |       End | transcript_id   |
-        |   (category) | (category)   |   (int64) |   (int64) | (object)        |
-        |--------------+--------------+-----------+-----------+-----------------|
-        |            1 | +            |         1 |        10 | t1              |
-        |            1 | +            |        31 |        45 | t1              |
-        |            1 | +            |        52 |        90 | t1              |
-        |            2 | -            |       101 |       130 | t2              |
-        |            2 | -            |       201 |       218 | t2              |
-        +--------------+--------------+-----------+-----------+-----------------+
-        Stranded PyRanges object has 5 rows and 5 columns from 2 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
+          Chromosome  Strand      Start      End  transcript_id
+               int64  object      int64    int64  object
+        ------------  --------  -------  -------  ---------------
+                   1  +               1       10  t1
+                   1  +              31       45  t1
+                   1  +              52       90  t1
+                   2  -             101      130  t2
+                   2  -             201      218  t2
+        PyRanges with 5 rows and 5 columns.
+        Contains 2 chromosomes and 2 strands.
 
         >>> p.calculate_frame(by=['transcript_id'])
-        +--------------+--------------+-----------+-----------+-----------------+-----------+
-        |   Chromosome | Strand       |     Start |       End | transcript_id   |     Frame |
-        |   (category) | (category)   |   (int64) |   (int64) | (object)        |   (int64) |
-        |--------------+--------------+-----------+-----------+-----------------+-----------|
-        |            1 | +            |         1 |        10 | t1              |         0 |
-        |            1 | +            |        31 |        45 | t1              |         9 |
-        |            1 | +            |        52 |        90 | t1              |        23 |
-        |            2 | -            |       101 |       130 | t2              |        17 |
-        |            2 | -            |       201 |       218 | t2              |         0 |
-        +--------------+--------------+-----------+-----------+-----------------+-----------+
-        Stranded PyRanges object has 5 rows and 6 columns from 2 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
+          Chromosome  Strand      Start      End  transcript_id      Frame
+               int64  object      int64    int64  object             int64
+        ------------  --------  -------  -------  ---------------  -------
+                   1  +               1       10  t1                     0
+                   1  +              31       45  t1                     9
+                   1  +              52       90  t1                    23
+                   2  -             101      130  t2                     0
+                   2  -             201      218  t2                    17
+        PyRanges with 5 rows and 6 columns.
+        Contains 2 chromosomes and 2 strands.
+
 
         """
-        _self = self.copy()
+        gr = self.copy()
         # Column to save the initial index
-        _self.__index__ = np.arange(len(self))
+        gr.col[TEMP_INDEX_COL] = np.arange(len(self))
 
         # Filtering for desired columns
-        if isinstance(by, str):
-            lst = [by]
-        else:
-            lst = by
-        sorted_p = _self[["Strand", "__index__"] + lst]
+        lst = [by] if isinstance(by, str) else by
+        sorted_p = gr.get_with_loc_columns([TEMP_INDEX_COL, *lst])
 
         # Sorting by 5' (Intervals on + are sorted by ascending order and - are sorted by descending order)
-        sorted_p = sorted_p.sort(by="5")
+        sorted_p = sorted_p.sort_by_5_prime_ascending_and_3_prime_descending()
 
         # Creating a column saving the length for the intervals (for selenoprofiles and ensembl)
-        sorted_p.__length__ = sorted_p.lengths()
+        sorted_p.col[TEMP_LENGTH_COL] = sorted_p.lengths()
 
         # Creating a column saving the cumulative length for the intervals
-        sorted_p.loc["__cumsum__", :] = sorted_p.groupby(by=by).__length__.cumsum()
+        sorted_p.col[TEMP_CUMSUM_COL] = sorted_p.groupby(by=by)[
+            TEMP_LENGTH_COL
+        ].cumsum()
 
         # Creating a frame column
-        sorted_p.Frame = sorted_p.__cumsum__ - sorted_p.__length__
+        sorted_p.col[FRAME_COL] = sorted_p[TEMP_CUMSUM_COL] - sorted_p[TEMP_LENGTH_COL]
 
         # Appending the Frame of sorted_p by the index of p
-        sorted_p = sorted_p.apply(lambda df: df.sort_values(by="__index__"))
+        sorted_p = sorted_p.sort_values(by=TEMP_INDEX_COL)
 
-        _self.Frame = sorted_p.Frame
+        gr.col.Frame = sorted_p.Frame
 
         # Drop __index__ column
-        return _self.apply(lambda df: df.drop("__index__", axis=1))
+        return gr.drop(TEMP_INDEX_COL, axis=1)
 
     @property
     def chromosomes(self) -> list[str]:
@@ -2281,7 +2284,9 @@ class PyRanges(pr.RangeFrame):
         return PyRanges(_self)
 
     def sort_by_5_prime_ascending_and_3_prime_descending(
-        self, *, reverse: bool = False
+        self,
+        *,
+        reverse: bool = False,
     ) -> "PyRanges":
         """
         Sort by 5' end ascending and 3' end descending.
@@ -4155,7 +4160,7 @@ class PyRanges(pr.RangeFrame):
             raise ValueError(msg)
         if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
             assert (
-                    self.strand_values_valid and other.strand_values_valid
+                self.strand_values_valid and other.strand_values_valid
             ), "Can only do opposite strand operations when both PyRanges contain valid strand info."
 
     def _group_keys(

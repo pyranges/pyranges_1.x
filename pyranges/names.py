@@ -8,12 +8,14 @@ RANGE_COLS = [START_COL, END_COL]
 GENOME_LOC_COLS = [CHROM_COL, *RANGE_COLS]
 GENOME_LOC_COLS_WITH_STRAND = [*GENOME_LOC_COLS, STRAND_COL]
 
+FRAME_COL = "Frame"
+
 FORWARD_STRAND = "+"
 REVERSE_STRAND = "-"
 VALID_GENOMIC_STRAND_INFO = [FORWARD_STRAND, REVERSE_STRAND]
 
 STRAND_AUTO = "auto"
-VALID_STRAND_OPTIONS = Literal["auto"] | True | False
+VALID_STRAND_OPTIONS = Literal["auto"] | bool
 
 STRAND_BEHAVIOR_AUTO = "auto"
 STRAND_BEHAVIOR_SAME = "same"
@@ -49,3 +51,5 @@ TEMP_START_COL = "__temp_start__"
 TEMP_STRAND_COL = "__temp_strand__"
 TEMP_END_COL = "__temp_end__"
 TEMP_NAME_COL = "__temp_name__"
+TEMP_CUMSUM_COL = "__temp_cumsum__"
+TEMP_LENGTH_COL = "__temp_length__"

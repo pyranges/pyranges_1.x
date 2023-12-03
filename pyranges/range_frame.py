@@ -1,11 +1,29 @@
+from dataclasses import dataclass
 from functools import cached_property
-from typing import Literal, Iterable
+from typing import Literal, Iterable, Self
 
 import pandas as pd
 
 from pyranges.methods.overlap import _overlap
 from pyranges.names import RANGE_COLS
 from pyranges.tostring import tostring
+
+
+class ColUpdater:
+    def __init__(self, r: "RangeFrame") -> Self:
+        self.__dict__["r"] = r
+
+    def __setattr__(self, key, value) -> None:
+        if key not in self.r:
+            self.r.insert(self.r.shape[-1], key, value)
+        else:
+            self.r.loc[:, key] = value
+
+    def __setitem__(self, key: str, value: Iterable) -> None:
+        if key not in self.r:
+            self.r.insert(self.r.shape[-1], key, value)
+        else:
+            self.r.loc[:, key] = value
 
 
 class RangeFrame(pd.DataFrame):
@@ -50,6 +68,45 @@ class RangeFrame(pd.DataFrame):
         return self.__str__(
             max_col_width=max_col_width, max_total_width=max_total_width
         )
+
+    @property
+    def col(self) -> "ColUpdater":
+        """Add or update a column.
+
+        Returns
+        -------
+
+        Examples
+        >>> gr = RangeFrame({"Start": [0, 1], "End": [2, 3]})
+        >>> gr.col.Frame = ["Hi", "There"]
+        >>> gr
+          Start      End  Frame
+          int64    int64  object
+        -------  -------  --------
+              0        2  Hi
+              1        3  There
+        RangeFrame with 2 rows and 3 columns.
+
+        >>> gr.col.Frame = ["Next", "words"]
+        >>> gr
+          Start      End  Frame
+          int64    int64  object
+        -------  -------  --------
+              0        2  Next
+              1        3  words
+        RangeFrame with 2 rows and 3 columns.
+
+        >>> gr.col["Start"] = [5000, 1000]
+        >>> gr
+          Start      End  Frame
+          int64    int64  object
+        -------  -------  --------
+           5000        2  Next
+           1000        3  words
+        RangeFrame with 2 rows and 3 columns.
+        """
+
+        return ColUpdater(self)
 
     def overlap(
         self,

@@ -25,6 +25,7 @@ if TYPE_CHECKING:
 def pyrange_apply_single(
     function: Callable, self: "PyRanges", **kwargs
 ) -> pd.DataFrame:
+    temp_index_col = "__index_column_for_apply__"
     strand = kwargs["strand"]
 
     if strand and not STRAND_COL in self.columns:
@@ -37,7 +38,7 @@ def pyrange_apply_single(
         keys = [CHROM_COL, STRAND_COL] if strand else [CHROM_COL]
     range_index = np.arange(len(self))
     if isinstance(self.index, pd.RangeIndex):
-        self = self.set_index(pd.Series(name=TEMP_INDEX_COL, data=range_index))
+        self = self.set_index(pd.Series(name=temp_index_col, data=range_index))
         res = (
             self.groupby(keys, as_index=False, observed=True)
             .apply(function, **kwargs)
@@ -52,7 +53,7 @@ def pyrange_apply_single(
                 self.index.names if self.index.name is None else self.index.names
             )
         self = self.reset_index().set_index(
-            pd.Series(name=TEMP_INDEX_COL, data=range_index), append=False
+            pd.Series(name=temp_index_col, data=range_index), append=False
         )
         res = self.groupby(keys, as_index=False, observed=True).apply(
             function, **kwargs
