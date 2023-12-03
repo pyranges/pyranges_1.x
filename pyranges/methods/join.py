@@ -50,10 +50,11 @@ def _both_dfs(scdf, ocdf, join_type: VALID_JOIN_TYPE, **kwargs):
         )
         scdf = pd.concat([scdf_matching, scdf_missing])
         ocdf = pd.concat([ocdf_matcing, ocdf_missing])
+    suffixes = (kwargs["lsuffix"], kwargs["rsuffix"]) if (kwargs["lsuffix"] or kwargs["rsuffix"]) else None
     return scdf.merge(
         ocdf,
         left_index=True,
         right_index=True,
-        suffixes=("", kwargs["suffix"]),
+        suffixes=suffixes,
         how="inner" if join_type is None else join_type,
     )
