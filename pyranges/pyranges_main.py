@@ -42,7 +42,7 @@ from pyranges.names import (
     TEMP_INDEX_COL,
     TEMP_CUMSUM_COL,
     TEMP_LENGTH_COL,
-    FRAME_COL,
+    FRAME_COL, CHROM_AND_STRAND_COLS,
 )
 
 if TYPE_CHECKING:
@@ -712,7 +712,8 @@ class PyRanges(pr.RangeFrame):
         strand: VALID_STRAND_OPTIONS = "auto",
         by: list[str] | str | None = None,
         slack: int = 0,
-        count: bool = False,
+        cluster_column: str = "Cluster",
+        count_column: str | None = None,
     ) -> "PyRanges":
         """Give overlapping intervals a common id.
 
@@ -731,6 +732,12 @@ class PyRanges(pr.RangeFrame):
             Consider intervals separated by less than `slack` to be in the same cluster. If `slack`
             is negative, intervals overlapping less than `slack` are not considered to be in the
             same cluster.
+
+        cluster_column:
+            Name the cluster column. Default: "Cluster"
+
+        count_column:
+            Add a column of counts with this name.
 
         Returns
         -------
@@ -755,128 +762,88 @@ class PyRanges(pr.RangeFrame):
         >>> gr = pr.PyRanges({"Chromosome": [1, 1, 1, 1], "Start": [1, 2, 3, 9],
         ...                    "End": [3, 3, 10, 12], "Gene": [1, 2, 3, 3]})
         >>> gr
-        +--------------+-----------+-----------+-----------+
-        |   Chromosome |     Start |       End |      Gene |
-        |   (category) |   (int64) |   (int64) |   (int64) |
-        |--------------+-----------+-----------+-----------|
-        |            1 |         1 |         3 |         1 |
-        |            1 |         2 |         3 |         2 |
-        |            1 |         3 |        10 |         3 |
-        |            1 |         9 |        12 |         3 |
-        +--------------+-----------+-----------+-----------+
-        Unstranded PyRanges object has 4 rows and 4 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
+          Chromosome    Start      End     Gene
+               int64    int64    int64    int64
+        ------------  -------  -------  -------
+                   1        1        3        1
+                   1        2        3        2
+                   1        3       10        3
+                   1        9       12        3
+        PyRanges with 4 rows and 4 columns.
+        Contains 1 chromosomes.
+
 
         >>> gr.cluster()
-        +--------------+-----------+-----------+-----------+-----------+
-        |   Chromosome |     Start |       End |      Gene |   Cluster |
-        |   (category) |   (int64) |   (int64) |   (int64) |   (int64) |
-        |--------------+-----------+-----------+-----------+-----------|
-        |            1 |         1 |         3 |         1 |         1 |
-        |            1 |         2 |         3 |         2 |         1 |
-        |            1 |         3 |        10 |         3 |         1 |
-        |            1 |         9 |        12 |         3 |         1 |
-        +--------------+-----------+-----------+-----------+-----------+
-        Unstranded PyRanges object has 4 rows and 5 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
+          Chromosome    Start      End     Gene    Cluster
+               int64    int64    int64    int64      int64
+        ------------  -------  -------  -------  ---------
+                   1        1        3        1          0
+                   1        2        3        2          0
+                   1        3       10        3          0
+                   1        9       12        3          0
+        PyRanges with 4 rows and 5 columns.
+        Contains 1 chromosomes.
 
-        >>> gr.cluster(by="Gene", count=True)
-        +--------------+-----------+-----------+-----------+-----------+-----------+
-        |   Chromosome |     Start |       End |      Gene |   Cluster |     Count |
-        |   (category) |   (int64) |   (int64) |   (int64) |   (int64) |   (int64) |
-        |--------------+-----------+-----------+-----------+-----------+-----------|
-        |            1 |         1 |         3 |         1 |         1 |         1 |
-        |            1 |         2 |         3 |         2 |         2 |         1 |
-        |            1 |         3 |        10 |         3 |         3 |         2 |
-        |            1 |         9 |        12 |         3 |         3 |         2 |
-        +--------------+-----------+-----------+-----------+-----------+-----------+
-        Unstranded PyRanges object has 4 rows and 6 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
+
+        >>> gr.cluster(by="Gene", count_column="Count")
+          Chromosome    Start      End     Gene    Cluster
+               int64    int64    int64    int64      int64
+        ------------  -------  -------  -------  ---------
+                   1        1        3        1          0
+                   1        2        3        2          1
+                   1        3       10        3          2
+                   1        9       12        3          2
+        PyRanges with 4 rows and 5 columns.
+        Contains 1 chromosomes.
 
         Avoid clustering bookended intervals with slack=-1:
 
         >>> gr.cluster(slack=-1)
-        +--------------+-----------+-----------+-----------+-----------+
-        |   Chromosome |     Start |       End |      Gene |   Cluster |
-        |   (category) |   (int64) |   (int64) |   (int64) |   (int64) |
-        |--------------+-----------+-----------+-----------+-----------|
-        |            1 |         1 |         3 |         1 |         1 |
-        |            1 |         2 |         3 |         2 |         1 |
-        |            1 |         3 |        10 |         3 |         2 |
-        |            1 |         9 |        12 |         3 |         2 |
-        +--------------+-----------+-----------+-----------+-----------+
-        Unstranded PyRanges object has 4 rows and 5 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
+          Chromosome    Start      End     Gene    Cluster
+               int64    int64    int64    int64      int64
+        ------------  -------  -------  -------  ---------
+                   1        1        3        1          0
+                   1        2        3        2          0
+                   1        3       10        3          0
+                   1        9       12        3          0
+        PyRanges with 4 rows and 5 columns.
+        Contains 1 chromosomes.
 
-        >>> gr2 = pr.data.ensembl_gtf()[["Feature", "Source"]]
+
+        >>> gr2 = pr.data.ensembl_gtf.get_with_loc_columns(["Feature", "Source"])
         >>> gr2.cluster(by=["Feature", "Source"])
-        +--------------+--------------+---------------+-----------+-----------+--------------+-----------+
-        | Chromosome   | Feature      | Source        | Start     | End       | Strand       | Cluster   |
-        | (category)   | (category)   | (object)      | (int64)   | (int64)   | (category)   | (int64)   |
-        |--------------+--------------+---------------+-----------+-----------+--------------+-----------|
-        | 1            | CDS          | ensembl       | 69090     | 70005     | +            | 1         |
-        | 1            | CDS          | ensembl       | 925941    | 926013    | +            | 2         |
-        | 1            | CDS          | ensembl       | 925941    | 926013    | +            | 2         |
-        | 1            | CDS          | ensembl       | 925941    | 926013    | +            | 2         |
-        | ...          | ...          | ...           | ...       | ...       | ...          | ...       |
-        | 1            | transcript   | havana_tagene | 167128    | 169240    | -            | 1142      |
-        | 1            | transcript   | mirbase       | 17368     | 17436     | -            | 1143      |
-        | 1            | transcript   | mirbase       | 187890    | 187958    | -            | 1144      |
-        | 1            | transcript   | mirbase       | 632324    | 632413    | -            | 1145      |
-        +--------------+--------------+---------------+-----------+-----------+--------------+-----------+
-        Stranded PyRanges object has 2,446 rows and 7 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
-        """
-        _self = self.copy()
-        if strand is None:
-            strand = _self.strand_values_valid
+        Chromosome    Start    End      Strand      Feature     Source    Cluster
+        category      int64    int64    category    category    object    int64
+        ------------  -------  -------  ----------  ----------  --------  ---------
+        1             11868    12227    +           exon        havana    0
+        1             12612    12721    +           exon        havana    0
+        1             13220    14409    +           exon        havana    0
+        1             11868    14409    +           gene        havana    1
+        ...           ...      ...      ...         ...         ...       ...
+        1             133373   133723   -           exon        ensembl   3
+        1             110952   111357   -           exon        havana    4
+        1             112699   112804   -           exon        havana    4
+        1             120724   133723   -           transcript  ensembl   5
+        PyRanges with 11 rows and 7 columns.
+        Contains 1 chromosomes and 2 strands.
 
-        kwargs = {"strand": strand, "slack": slack, "count": count, "by": by}
-        kwargs = fill_kwargs(kwargs)
+        """
+        from pyranges.methods.cluster import _cluster, _cluster_by
+        _self = self.copy()
+        if strand == "auto":
+            strand = _self.strand_values_valid
 
         _stranded = _self.strand_values_valid
         if not strand and _stranded:
             _self.__Strand__ = _self.Strand
             _self = _self.remove_strand()
 
-        if not by:
-            from pyranges.methods.cluster import _cluster
-
-            df = pyrange_apply_single(_cluster, _self, **kwargs)
-        else:
-            from pyranges.methods.cluster import _cluster_by
-
-            kwargs["by"] = by
-            df = pyrange_apply_single(_cluster_by, _self, **kwargs)
-
+        cluster_method = _cluster_by if by else _cluster
+        _by = [by] if isinstance(by, str) else (by or [])
+        df = pyrange_apply_single(cluster_method, _self, strand=strand, by=by, slack=slack, count=count_column, cluster_column=cluster_column,)
         gr = pr.PyRanges(df)
-
-        # each chromosome got overlapping ids (0 to len). Need to make unique!
-        new_dfs = {}
-        first = True
-        max_id = 0
-        for k, v in gr.items():
-            if first:
-                max_id = v.Cluster.max()
-                new_dfs[k] = v
-                first = False
-                continue
-
-            v.loc[:, "Cluster"] += max_id
-            max_id = v.Cluster.max()
-            new_dfs[k] = v
-
-        if not strand and _stranded:
-            renamed = [
-                d.rename(columns={"__Strand__": "Strand"}) for d in new_dfs.values()
-            ]
-            return PyRanges._zip_locationkey_and_data(
-                new_dfs.keys(), renamed, strand=True
-            )
-        else:
-            return PyRanges._zip_locationkey_and_data(
-                new_dfs.keys(), new_dfs.values(), strand=strand
-            )
+        gr.col[cluster_column] = gr.groupby(self._location_cols + (_by or [])).ngroup()
+        return gr
 
     def copy(self, *args, **kwargs) -> "pr.PyRanges":
         return pr.PyRanges(super().copy(*args, **kwargs))
@@ -1248,6 +1215,10 @@ class PyRanges(pr.RangeFrame):
             msg = f"Need PyRanges with valid strands ({VALID_GENOMIC_STRAND_INFO}) to find 5'."
             raise AssertionError(msg)
         return pr.PyRanges(pyrange_apply_single(_tss, self, strand=True))
+
+    @property
+    def _location_cols(self) -> list[str]:
+        return CHROM_AND_STRAND_COLS if self.has_strand_column else [CHROM_COL]
 
     @property
     def has_strand_column(self) -> bool:

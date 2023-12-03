@@ -27,7 +27,8 @@ def _cluster_by(df, **kwargs):
         return None
 
     slack = kwargs.get("slack", 0)
-    count = kwargs.get("count", False)
+    count = kwargs.get("count_column", None)
+    cluster_column = kwargs.get("cluster_column", False)
 
     by = kwargs["by"]
 
@@ -48,7 +49,7 @@ def _cluster_by(df, **kwargs):
     ids = cluster_by(cdf.Start.values, cdf.End.values, cdf.ClusterBy.values, slack)
 
     cdf = cdf.drop("ClusterBy", axis=1)
-    cdf.insert(cdf.shape[1], "Cluster", ids)
+    cdf.insert(cdf.shape[1], cluster_column, ids)
 
     if count:
         _count = cdf.groupby("Cluster").Cluster.count()
