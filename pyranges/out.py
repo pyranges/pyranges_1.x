@@ -9,7 +9,7 @@ from pandas.core.frame import DataFrame
 
 from pyranges.pyranges_main import PyRanges
 
-_gtf_columns = {
+GTF_COLUMNS_TO_PYRANGES = {
     "seqname": "Chromosome",
     "source": "Source",
     "feature": "Feature",
@@ -20,8 +20,11 @@ _gtf_columns = {
     "frame": "Frame",
 }
 
-_gff3_columns = _gtf_columns.copy()
-_gff3_columns["phase"] = _gff3_columns.pop("frame")
+GFF3_COLUMNS_TO_PYRANGES = GTF_COLUMNS_TO_PYRANGES.copy()
+GFF3_COLUMNS_TO_PYRANGES["phase"] = GFF3_COLUMNS_TO_PYRANGES.pop("frame")
+
+PYRANGES_TO_GFF3_COLUMNS = {v: k for k, v in GFF3_COLUMNS_TO_PYRANGES.items()}
+PYRANGES_TO_GTF_COLUMNS = {v: k for k, v in GTF_COLUMNS_TO_PYRANGES.items()}
 
 _ordered_gtf_columns = [
     "seqname",
@@ -79,33 +82,27 @@ def _bed(df: DataFrame, keep: bool) -> DataFrame:
         return outdf
 
 
-def _gtf(df: DataFrame, mapping: Dict[str, str]) -> DataFrame:
-    pr_col2gff_col = {v: k for k, v in mapping.items()}
-
-    df = df.rename(columns=pr_col2gff_col)  # copying here
+def _gtf(df: DataFrame) -> DataFrame:
+    df = df.rename(columns=PYRANGES_TO_GTF_COLUMNS)  # copying here
     df.loc[:, "start"] = df.start + 1
     all_columns = _ordered_gtf_columns[:-1]
     columns = list(df.columns)
 
     outdf = _fill_missing(df, all_columns)
 
-    if "attribute" in df.columns:
-        attribute = mapping["attribute"] + ' "' + df.attribute + '";'
-    else:
-        # gotten all needed columns, need to join the rest
-        _rest = set(df.columns) - set(all_columns)
-        rest = sorted(_rest, key=columns.index)
-        rest_df = df[rest].copy()
-        for c in rest_df:
-            col = pd.Series(rest_df[c])
-            isnull = col.isnull()
-            col = col.astype(str).str.replace("nan", "")
-            new_val = str(c) + ' "' + col + '";'
-            rest_df.loc[:, c] = rest_df[c].astype(str)
-            rest_df.loc[~isnull, c] = new_val
-            rest_df.loc[isnull, c] = ""
+    _rest = set(df.columns) - set(all_columns)
+    rest = sorted(_rest, key=columns.index)
+    rest_df = df[rest].copy()
+    for c in rest_df:
+        col = pd.Series(rest_df[c])
+        isnull = col.isnull()
+        col = col.astype(str).str.replace("nan", "")
+        new_val = str(c) + ' "' + col + '";'
+        rest_df.loc[:, c] = rest_df[c].astype(str)
+        rest_df.loc[~isnull, c] = new_val
+        rest_df.loc[isnull, c] = ""
 
-        attribute = rest_df.apply(lambda r: " ".join([v for v in r if v]), axis=1)
+    attribute = rest_df.apply(lambda r: " ".join([v for v in r if v]), axis=1)
     outdf.insert(outdf.shape[1], "attribute", attribute)
 
     return outdf
@@ -115,39 +112,18 @@ def _to_gtf(
     self: PyRanges,
     path: Optional[str] = None,
     compression: str = "infer",
-    map_cols: Optional[Dict[str, str]] = None,
 ) -> Optional[str]:
-    mapping = _gtf_columns.copy()
-    if map_cols:
-        mapping.update(map_cols)
+    df = _gtf(self)
 
-    gr = self
-
-    outdfs = [_gtf(v, mapping) for k, v in sorted(gr.dfs.items())]
-
-    if path:
-        mode = "w+"
-        for outdf in outdfs:
-            outdf.to_csv(
-                path,
-                sep="\t",
-                index=False,
-                header=False,
-                compression=compression,
-                mode=mode,
-                quoting=csv.QUOTE_NONE,
-            )  # type: ignore
-            mode = "a"
-        return None
-    else:
-        return "".join(
-            [
-                outdf.to_csv(
-                    index=False, header=False, sep="\t", quoting=csv.QUOTE_NONE
-                )
-                for outdf in outdfs
-            ]
-        )
+    return df.to_csv(
+        path,
+        sep="\t",
+        index=False,
+        header=False,
+        compression=compression,
+        mode="w+",
+        quoting=csv.QUOTE_NONE,
+    )  # type: ignore
 
 
 def _to_csv(
@@ -188,39 +164,20 @@ def _to_csv(
 def _to_bed(
     self: PyRanges,
     path: Optional[str] = None,
-    sep: str = "\t",
     keep: bool = True,
     compression: str = "infer",
 ) -> Optional[str]:
-    gr = self
+    df = _bed(self, keep)
 
-    outdfs = natsorted(gr.dfs.items())
-    outdfs = [_bed(df, keep) for _, df in outdfs]
-
-    if path:
-        mode = "w+"
-        for outdf in outdfs:
-            outdf.to_csv(
-                path,
-                index=False,
-                header=False,
-                compression=compression,
-                mode=mode,
-                sep="\t",
-                quoting=csv.QUOTE_NONE,
-            )  # type: ignore
-            mode = "a"
-        return None
-    else:
-        res = "".join(
-            [
-                outdf.to_csv(
-                    index=False, header=False, sep="\t", quoting=csv.QUOTE_NONE
-                )
-                for outdf in outdfs
-            ]
-        )
-        return res
+    return df.to_csv(
+        path,
+        index=False,
+        header=False,
+        compression=compression,
+        mode="w+",
+        sep="\t",
+        quoting=csv.QUOTE_NONE,
+    )  # type: ignore
 
 
 def _to_bigwig(
@@ -288,78 +245,49 @@ def _to_bigwig(
 
 
 def _to_gff3(
-    self: PyRanges,
+    gr: PyRanges,
     path: None = None,
     compression: str = "infer",
-    map_cols: Optional[Dict[str, str]] = None,
 ) -> str | None:
-    mapping = _gff3_columns.copy()
-    if map_cols:
-        mapping.update(map_cols)
-
-    gr = self
-
-    outdfs = [_gff3(v, mapping) for k, v in sorted(gr.dfs.items())]
-
-    if path:
-        mode = "w+"
-        for outdf in outdfs:
-            outdf.to_csv(
-                path,
-                index=False,
-                header=False,
-                compression=compression,
-                mode=mode,
-                sep="\t",
-                quoting=csv.QUOTE_NONE,
-            )
-            mode = "a"
-    else:
-        return "".join(
-            [
-                outdf.to_csv(
-                    index=False, header=False, sep="\t", quoting=csv.QUOTE_MINIMAL
-                )
-                for outdf in outdfs
-            ]
-        )
+    df = _gff3(gr)
+    return df.to_csv(
+        path,
+        index=False,
+        header=False,
+        compression=compression,
+        mode="w+",
+        sep="\t",
+        quoting=csv.QUOTE_NONE,
+    )  # type: ignore
 
 
-def _gff3(df, mapping) -> pd.DataFrame:
-    pr_col2gff_col = {v: k for k, v in mapping.items()}
-
-    df = df.rename(columns=pr_col2gff_col)  # copying here
+def _gff3(df) -> pd.DataFrame:
+    df = df.rename(columns=PYRANGES_TO_GFF3_COLUMNS)  # copying here
     df.loc[:, "start"] = df.start + 1
     all_columns = _ordered_gff3_columns[:-1]
     columns = list(df.columns)
 
     outdf = _fill_missing(df, all_columns)
 
-    if "attribute" in mapping:
-        attribute_name = mapping["attribute"]
-        attribute_value = df.attribute.iloc[0]
-        attribute = f"{attribute_name}={attribute_value}"
-    else:
-        # gotten all needed columns, need to join the rest
-        rest = set(df.columns) - set(all_columns)
-        _rest = sorted(rest, key=columns.index)
-        rest_df = df.get(_rest).copy()
-        total_cols = rest_df.shape[1]
-        for i, c in enumerate(rest_df, 1):
-            col = rest_df[c]
-            isnull = col.isnull()
-            col = col.astype(str).str.replace("nan", "")
-            if i != total_cols:
-                new_val = c + "=" + col + ";"
-            else:
-                new_val = c + "=" + col
-            rest_df.loc[:, c] = rest_df[c].astype(str)
-            rest_df.loc[~isnull, c] = new_val
-            rest_df.loc[isnull, c] = ""
+    rest = set(df.columns) - set(all_columns)
+    _rest = sorted(rest, key=columns.index)
+    rest_df = df.get(_rest).copy()
+    total_cols = rest_df.shape[1]
+    for i, c in enumerate(rest_df, 1):
+        col = rest_df[c]
+        isnull = col.isnull()
+        col = col.astype(str).str.replace("nan", "")
+        if i != total_cols:
+            new_val = c + "=" + col + ";"
+        else:
+            new_val = c + "=" + col
+        rest_df.loc[:, c] = rest_df[c].astype(str)
+        rest_df.loc[~isnull, c] = new_val
+        rest_df.loc[isnull, c] = ""
 
-        attribute = rest_df.apply(
-            lambda r: "".join([v for v in r if v]), axis=1
-        ).str.replace(";$", "", regex=True)
+    attribute = rest_df.apply(
+        lambda r: "".join([v for v in r if v]), axis=1
+    ).str.replace(";$", "", regex=True)
     outdf.insert(outdf.shape[1], "attribute", attribute)
 
     return outdf

@@ -48,16 +48,6 @@ def _subtraction(scdf, ocdf, **kwargs):
     if ocdf.empty or scdf.empty:
         return scdf
 
-    strandedness = kwargs["strandedness"]
-    strand = True if strandedness else False
-
-    chromosome = scdf.Chromosome.head(1).iloc[0]
-    kwargs["chromosome"] = chromosome
-
-    if "Strand" in ocdf and strand:
-        strand = scdf.Strand.head(1).iloc[0]
-        kwargs["strand"] = strand
-
     o = NCLS(ocdf.Start.values, ocdf.End.values, ocdf.index.values)
 
     idx_self, new_starts, new_ends = o.set_difference_helper(

@@ -16,7 +16,7 @@ REVERSE_STRAND = "-"
 VALID_GENOMIC_STRAND_INFO = [FORWARD_STRAND, REVERSE_STRAND]
 
 STRAND_AUTO = "auto"
-VALID_STRAND_OPTIONS = Literal["auto"] | bool
+VALID_STRAND_OPTIONS = Literal["auto"] | bool | None
 
 STRAND_BEHAVIOR_AUTO = "auto"
 STRAND_BEHAVIOR_SAME = "same"
@@ -46,6 +46,16 @@ VALID_JOIN_TYPE = (
     Literal["inner"] | Literal["left"] | Literal["outer"] | Literal["right"]
 )
 VALID_JOIN_OPTIONS = [JOIN_INNER, JOIN_LEFT, JOIN_OUTER, JOIN_RIGHT]
+
+NEAREST_ANY_DIRECTION = "any"
+NEAREST_UPSTREAM = "upstream"
+NEAREST_DOWNSTREAM = "downstream"
+VALID_NEAREST_OPTIONS = [
+    NEAREST_ANY_DIRECTION,
+    NEAREST_UPSTREAM,
+    NEAREST_UPSTREAM,
+    None,
+]
 
 TEMP_INDEX_COL = "__temp_index__"
 TEMP_START_COL = "__temp_start__"

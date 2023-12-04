@@ -48,6 +48,38 @@ __all__ = [
 
 
 class ExampleData:
+    @staticmethod
+    def _read_bed_from_string(contents):
+        with tempfile.NamedTemporaryFile("w") as f:
+            f.write(contents)
+            f.flush()
+            return pr.read_gtf(f.name)
+
+    @cached_property
+    def chipseq(self) -> "pr.PyRanges":
+        contents = """
+chr8	28510032	28510057	U0	0	-
+chr7	107153363	107153388	U0	0	-
+chr5	135821802	135821827	U0	0	-
+chr14	19418999	19419024	U0	0	-
+chr12	106679761	106679786	U0	0	-
+chr21	40099618	40099643	U0	0	+
+chr8	22714402	22714427	U0	0	-
+chr19	19571102	19571127	U0	0	+
+chr3	140986358	140986383	U0	0	-
+chr10	35419784	35419809	U0	0	-
+chr4	98488749	98488774	U0	0	+
+chr11	22225193	22225218	U0	0	+
+chr1	38457520	38457545	U0	0	+
+chr1	80668132	80668157	U0	0	-
+chr2	152562484	152562509	U0	0	-
+chr4	153155301	153155326	U0	0	+
+chr9	120803448	120803473	U0	0	+
+chr6	89296757	89296782	U0	0	-
+chr1	194245558	194245583	U0	0	+
+chr8	57916061	57916086	U0	0	+"""
+        return self._read_bed_from_string(contents)
+
     @cached_property
     def ensembl_gtf(self) -> "pr.PyRanges":
         """Example gtf file from Ensembl."""
@@ -68,10 +100,23 @@ class ExampleData:
 1	ensembl	exon	133374	133723	.	-	.	gene_id "ENSG00000238009"; gene_version "6"; transcript_id "ENST00000610542"; transcript_version "1"; exon_number "1"; gene_name "AL627309.1"; gene_source "ensembl_havana"; gene_biotype "lincRNA"; transcript_name "AL627309.1-205"; transcript_source "ensembl"; transcript_biotype "lincRNA"; exon_id "ENSE00003748456"; exon_version "1"; tag "basic"; transcript_support_level "5";
 1	ensembl	exon	129055	129223	.	-	.	gene_id "ENSG00000238009"; gene_version "6"; transcript_id "ENST00000610542"; transcript_version "1"; exon_number "2"; gene_name "AL627309.1"; gene_source "ensembl_havana"; gene_biotype "lincRNA"; transcript_name "AL627309.1-205"; transcript_source "ensembl"; transcript_biotype "lincRNA"; exon_id "ENSE00003734824"; exon_version "1"; tag "basic"; transcript_support_level "5";
 1	ensembl	exon	120874	120932	.	-	.	gene_id "ENSG00000238009"; gene_version "6"; transcript_id "ENST00000610542"; transcript_version "1"; exon_number "3"; gene_name "AL627309.1"; gene_source "ensembl_havana"; gene_biotype "lincRNA"; transcript_name "AL627309.1-205"; transcript_source "ensembl"; transcript_biotype "lincRNA"; exon_id "ENSE00003740919"; exon_version "1"; tag "basic"; transcript_support_level "5";"""
+        return self._read_bed_from_string(contents)
+
+    @cached_property
+    def f1(self) -> "pr.PyRanges":
+        contents = """chr1	3	6	interval1	0	+
+chr1	5	7	interval2	0	-
+chr1	8	9	interval3	0	+"""
+        return self._read_bed_from_string(contents)
+
+    @cached_property
+    def f2(self) -> "pr.PyRanges":
+        contents = """chr1	1	2	a	0	+
+chr1	6	7	b	0	-"""
         with tempfile.NamedTemporaryFile("w") as f:
             f.write(contents)
             f.flush()
-            return pr.read_gtf(f.name)
+            return pr.read_bed(f.name)
 
 
 def get_example_path(basename) -> Path:

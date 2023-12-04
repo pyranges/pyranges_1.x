@@ -71,11 +71,14 @@ def read_bed(f: Union[str, Path], /, nrows: Optional[int] = None) -> pr.PyRanges
     except ValueError:
         header = 0
 
+    ncols = pd.read_table(path, nrows=2).shape[1]
+
     df = pd.read_csv(
         path,
         dtype={"Chromosome": "category", "Strand": "category"},  # type: ignore
         nrows=nrows,
         header=header,
+        names=columns[:ncols] if header != 0 else None,
         sep="\t",
     )
 

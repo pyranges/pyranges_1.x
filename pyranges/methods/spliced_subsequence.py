@@ -43,14 +43,14 @@ def _spliced_subseq(scdf, **kwargs):
         if kwargs.get("by"):
             exp_len_per_transc = (
                 scdf.loc[:, by + ["__i__"]]
-                .merge_overlaps(len_per_transc, on=by)
+                .merge(len_per_transc, on=by)
                 .set_index("__i__")
                 .loc[scdf.index]
             )
         else:
             exp_len_per_transc = (
                 scdf.loc[:, by]
-                .merge_overlaps(len_per_transc, on=by)
+                .merge(len_per_transc, on=by)
                 .set_index("__i__")
                 .loc[scdf.index]
             )

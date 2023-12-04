@@ -9,21 +9,25 @@ def _merge(df, **kwargs):
         return None
 
     slack = kwargs.get("slack", 0)
+    by = kwargs["by"]
 
-    chromosome = df[CHROM_COL]
-    cdf = df.sort_values("Start")
+    cdf = df.sort_values(START_COL)
 
     starts, ends, number = find_clusters(cdf.Start.values, cdf.End.values, slack)
 
+    by_values = df.head(1).squeeze()[by].to_dict()
+
     cluster_df = pd.DataFrame(
         {
-            CHROM_COL: chromosome,
             START_COL: starts,
             END_COL: ends,
-        } | ({STRAND_COL: cdf[STRAND_COL]} if STRAND_COL in cdf else {})
+        }
+        | by_values
     )
+    # Sort columns in the original order of the dataframe.
+    cluster_df = cluster_df[[c for c in cdf.columns if c in cluster_df]]
 
-    if kwargs["count"]:
+    if kwargs["count_col"]:
         cluster_df.insert(cluster_df.shape[1], kwargs["count_col"], number)
 
     return cluster_df

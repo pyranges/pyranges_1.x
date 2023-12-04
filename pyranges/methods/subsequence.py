@@ -70,7 +70,7 @@ def _subseq(scdf, **kwargs):
 
     # I'm maintaing the original row order
     scdf = (
-        scdf.merge_overlaps(j[by + ["__min__", "__max__"]], on=by)
+        scdf.merge(j[by + ["__min__", "__max__"]], on=by)
         .set_index("__i__")
         .loc[orig_order]
     )

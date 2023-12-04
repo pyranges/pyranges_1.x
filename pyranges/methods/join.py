@@ -9,9 +9,7 @@ from pyranges.names import VALID_JOIN_TYPE, JOIN_INNER, JOIN_RIGHT
 def _both_indexes(
     scdf,
     ocdf,
-    join_type: VALID_JOIN_TYPE,
-    **_,
-):
+) -> tuple[np.array, np.array]:
     if ocdf.empty:
         return scdf.index, np.array([], dtype=np.int64)
 
@@ -25,7 +23,7 @@ def _both_indexes(
 
 
 def _both_dfs(scdf, ocdf, join_type: VALID_JOIN_TYPE, **kwargs):
-    _self_indexes, _other_indexes = _both_indexes(scdf, ocdf, join_type, **kwargs)
+    _self_indexes, _other_indexes = _both_indexes(scdf, ocdf)
     if join_type == "inner":
         scdf = scdf.reindex(_self_indexes)
         ocdf = ocdf.reindex(_other_indexes)
@@ -50,7 +48,7 @@ def _both_dfs(scdf, ocdf, join_type: VALID_JOIN_TYPE, **kwargs):
         )
         scdf = pd.concat([scdf_matching, scdf_missing])
         ocdf = pd.concat([ocdf_matcing, ocdf_missing])
-    suffixes = (kwargs["lsuffix"], kwargs["rsuffix"]) if (kwargs["lsuffix"] or kwargs["rsuffix"]) else None
+    suffixes = ("", kwargs["suffix"]) if kwargs["suffix"] else None
     return scdf.merge(
         ocdf,
         left_index=True,

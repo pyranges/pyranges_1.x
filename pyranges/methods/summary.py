@@ -4,7 +4,7 @@ import pandas as pd
 from tabulate import tabulate
 
 
-def _summary(self, to_stdout=True, return_df=False):
+def _summary(self, return_df=False):
     lengths = {}
     total_lengths = {}
     lengths["pyrange"] = self.lengths()
@@ -12,14 +12,14 @@ def _summary(self, to_stdout=True, return_df=False):
 
     if self.strand_values_valid:
         c = self.merge_overlaps(strand=True)
-        lengths["coverage_forward"] = c["+"].lengths()
-        lengths["coverage_reverse"] = c["-"].lengths()
-        total_lengths["coverage_forward"] = [c["+"].length]
-        total_lengths["coverage_reverse"] = [c["-"].length]
+        lengths["coverage_forward"] = c.loci["+"].lengths()
+        lengths["coverage_reverse"] = c.loci["-"].lengths()
+        total_lengths["coverage_forward"] = [c.loci["+"].length]
+        total_lengths["coverage_reverse"] = [c.loci["-"].length]
     else:
         c = self
 
-    c = c.merge(strand=False)
+    c = c.merge_overlaps(strand=False)
     lengths["coverage_unstranded"] = c.lengths()
     total_lengths["coverage_unstranded"] = [c.length]
 
@@ -36,9 +36,8 @@ def _summary(self, to_stdout=True, return_df=False):
     df.index = ["sum"]
     summary = pd.concat([summary, df])
 
-    if to_stdout:
-        str_repr = tabulate(summary, headers=summary.columns, tablefmt="psql")
-        print(str_repr)
-
     if return_df:
         return summary
+    else:
+        str_repr = tabulate(summary, headers=summary.columns)
+        print(str_repr)

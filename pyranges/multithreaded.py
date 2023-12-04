@@ -23,7 +23,9 @@ if TYPE_CHECKING:
 
 
 def pyrange_apply_single(
-    function: Callable, self: "PyRanges", **kwargs
+    function: Callable,
+    self: "PyRanges",
+    **kwargs,
 ) -> pd.DataFrame:
     temp_index_col = "__index_column_for_apply__"
     strand = kwargs["strand"]
