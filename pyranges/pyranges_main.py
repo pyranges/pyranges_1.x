@@ -57,6 +57,7 @@ from pyranges.names import (
 
 if TYPE_CHECKING:
     from pyrle.rledict import Rledict  # type: ignore
+    from pyranges.genomicfeatures import GenomicFeaturesMethods
 
 __all__ = ["PyRanges"]
 
@@ -154,7 +155,6 @@ class PyRanges(pr.RangeFrame):
     Contains 1 chromosomes and 2 strands.
     """
 
-    features = None
     """Namespace for genomic-features methods.
 
     See Also
@@ -171,6 +171,11 @@ class PyRanges(pr.RangeFrame):
     pyranges.statistics : namespace for statistics
     pyranges.stats.StatisticsMethods : namespace for statistics
     """
+
+    @property
+    def features(self) -> "GenomicFeaturesMethods":
+        from pyranges.genomicfeatures import GenomicFeaturesMethods
+        return GenomicFeaturesMethods(self)
 
     @property
     def loci(self) -> LociGetter:
@@ -2838,75 +2843,7 @@ class PyRanges(pr.RangeFrame):
             "tile_size": tile_size,
         }
 
-        return PyRanges(pyrange_apply_single(_tiles, self, **kwargs))
-
-    def to_example(self, n: int = 10) -> dict[str, list[int | str]]:
-        """Return as dict.
-
-        Used for easily creating examples for copy and pasting.
-
-        Parameters
-        ----------
-        n : int, default 10
-            Number of rows. Half is taken from the start, the other half from the end.
-
-        See Also
-        --------
-
-        PyRanges.PyRanges : create PyRanges from dict
-
-        Examples
-        --------
-
-        >>> gr = pr.data.chipseq()
-
-        >>> gr
-        +--------------+-----------+-----------+------------+-----------+--------------+
-        | Chromosome   | Start     | End       | Name       | Score     | Strand       |
-        | (category)   | (int64)   | (int64)   | (object)   | (int64)   | (category)   |
-        |--------------+-----------+-----------+------------+-----------+--------------|
-        | chr1         | 212609534 | 212609559 | U0         | 0         | +            |
-        | chr1         | 169887529 | 169887554 | U0         | 0         | +            |
-        | chr1         | 216711011 | 216711036 | U0         | 0         | +            |
-        | chr1         | 144227079 | 144227104 | U0         | 0         | +            |
-        | ...          | ...       | ...       | ...        | ...       | ...          |
-        | chrY         | 15224235  | 15224260  | U0         | 0         | -            |
-        | chrY         | 13517892  | 13517917  | U0         | 0         | -            |
-        | chrY         | 8010951   | 8010976   | U0         | 0         | -            |
-        | chrY         | 7405376   | 7405401   | U0         | 0         | -            |
-        +--------------+-----------+-----------+------------+-----------+--------------+
-        Stranded PyRanges object has 10,000 rows and 6 columns from 24 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
-
-        >>> d = gr.to_example(n=4)
-        >>> d
-        {'Chromosome': ['chr1', 'chr1', 'chrY', 'chrY'], 'Start': [212609534, 169887529, 8010951, 7405376], 'End': [212609559, 169887554, 8010976, 7405401], 'Name': ['U0', 'U0', 'U0', 'U0'], 'Score': [0, 0, 0, 0], 'Strand': ['+', '+', '-', '-']}
-        >>> pr.PyRanges(d)
-        +--------------+-----------+-----------+------------+-----------+--------------+
-        | Chromosome   |     Start |       End | Name       |     Score | Strand       |
-        | (category)   |   (int64) |   (int64) | (object)   |   (int64) | (category)   |
-        |--------------+-----------+-----------+------------+-----------+--------------|
-        | chr1         | 212609534 | 212609559 | U0         |         0 | +            |
-        | chr1         | 169887529 | 169887554 | U0         |         0 | +            |
-        | chrY         |   8010951 |   8010976 | U0         |         0 | -            |
-        | chrY         |   7405376 |   7405401 | U0         |         0 | -            |
-        +--------------+-----------+-----------+------------+-----------+--------------+
-        Stranded PyRanges object has 4 rows and 6 columns from 2 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
-        """
-
-        nrows_half = int(min(n, len(self)) / 2)
-
-        if n < len(self):
-            first = self.head(nrows_half)
-            last = self.tail(nrows_half)
-            example = pr.concat([first, last])
-        else:
-            example = self
-
-        d = {c: list(getattr(example, c)) for c in example.columns}
-
-        return d
+        return self.apply_single(_tiles, **kwargs)
 
     def three_end(self) -> "PyRanges":
         """Return the 3'-end.
@@ -3111,9 +3048,6 @@ class PyRanges(pr.RangeFrame):
 
             Return data that would be written without writing bigwigs.
 
-        chain : bool, default False
-            Whether to return the PyRanges after writing.
-
         Note
         ----
 
@@ -3133,30 +3067,18 @@ class PyRanges(pr.RangeFrame):
         ...       'Value': [10, 20, 30]}
         >>> gr = pr.PyRanges(d)
         >>> gr
-        +--------------+-----------+-----------+--------------+-----------+
-        | Chromosome   |     Start |       End | Strand       |     Value |
-        | (category)   |   (int64) |   (int64) | (category)   |   (int64) |
-        |--------------+-----------+-----------+--------------+-----------|
-        | chr1         |         1 |         7 | +            |        10 |
-        | chr1         |         4 |         8 | -            |        20 |
-        | chr1         |         6 |        10 | -            |        30 |
-        +--------------+-----------+-----------+--------------+-----------+
-        Stranded PyRanges object has 3 rows and 5 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
+        Chromosome      Start      End  Strand      Value
+        object          int64    int64  object      int64
+        ------------  -------  -------  --------  -------
+        chr1                1        7  +              10
+        chr1                4        8  -              20
+        chr1                6       10  -              30
+        PyRanges with 3 rows and 5 columns.
+        Contains 1 chromosomes and 2 strands.
 
         >>> gr.to_bigwig(dryrun=True, rpm=False)
-        +--------------+-----------+-----------+-------------+
-        | Chromosome   |     Start |       End |       Score |
-        | (category)   |   (int64) |   (int64) |   (float64) |
-        |--------------+-----------+-----------+-------------|
-        | chr1         |         1 |         4 |           1 |
-        | chr1         |         4 |         6 |           2 |
-        | chr1         |         6 |         7 |           3 |
-        | chr1         |         7 |         8 |           2 |
-        | chr1         |         8 |        10 |           1 |
-        +--------------+-----------+-----------+-------------+
-        Unstranded PyRanges object has 5 rows and 4 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
+
+
 
         >>> gr.to_bigwig(dryrun=True, rpm=False, value_col="Value")
         +--------------+-----------+-----------+-------------+
@@ -3191,7 +3113,7 @@ class PyRanges(pr.RangeFrame):
         from pyranges.out import _to_bigwig
 
         _chromosome_sizes = (
-            pr.data.chromsizes() if chromosome_sizes is None else chromosome_sizes
+            pr.data.chromsizes if chromosome_sizes is None else chromosome_sizes
         )
 
         result = _to_bigwig(

@@ -58,7 +58,7 @@ def test_read_gff3():
 
 
 def test_read_bed():
-    pr.read_bed("pyranges/example_data/chipseq.bed")
+    pr.read_bed("pyranges/data/chipseq.bed")
 
 
 def test_to_rows_keep_duplicates():

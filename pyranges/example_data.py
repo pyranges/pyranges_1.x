@@ -8,21 +8,21 @@ pyranges.random : generate random PyRanges
 Examples
 --------
 
->>> pr.data.f1()
-+--------------+-----------+-----------+------------+-----------+--------------+
-| Chromosome   |     Start |       End | Name       |     Score | Strand       |
-| (category)   |   (int64) |   (int64) | (object)   |   (int64) | (category)   |
-|--------------+-----------+-----------+------------+-----------+--------------|
-| chr1         |         3 |         6 | interval1  |         0 | +            |
-| chr1         |         8 |         9 | interval3  |         0 | +            |
-| chr1         |         5 |         7 | interval2  |         0 | -            |
-+--------------+-----------+-----------+------------+-----------+--------------+
-Stranded PyRanges object has 3 rows and 6 columns from 1 chromosomes.
-For printing, the PyRanges was sorted on Chromosome and Strand.
+>>> pr.data.f1
+Chromosome      Start      End  Name         Score  Strand
+category        int64    int64  object       int64  category
+------------  -------  -------  ---------  -------  ----------
+chr1                3        6  interval1        0  +
+chr1                5        7  interval2        0  -
+chr1                8        9  interval3        0  +
+PyRanges with 3 rows and 6 columns.
+Contains 1 chromosomes and 2 strands.
 """
-import io
+import functools
+import importlib
 import tempfile
 from functools import cached_property
+from importlib.resources import files
 from pathlib import Path
 
 import pandas as pd
@@ -48,8 +48,42 @@ __all__ = [
 
 
 class ExampleData:
+    """"""
+    _files: dict[str, Path] = {}
+
+    @classmethod
+    @property
+    def files(cls) -> dict[str, Path]:
+        """Return a dict of the basenames to full paths of the example data in the project.
+
+        Examples
+        --------
+        >>> bam = ExampleData.files["smaller.bam"]
+        >>> bam.exists()
+        True
+        >>> bam == importlib.resources.files().joinpath("data/smaller.bam")
+        True
+        """
+        if cls._files:
+            return cls._files
+        cls._files = {
+            f.name: f
+            for f in files("pyranges").joinpath("data").iterdir()
+            if "__" not in f.name
+        }
+        return cls._files
+
+
+
     @staticmethod
     def _read_bed_from_string(contents):
+        with tempfile.NamedTemporaryFile("w") as f:
+            f.write(contents)
+            f.flush()
+            return pr.read_bed(f.name)
+
+    @staticmethod
+    def _read_gtf_from_string(contents):
         with tempfile.NamedTemporaryFile("w") as f:
             f.write(contents)
             f.flush()
@@ -57,8 +91,7 @@ class ExampleData:
 
     @cached_property
     def chipseq(self) -> "pr.PyRanges":
-        contents = """
-chr8	28510032	28510057	U0	0	-
+        contents = """chr8	28510032	28510057	U0	0	-
 chr7	107153363	107153388	U0	0	-
 chr5	135821802	135821827	U0	0	-
 chr14	19418999	19419024	U0	0	-
@@ -81,6 +114,35 @@ chr8	57916061	57916086	U0	0	+"""
         return self._read_bed_from_string(contents)
 
     @cached_property
+    def chromsizes(self) -> "pr.PyRanges":
+        contents = """chr1	0	249250621
+chr2	0	243199373
+chr3	0	198022430
+chr4	0	191154276
+chr5	0	180915260
+chr6	0	171115067
+chr7	0	159138663
+chrX	0	155270560
+chr8	0	146364022
+chr9	0	141213431
+chr10	0	135534747
+chr11	0	135006516
+chr12	0	133851895
+chr13	0	115169878
+chr14	0	107349540
+chr15	0	102531392
+chr16	0	90354753
+chr17	0	81195210
+chr18	0	78077248
+chr20	0	63025520
+chrY	0	59373566
+chr19	0	59128983
+chr22	0	51304566
+chr21	0	48129895
+chrM	0	16571"""
+        return self._read_bed_from_string(contents)
+
+    @cached_property
     def ensembl_gtf(self) -> "pr.PyRanges":
         """Example gtf file from Ensembl."""
 
@@ -100,7 +162,7 @@ chr8	57916061	57916086	U0	0	+"""
 1	ensembl	exon	133374	133723	.	-	.	gene_id "ENSG00000238009"; gene_version "6"; transcript_id "ENST00000610542"; transcript_version "1"; exon_number "1"; gene_name "AL627309.1"; gene_source "ensembl_havana"; gene_biotype "lincRNA"; transcript_name "AL627309.1-205"; transcript_source "ensembl"; transcript_biotype "lincRNA"; exon_id "ENSE00003748456"; exon_version "1"; tag "basic"; transcript_support_level "5";
 1	ensembl	exon	129055	129223	.	-	.	gene_id "ENSG00000238009"; gene_version "6"; transcript_id "ENST00000610542"; transcript_version "1"; exon_number "2"; gene_name "AL627309.1"; gene_source "ensembl_havana"; gene_biotype "lincRNA"; transcript_name "AL627309.1-205"; transcript_source "ensembl"; transcript_biotype "lincRNA"; exon_id "ENSE00003734824"; exon_version "1"; tag "basic"; transcript_support_level "5";
 1	ensembl	exon	120874	120932	.	-	.	gene_id "ENSG00000238009"; gene_version "6"; transcript_id "ENST00000610542"; transcript_version "1"; exon_number "3"; gene_name "AL627309.1"; gene_source "ensembl_havana"; gene_biotype "lincRNA"; transcript_name "AL627309.1-205"; transcript_source "ensembl"; transcript_biotype "lincRNA"; exon_id "ENSE00003740919"; exon_version "1"; tag "basic"; transcript_support_level "5";"""
-        return self._read_bed_from_string(contents)
+        return self._read_gtf_from_string(contents)
 
     @cached_property
     def f1(self) -> "pr.PyRanges":
@@ -120,15 +182,11 @@ chr1	6	7	b	0	-"""
 
 
 def get_example_path(basename) -> Path:
-    full_path = pkg_resources.resource_filename(
-        "pyranges", "example_data/{}".format(basename)
-    )
+    full_path = pkg_resources.resource_filename("pyranges", "data/{}".format(basename))
 
     if full_path.endswith(".bam"):
         # hack to load index too
-        pkg_resources.resource_filename(
-            "pyranges", "example_data/{}.bai".format(basename)
-        )
+        pkg_resources.resource_filename("pyranges", "data/{}.bai".format(basename))
 
     return Path(full_path)
 

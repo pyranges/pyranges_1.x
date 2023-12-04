@@ -1,6 +1,6 @@
 """Tests that all example data loads properly."""
 
-from pyranges.example_data import (
+from pyranges.data import (
     aorta,
     aorta2,
     chipseq,

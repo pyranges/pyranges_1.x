@@ -6,6 +6,7 @@ from pandas.core.frame import DataFrame
 from sorted_nearest.src.introns import find_introns  # type: ignore
 
 import pyranges as pr
+from pyranges.names import CHROM_COL, END_COL
 from pyranges.pyranges_main import PyRanges
 
 __all__ = ["genome_bounds", "tile_genome", "GenomicFeaturesMethods"]
@@ -32,57 +33,45 @@ class GenomicFeaturesMethods:
         Examples
         --------
 
-        >>> gr = pr.data.ensembl_gtf()[["Source", "Feature"]]
+        >>> gr = pr.data.ensembl_gtf.get_with_loc_columns(["Source", "Feature"])
         >>> gr
-        +--------------+------------+--------------+-----------+-----------+--------------+
-        | Chromosome   | Source     | Feature      | Start     | End       | Strand       |
-        | (category)   | (object)   | (category)   | (int64)   | (int64)   | (category)   |
-        |--------------+------------+--------------+-----------+-----------+--------------|
-        | 1            | havana     | gene         | 11868     | 14409     | +            |
-        | 1            | havana     | transcript   | 11868     | 14409     | +            |
-        | 1            | havana     | exon         | 11868     | 12227     | +            |
-        | 1            | havana     | exon         | 12612     | 12721     | +            |
-        | ...          | ...        | ...          | ...       | ...       | ...          |
-        | 1            | havana     | gene         | 1173055   | 1179555   | -            |
-        | 1            | havana     | transcript   | 1173055   | 1179555   | -            |
-        | 1            | havana     | exon         | 1179364   | 1179555   | -            |
-        | 1            | havana     | exon         | 1173055   | 1176396   | -            |
-        +--------------+------------+--------------+-----------+-----------+--------------+
-        Stranded PyRanges object has 2,446 rows and 6 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
+        Chromosome    Start    End      Strand      Source    Feature
+        category      int64    int64    category    object    category
+        ------------  -------  -------  ----------  --------  ----------
+        1             11868    14409    +           havana    gene
+        1             11868    14409    +           havana    transcript
+        1             11868    12227    +           havana    exon
+        1             12612    12721    +           havana    exon
+        ...           ...      ...      ...         ...       ...
+        1             120724   133723   -           ensembl   transcript
+        1             133373   133723   -           ensembl   exon
+        1             129054   129223   -           ensembl   exon
+        1             120873   120932   -           ensembl   exon
+        PyRanges with 11 rows and 6 columns.
+        Contains 1 chromosomes and 2 strands.
 
         >>> gr.features.tss()
-        +--------------+------------+------------+-----------+-----------+--------------+
-        | Chromosome   | Source     | Feature    | Start     | End       | Strand       |
-        | (category)   | (object)   | (object)   | (int64)   | (int64)   | (category)   |
-        |--------------+------------+------------+-----------+-----------+--------------|
-        | 1            | havana     | tss        | 11868     | 11869     | +            |
-        | 1            | havana     | tss        | 12009     | 12010     | +            |
-        | 1            | havana     | tss        | 29553     | 29554     | +            |
-        | 1            | havana     | tss        | 30266     | 30267     | +            |
-        | ...          | ...        | ...        | ...       | ...       | ...          |
-        | 1            | havana     | tss        | 1092812   | 1092813   | -            |
-        | 1            | havana     | tss        | 1116086   | 1116087   | -            |
-        | 1            | havana     | tss        | 1116088   | 1116089   | -            |
-        | 1            | havana     | tss        | 1179554   | 1179555   | -            |
-        +--------------+------------+------------+-----------+-----------+--------------+
-        Stranded PyRanges object has 280 rows and 6 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
+          Chromosome    Start      End  Strand      Source    Feature
+            category    int64    int64  category    object    object
+        ------------  -------  -------  ----------  --------  ---------
+                   1    11868    11869  +           havana    tss
+                   1   133722   133723  -           ensembl   tss
+        PyRanges with 2 rows and 6 columns.
+        Contains 1 chromosomes and 2 strands.
         """
+        gr = self.pr
 
-        pr = self.pr
-
-        if not pr.strand_values_valid:
+        if not gr.strand_values_valid:
             raise Exception(
                 "Cannot compute TSSes or TESes without strand info. Perhaps use extend() or subsequence() or spliced_subsequence() instead?"
             )
 
-        pr = pr[pr.Feature == "transcript"]
-        pr = pr.apply(lambda df: _tss(df))
+        gr = gr[gr.Feature == "transcript"]
+        gr = gr.groupby(CHROM_COL).apply(_tss).reset_index(drop=True)
 
-        pr.Feature = "tss"
+        gr.Feature = "tss"
 
-        return pr
+        return pr.PyRanges(gr)
 
     def tes(self) -> PyRanges:
         """Return the transcription end sites.
@@ -96,57 +85,46 @@ class GenomicFeaturesMethods:
         Examples
         --------
 
-        >>> gr = pr.data.ensembl_gtf()[["Source", "Feature"]]
+        >>> gr = pr.data.ensembl_gtf.get_with_loc_columns(["Source", "Feature"])
         >>> gr
-        +--------------+------------+--------------+-----------+-----------+--------------+
-        | Chromosome   | Source     | Feature      | Start     | End       | Strand       |
-        | (category)   | (object)   | (category)   | (int64)   | (int64)   | (category)   |
-        |--------------+------------+--------------+-----------+-----------+--------------|
-        | 1            | havana     | gene         | 11868     | 14409     | +            |
-        | 1            | havana     | transcript   | 11868     | 14409     | +            |
-        | 1            | havana     | exon         | 11868     | 12227     | +            |
-        | 1            | havana     | exon         | 12612     | 12721     | +            |
-        | ...          | ...        | ...          | ...       | ...       | ...          |
-        | 1            | havana     | gene         | 1173055   | 1179555   | -            |
-        | 1            | havana     | transcript   | 1173055   | 1179555   | -            |
-        | 1            | havana     | exon         | 1179364   | 1179555   | -            |
-        | 1            | havana     | exon         | 1173055   | 1176396   | -            |
-        +--------------+------------+--------------+-----------+-----------+--------------+
-        Stranded PyRanges object has 2,446 rows and 6 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
+        Chromosome    Start    End      Strand      Source    Feature
+        category      int64    int64    category    object    category
+        ------------  -------  -------  ----------  --------  ----------
+        1             11868    14409    +           havana    gene
+        1             11868    14409    +           havana    transcript
+        1             11868    12227    +           havana    exon
+        1             12612    12721    +           havana    exon
+        ...           ...      ...      ...         ...       ...
+        1             120724   133723   -           ensembl   transcript
+        1             133373   133723   -           ensembl   exon
+        1             129054   129223   -           ensembl   exon
+        1             120873   120932   -           ensembl   exon
+        PyRanges with 11 rows and 6 columns.
+        Contains 1 chromosomes and 2 strands.
 
         >>> gr.features.tes()
-        +--------------+------------+------------+-----------+-----------+--------------+
-        | Chromosome   | Source     | Feature    | Start     | End       | Strand       |
-        | (category)   | (object)   | (object)   | (int64)   | (int64)   | (category)   |
-        |--------------+------------+------------+-----------+-----------+--------------|
-        | 1            | havana     | tes        | 14408     | 14409     | +            |
-        | 1            | havana     | tes        | 13669     | 13670     | +            |
-        | 1            | havana     | tes        | 31096     | 31097     | +            |
-        | 1            | havana     | tes        | 31108     | 31109     | +            |
-        | ...          | ...        | ...        | ...       | ...       | ...          |
-        | 1            | havana     | tes        | 1090405   | 1090406   | -            |
-        | 1            | havana     | tes        | 1091045   | 1091046   | -            |
-        | 1            | havana     | tes        | 1091499   | 1091500   | -            |
-        | 1            | havana     | tes        | 1173055   | 1173056   | -            |
-        +--------------+------------+------------+-----------+-----------+--------------+
-        Stranded PyRanges object has 280 rows and 6 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
+          Chromosome    Start      End  Strand      Source    Feature
+            category    int64    int64  category    object    object
+        ------------  -------  -------  ----------  --------  ---------
+                   1    14408    14409  +           havana    tes
+                   1   120724   120725  -           ensembl   tes
+        PyRanges with 2 rows and 6 columns.
+        Contains 1 chromosomes and 2 strands.
         """
 
-        pr = self.pr
+        gr = self.pr
 
-        if not pr.strand_values_valid:
+        if not gr.strand_values_valid:
             raise Exception(
                 "Cannot compute TSSes or TESes without strand info. Perhaps use extend() or subsequence() or spliced_subsequence() instead?"
             )
 
-        pr = pr[pr.Feature == "transcript"]
-        pr = pr.apply(lambda df: _tes(df))
+        gr = gr[gr.Feature == "transcript"]
+        gr = gr.groupby(CHROM_COL).apply(_tes).reset_index(drop=True)
 
-        pr.Feature = "tes"
+        gr.Feature = "tes"
 
-        return pr
+        return pr.PyRanges(gr)
 
     def introns(self, by: str = "gene") -> PyRanges:
         """Return the introns.
@@ -163,24 +141,22 @@ class GenomicFeaturesMethods:
         Examples
         --------
 
-        >>> gr = pr.data.ensembl_gtf()[["Feature", "gene_id", "transcript_id"]]
+        >>> gr = pr.data.ensembl_gtf.get_with_loc_columns(["Feature", "gene_id", "transcript_id"])
         >>> gr
-        +--------------+--------------+-----------+-----------+--------------+-----------------+-----------------+
-        | Chromosome   | Feature      | Start     | End       | Strand       | gene_id         | transcript_id   |
-        | (category)   | (category)   | (int64)   | (int64)   | (category)   | (object)        | (object)        |
-        |--------------+--------------+-----------+-----------+--------------+-----------------+-----------------|
-        | 1            | gene         | 11868     | 14409     | +            | ENSG00000223972 | nan             |
-        | 1            | transcript   | 11868     | 14409     | +            | ENSG00000223972 | ENST00000456328 |
-        | 1            | exon         | 11868     | 12227     | +            | ENSG00000223972 | ENST00000456328 |
-        | 1            | exon         | 12612     | 12721     | +            | ENSG00000223972 | ENST00000456328 |
-        | ...          | ...          | ...       | ...       | ...          | ...             | ...             |
-        | 1            | gene         | 1173055   | 1179555   | -            | ENSG00000205231 | nan             |
-        | 1            | transcript   | 1173055   | 1179555   | -            | ENSG00000205231 | ENST00000379317 |
-        | 1            | exon         | 1179364   | 1179555   | -            | ENSG00000205231 | ENST00000379317 |
-        | 1            | exon         | 1173055   | 1176396   | -            | ENSG00000205231 | ENST00000379317 |
-        +--------------+--------------+-----------+-----------+--------------+-----------------+-----------------+
-        Stranded PyRanges object has 2,446 rows and 7 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
+        Chromosome    Start    End      Strand      Feature     gene_id          ...
+        category      int64    int64    category    category    object           ...
+        ------------  -------  -------  ----------  ----------  ---------------  -----
+        1             11868    14409    +           gene        ENSG00000223972  ...
+        1             11868    14409    +           transcript  ENSG00000223972  ...
+        1             11868    12227    +           exon        ENSG00000223972  ...
+        1             12612    12721    +           exon        ENSG00000223972  ...
+        ...           ...      ...      ...         ...         ...              ...
+        1             120724   133723   -           transcript  ENSG00000238009  ...
+        1             133373   133723   -           exon        ENSG00000238009  ...
+        1             129054   129223   -           exon        ENSG00000238009  ...
+        1             120873   120932   -           exon        ENSG00000238009  ...
+        PyRanges with 11 rows and 7 columns (1 columns not shown: "transcript_id").
+        Contains 1 chromosomes and 2 strands.
 
         >>> gr.features.introns(by="gene")
         +--------------+------------+-----------+-----------+--------------+-----------------+-----------------+
@@ -218,9 +194,6 @@ class GenomicFeaturesMethods:
         Stranded PyRanges object has 1,043 rows and 7 columns from 1 chromosomes.
         For printing, the PyRanges was sorted on Chromosome and Strand.
         """
-
-        kwargs = {"by": by}
-        kwargs = pr.pyranges_main.fill_kwargs(kwargs)
 
         assert by in ["gene", "transcript"]
 
@@ -324,54 +297,50 @@ def genome_bounds(
     --------
 
     >>> d = {"Chromosome": [1, 1, 3], "Start": [1, 249250600, 5], "End": [2, 249250640, 7]}
-    >>> gr = pr.from_dict(d)
+    >>> gr = pr.PyRanges(d)
     >>> gr
-    +--------------+-----------+-----------+
-    |   Chromosome |     Start |       End |
-    |   (category) |   (int64) |   (int64) |
-    |--------------+-----------+-----------|
-    |            1 |         1 |         2 |
-    |            1 | 249250600 | 249250640 |
-    |            3 |         5 |         7 |
-    +--------------+-----------+-----------+
-    Unstranded PyRanges object has 3 rows and 3 columns from 2 chromosomes.
-    For printing, the PyRanges was sorted on Chromosome.
+      Chromosome      Start        End
+           int64      int64      int64
+    ------------  ---------  ---------
+               1          1          2
+               1  249250600  249250640
+               3          5          7
+    PyRanges with 3 rows and 3 columns.
+    Contains 2 chromosomes.
 
-    >>> chromsizes = {"1": 249250621, "3": 500}
+    >>> chromsizes = {1: 249250621, 3: 500}
     >>> chromsizes
-    {'1': 249250621, '3': 500}
+    {1: 249250621, 3: 500}
 
     >>> pr.gf.genome_bounds(gr, chromsizes)
-    +--------------+-----------+-----------+
-    |   Chromosome |     Start |       End |
-    |   (category) |   (int64) |   (int64) |
-    |--------------+-----------+-----------|
-    |            1 |         1 |         2 |
-    |            3 |         5 |         7 |
-    +--------------+-----------+-----------+
-    Unstranded PyRanges object has 2 rows and 3 columns from 2 chromosomes.
-    For printing, the PyRanges was sorted on Chromosome.
+      Chromosome    Start      End
+           int64    int64    int64
+    ------------  -------  -------
+               1        1        2
+               3        5        7
+    PyRanges with 2 rows and 3 columns.
+    Contains 2 chromosomes.
 
     >>> pr.gf.genome_bounds(gr, chromsizes, clip=True)
-    +--------------+-----------+-----------+
-    |   Chromosome |     Start |       End |
-    |   (category) |   (int64) |   (int64) |
-    |--------------+-----------+-----------|
-    |            1 |         1 |         2 |
-    |            1 | 249250600 | 249250621 |
-    |            3 |         5 |         7 |
-    +--------------+-----------+-----------+
-    Unstranded PyRanges object has 3 rows and 3 columns from 2 chromosomes.
-    For printing, the PyRanges was sorted on Chromosome.
+      Chromosome      Start        End
+           int64      int64      int64
+    ------------  ---------  ---------
+               1          1          2
+               1  249250600  249250621
+               3          5          7
+    PyRanges with 3 rows and 3 columns.
+    Contains 2 chromosomes.
 
-    >>> del chromsizes['3']
+    >>> del chromsizes[3]
     >>> chromsizes
-    {'1': 249250621}
+    {1: 249250621}
 
     >>> pr.gf.genome_bounds(gr, chromsizes)
     Traceback (most recent call last):
     ...
-    KeyError: '3'
+    ValueError: Not all chromosomes were in the chromsize dict. This might mean that their types differed.
+    Missing keys: {3}.
+    Chromosome col had type: int64 while keys were of type: int
     """
 
     if isinstance(chromsizes, pr.PyRanges):
@@ -389,25 +358,31 @@ def genome_bounds(
         except ImportError:
             pass
 
+    if missing_keys := set(gr[CHROM_COL]).difference(set(chromsizes.keys())):
+        msg = f"""Not all chromosomes were in the chromsize dict. This might mean that their types differed.
+Missing keys: {missing_keys}.
+Chromosome col had type: {gr[CHROM_COL].dtype} while keys were of type: {', '.join(set(type(k).__name__ for k in chromsizes))}"""
+        raise ValueError(msg)
+
     assert isinstance(
         chromsizes, dict
     ), "ERROR chromsizes must be a dictionary, or a PyRanges, or a pyfaidx.Fasta object"
 
-    return gr.apply(
-        _outside_bounds, chromsizes=chromsizes, clip=clip, only_right=only_right
+    return pr.PyRanges(
+        gr.groupby(CHROM_COL).apply(
+            _outside_bounds, chromsizes=chromsizes, clip=clip, only_right=only_right,
+        ).reset_index(drop=True)
     )
 
 
-def _last_tile(df: DataFrame, sizes: pd.DataFrame, **kwargs) -> DataFrame:
-    # do not need copy, since it is only used internally by tile_genome
-    size = sizes[df.Chromosome.iloc[0]].End.iloc[0]
-    df.loc[df.tail(1).index, "End"] = size
-
+def _last_tile(df: DataFrame, sizes: dict[str, int]) -> DataFrame:
+    size = sizes[df.Chromosome.iloc[0]]
+    df.iloc[-1, df.columns.get_loc(END_COL)] = size
     return df
 
 
 def tile_genome(
-    chromsizes: PyRanges, tile_size: int, tile_last: bool = False
+    chromsizes: PyRanges, tile_size: int, tile_last: bool = False,
 ) -> PyRanges:
     """Create a tiled genome.
 
@@ -422,7 +397,7 @@ def tile_genome(
 
     tile_last : bool, default False
 
-        Use genome length as end of last tile.
+        Use chromosome length as end of last tile.
 
     See Also
     --------
@@ -432,55 +407,53 @@ def tile_genome(
     Examples
     --------
 
-    >>> chromsizes = pr.data.chromsizes()
+    >>> chromsizes = pr.data.chromsizes
     >>> chromsizes
-    +--------------+-----------+-----------+
-    | Chromosome   | Start     | End       |
-    | (category)   | (int64)   | (int64)   |
-    |--------------+-----------+-----------|
-    | chr1         | 0         | 249250621 |
-    | chr2         | 0         | 243199373 |
-    | chr3         | 0         | 198022430 |
-    | chr4         | 0         | 191154276 |
-    | ...          | ...       | ...       |
-    | chr22        | 0         | 51304566  |
-    | chrM         | 0         | 16571     |
-    | chrX         | 0         | 155270560 |
-    | chrY         | 0         | 59373566  |
-    +--------------+-----------+-----------+
-    Unstranded PyRanges object has 25 rows and 3 columns from 25 chromosomes.
-    For printing, the PyRanges was sorted on Chromosome.
+    Chromosome    Start    End
+    category      int64    int64
+    ------------  -------  ---------
+    chr1          0        249250621
+    chr2          0        243199373
+    chr3          0        198022430
+    chr4          0        191154276
+    ...           ...      ...
+    chr19         0        59128983
+    chr22         0        51304566
+    chr21         0        48129895
+    chrM          0        16571
+    PyRanges with 25 rows and 3 columns.
+    Contains 25 chromosomes.
 
     >>> pr.gf.tile_genome(chromsizes, int(1e6))
-    +--------------+-----------+-----------+
-    | Chromosome   | Start     | End       |
-    | (category)   | (int64)   | (int64)   |
-    |--------------+-----------+-----------|
-    | chr1         | 0         | 1000000   |
-    | chr1         | 1000000   | 2000000   |
-    | chr1         | 2000000   | 3000000   |
-    | chr1         | 3000000   | 4000000   |
-    | ...          | ...       | ...       |
-    | chrY         | 56000000  | 57000000  |
-    | chrY         | 57000000  | 58000000  |
-    | chrY         | 58000000  | 59000000  |
-    | chrY         | 59000000  | 59373566  |
-    +--------------+-----------+-----------+
-    Unstranded PyRanges object has 3,114 rows and 3 columns from 25 chromosomes.
-    For printing, the PyRanges was sorted on Chromosome.
+    Chromosome    Start     End
+    category      int64     int64
+    ------------  --------  --------
+    chr1          0         1000000
+    chr1          1000000   2000000
+    chr1          2000000   3000000
+    chr1          3000000   4000000
+    ...           ...       ...
+    chrY          56000000  57000000
+    chrY          57000000  58000000
+    chrY          58000000  59000000
+    chrY          59000000  59373566
+    PyRanges with 3114 rows and 3 columns.
+    Contains 25 chromosomes.
     """
-
     if isinstance(chromsizes, dict):
+        chromsize_dict = chromsizes
         chromosomes, ends = list(chromsizes.keys()), list(chromsizes.values())
         df = pd.DataFrame({"Chromosome": chromosomes, "Start": 0, "End": ends})
         chromsizes = pr.PyRanges(df)
+    else:
+        chromsize_dict = dict(zip(chromsizes[CHROM_COL], chromsizes[END_COL], strict=True))
 
     gr = chromsizes.tile(tile_size)
 
     if not tile_last:
-        gr = gr.apply(_last_tile, sizes=chromsizes)
+        gr = gr.groupby(CHROM_COL).apply(_last_tile, sizes=chromsize_dict).reset_index(drop=True)
 
-    return gr
+    return pr.PyRanges(gr)
 
 
 def _keep_transcript_with_most_exons(df: pd.DataFrame) -> DataFrame:

@@ -16,7 +16,7 @@ from pandas import Series
 import pyranges as pr
 import pyranges.genomicfeatures as gf  # NOQA: F401
 from pyranges.example_data import ExampleData
-from pyranges import example_data, statistics
+from pyranges import data, statistics
 from pyranges.get_fasta import get_fasta, get_sequence, get_transcript_sequence
 from pyranges.helpers import get_key_from_df, single_value_key
 from pyranges.methods.concat import concat
@@ -59,12 +59,12 @@ def concat(grs: Iterable[PyRanges], *args, **kwargs) -> "PyRanges":
 
     Examples:
     ---------
-    >>> gr1 = pr.data.f2()
-    >>> gr2 = pr.data.f1()
+    >>> gr1 = pr.data.f2
+    >>> gr2 = pr.data.f1
     >>> pr.concat([gr1, gr2])
     Chromosome      Start      End  Name         Score  Strand
-    object          int64    int64  object       int64  object
-    ------------  -------  -------  ---------  -------  --------
+    category        int64    int64  object       int64  category
+    ------------  -------  -------  ---------  -------  ----------
     chr1                1        2  a                0  +
     chr1                6        7  b                0  -
     chr1                3        6  interval1        0  +
@@ -75,8 +75,8 @@ def concat(grs: Iterable[PyRanges], *args, **kwargs) -> "PyRanges":
 
     >>> pr.concat([gr1, gr2.remove_strand()])
     Chromosome      Start      End  Name         Score  Strand
-    object          int64    int64  object       int64  object
-    ------------  -------  -------  ---------  -------  --------
+    category        int64    int64  object       int64  category
+    ------------  -------  -------  ---------  -------  ----------
     chr1                1        2  a                0  +
     chr1                6        7  b                0  -
     chr1                3        6  interval1        0  nan
@@ -159,11 +159,6 @@ def from_string(s: str) -> PyRanges:
 
         String with data.
 
-    See Also
-    --------
-
-    pyranges.from_dict : create a PyRanges from a dictionary.
-
     Examples
     --------
 
@@ -175,19 +170,16 @@ def from_string(s: str) -> PyRanges:
     ... chr14  103456471  103456571      -'''
 
     >>> pr.from_string(s)
-    +--------------+-----------+-----------+--------------+
-    | Chromosome   |     Start |       End | Strand       |
-    | (category)   |   (int64) |   (int64) | (category)   |
-    |--------------+-----------+-----------+--------------|
-    | chr1         | 246719402 | 246719502 | +            |
-    | chr5         |  15400908 |  15401008 | +            |
-    | chr9         |  68366534 |  68366634 | +            |
-    | chr14        |  79220091 |  79220191 | +            |
-    | chr14        | 103456471 | 103456571 | -            |
-    +--------------+-----------+-----------+--------------+
-    Stranded PyRanges object has 5 rows and 4 columns from 4 chromosomes.
-    For printing, the PyRanges was sorted on Chromosome and Strand.
-
+    Chromosome        Start        End  Strand
+    object            int64      int64  object
+    ------------  ---------  ---------  --------
+    chr1          246719402  246719502  +
+    chr5           15400908   15401008  +
+    chr9           68366534   68366634  +
+    chr14          79220091   79220191  +
+    chr14         103456471  103456571  -
+    PyRanges with 5 rows and 4 columns.
+    Contains 4 chromosomes and 2 strands.
     """
 
     from io import StringIO
@@ -195,114 +187,6 @@ def from_string(s: str) -> PyRanges:
     df = pd.read_csv(StringIO(s), sep=r"\s+", index_col=None)
 
     return PyRanges(df)
-
-
-def itergrs(prs: Iterable[PyRanges], strand=None, keys=False):
-    r"""Iterate over multiple PyRanges at once.
-
-    Parameters
-    ----------
-    prs : list of PyRanges
-
-        PyRanges to iterate over.
-
-    strand : bool, default None, i.e. auto
-
-        Whether to iterate over strands. If True, all PyRanges must be stranded.
-
-    keys : bool, default False
-
-        Return tuple with key and value from iterator.
-
-    Examples
-    --------
-
-    >>> d1 = {"Chromosome": [1, 1, 2], "Start": [1, 2, 3], "End": [4, 9, 12], "Strand": ["+", "+", "-"]}
-    >>> d2 = {"Chromosome": [2, 3, 3], "Start": [5, 9, 21], "End": [81, 42, 25], "Strand": ["-", "+", "-"]}
-    >>> gr1, gr2 = pr.from_dict(d1), pr.from_dict(d2)
-    >>> gr1
-    +--------------+-----------+-----------+--------------+
-    |   Chromosome |     Start |       End | Strand       |
-    |   (category) |   (int64) |   (int64) | (category)   |
-    |--------------+-----------+-----------+--------------|
-    |            1 |         1 |         4 | +            |
-    |            1 |         2 |         9 | +            |
-    |            2 |         3 |        12 | -            |
-    +--------------+-----------+-----------+--------------+
-    Stranded PyRanges object has 3 rows and 4 columns from 2 chromosomes.
-    For printing, the PyRanges was sorted on Chromosome and Strand.
-
-    >>> gr2
-    +--------------+-----------+-----------+--------------+
-    |   Chromosome |     Start |       End | Strand       |
-    |   (category) |   (int64) |   (int64) | (category)   |
-    |--------------+-----------+-----------+--------------|
-    |            2 |         5 |        81 | -            |
-    |            3 |         9 |        42 | +            |
-    |            3 |        21 |        25 | -            |
-    +--------------+-----------+-----------+--------------+
-    Stranded PyRanges object has 3 rows and 4 columns from 2 chromosomes.
-    For printing, the PyRanges was sorted on Chromosome and Strand.
-
-    >>> ranges = [gr1, gr2]
-
-    >>> for key, dfs in pr.itergrs(ranges, keys=True):
-    ...     print("-----------\n" + str(key) + "\n-----------")
-    ...     for df in dfs:
-    ...         print(df)
-    -----------
-    ('1', '+')
-    -----------
-      Chromosome  Start  End Strand
-    0          1      1    4      +
-    1          1      2    9      +
-    Empty DataFrame
-    Columns: [Chromosome, Start, End, Strand]
-    Index: []
-    -----------
-    ('2', '-')
-    -----------
-      Chromosome  Start  End Strand
-    2          2      3   12      -
-      Chromosome  Start  End Strand
-    0          2      5   81      -
-    -----------
-    ('3', '+')
-    -----------
-    Empty DataFrame
-    Columns: [Chromosome, Start, End, Strand]
-    Index: []
-      Chromosome  Start  End Strand
-    1          3      9   42      +
-    -----------
-    ('3', '-')
-    -----------
-    Empty DataFrame
-    Columns: [Chromosome, Start, End, Strand]
-    Index: []
-      Chromosome  Start  End Strand
-    2          3     21   25      -
-    """
-
-    # Determine if all prs are stranded only if strand is None, otherwise use the provided value.
-    strand = all(gr.strand_values_valid for gr in prs) if strand is None else strand
-
-    # If strand is False and any PyRanges are stranded, remove strand information.
-    prs = (
-        [gr.remove_strand() for gr in prs if gr.strand_values_valid]
-        if not strand
-        else prs
-    )
-
-    empty_dfs = [pd.DataFrame(columns=gr.columns) for gr in prs]
-    for gr, empty in zip(prs, empty_dfs):
-        for k in set_keys:
-            df = gr.dfs.get(k, empty)  # type: ignore
-            grs_per_chromosome[k].append(df)
-
-    # Iterate through each key and PyRanges object, collecting DataFrames.
-    for key in set_keys:
-        yield key, [gr.dfs.get(key, pd.DataFrame(columns=gr.columns)) for gr in prs]
 
 
 def random(
@@ -338,62 +222,37 @@ def random(
 
     Examples
     --------
-
-    # >>> pr.random()
-    # +--------------+-----------+-----------+--------------+
-    # | Chromosome   | Start     | End       | Strand       |
-    # | (category)   | (int64)   | (int64)   | (category)   |
-    # |--------------+-----------+-----------+--------------|
-    # | chr1         | 216128004 | 216128104 | +            |
-    # | chr1         | 114387955 | 114388055 | +            |
-    # | chr1         | 67597551  | 67597651  | +            |
-    # | chr1         | 26306616  | 26306716  | +            |
-    # | ...          | ...       | ...       | ...          |
-    # | chrY         | 20811459  | 20811559  | -            |
-    # | chrY         | 12221362  | 12221462  | -            |
-    # | chrY         | 8578041   | 8578141   | -            |
-    # | chrY         | 43259695  | 43259795  | -            |
-    # +--------------+-----------+-----------+--------------+
-    # Stranded PyRanges object has 1,000 rows and 4 columns from 24 chromosomes.
-    # For printing, the PyRanges was sorted on Chromosome and Strand.
-
-    To have random interval lengths:
-
-    # >>> gr = pr.random(length=1)
-    # >>> gr.End += np.random.randint(int(1e5), size=len(gr))
-    # >>> gr.Length = gr.lengths()
-    # >>> gr
-    # +--------------+-----------+-----------+--------------+-----------+
-    # | Chromosome   | Start     | End       | Strand       | Length    |
-    # | (category)   | (int64)   | (int64)   | (category)   | (int64)   |
-    # |--------------+-----------+-----------+--------------+-----------|
-    # | chr1         | 203654331 | 203695380 | +            | 41049     |
-    # | chr1         | 46918271  | 46978908  | +            | 60637     |
-    # | chr1         | 97355021  | 97391587  | +            | 36566     |
-    # | chr1         | 57284999  | 57323542  | +            | 38543     |
-    # | ...          | ...       | ...       | ...          | ...       |
-    # | chrY         | 31665821  | 31692660  | -            | 26839     |
-    # | chrY         | 20236607  | 20253473  | -            | 16866     |
-    # | chrY         | 33255377  | 33315933  | -            | 60556     |
-    # | chrY         | 31182964  | 31205467  | -            | 22503     |
-    # +--------------+-----------+-----------+--------------+-----------+
-    # Stranded PyRanges object has 1,000 rows and 5 columns from 24 chromosomes.
-    # For printing, the PyRanges was sorted on Chromosome and Strand.
+    >>> pr.random(seed=12345)
+    Chromosome    Start      End        Strand
+    object        int64      int64      object
+    ------------  ---------  ---------  --------
+    chr4          130788360  130788460  +
+    chr4          36129012   36129112   +
+    chr4          69733790   69733890   -
+    chr4          187723767  187723867  -
+    ...           ...        ...        ...
+    chr21         13544178   13544278   -
+    chr21         33556472   33556572   +
+    chr21         31438477   31438577   +
+    chr21         38433522   38433622   -
+    PyRanges with 1000 rows and 4 columns.
+    Contains 24 chromosomes and 2 strands.
     """
+    rng = np.random.default_rng(seed=seed)
 
     if chromsizes is None:
-        df = data.chromsizes().df
+        df = data.chromsizes
     elif isinstance(chromsizes, dict):
         df = pd.DataFrame(
             {CHROM_COL: list(chromsizes.keys()), "End": list(chromsizes.values())}
         )
     else:
-        df = chromsizes.df
+        df = chromsizes
 
     p = df.End / df.End.sum()
 
     n_per_chrom = (
-        pd.Series(np.random.choice(df.index, size=n, p=p))
+        pd.Series(rng.choice(df.index, size=n, p=p))
         .value_counts(sort=False)
         .to_frame()
     )
@@ -402,13 +261,13 @@ def random(
 
     random_dfs = []
     for _, (count, chrom) in n_per_chrom.iterrows():
-        r = np.random.randint(0, df[df.Chromosome == chrom].End - length, size=count)
+        r = rng.integers(0, df[df.Chromosome == chrom].End - length, size=count)
         _df = pd.DataFrame({CHROM_COL: chrom, START_COL: r, "End": r + length})
         random_dfs.append(_df)
 
     random_df = pd.concat(random_dfs)
     if strand:
-        s = np.random.choice("+ -".split(), size=n)
+        s = rng.choice("+ -".split(), size=n)
         random_df.insert(3, "Strand", s)
 
     return PyRanges(random_df)
@@ -442,9 +301,7 @@ def version_info() -> None:
     update_version_info(version_info, "ncls")
     update_version_info(version_info, "sorted_nearest")
     update_version_info(version_info, "pyrle")
-    update_version_info(version_info, "ray")
     update_version_info(version_info, "bamread")
-    # update_version_info(version_info, "bwread") no version string yet!
     update_version_info(version_info, "pyranges_db")
     update_version_info(version_info, "pybigwig")
     update_version_info(version_info, "hypothesis")
@@ -454,10 +311,8 @@ def version_info() -> None:
 
 __all__ = [
     "from_string",
-    "from_dict",
     "count_overlaps",
     "random",
-    "itergrs",
     "read_gtf",
     "read_bam",
     "read_bed",

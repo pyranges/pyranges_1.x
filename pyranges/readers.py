@@ -272,26 +272,21 @@ def read_gtf(
     Examples
     --------
 
-    >>> path = pr.get_example_path("ensembl.gtf")
-    >>> gr = pr.read_gtf(path)
-
-    >>> # +--------------+------------+--------------+-----------+-----------+------------+--------------+------------+-----------------+----------------+-------+
-    >>> # | Chromosome   | Source     | Feature      | Start     | End       | Score      | Strand       | Frame      | gene_id         | gene_version   | +18   |
-    >>> # | (category)   | (object)   | (category)   | (int64)   | (int64)   | (object)   | (category)   | (object)   | (object)        | (object)       | ...   |
-    >>> # |--------------+------------+--------------+-----------+-----------+------------+--------------+------------+-----------------+----------------+-------|
-    >>> # | 1            | havana     | gene         | 11868     | 14409     | .          | +            | .          | ENSG00000223972 | 5              | ...   |
-    >>> # | 1            | havana     | transcript   | 11868     | 14409     | .          | +            | .          | ENSG00000223972 | 5              | ...   |
-    >>> # | 1            | havana     | exon         | 11868     | 12227     | .          | +            | .          | ENSG00000223972 | 5              | ...   |
-    >>> # | 1            | havana     | exon         | 12612     | 12721     | .          | +            | .          | ENSG00000223972 | 5              | ...   |
-    >>> # | ...          | ...        | ...          | ...       | ...       | ...        | ...          | ...        | ...             | ...            | ...   |
-    >>> # | 1            | ensembl    | transcript   | 120724    | 133723    | .          | -            | .          | ENSG00000238009 | 6              | ...   |
-    >>> # | 1            | ensembl    | exon         | 133373    | 133723    | .          | -            | .          | ENSG00000238009 | 6              | ...   |
-    >>> # | 1            | ensembl    | exon         | 129054    | 129223    | .          | -            | .          | ENSG00000238009 | 6              | ...   |
-    >>> # | 1            | ensembl    | exon         | 120873    | 120932    | .          | -            | .          | ENSG00000238009 | 6              | ...   |
-    >>> # +--------------+------------+--------------+-----------+-----------+------------+--------------+------------+-----------------+----------------+-------+
-    >>> # Stranded PyRanges object has 95 rows and 28 columns from 1 chromosomes.
-    >>> # For printing, the PyRanges was sorted on Chromosome and Strand.
-    >>> # 18 hidden columns: gene_name, gene_source, gene_biotype, transcript_id, transcript_version, transcript_name, transcript_source, transcript_biotype, tag, transcript_support_level, ... (+ 8 more.)
+    >>> from tempfile import NamedTemporaryFile
+    >>> contents = ['#!genome-build GRCh38.p10']
+    >>> contents.append('1\\thavana\\tgene\\t11869\\t14409\\t.\\t+\\t.\\tgene_id "ENSG00000223972"; gene_version "5"; gene_name "DDX11L1"; gene_source "havana"; gene_biotype "transcribed_unprocessed_pseudogene";')
+    >>> contents.append('1\\thavana\\ttranscript\\t11869\\t14409\\t.\\t+\\t.\\tgene_id "ENSG00000223972"; gene_version "5"; transcript_id "ENST00000456328"; transcript_version "2"; gene_name "DDX11L1"; gene_source "havana"; gene_biotype "transcribed_unprocessed_pseudogene"; transcript_name "DDX11L1-202"; transcript_source "havana"; transcript_biotype "processed_transcript"; tag "basic"; transcript_support_level "1";')
+    >>> f = NamedTemporaryFile("w")
+    >>> _bytes_written = f.write("\\n".join(contents))
+    >>> f.flush()
+    >>> pr.read_gtf(f.name)
+      Chromosome  Source    Feature       Start      End  Score     Strand      Frame     ...
+        category  object    category      int64    int64  object    category    object    ...
+    ------------  --------  ----------  -------  -------  --------  ----------  --------  -----
+               1  havana    gene          11868    14409  .         +           .         ...
+               1  havana    transcript    11868    14409  .         +           .         ...
+    PyRanges with 2 rows and 20 columns (12 columns not shown: "gene_id", "gene_version", "gene_name", ...).
+    Contains 1 chromosomes and 1 strands.
     """
 
     path = Path(f)
@@ -299,7 +294,11 @@ def read_gtf(
 
     if full:
         gr = read_gtf_full(
-            path, nrows, _skiprows, duplicate_attr, ignore_bad=ignore_bad
+            path,
+            nrows,
+            _skiprows,
+            duplicate_attr,
+            ignore_bad=ignore_bad,
         )
     else:
         gr = read_gtf_restricted(path, _skiprows, nrows=None)
