@@ -198,7 +198,7 @@ class GenomicFeaturesMethods:
         assert by in ["gene", "transcript"]
 
         id_column = by_to_id[by]
-        gr = self.pr.sort(id_column)
+        gr = self.pr.sort()
 
         if not len(gr):
             return pr.PyRanges()
@@ -369,9 +369,14 @@ Chromosome col had type: {gr[CHROM_COL].dtype} while keys were of type: {', '.jo
     ), "ERROR chromsizes must be a dictionary, or a PyRanges, or a pyfaidx.Fasta object"
 
     return pr.PyRanges(
-        gr.groupby(CHROM_COL).apply(
-            _outside_bounds, chromsizes=chromsizes, clip=clip, only_right=only_right,
-        ).reset_index(drop=True)
+        gr.groupby(CHROM_COL)
+        .apply(
+            _outside_bounds,
+            chromsizes=chromsizes,
+            clip=clip,
+            only_right=only_right,
+        )
+        .reset_index(drop=True)
     )
 
 
@@ -382,7 +387,9 @@ def _last_tile(df: DataFrame, sizes: dict[str, int]) -> DataFrame:
 
 
 def tile_genome(
-    chromsizes: PyRanges, tile_size: int, tile_last: bool = False,
+    chromsizes: PyRanges,
+    tile_size: int,
+    tile_last: bool = False,
 ) -> PyRanges:
     """Create a tiled genome.
 
@@ -446,12 +453,18 @@ def tile_genome(
         df = pd.DataFrame({"Chromosome": chromosomes, "Start": 0, "End": ends})
         chromsizes = pr.PyRanges(df)
     else:
-        chromsize_dict = dict(zip(chromsizes[CHROM_COL], chromsizes[END_COL], strict=True))
+        chromsize_dict = dict(
+            zip(chromsizes[CHROM_COL], chromsizes[END_COL], strict=True)
+        )
 
     gr = chromsizes.tile(tile_size)
 
     if not tile_last:
-        gr = gr.groupby(CHROM_COL).apply(_last_tile, sizes=chromsize_dict).reset_index(drop=True)
+        gr = (
+            gr.groupby(CHROM_COL)
+            .apply(_last_tile, sizes=chromsize_dict)
+            .reset_index(drop=True)
+        )
 
     return pr.PyRanges(gr)
 

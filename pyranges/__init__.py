@@ -252,9 +252,7 @@ def random(
     p = df.End / df.End.sum()
 
     n_per_chrom = (
-        pd.Series(rng.choice(df.index, size=n, p=p))
-        .value_counts(sort=False)
-        .to_frame()
+        pd.Series(rng.choice(df.index, size=n, p=p)).value_counts(sort=False).to_frame()
     )
     n_per_chrom.insert(1, CHROM_COL, df.loc[n_per_chrom.index].Chromosome)
     n_per_chrom.columns = pd.Index("Count Chromosome".split())

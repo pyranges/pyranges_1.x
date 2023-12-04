@@ -193,9 +193,12 @@ class RangeFrame(pd.DataFrame):
         return self.apply_pair(other, _overlap, how=how, by=by)
 
     def apply_single(
-        self, function, by: str | list[str] | None = None, **kwargs,
+        self,
+        function,
+        by: str | list[str] | None = None,
+        **kwargs,
     ) -> "pr.RangeFrame":
-        if by is None:
+        if not by:
             return RangeFrame(function(self, **kwargs))
         res = self.groupby(by).apply(function, by=by, **kwargs).reset_index(drop=True)
 

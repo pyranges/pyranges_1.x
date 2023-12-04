@@ -49,6 +49,7 @@ __all__ = [
 
 class ExampleData:
     """"""
+
     _files: dict[str, Path] = {}
 
     @classmethod
@@ -72,8 +73,6 @@ class ExampleData:
             if "__" not in f.name
         }
         return cls._files
-
-
 
     @staticmethod
     def _read_bed_from_string(contents):

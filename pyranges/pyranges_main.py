@@ -10,7 +10,7 @@ from typing import (
 
 import numpy as np
 import pandas as pd
-from natsort import natsorted  # type: ignore
+from natsort import natsorted, natsort  # type: ignore
 
 import pyranges as pr
 from pyranges import multithreaded
@@ -175,6 +175,7 @@ class PyRanges(pr.RangeFrame):
     @property
     def features(self) -> "GenomicFeaturesMethods":
         from pyranges.genomicfeatures import GenomicFeaturesMethods
+
         return GenomicFeaturesMethods(self)
 
     @property
@@ -291,6 +292,55 @@ class PyRanges(pr.RangeFrame):
         TypeError: The loci accessor does not accept a list. If you meant to retrieve columns, use .gloc instead.
         """
         return self._loci
+
+    def sort_by_position(self):
+        """Sort pyranges by Chromosome, Start, End, and possibly Strand.
+
+        Examples
+        -------
+
+        >>> gr = pr.data.chipseq
+        >>> gr
+        Chromosome    Start      End        Name      Score    Strand
+        category      int64      int64      object    int64    category
+        ------------  ---------  ---------  --------  -------  ----------
+        chr8          28510032   28510057   U0        0        -
+        chr7          107153363  107153388  U0        0        -
+        chr5          135821802  135821827  U0        0        -
+        chr14         19418999   19419024   U0        0        -
+        ...           ...        ...        ...       ...      ...
+        chr9          120803448  120803473  U0        0        +
+        chr6          89296757   89296782   U0        0        -
+        chr1          194245558  194245583  U0        0        +
+        chr8          57916061   57916086   U0        0        +
+        PyRanges with 20 rows and 6 columns.
+        Contains 15 chromosomes and 2 strands.
+        >>> gr.sort_by_position()
+        Chromosome    Start      End        Name      Score    Strand
+        category      int64      int64      object    int64    category
+        ------------  ---------  ---------  --------  -------  ----------
+        chr1          38457520   38457545   U0        0        +
+        chr1          194245558  194245583  U0        0        +
+        chr1          80668132   80668157   U0        0        -
+        chr2          152562484  152562509  U0        0        -
+        ...           ...        ...        ...       ...      ...
+        chr12         106679761  106679786  U0        0        -
+        chr14         19418999   19419024   U0        0        -
+        chr19         19571102   19571127   U0        0        +
+        chr21         40099618   40099643   U0        0        +
+        PyRanges with 20 rows and 6 columns.
+        Contains 15 chromosomes and 2 strands.
+        """
+        self = self.sort_values(([STRAND_COL] if self.has_strand_column else []) + RANGE_COLS)
+        return self.reindex(
+            index=natsort.order_by_index(
+                self.index,
+                natsort.index_natsorted(
+                    self[CHROM_COL],
+                ),
+            ),
+        )
+
 
     @cached_property
     def _required_columns(self) -> Iterable[str]:
@@ -432,6 +482,15 @@ class PyRanges(pr.RangeFrame):
         else:
             result._check_index_column_names()
         return result
+
+    def apply_single(
+        self,
+        function,
+        by: str | list[str] | None = None,
+        **kwargs,
+    ) -> "pr.PyRanges":
+        _by = [] if by is None else ([by] if isinstance(by, str) else [*by])
+        return super().apply_single(function=function, by=_by, **kwargs)
 
     def apply_pair(
         self,
@@ -2577,8 +2636,8 @@ class PyRanges(pr.RangeFrame):
         if strand is None:
             strand = True if self.strand_values_valid else False
 
-        result = pyrange_apply_single(
-            _subseq, self, strand=strand, by=by, start=start, end=end
+        result = super().apply_single(
+            _subseq, strand=strand, by=by, start=start, end=end
         )
 
         return pr.PyRanges(result)
