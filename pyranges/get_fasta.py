@@ -1,3 +1,4 @@
+import operator
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
@@ -7,6 +8,7 @@ from pandas.core.frame import DataFrame
 from pandas.core.series import Series
 
 import pyranges as pr  # noqa: F401
+from pyranges.names import FORWARD_STRAND
 from pyranges.pyranges_main import PyRanges
 
 if TYPE_CHECKING:
@@ -63,23 +65,22 @@ def get_sequence(
     Examples
     --------
 
-    >>> gr = pr.from_dict({"Chromosome": ["chr1", "chr1"],
-    ...                    "Start": [5, 0], "End": [8, 5]})
+    >>> gr = pr.PyRanges({"Chromosome": ["chr1", "chr1"],
+    ...                   "Start": [5, 0], "End": [8, 5],
+    ...                   "Strand": ["+", "-"]})
 
     >>> gr
-    +--------------+-----------+-----------+
-    | Chromosome   |     Start |       End |
-    | (category)   |   (int64) |   (int64) |
-    |--------------+-----------+-----------|
-    | chr1         |         5 |         8 |
-    | chr1         |         0 |         5 |
-    +--------------+-----------+-----------+
-    Unstranded PyRanges object has 2 rows and 3 columns from 1 chromosomes.
-    For printing, the PyRanges was sorted on Chromosome.
+    Chromosome      Start      End  Strand
+    object          int64    int64  object
+    ------------  -------  -------  --------
+    chr1                5        8  +
+    chr1                0        5  -
+    PyRanges with 2 rows and 4 columns.
+    Contains 1 chromosomes and 2 strands.
 
     >>> tmp_handle = open("temp.fasta", "w+")
     >>> _ = tmp_handle.write(">chr1\\n")
-    >>> _ = tmp_handle.write("ATTACCAT\\n")
+    >>> _ = tmp_handle.write("GTAATCAT\\n")
     >>> tmp_handle.close()
 
     >>> seq = pr.get_sequence(gr, "temp.fasta")
@@ -89,18 +90,15 @@ def get_sequence(
     1    ATTAC
     dtype: object
 
-    >>> gr.seq = seq
+    >>> gr.col.seq = seq
     >>> gr
-    +--------------+-----------+-----------+------------+
-    | Chromosome   |     Start |       End | seq        |
-    | (category)   |   (int64) |   (int64) | (object)   |
-    |--------------+-----------+-----------+------------|
-    | chr1         |         5 |         8 | CAT        |
-    | chr1         |         0 |         5 | ATTAC      |
-    +--------------+-----------+-----------+------------+
-    Unstranded PyRanges object has 2 rows and 4 columns from 1 chromosomes.
-    For printing, the PyRanges was sorted on Chromosome.
-
+    Chromosome      Start      End  Strand    seq
+    object          int64    int64  object    object
+    ------------  -------  -------  --------  --------
+    chr1                5        8  +         CAT
+    chr1                0        5  -         ATTAC
+    PyRanges with 2 rows and 5 columns.
+    Contains 1 chromosomes and 2 strands.
     """
 
     try:
@@ -119,22 +117,16 @@ def get_sequence(
         pyfaidx_fasta = pyfaidx.Fasta(path, read_ahead=int(1e5))
 
     seqs = []
-    for k, df in gr:
-        if type(k) is tuple:  # input is Stranded
-            _fasta = pyfaidx_fasta[k[0]]
-            if k[1] == "-":
-                for start, end in zip(df.Start, df.End):
-                    seqs.append((-_fasta[start:end]).seq)  # reverse complement
-            else:
-                for start, end in zip(df.Start, df.End):
-                    seqs.append(_fasta[start:end].seq)
+    use_strand = gr.strand_values_valid
+    for key, df in gr.groupby(gr.location_cols_include_strand_only_if_valid):
+        chromosome, strand = key + (tuple() if use_strand else (FORWARD_STRAND,))
+        _fasta = pyfaidx_fasta[chromosome]
+        forward_strand = strand == FORWARD_STRAND
+        for start, end in zip(df.Start, df.End):
+            seq = _fasta[start:end]
+            seqs.append(seq.seq if forward_strand else (-seq).seq)
 
-        else:
-            _fasta = pyfaidx_fasta[k]
-            for start, end in zip(df.Start, df.End):
-                seqs.append(_fasta[start:end].seq)
-
-    return pd.concat([pd.Series(s) for s in seqs]).reset_index(drop=True)
+    return pd.concat([pd.Series(s) for s in seqs]).reset_index(drop=True).squeeze()
 
 
 def get_fasta(*args, **kwargs):
@@ -197,22 +189,19 @@ def get_transcript_sequence(
     Examples
     --------
 
-    >>> gr = pr.from_dict({"Chromosome": ['chr1', 'chr1', 'chr1'],
-    ...                    "Start": [0, 9, 18], "End": [4, 13, 21],
-    ...                    "Strand":['+', '-', '-'],
-    ...                    "transcript": ['t1', 't2', 't2']})
+    >>> gr = pr.PyRanges({"Chromosome": ['chr1', 'chr1', 'chr1'],
+    ...                   "Start": [0, 9, 18], "End": [4, 13, 21],
+    ...                   "Strand":['+', '-', '-'],
+    ...                   "transcript": ['t1', 't2', 't2']})
     >>> gr
-    +--------------+-----------+-----------+--------------+--------------+
-    | Chromosome   |     Start |       End | Strand       | transcript   |
-    | (category)   |   (int64) |   (int64) | (category)   | (object)     |
-    |--------------+-----------+-----------+--------------+--------------|
-    | chr1         |         0 |         4 | +            | t1           |
-    | chr1         |         9 |        13 | -            | t2           |
-    | chr1         |        18 |        21 | -            | t2           |
-    +--------------+-----------+-----------+--------------+--------------+
-    Stranded PyRanges object has 3 rows and 5 columns from 1 chromosomes.
-    For printing, the PyRanges was sorted on Chromosome and Strand.
-
+    Chromosome      Start      End  Strand    transcript
+    object          int64    int64  object    object
+    ------------  -------  -------  --------  ------------
+    chr1                0        4  +         t1
+    chr1                9       13  -         t2
+    chr1               18       21  -         t2
+    PyRanges with 3 rows and 5 columns.
+    Contains 1 chromosomes and 2 strands.
 
     >>> tmp_handle = open("temp.fasta", "w+")
     >>> _ = tmp_handle.write(">chr1\\n")
@@ -226,22 +215,21 @@ def get_transcript_sequence(
     1         t2  AAATCCC
 
     To write to a file in fasta format:
-    # with open('outfile.fasta', 'w') as fw:
-    #     nchars=60
-    #     for row in seq.itertuples():
-    #         s = '\\n'.join([ row.Sequence[i:i+nchars] for i in range(0, len(row.Sequence), nchars)])
-    #         fw.write(f'>{row.transcript}\\n{s}\\n')
+    >>> with open('outfile.fasta', 'w') as fw:
+    ...     nchars=60
+    ...     for row in seq.itertuples():
+    ...         s = '\\n'.join([ row.Sequence[i:i+nchars] for i in range(0, len(row.Sequence), nchars)])
+    ...         fw.write(f'>{row.transcript}\\n{s}\\n')
     """
 
     if gr.strand_values_valid:
-        gr = gr.sort("5")
+        gr = gr.sort_by_5_prime_ascending_and_3_prime_descending()
     else:
-        gr = gr.sort()
+        gr = gr.sort_by_position()
 
-    z = gr.df
-    z["Sequence"] = get_sequence(gr, path=path, pyfaidx_fasta=pyfaidx_fasta)
+    gr.col["Sequence"] = get_sequence(gr, path=path, pyfaidx_fasta=pyfaidx_fasta)
 
-    return z.groupby(group_by, as_index=False).agg({"Sequence": "".join})
+    return gr.groupby(group_by, as_index=False).agg({"Sequence": "".join})
 
 
 def _test():

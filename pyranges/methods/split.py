@@ -1,9 +1,9 @@
 import pandas as pd
 
-from pyranges.names import VALID_STRAND_OPTIONS, RANGE_COLS
+from pyranges.names import VALID_STRAND_TYPE, RANGE_COLS
 
 
-def _split(df, strand: VALID_STRAND_OPTIONS = "auto"):
+def _split(df, strand: VALID_STRAND_TYPE = "auto"):
     dtype = df.Start.dtype
 
     starts = df.Start

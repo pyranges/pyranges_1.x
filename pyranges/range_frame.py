@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from functools import cached_property
 from typing import Literal, Iterable, Self
 
@@ -39,20 +38,6 @@ class RangeFrame(pd.DataFrame):
         if missing_columns:
             msg = f"Missing required columns: {missing_columns}"
             raise ValueError(msg)
-        self._check_index_column_names()
-
-    def _check_index_column_names(self):
-        # Check for columns with the same name as the index
-        if self.index.name is not None and self.index.name in self.columns:
-            raise ValueError(
-                f"Index name '{self.index.name}' cannot be the same as a column name."
-            )
-        if isinstance(self.index, pd.MultiIndex):
-            for level in self.index.names:
-                if level in self.columns:
-                    raise ValueError(
-                        f"Index level name '{level}' cannot be the same as a column name."
-                    )
 
     def __str__(
         self, max_col_width: int | None = None, max_total_width: int | None = None
@@ -225,4 +210,5 @@ class RangeFrame(pd.DataFrame):
         for key, _df in self.groupby(by):
             odf = others.get(key, empty)
             results.append(function(_df, odf, **kwargs))
+
         return RangeFrame(pd.concat(results))

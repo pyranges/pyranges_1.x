@@ -1,7 +1,7 @@
 from pyranges.multithreaded import pyrange_apply_single
 
 
-def _to_rle(ranges, value_col=None, strand=True, rpm=False, **kwargs):
+def _to_rle(ranges: "pr.PyRanges", value_col=None, strand=True, rpm=False, **kwargs):
     try:
         from pyrle import PyRles  # type: ignore
         from pyrle.methods import coverage  # type: ignore
@@ -15,7 +15,7 @@ def _to_rle(ranges, value_col=None, strand=True, rpm=False, **kwargs):
     }  # already sparse
     kwargs.update(_kwargs)
 
-    result = pyrange_apply_single(coverage, ranges, **kwargs)
+    result = {k: coverage(v, **kwargs) for k, v in ranges.groupby(ranges.location_cols)}
 
     if rpm:
         multiplier = 1e6 / len(ranges)

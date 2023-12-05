@@ -56,7 +56,7 @@ def tostring(
         if num_not_shown > 3:
             not_shown.append("...")
         columns_not_shown = (
-            f" ({num_not_shown} columns not shown: {", ".join(not_shown)})."
+            f" ({num_not_shown} columns not shown: {', '.join(not_shown)})."
         )
         truncated_data = [row + truncation_marker for row in truncated_data]
         truncated_headers += truncation_marker

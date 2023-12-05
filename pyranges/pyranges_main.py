@@ -11,6 +11,7 @@ from typing import (
 import numpy as np
 import pandas as pd
 from natsort import natsorted, natsort  # type: ignore
+from pandas.core.internals import BlockManager
 
 import pyranges as pr
 from pyranges import multithreaded
@@ -32,7 +33,7 @@ from pyranges.names import (
     CHROM_COL,
     RANGE_COLS,
     VALID_JOIN_TYPE,
-    VALID_STRAND_OPTIONS,
+    VALID_STRAND_TYPE,
     STRAND_BEHAVIOR_SAME,
     STRAND_AUTO,
     VALID_STRAND_BEHAVIOR_OPTIONS,
@@ -52,7 +53,7 @@ from pyranges.names import (
     END_COL,
     VALID_NEAREST_OPTIONS,
     NEAREST_DOWNSTREAM,
-    NEAREST_UPSTREAM,
+    NEAREST_UPSTREAM, VALID_STRAND_OPTIONS, VALID_BY_OPTIONS,
 )
 
 if TYPE_CHECKING:
@@ -171,6 +172,34 @@ class PyRanges(pr.RangeFrame):
     pyranges.statistics : namespace for statistics
     pyranges.stats.StatisticsMethods : namespace for statistics
     """
+    def __new__(cls, *args, **kwargs):
+        # Logic to decide whether to return an instance of PyRanges or a DataFrame
+        if len(args) == 0:
+            return pr.empty()
+        if isinstance(val := args[0], dict):
+            columns = val.keys()
+        elif isinstance(val, pd.DataFrame):
+            columns = val.columns
+        elif isinstance(val, BlockManager):
+            columns = val.items
+        else:
+            raise Exception(f"Invalid type: {val}")
+
+        if set(GENOME_LOC_COLS).issubset(columns):
+            return super(PyRanges, cls).__new__(cls)
+        else:
+            return pd.DataFrame(*args, **kwargs)
+
+    @property
+    def _constructor(self):
+        # assert set(RANGE_COLS).issubset(self.columns), f"{RANGE_COLS} {self.columns}"
+        if not set(RANGE_COLS).issubset(self.columns):
+            assert 0, f"a{self.columns}"
+            return pd.DataFrame
+        if not set(GENOME_LOC_COLS).issubset(self.columns):
+            assert 0, f"b{self.columns}"
+            return pr.RangeFrame
+        return pr.PyRanges
 
     @property
     def features(self) -> "GenomicFeaturesMethods":
@@ -341,26 +370,20 @@ class PyRanges(pr.RangeFrame):
             ),
         )
 
-
     @cached_property
     def _required_columns(self) -> Iterable[str]:
         return GENOME_LOC_COLS[:]
 
     def __init__(self, *args, **kwargs) -> None:
-        if not args and not "data" in kwargs:
-            kwargs["data"] = {
-                k: []
-                for k in (
-                    GENOME_LOC_COLS_WITH_STRAND
-                    if kwargs.get("strand")
-                    else GENOME_LOC_COLS
-                )
-            }
-            if "strand" in kwargs:
-                del kwargs["strand"]
+        called_constructor_without_arguments = not args and not "data" in kwargs
+        if called_constructor_without_arguments:
+            # find out whether to include the strand column
+            # also remove the strand key from kwargs since the constructor does not expect it.
+            cols_to_use = GENOME_LOC_COLS_WITH_STRAND if kwargs.pop("strand", False) else GENOME_LOC_COLS
+            # pass dict with the necessary pyranges cols to the constructor
+            kwargs["data"] = {k: [] for k in cols_to_use}
 
         super().__init__(*args, **kwargs)
-        self._check_index_column_names()
         self._loci = LociGetter(self)
 
     def _chrom_and_strand_info(self) -> str:
@@ -461,26 +484,9 @@ class PyRanges(pr.RangeFrame):
         """
         return f"{super().__str__(max_total_width=max_total_width, max_col_width=max_col_width)}\n{self._chrom_and_strand_info()}."
 
-    def _check_index_column_names(self):
-        # Check for columns with the same name as the index
-        if self.index.name is not None and self.index.name in self.columns:
-            raise ValueError(
-                f"Index name '{self.index.name}' cannot be the same as a column name."
-            )
-        if isinstance(self.index, pd.MultiIndex):
-            for level in self.index.names:
-                if level in self.columns:
-                    raise ValueError(
-                        f"Index level name '{level}' cannot be the same as a column name."
-                    )
-
     def set_index(self, *args, **kwargs) -> "PyRanges | None":
         # Custom behavior for set_index
         result = PyRanges(super().set_index(*args, **kwargs))
-        if kwargs.get("inplace"):
-            self._check_index_column_names()
-        else:
-            result._check_index_column_names()
         return result
 
     def apply_single(
@@ -517,17 +523,15 @@ class PyRanges(pr.RangeFrame):
 
         kwargs : dict
         """
-        _by = [] if by is None else ([by] if isinstance(by, str) else [*by])
-
         self._ensure_strand_behavior_options_valid(other, strand_behavior)
 
         if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
             self.col[TEMP_STRAND_COL] = self[STRAND_COL].replace({"+": "-", "-": "+"})
             other.col[TEMP_STRAND_COL] = other[STRAND_COL]
 
-        grpby_ks = self._group_keys(other, strand_behavior) + _by
+        grpby_ks = self._group_keys_from_strand_behavior(other, strand_behavior, by=by)
 
-        res = super(PyRanges, self).apply_pair(other, function, grpby_ks, **kwargs)
+        res = super(PyRanges, self).apply_pair(other, function, by=grpby_ks, **kwargs)
 
         if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
             other.drop(TEMP_STRAND_COL, axis="columns", inplace=True)
@@ -727,7 +731,7 @@ class PyRanges(pr.RangeFrame):
 
     def cluster(
         self,
-        strand: VALID_STRAND_OPTIONS = "auto",
+        strand: VALID_STRAND_TYPE = "auto",
         by: list[str] | str | None = None,
         slack: int = 0,
         cluster_column: str = "Cluster",
@@ -869,7 +873,7 @@ class PyRanges(pr.RangeFrame):
             cluster_column=cluster_column,
         )
         gr = pr.PyRanges(df)
-        gr.col[cluster_column] = gr.groupby(self._location_cols + (_by or [])).ngroup()
+        gr.col[cluster_column] = gr.groupby(self.location_cols + (_by or [])).ngroup()
         return gr
 
     def copy(self, *args, **kwargs) -> "pr.PyRanges":
@@ -1234,7 +1238,11 @@ class PyRanges(pr.RangeFrame):
         return pr.PyRanges(pyrange_apply_single(_tss, self, strand=True))
 
     @property
-    def _location_cols(self) -> list[str]:
+    def location_cols(self) -> list[str]:
+        return CHROM_AND_STRAND_COLS if self.has_strand_column else [CHROM_COL]
+
+    @property
+    def location_cols_include_strand_only_if_valid(self) -> list[str]:
         return CHROM_AND_STRAND_COLS if self.has_strand_column else [CHROM_COL]
 
     @property
@@ -1483,7 +1491,7 @@ class PyRanges(pr.RangeFrame):
 
     def max_disjoint(
         self,
-        strand: VALID_STRAND_OPTIONS = "auto",
+        strand: VALID_STRAND_TYPE = "auto",
         slack: int = 0,
         **kwargs,
     ) -> "PyRanges":
@@ -1537,7 +1545,7 @@ class PyRanges(pr.RangeFrame):
 
     def merge_overlaps(
         self,
-        strand: VALID_STRAND_OPTIONS = "auto",
+        strand: VALID_STRAND_TYPE = "auto",
         count_col: Optional[str] = None,
         by: list[str] | str | None = None,
         slack: int = 0,
@@ -2190,7 +2198,7 @@ class PyRanges(pr.RangeFrame):
         start: int = 0,
         end: int | None = None,
         by: str | None = None,
-        strand: VALID_STRAND_OPTIONS = "auto",
+        strand: VALID_STRAND_TYPE = "auto",
         **kwargs,
     ) -> "PyRanges":
         """Get subsequences of the intervals, using coordinates mapping to spliced transcripts (without introns)
@@ -2324,7 +2332,7 @@ class PyRanges(pr.RangeFrame):
 
     def split(
         self,
-        strand: VALID_STRAND_OPTIONS = "auto",
+        strand: VALID_STRAND_TYPE = "auto",
         between: bool = False,
     ) -> "PyRanges":
         """Split into non-overlapping intervals.
@@ -2518,7 +2526,7 @@ class PyRanges(pr.RangeFrame):
         start: int = 0,
         end: int | None = None,
         by: str | None = None,
-        strand: VALID_STRAND_OPTIONS = "auto",
+        strand: VALID_STRAND_TYPE = "auto",
         **kwargs,
     ) -> "PyRanges":
         """Get subsequences of the intervals.
@@ -2902,7 +2910,7 @@ class PyRanges(pr.RangeFrame):
             "tile_size": tile_size,
         }
 
-        return self.apply_single(_tiles, **kwargs)
+        return pr.PyRanges(self.apply_single(_tiles, **kwargs))
 
     def three_end(self) -> "PyRanges":
         """Return the 3'-end.
@@ -3361,7 +3369,7 @@ class PyRanges(pr.RangeFrame):
     def to_rle(
         self,
         value_col: str | None = None,
-        strand: VALID_STRAND_OPTIONS = "auto",
+        strand: VALID_STRAND_TYPE = "auto",
         rpm: bool = False,
     ) -> "Rledict":
         """Return as Rledict.
@@ -3697,25 +3705,26 @@ class PyRanges(pr.RangeFrame):
         return PyRanges(super().__getitem__(cols_to_include_genome_loc_correct_order))
 
     def _resolve_strand_argument_ensure_valid(
-        self, strand: VALID_STRAND_OPTIONS
+        self, strand: VALID_STRAND_TYPE
     ) -> bool:
         if strand == STRAND_AUTO:
             return self.strand_values_valid
         return strand
 
-    def _ensure_strand_behavior_options_valid(self, other, strand_behavior):
+    def _ensure_strand_behavior_options_valid(self, other: "pr.PyRanges", strand_behavior: VALID_STRAND_BEHAVIOR_TYPE):
         if strand_behavior not in VALID_STRAND_BEHAVIOR_OPTIONS:
-            msg = f"{VALID_STRAND_BEHAVIOR_OPTIONS} are the only valid values for strand_behavior."
+            msg = f"{VALID_STRAND_BEHAVIOR_OPTIONS} are the only valid values for strand_behavior. Was: {strand_behavior}"
             raise ValueError(msg)
         if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
             assert (
                 self.strand_values_valid and other.strand_values_valid
             ), "Can only do opposite strand operations when both PyRanges contain valid strand info."
 
-    def _group_keys(
+    def _group_keys_from_strand_behavior(
         self,
         other: "PyRanges",
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE,
+        by: VALID_BY_OPTIONS = None
     ) -> list[str]:
         include_strand = True
         if strand_behavior == STRAND_BEHAVIOR_AUTO:
@@ -3724,4 +3733,26 @@ class PyRanges(pr.RangeFrame):
             include_strand = False
         elif strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
             return [CHROM_COL, TEMP_STRAND_COL]
-        return [CHROM_COL, STRAND_COL] if include_strand else [CHROM_COL]
+        genome_cols = [CHROM_COL, STRAND_COL] if include_strand else [CHROM_COL]
+        return genome_cols + ([] if by is None else ([by] if isinstance(by, str) else [*by]))
+
+    def _ensure_valid_strand_option(self, strand: VALID_STRAND_TYPE):
+        if not strand in VALID_STRAND_OPTIONS:
+            msg = f"Invalid strand option: {strand}"
+            raise ValueError(msg)
+        if strand and not self.has_strand_column:
+            msg = "Cannot use Strand when strand column is missing."
+            raise ValueError(msg)
+
+    def _group_keys_single(
+        self,
+        strand: VALID_STRAND_TYPE,
+        by: list[str]
+    ):
+        self._ensure_valid_strand_option(strand)
+        if strand == "auto":
+            genome_keys = [CHROM_COL, STRAND_COL] if self.has_strand_column else [CHROM_COL]
+        else:
+            genome_keys = [CHROM_COL, STRAND_COL] if strand else [CHROM_COL]
+        return genome_keys + ([] if by is None else ([by] if isinstance(by, str) else [*by]))
+

@@ -39,20 +39,18 @@ def read_bed(f: Union[str, Path], /, nrows: Optional[int] = None) -> pr.PyRanges
     Examples
     --------
 
-    >>> path = pr.get_example_path("aorta.bed")
+    >>> path = pr.data.files["aorta.bed"]
     >>> pr.read_bed(path, nrows=5)
-    +--------------+-----------+-----------+------------+-----------+--------------+
-    | Chromosome   |     Start |       End | Name       |     Score | Strand       |
-    | (category)   |   (int64) |   (int64) | (object)   |   (int64) | (category)   |
-    |--------------+-----------+-----------+------------+-----------+--------------|
-    | chr1         |      9939 |     10138 | H3K27me3   |         7 | +            |
-    | chr1         |      9953 |     10152 | H3K27me3   |         5 | +            |
-    | chr1         |      9916 |     10115 | H3K27me3   |         5 | -            |
-    | chr1         |      9951 |     10150 | H3K27me3   |         8 | -            |
-    | chr1         |      9978 |     10177 | H3K27me3   |         7 | -            |
-    +--------------+-----------+-----------+------------+-----------+--------------+
-    Stranded PyRanges object has 5 rows and 6 columns from 1 chromosomes.
-    For printing, the PyRanges was sorted on Chromosome and Strand.
+    Chromosome      Start      End  Name        Score  Strand
+    category        int64    int64  object      int64  category
+    ------------  -------  -------  --------  -------  ----------
+    chr1             9916    10115  H3K27me3        5  -
+    chr1             9939    10138  H3K27me3        7  +
+    chr1             9951    10150  H3K27me3        8  -
+    chr1             9953    10152  H3K27me3        5  +
+    chr1             9978    10177  H3K27me3        7  -
+    PyRanges with 5 rows and 6 columns.
+    Contains 1 chromosomes and 2 strands.
     """
 
     columns = "Chromosome Start End Name Score Strand ThickStart ThickEnd ItemRGB BlockCount BlockSizes BlockStarts".split()
@@ -125,24 +123,22 @@ def read_bam(
     Examples
     --------
 
-    >>> path = pr.get_example_path("control.bam")
-    >>> pr.read_bam(path).sort()
-    +--------------+-----------+-----------+--------------+------------+
-    | Chromosome   | Start     | End       | Strand       | Flag       |
-    | (category)   | (int64)   | (int64)   | (category)   | (uint16)   |
-    |--------------+-----------+-----------+--------------+------------|
-    | chr1         | 1041102   | 1041127   | +            | 0          |
-    | chr1         | 2129359   | 2129384   | +            | 0          |
-    | chr1         | 2239108   | 2239133   | +            | 0          |
-    | chr1         | 2318805   | 2318830   | +            | 0          |
-    | ...          | ...       | ...       | ...          | ...        |
-    | chrY         | 10632456  | 10632481  | -            | 16         |
-    | chrY         | 11918814  | 11918839  | -            | 16         |
-    | chrY         | 11936866  | 11936891  | -            | 16         |
-    | chrY         | 57402214  | 57402239  | -            | 16         |
-    +--------------+-----------+-----------+--------------+------------+
-    Stranded PyRanges object has 10,000 rows and 5 columns from 25 chromosomes.
-    For printing, the PyRanges was sorted on Chromosome and Strand.
+    >>> path = pr.data.files["smaller.bam"]
+    >>> pr.read_bam(path)
+    Chromosome    Start     End       Strand      Flag
+    category      int64     int64     category    uint16
+    ------------  --------  --------  ----------  --------
+    chr1          887771    887796    -           16
+    chr1          994660    994685    -           16
+    chr1          1041102   1041127   +           0
+    chr1          1770383   1770408   -           16
+    ...           ...       ...       ...         ...
+    chr1          18800901  18800926  +           0
+    chr1          18800901  18800926  +           0
+    chr1          18855123  18855148  -           16
+    chr1          19373470  19373495  +           0
+    PyRanges with 100 rows and 5 columns.
+    Contains 1 chromosomes and 2 strands.
     """
     path = Path(f)
     try:
