@@ -112,6 +112,20 @@ chr1	194245558	194245583	U0	0	+
 chr8	57916061	57916086	U0	0	+"""
         return self._read_bed_from_string(contents)
 
+    @property
+    def chipseq_background(self) -> "pr.PyRanges":
+        contents = """chr7	20246668	20246693	U0	0	+
+chr1	39036822	39036847	U0	0	+
+chr19	47109000	47109025	U0	0	-
+chr10	90059861	90059886	U0	0	-
+chr3	55648137	55648162	U0	0	+
+chr7	91135110	91135135	U0	0	+
+chr13	100938475	100938500	U0	0	+
+chr3	115816130	115816155	U0	0	+
+chr19	43528773	43528798	U0	0	+
+chr10	73781101	73781126	U0	0	+"""
+        return self._read_bed_from_string(contents)
+
     @cached_property
     def chromsizes(self) -> "pr.PyRanges":
         contents = """chr1	0	249250621
@@ -178,6 +192,14 @@ chr1	6	7	b	0	-"""
             f.write(contents)
             f.flush()
             return pr.read_bed(f.name)
+
+    @property
+    def aorta(self) -> "pr.PyRanges":
+        return pr.read_bed(self.files["aorta.bed"])
+
+    @property
+    def aorta2(self) -> "pr.PyRanges":
+        return pr.read_bed(self.files["aorta2.bed"])
 
 
 def get_example_path(basename) -> Path:

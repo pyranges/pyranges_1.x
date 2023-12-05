@@ -189,19 +189,9 @@ class RangeFrame(pd.DataFrame):
 
         return res
 
-    def apply_pair(self, other, function, by, **kwargs):
+    def apply_pair(self, other, function, by, **kwargs) -> "RangeFrame":
         if by is None:
             return RangeFrame(function(self, other, **kwargs))
-
-        """
-        If opposite
-
-        add temp column to match on
-
-        run super method with added column
-
-        remove temp column afterwards
-        """
 
         results = []
         empty = RangeFrame(columns=other.columns)

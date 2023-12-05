@@ -59,6 +59,7 @@ from pyranges.names import (
 if TYPE_CHECKING:
     from pyrle.rledict import Rledict  # type: ignore
     from pyranges.genomicfeatures import GenomicFeaturesMethods
+    from pyranges.statistics import StatisticsMethods
 
 __all__ = ["PyRanges"]
 
@@ -154,6 +155,13 @@ class PyRanges(pr.RangeFrame):
                1  -               4       27        1       11        9        3
     PyRanges with 2 rows and 8 columns.
     Contains 1 chromosomes and 2 strands.
+
+    # Operations that remove a column required for a PyRanges return a
+    # DataFrame instead
+    >>> gr.drop("Chromosome", axis=1)
+      Strand  Start  End  TP  FP  TN  FN
+    0      +      1    2   0  12  10   2
+    1      -      4   27   1  11   9   3
     """
 
     """Namespace for genomic-features methods.
@@ -164,7 +172,6 @@ class PyRanges(pr.RangeFrame):
     pyranges.genomicfeatures.GenomicFeaturesMethods : namespace for feature-functionality
     """
 
-    stats = None
     """Namespace for statistcal methods.
 
     See Also
@@ -173,6 +180,11 @@ class PyRanges(pr.RangeFrame):
     pyranges.stats.StatisticsMethods : namespace for statistics
     """
     def __new__(cls, *args, **kwargs):
+        # __new__ is a special static method used for creating and
+        # returning a new instance of a class. It is called before
+        # __init__ and is typically used in scenarios requiring
+        # control over the creation of new instances
+
         # Logic to decide whether to return an instance of PyRanges or a DataFrame
         if len(args) == 0:
             return pr.empty()
@@ -192,20 +204,17 @@ class PyRanges(pr.RangeFrame):
 
     @property
     def _constructor(self):
-        # assert set(RANGE_COLS).issubset(self.columns), f"{RANGE_COLS} {self.columns}"
-        if not set(RANGE_COLS).issubset(self.columns):
-            assert 0, f"a{self.columns}"
-            return pd.DataFrame
-        if not set(GENOME_LOC_COLS).issubset(self.columns):
-            assert 0, f"b{self.columns}"
-            return pr.RangeFrame
         return pr.PyRanges
 
     @property
     def features(self) -> "GenomicFeaturesMethods":
         from pyranges.genomicfeatures import GenomicFeaturesMethods
-
         return GenomicFeaturesMethods(self)
+
+    @property
+    def stats(self) -> "StatisticsMethods":
+        from pyranges.statistics import StatisticsMethods
+        return StatisticsMethods(self)
 
     @property
     def loci(self) -> LociGetter:
@@ -523,7 +532,7 @@ class PyRanges(pr.RangeFrame):
 
         kwargs : dict
         """
-        self._ensure_strand_behavior_options_valid(other, strand_behavior)
+        self.ensure_strand_behavior_options_valid(other, strand_behavior)
 
         if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
             self.col[TEMP_STRAND_COL] = self[STRAND_COL].replace({"+": "-", "-": "+"})
@@ -692,7 +701,6 @@ class PyRanges(pr.RangeFrame):
 
         gr.col.Frame = sorted_p.Frame
 
-        # Drop __index__ column
         return gr.drop(TEMP_INDEX_COL, axis=1)
 
     @property
@@ -1073,10 +1081,10 @@ class PyRanges(pr.RangeFrame):
 
         return counts
 
-    def drop(self, *args, **kwargs) -> "PyRanges | None":
-        res = super().drop(*args, **kwargs)
-        if res is not None:
-            return PyRanges(res)
+    # def drop(self, *args, **kwargs) -> "PyRanges | None":
+    #     res = super().drop(*args, **kwargs)
+    #     if res is not None:
+    #         return PyRanges(res)
 
     def extend(
         self,
@@ -3711,7 +3719,7 @@ class PyRanges(pr.RangeFrame):
             return self.strand_values_valid
         return strand
 
-    def _ensure_strand_behavior_options_valid(self, other: "pr.PyRanges", strand_behavior: VALID_STRAND_BEHAVIOR_TYPE):
+    def ensure_strand_behavior_options_valid(self, other: "pr.PyRanges", strand_behavior: VALID_STRAND_BEHAVIOR_TYPE) -> None:
         if strand_behavior not in VALID_STRAND_BEHAVIOR_OPTIONS:
             msg = f"{VALID_STRAND_BEHAVIOR_OPTIONS} are the only valid values for strand_behavior. Was: {strand_behavior}"
             raise ValueError(msg)
@@ -3755,4 +3763,70 @@ class PyRanges(pr.RangeFrame):
         else:
             genome_keys = [CHROM_COL, STRAND_COL] if strand else [CHROM_COL]
         return genome_keys + ([] if by is None else ([by] if isinstance(by, str) else [*by]))
+
+    def intersect_columns(self, *, start2: str, end2: str, start: str = START_COL, end: str = END_COL, drop_old_columns: bool = True) -> "pr.PyRanges":
+        """Use two pairs of columns representing intervals to create a new start and end column.
+
+        Parameters
+        ----------
+        start
+        end
+        start2
+        end2
+        drop_old_columns
+            Whether to drop the above mentioned columns.
+
+        Examples
+        --------
+        >>> gr1, gr2 = pr.data.aorta.head(3).get_with_loc_columns(), pr.data.aorta2.head(3).get_with_loc_columns()
+        >>> j = gr1.interval_join(gr2)
+        >>> j
+        Chromosome    Start    End      Strand      Chromosome_b    Start_b    End_b    Strand_b
+        category      int64    int64    category    category        int64      int64    category
+        ------------  -------  -------  ----------  --------------  ---------  -------  ----------
+        chr1          9939     10138    +           chr1            10073      10272    +
+        chr1          9916     10115    -           chr1            9988       10187    -
+        chr1          9916     10115    -           chr1            10079      10278    -
+        chr1          9916     10115    -           chr1            9988       10187    -
+        ...           ...      ...      ...         ...             ...        ...      ...
+        chr1          9951     10150    -           chr1            9988       10187    -
+        chr1          9951     10150    -           chr1            10079      10278    -
+        chr1          9951     10150    -           chr1            9988       10187    -
+        chr1          9951     10150    -           chr1            10079      10278    -
+        PyRanges with 9 rows and 8 columns.
+        Contains 1 chromosomes and 2 strands.
+
+        >>> j.intersect_columns(start="Start", end="End", start2="Start_b", end2="End_b")
+        Chromosome    Start    End      Strand      Chromosome_b    Strand_b
+        category      int64    int64    category    category        category
+        ------------  -------  -------  ----------  --------------  ----------
+        chr1          10073    10138    +           chr1            +
+        chr1          9988     10115    -           chr1            -
+        chr1          10079    10115    -           chr1            -
+        chr1          9988     10115    -           chr1            -
+        ...           ...      ...      ...         ...             ...
+        chr1          9988     10150    -           chr1            -
+        chr1          10079    10150    -           chr1            -
+        chr1          9988     10150    -           chr1            -
+        chr1          10079    10150    -           chr1            -
+        PyRanges with 9 rows and 6 columns.
+        Contains 1 chromosomes and 2 strands.
+        """
+        new_starts = pd.Series(
+            np.where(self[start] > self[start2].values, self[start], self[start2]),
+            index=self.index,
+        )
+
+        new_ends = pd.Series(
+            np.where(self[end] < self[end2].values, self[end], self[end2]),
+            index=self.index,
+        )
+
+        self.col[START_COL] = new_starts
+        self.col[END_COL] = new_ends
+
+        cols_to_drop = {start, end, start2, end2}.difference(RANGE_COLS) if drop_old_columns else []
+
+        return self.drop(cols_to_drop, axis=1)
+
 
