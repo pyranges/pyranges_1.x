@@ -1,6 +1,7 @@
 import pandas as pd
 
-from pyranges import GENOME_LOC_COLS
+import pyranges as pr
+from pyranges.names import GENOME_LOC_COLS
 
 
 def return_pyranges_if_possible(method):
@@ -10,7 +11,7 @@ def return_pyranges_if_possible(method):
 
         # Check if the result should be a MySpecialDataFrame
         if isinstance(result, pd.DataFrame) and set(GENOME_LOC_COLS).issubset(result.columns):
-            return PyRangesGroupBy(result)
+            return pr.PyRanges(result)
         else:
             return result
 
@@ -18,6 +19,9 @@ def return_pyranges_if_possible(method):
 
 
 class PyRangesGroupBy(pd.core.groupby.DataFrameGroupBy):
+    @return_pyranges_if_possible
+    def agg(self, *args, **kwargs):
+        return super().agg(*args, **kwargs)
 
     @return_pyranges_if_possible
     def aggregate(self, func, *args, **kwargs):

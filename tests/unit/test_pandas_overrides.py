@@ -3,6 +3,8 @@
 import pandas as pd
 
 import pyranges as pr
+from pyranges import PyRanges
+from pyranges.pyranges_groupby import PyRangesGroupBy
 
 
 def test_getitem():
@@ -32,11 +34,11 @@ def test_loc_set():
 
 
 def test_groupby():
-    gr = pr.PyRanges({"Chromosome": ["chr1", "chr2"], "Start": [0, 4], "End": [40, 10]})
-    res = gr.groupby("Chromosome").agg({"Chromosome": "first", "Start": "min", "End": "max"})
-    print(res)
+    gr = pr.PyRanges({"Chromosome": ["chr1", "chr1", "chr2"], "Start": [4, 10, 4], "End": [40, 11, 10]})
+    g = gr.groupby("Chromosome")
+    assert isinstance(g, PyRangesGroupBy)
+    res = g.agg({"Chromosome": "first", "Start": "min", "End": "max"})
+    assert isinstance(res, PyRanges)
 
-    assert 0
-
-
-
+    assert res.Start.tolist() == [4, 4]
+    assert res.End.tolist() == [40, 10]

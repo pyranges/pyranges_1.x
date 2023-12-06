@@ -56,6 +56,7 @@ from pyranges.names import (
     NEAREST_DOWNSTREAM,
     NEAREST_UPSTREAM, VALID_STRAND_OPTIONS, VALID_BY_OPTIONS, TEMP_NUM_COL,
 )
+from pyranges.pyranges_groupby import PyRangesGroupBy
 from pyranges.tostring import tostring
 
 if TYPE_CHECKING:
@@ -200,6 +201,10 @@ class PyRanges(pr.RangeFrame):
             return df
 
         return super(PyRanges, cls).__new__(cls)
+
+    def groupby(self, *args, **kwargs):
+        # Return an instance of the custom GroupBy class
+        return PyRangesGroupBy(self, *args, **kwargs)
 
     @property
     def _constructor(self):
