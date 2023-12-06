@@ -602,8 +602,8 @@ def simes(df, groupby, pcol, keep_position=False):
 
     >>> s = '''Chromosome Start End Strand Gene PValue
     ... 1 10 20 + P53 0.0001
-    ... 1 20 20 + P53 0.0002
-    ... 1 30 20 + P53 0.0003
+    ... 1 20 35 + P53 0.0002
+    ... 1 30 40 + P53 0.0003
     ... 2 60 65 - FOX 0.05
     ... 2 70 75 - FOX 0.0000001
     ... 2 80 90 - FOX 0.0000021'''
@@ -614,8 +614,8 @@ def simes(df, groupby, pcol, keep_position=False):
            int64    int64    int64  object    object      float64
     ------------  -------  -------  --------  --------  ---------
                1       10       20  +         P53         0.0001
-               1       20       20  +         P53         0.0002
-               1       30       20  +         P53         0.0003
+               1       20       35  +         P53         0.0002
+               1       30       40  +         P53         0.0003
                2       60       65  -         FOX         0.05
                2       70       75  -         FOX         1e-07
                2       80       90  -         FOX         2.1e-06
@@ -633,7 +633,7 @@ def simes(df, groupby, pcol, keep_position=False):
            int64    int64    int64    float64  object    object
     ------------  -------  -------  ---------  --------  --------
                2       60       90     1e-07   -         FOX
-               1       10       20     0.0001  +         P53
+               1       10       40     0.0001  +         P53
     PyRanges with 2 rows and 6 columns.
     Contains 2 chromosomes and 2 strands.
     """

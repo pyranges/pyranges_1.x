@@ -1,6 +1,8 @@
 import pandas as pd
 from ncls import NCLS  # type: ignore
 
+from pyranges.names import TEMP_NUM_COL
+
 
 def add_rows_per_group(df):
     last_rows = df.groupby("__ix__").last().reset_index()
@@ -51,7 +53,7 @@ def _subtraction(scdf, ocdf, **kwargs):
     o = NCLS(ocdf.Start.values, ocdf.End.values, ocdf.index.values)
 
     idx_self, new_starts, new_ends = o.set_difference_helper(
-        scdf.Start.values, scdf.End.values, scdf.index.values, scdf.__num__.values
+        scdf.Start.values, scdf.End.values, scdf.index.values, scdf[TEMP_NUM_COL].values
     )
 
     missing_idx = pd.Index(scdf.index).difference(idx_self)

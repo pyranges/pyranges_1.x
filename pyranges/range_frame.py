@@ -1,10 +1,12 @@
 from functools import cached_property
-from typing import Literal, Iterable, Self
+from typing import Literal, Iterable, Self, Optional
 
 import pandas as pd
+import numpy as np
+from pandas.core.internals import BlockManager
 
 from pyranges.methods.overlap import _overlap
-from pyranges.names import RANGE_COLS
+from pyranges.names import RANGE_COLS, TEMP_TYPE_COL, START_COL, END_COL, DEFAULT_CLUSTER_ID_COL, TEMP_CLUSTER_COL
 from pyranges.tostring import tostring
 
 
@@ -34,7 +36,8 @@ class RangeFrame(pd.DataFrame):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        missing_columns = [c for c in self._required_columns if c not in self.columns]
+
+        missing_columns = [c for c in RANGE_COLS if c not in self.columns]
         if missing_columns:
             msg = f"Missing required columns: {missing_columns}"
             raise ValueError(msg)
@@ -185,9 +188,7 @@ class RangeFrame(pd.DataFrame):
     ) -> "pr.RangeFrame":
         if not by:
             return RangeFrame(function(self, **kwargs))
-        res = self.groupby(by).apply(function, by=by, **kwargs).reset_index(drop=True)
-
-        return res
+        return self.groupby(by).apply(function, by=by, **kwargs).reset_index(drop=True)
 
     def apply_pair(self, other, function, by, **kwargs) -> "RangeFrame":
         if by is None:
@@ -202,3 +203,34 @@ class RangeFrame(pd.DataFrame):
             results.append(function(_df, odf, **kwargs))
 
         return RangeFrame(pd.concat(results))
+
+    def sort_by_position(self) -> "RangeFrame":
+        """Sort by Start and End columns."""
+        return self.sort_values(RANGE_COLS)
+
+    @staticmethod
+    def _by_to_list(by: str | list[str] | None) -> list[str]:
+        return [by] if isinstance(by, str) else (by or [])
+
+    # def subtract(self, inner: "RangeFrame"):
+    #     """
+
+    #     Parameters
+    #     ----------
+    #     inner_col
+    #     outer_col
+
+    #     Examples
+    #     --------
+    #     >>> r1 = RangeFrame({"Start": [1], "End": [11]})
+    #     >>> r2 = RangeFrame({"Start": [5], "End": [7]})
+    #     >>> r1.subtract(r2)
+
+    #     """
+    #     outer = self.copy()
+    #     inner = inner.copy()
+    #     outer.col[TEMP_TYPE_COL] = "outer"
+    #     inner.col[TEMP_TYPE_COL] = "inner"
+    #     inner.merge()
+
+

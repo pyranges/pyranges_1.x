@@ -6,6 +6,7 @@ from pandas.core.frame import DataFrame
 from sorted_nearest.src.introns import find_introns  # type: ignore
 
 import pyranges as pr
+from pyranges.methods.subtraction import _subtraction
 from pyranges.names import CHROM_COL, END_COL
 from pyranges.pyranges_main import PyRanges
 
@@ -126,7 +127,13 @@ class GenomicFeaturesMethods:
 
         return pr.PyRanges(gr)
 
-    def introns(self, by: str = "gene") -> PyRanges:
+    def introns(
+        self,
+        feature_column: str = "Feature",
+        outer_feature: str = "gene",
+        inner_feature: str = "exon",
+        by: str | list[str] | None = None,
+    ) -> PyRanges:
         """Return the introns.
 
         Parameters
@@ -142,75 +149,59 @@ class GenomicFeaturesMethods:
         --------
 
         >>> gr = pr.data.ensembl_gtf.get_with_loc_columns(["Feature", "gene_id", "transcript_id"])
+        >>> gr = gr[gr["gene_id"] == "ENSG00000223972"]
         >>> gr
-        Chromosome    Start    End      Strand      Feature     gene_id          ...
-        category      int64    int64    category    category    object           ...
-        ------------  -------  -------  ----------  ----------  ---------------  -----
-        1             11868    14409    +           gene        ENSG00000223972  ...
-        1             11868    14409    +           transcript  ENSG00000223972  ...
-        1             11868    12227    +           exon        ENSG00000223972  ...
-        1             12612    12721    +           exon        ENSG00000223972  ...
-        ...           ...      ...      ...         ...         ...              ...
-        1             120724   133723   -           transcript  ENSG00000238009  ...
-        1             133373   133723   -           exon        ENSG00000238009  ...
-        1             129054   129223   -           exon        ENSG00000238009  ...
-        1             120873   120932   -           exon        ENSG00000238009  ...
-        PyRanges with 11 rows and 7 columns (1 columns not shown: "transcript_id").
-        Contains 1 chromosomes and 2 strands.
+          Chromosome    Start      End  Strand      Feature     gene_id          transcript_id
+            category    int64    int64  category    category    object           object
+        ------------  -------  -------  ----------  ----------  ---------------  ---------------
+                   1    11868    14409  +           gene        ENSG00000223972  nan
+                   1    11868    14409  +           transcript  ENSG00000223972  ENST00000456328
+                   1    11868    12227  +           exon        ENSG00000223972  ENST00000456328
+                   1    12612    12721  +           exon        ENSG00000223972  ENST00000456328
+                   1    13220    14409  +           exon        ENSG00000223972  ENST00000456328
+        PyRanges with 5 rows and 7 columns.
+        Contains 1 chromosomes and 1 strands.
 
-        >>> gr.features.introns(by="gene")
-        +--------------+------------+-----------+-----------+--------------+-----------------+-----------------+
-        | Chromosome   | Feature    | Start     | End       | Strand       | gene_id         | transcript_id   |
-        | (category)   | (object)   | (int64)   | (int64)   | (category)   | (object)        | (object)        |
-        |--------------+------------+-----------+-----------+--------------+-----------------+-----------------|
-        | 1            | intron     | 1173926   | 1174265   | +            | ENSG00000162571 | nan             |
-        | 1            | intron     | 1174321   | 1174423   | +            | ENSG00000162571 | nan             |
-        | 1            | intron     | 1174489   | 1174520   | +            | ENSG00000162571 | nan             |
-        | 1            | intron     | 1175034   | 1179188   | +            | ENSG00000162571 | nan             |
-        | ...          | ...        | ...       | ...       | ...          | ...             | ...             |
-        | 1            | intron     | 874591    | 875046    | -            | ENSG00000283040 | nan             |
-        | 1            | intron     | 875155    | 875525    | -            | ENSG00000283040 | nan             |
-        | 1            | intron     | 875625    | 876526    | -            | ENSG00000283040 | nan             |
-        | 1            | intron     | 876611    | 876754    | -            | ENSG00000283040 | nan             |
-        +--------------+------------+-----------+-----------+--------------+-----------------+-----------------+
-        Stranded PyRanges object has 311 rows and 7 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
-
-        >>> gr.features.introns(by="transcript")
-        +--------------+------------+-----------+-----------+--------------+-----------------+-----------------+
-        | Chromosome   | Feature    | Start     | End       | Strand       | gene_id         | transcript_id   |
-        | (category)   | (object)   | (int64)   | (int64)   | (category)   | (object)        | (object)        |
-        |--------------+------------+-----------+-----------+--------------+-----------------+-----------------|
-        | 1            | intron     | 818202    | 818722    | +            | ENSG00000177757 | ENST00000326734 |
-        | 1            | intron     | 960800    | 961292    | +            | ENSG00000187961 | ENST00000338591 |
-        | 1            | intron     | 961552    | 961628    | +            | ENSG00000187961 | ENST00000338591 |
-        | 1            | intron     | 961750    | 961825    | +            | ENSG00000187961 | ENST00000338591 |
-        | ...          | ...        | ...       | ...       | ...          | ...             | ...             |
-        | 1            | intron     | 732207    | 732980    | -            | ENSG00000230021 | ENST00000648019 |
-        | 1            | intron     | 168165    | 169048    | -            | ENSG00000241860 | ENST00000655252 |
-        | 1            | intron     | 165942    | 167958    | -            | ENSG00000241860 | ENST00000662089 |
-        | 1            | intron     | 168165    | 169048    | -            | ENSG00000241860 | ENST00000662089 |
-        +--------------+------------+-----------+-----------+--------------+-----------------+-----------------+
-        Stranded PyRanges object has 1,043 rows and 7 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome and Strand.
+        >>> gr = pr.from_string('''Chromosome   Start      End  Strand      Feature Id
+        ...          1   0    100  +           gene A
+        ...          1   10    20  +           exon A
+        ...          1   35    45  +           exon A
+        ...          1   30    40  +           exon A
+        ...          1   0    50   +           gene B
+        ...          1   20   30  +           exon  B''')
+        >>> gr
+          Chromosome    Start      End  Strand    Feature    Id
+               int64    int64    int64  object    object     object
+        ------------  -------  -------  --------  ---------  --------
+                   1        0      100  +         gene       A
+                   1       10       20  +         exon       A
+                   1       35       45  +         exon       A
+                   1       30       40  +         exon       A
+                   1        0       50  +         gene       B
+                   1       20       30  +         exon       B
+        PyRanges with 6 rows and 6 columns.
+        Contains 1 chromosomes and 1 strands.
+        >>> gr.features.introns(feature_column="Feature", outer_feature="gene", inner_feature="exon", by="Id")
+          Chromosome    Start      End  Strand    Feature    Id
+               int64    int64    int64  object    object     object
+        ------------  -------  -------  --------  ---------  --------
+                   1        0       10  +         gene       A
+                   1       20       30  +         gene       A
+                   1       45      100  +         gene       A
+                   1        0       20  +         gene       B
+                   1       30       50  +         gene       B
+        PyRanges with 5 rows and 6 columns.
+        Contains 1 chromosomes and 1 strands.
         """
 
-        assert by in ["gene", "transcript"]
+        gr = self.pr
+        if gr.empty:
+            return gr
 
-        id_column = by_to_id[by]
-        gr = self.pr.sort()
+        inner_df = gr[gr[feature_column] == inner_feature]
+        outer_df = gr[gr[feature_column] == outer_feature]
 
-        if not len(gr):
-            return pr.PyRanges()
-
-        exons = gr.subset(lambda df: df.Feature == "exon")
-        exons = exons.merge_overlaps(by=id_column)
-
-        by_gr = gr.subset(lambda df: df.Feature == by)
-
-        result = pyrange_apply(_introns2, by_gr, exons, **kwargs)
-
-        return pr.from_dfs(result)
+        return outer_df.subtract_intervals(inner_df, by=by)
 
 
 def _outside_bounds(df: DataFrame, **kwargs) -> DataFrame:

@@ -92,15 +92,14 @@ by = ["gene", "transcript"]
 def test_introns_single():
     "Assert that our fast method of computing introns is the same as the slow, correct one in compute_introns_single"
 
-    gr = pr.data.gencode_gtf()[["gene_id", "Feature"]]
+    gr = pr.data.gencode_gff.get_with_loc_columns(["gene_id", "Feature"])
     exons = gr[gr.Feature == "exon"].merge_overlaps(by="gene_id")
     exons.Feature = "exon"
-    exons = exons.df
-    df = pd.concat([gr[gr.Feature == "gene"].df, exons], sort=False)
+    df = pd.concat([gr[gr.Feature == "gene"], exons], sort=False)
 
     for gid, gdf in df.groupby("gene_id"):
         expected = compute_introns_single(gdf, by="gene")
-        actual = pr.PyRanges(gdf).features.introns().df
+        actual = pr.PyRanges(gdf).features.introns()
         if actual.empty:
             assert expected.empty
             continue

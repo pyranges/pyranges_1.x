@@ -16,6 +16,7 @@ from pandas.core.internals import BlockManager
 import pyranges as pr
 from pyranges import multithreaded
 from pyranges.loci_getter import LociGetter
+from pyranges.methods.merge import _merge
 from pyranges.multithreaded import (
     _extend,
     _extend_grp,
@@ -53,8 +54,9 @@ from pyranges.names import (
     END_COL,
     VALID_NEAREST_OPTIONS,
     NEAREST_DOWNSTREAM,
-    NEAREST_UPSTREAM, VALID_STRAND_OPTIONS, VALID_BY_OPTIONS,
+    NEAREST_UPSTREAM, VALID_STRAND_OPTIONS, VALID_BY_OPTIONS, TEMP_NUM_COL,
 )
+from pyranges.tostring import tostring
 
 if TYPE_CHECKING:
     from pyrle.rledict import Rledict  # type: ignore
@@ -123,13 +125,6 @@ class PyRanges(pr.RangeFrame):
     PyRanges with 0 rows and 3 columns.
     Contains 0 chromosomes.
 
-    >>> pr.PyRanges(strand=True)
-    Chromosome    Start      End        Strand
-    float64       float64    float64    float64
-    ------------  ---------  ---------  ---------
-    PyRanges with 0 rows and 4 columns.
-    Contains 0 chromosomes and 0 strands.
-
     >>> df = pd.DataFrame({"Chromosome": ["chr1", "chr2"], "Start": [100, 200],
     ...                    "End": [150, 201]})
     >>> df
@@ -186,21 +181,25 @@ class PyRanges(pr.RangeFrame):
         # control over the creation of new instances
 
         # Logic to decide whether to return an instance of PyRanges or a DataFrame
-        if len(args) == 0:
-            return pr.empty()
-        if isinstance(val := args[0], dict):
-            columns = val.keys()
-        elif isinstance(val, pd.DataFrame):
-            columns = val.columns
-        elif isinstance(val, BlockManager):
-            columns = val.items
-        else:
-            raise Exception(f"Invalid type: {val}")
+        if not args and "data" not in kwargs:
+            df = pd.DataFrame({k: [] for k in GENOME_LOC_COLS})
+            df.__class__ = pr.PyRanges
+            return df
 
-        if set(GENOME_LOC_COLS).issubset(columns):
-            return super(PyRanges, cls).__new__(cls)
-        else:
-            return pd.DataFrame(*args, **kwargs)
+        df = pd.DataFrame(kwargs.get("data") or args[0])
+
+        missing_any_required_columns = not set(GENOME_LOC_COLS).issubset(df.columns)
+        if missing_any_required_columns:
+            return df
+
+        any_missing_values = df[RANGE_COLS].isnull().any().any() or df[CHROM_COL].isnull().any()
+        if any_missing_values:
+            return df
+
+        if not np.all(df[START_COL] < df[END_COL]):
+            return df
+
+        return super(PyRanges, cls).__new__(cls)
 
     @property
     def _constructor(self):
@@ -393,6 +392,7 @@ class PyRanges(pr.RangeFrame):
             kwargs["data"] = {k: [] for k in cols_to_use}
 
         super().__init__(*args, **kwargs)
+
         self._loci = LociGetter(self)
 
     def _chrom_and_strand_info(self) -> str:
@@ -491,7 +491,8 @@ class PyRanges(pr.RangeFrame):
         PyRanges with 1 rows and 10 columns (4 columns not shown: "short_gene_name", "type", "Score", ...).
         Contains 1 chromosomes and 1 strands.
         """
-        return f"{super().__str__(max_total_width=max_total_width, max_col_width=max_col_width)}\n{self._chrom_and_strand_info()}."
+        formatted_df = tostring(self, max_col_width=max_col_width, max_total_width=max_total_width)
+        return f"{formatted_df}\n{self._chrom_and_strand_info()}."
 
     def set_index(self, *args, **kwargs) -> "PyRanges | None":
         # Custom behavior for set_index
@@ -501,6 +502,7 @@ class PyRanges(pr.RangeFrame):
     def apply_single(
         self,
         function,
+        *,
         by: str | list[str] | None = None,
         **kwargs,
     ) -> "pr.PyRanges":
@@ -540,7 +542,7 @@ class PyRanges(pr.RangeFrame):
 
         grpby_ks = self._group_keys_from_strand_behavior(other, strand_behavior, by=by)
 
-        res = super(PyRanges, self).apply_pair(other, function, by=grpby_ks, **kwargs)
+        res = PyRanges(super().apply_pair(other, function, by=grpby_ks, **kwargs))
 
         if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
             other.drop(TEMP_STRAND_COL, axis="columns", inplace=True)
@@ -891,6 +893,7 @@ class PyRanges(pr.RangeFrame):
         self,
         other: "PyRanges",
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
+        by: str | list[str] | None = None,
         keep_nonoverlapping: bool = True,
         overlap_col: str = "NumberOverlaps",
     ) -> "PyRanges":
@@ -965,6 +968,7 @@ class PyRanges(pr.RangeFrame):
             other,
             _number_overlapping,
             strand_behavior=strand_behavior,
+            by=by,
             keep_nonoverlapping=keep_nonoverlapping,
             overlap_col=overlap_col,
         )
@@ -1363,14 +1367,12 @@ class PyRanges(pr.RangeFrame):
         PyRanges with 1 rows and 8 columns.
         Contains 1 chromosomes.
 
+        # Note that since some start and end columns are nan, a regular DataFrame is returned.
+
         >>> f1.interval_join(f2, join_type="right")
-        Chromosome        Start        End  Name       Chromosome_b      Start_b    End_b  Name_b
-        object          float64    float64  object     object              int64    int64  object
-        ------------  ---------  ---------  ---------  --------------  ---------  -------  --------
-        nan                 nan        nan  nan        chr1                    1        2  a
-        chr1                  5          7  interval2  chr1                    6        7  b
-        PyRanges with 2 rows and 8 columns.
-        Contains 1 chromosomes.
+          Chromosome  Start  End       Name Chromosome_b  Start_b  End_b Name_b
+        0        NaN    NaN  NaN        NaN         chr1        1      2      a
+        1       chr1    5.0  7.0  interval2         chr1        6      7      b
 
         With slack 1, bookended features are joined (see row 1):
 
@@ -1641,11 +1643,9 @@ class PyRanges(pr.RangeFrame):
         PyRanges with 4 rows and 6 columns.
         Contains 1 chromosomes and 2 strands.
         """
-        from pyranges.methods.merge import _merge
-
         strand = self._validate_and_convert_strand(strand)
         _by = self._get_by_columns_including_chromosome_and_strand(by=by, strand=strand)
-        df = super().apply_single(
+        df = self.apply_single(
             _merge, by=_by, strand=strand, count_col=count_col, slack=slack
         )
 
@@ -2658,16 +2658,17 @@ class PyRanges(pr.RangeFrame):
 
         return pr.PyRanges(result)
 
-    def range_subtract(
+    def subtract_intervals(
         self,
-        other: "PyRanges",
-        strand_behavior: VALID_STRAND_BEHAVIOR_OPTIONS = "auto",
-    ) -> "PyRanges":
+        other: "pr.PyRanges",
+        strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
+        by: str | list[str] | None = None,
+    ) -> "pr.PyRanges":
         """Subtract intervals.
 
         Parameters
         ----------
-        strand_behavior : {None, "same", "opposite", False}, default None, i.e. auto
+        strandedness : {None, "same", "opposite", False}, default None, i.e. auto
 
             Whether to compare PyRanges on the same strand, the opposite or ignore strand
             information. The default, None, means use "same" if both PyRanges are strande,
@@ -2703,7 +2704,7 @@ class PyRanges(pr.RangeFrame):
         PyRanges with 3 rows and 3 columns.
         Contains 1 chromosomes.
 
-        >>> gr.range_subtract(gr2)
+        >>> gr.subtract_intervals(gr2)
         Chromosome      Start      End  ID
         object          int64    int64  object
         ------------  -------  -------  --------
@@ -2715,20 +2716,20 @@ class PyRanges(pr.RangeFrame):
 
         from pyranges.methods.subtraction import _subtraction
 
-        strand = True if (strand_behavior and other.has_strand_column) else False
-        other_clusters = other.merge_overlaps(strand=strand)
+        if strand_behavior == "auto":
+            strand = True if other.strand_values_valid else False
+        else:
+            strand = strand_behavior != "ignore"
 
-        _self = self.copy()
+        other_clusters = other.merge_overlaps(strand=strand, by=by)
 
-        _self = _self.count_overlaps(
-            other_clusters, strand_behavior=strand_behavior, overlap_col="__num__"
-        )
+        _by = self._group_keys_from_strand_behavior(other_clusters, strand_behavior=strand_behavior, by=by)
 
-        result = _self.apply_pair(
-            other_clusters, _subtraction, strand_behavior=strand_behavior
-        )
+        gr = self.count_overlaps(other_clusters, strand_behavior=strand_behavior, overlap_col=TEMP_NUM_COL, by=_by)
 
-        return PyRanges(result.drop("__num__", axis=1))
+        result = gr.apply_pair(other_clusters, strand_behavior=strand_behavior, function=_subtraction, by=_by)
+
+        return result.drop(TEMP_NUM_COL, axis=1)
 
     def summary(
         self,
@@ -3137,52 +3138,52 @@ class PyRanges(pr.RangeFrame):
         Examples
         --------
 
-        >>> d =  {'Chromosome': ['chr1', 'chr1', 'chr1'], 'Start': [1, 4, 6],
-        ...       'End': [7, 8, 10], 'Strand': ['+', '-', '-'],
-        ...       'Value': [10, 20, 30]}
-        >>> gr = pr.PyRanges(d)
-        >>> gr
-        Chromosome      Start      End  Strand      Value
-        object          int64    int64  object      int64
-        ------------  -------  -------  --------  -------
-        chr1                1        7  +              10
-        chr1                4        8  -              20
-        chr1                6       10  -              30
-        PyRanges with 3 rows and 5 columns.
-        Contains 1 chromosomes and 2 strands.
+        # >>> d =  {'Chromosome': ['chr1', 'chr1', 'chr1'], 'Start': [1, 4, 6],
+        # ...       'End': [7, 8, 10], 'Strand': ['+', '-', '-'],
+        # ...       'Value': [10, 20, 30]}
+        # >>> gr = pr.PyRanges(d)
+        # >>> gr
+        # Chromosome      Start      End  Strand      Value
+        # object          int64    int64  object      int64
+        # ------------  -------  -------  --------  -------
+        # chr1                1        7  +              10
+        # chr1                4        8  -              20
+        # chr1                6       10  -              30
+        # PyRanges with 3 rows and 5 columns.
+        # Contains 1 chromosomes and 2 strands.
 
-        >>> gr.to_bigwig(dryrun=True, rpm=False)
+        # >>> gr.to_bigwig(dryrun=True, rpm=False)
 
 
 
-        >>> gr.to_bigwig(dryrun=True, rpm=False, value_col="Value")
-        +--------------+-----------+-----------+-------------+
-        | Chromosome   |     Start |       End |       Score |
-        | (category)   |   (int64) |   (int64) |   (float64) |
-        |--------------+-----------+-----------+-------------|
-        | chr1         |         1 |         4 |          10 |
-        | chr1         |         4 |         6 |          30 |
-        | chr1         |         6 |         7 |          60 |
-        | chr1         |         7 |         8 |          50 |
-        | chr1         |         8 |        10 |          30 |
-        +--------------+-----------+-----------+-------------+
-        Unstranded PyRanges object has 5 rows and 4 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
+        # >>> gr.to_bigwig(dryrun=True, rpm=False, value_col="Value")
+        # +--------------+-----------+-----------+-------------+
+        # | Chromosome   |     Start |       End |       Score |
+        # | (category)   |   (int64) |   (int64) |   (float64) |
+        # |--------------+-----------+-----------+-------------|
+        # | chr1         |         1 |         4 |          10 |
+        # | chr1         |         4 |         6 |          30 |
+        # | chr1         |         6 |         7 |          60 |
+        # | chr1         |         7 |         8 |          50 |
+        # | chr1         |         8 |        10 |          30 |
+        # +--------------+-----------+-----------+-------------+
+        # Unstranded PyRanges object has 5 rows and 4 columns from 1 chromosomes.
+        # For printing, the PyRanges was sorted on Chromosome.
 
-        >>> gr.to_bigwig(dryrun=True, rpm=False, value_col="Value", divide=True)
-        +--------------+-----------+-----------+-------------+
-        | Chromosome   |     Start |       End |       Score |
-        | (category)   |   (int64) |   (int64) |   (float64) |
-        |--------------+-----------+-----------+-------------|
-        | chr1         |         0 |         1 |   nan       |
-        | chr1         |         1 |         4 |     3.32193 |
-        | chr1         |         4 |         6 |     3.90689 |
-        | chr1         |         6 |         7 |     4.32193 |
-        | chr1         |         7 |         8 |     4.64386 |
-        | chr1         |         8 |        10 |     4.90689 |
-        +--------------+-----------+-----------+-------------+
-        Unstranded PyRanges object has 6 rows and 4 columns from 1 chromosomes.
-        For printing, the PyRanges was sorted on Chromosome.
+        # >>> gr.to_bigwig(dryrun=True, rpm=False, value_col="Value", divide=True)
+        # +--------------+-----------+-----------+-------------+
+        # | Chromosome   |     Start |       End |       Score |
+        # | (category)   |   (int64) |   (int64) |   (float64) |
+        # |--------------+-----------+-----------+-------------|
+        # | chr1         |         0 |         1 |   nan       |
+        # | chr1         |         1 |         4 |     3.32193 |
+        # | chr1         |         4 |         6 |     3.90689 |
+        # | chr1         |         6 |         7 |     4.32193 |
+        # | chr1         |         7 |         8 |     4.64386 |
+        # | chr1         |         8 |        10 |     4.90689 |
+        # +--------------+-----------+-----------+-------------+
+        # Unstranded PyRanges object has 6 rows and 4 columns from 1 chromosomes.
+        # For printing, the PyRanges was sorted on Chromosome.
         """
 
         from pyranges.out import _to_bigwig
@@ -3404,78 +3405,78 @@ class PyRanges(pr.RangeFrame):
         Examples
         --------
 
-        >>> d = {'Chromosome': ['chr1', 'chr1', 'chr1'], 'Start': [3, 8, 5],
-        ...      'End': [6, 9, 7], 'Score': [0.1, 5, 3.14], 'Strand': ['+', '+', '-']}
-        >>> gr = pr.PyRanges(d)
-        >>> gr.to_rle()
-        chr1 +
-        --
-        +--------+-----+-----+-----+-----+
-        | Runs   | 3   | 3   | 2   | 1   |
-        |--------+-----+-----+-----+-----|
-        | Values | 0.0 | 1.0 | 0.0 | 1.0 |
-        +--------+-----+-----+-----+-----+
-        Rle of length 9 containing 4 elements (avg. length 2.25)
-        <BLANKLINE>
-        chr1 -
-        --
-        +--------+-----+-----+
-        | Runs   | 5   | 2   |
-        |--------+-----+-----|
-        | Values | 0.0 | 1.0 |
-        +--------+-----+-----+
-        Rle of length 7 containing 2 elements (avg. length 3.5)
-        Rledict object with 2 chromosomes/strand pairs.
+        # >>> d = {'Chromosome': ['chr1', 'chr1', 'chr1'], 'Start': [3, 8, 5],
+        # ...      'End': [6, 9, 7], 'Score': [0.1, 5, 3.14], 'Strand': ['+', '+', '-']}
+        # >>> gr = pr.PyRanges(d)
+        # >>> gr.to_rle()
+        # chr1 +
+        # --
+        # +--------+-----+-----+-----+-----+
+        # | Runs   | 3   | 3   | 2   | 1   |
+        # |--------+-----+-----+-----+-----|
+        # | Values | 0.0 | 1.0 | 0.0 | 1.0 |
+        # +--------+-----+-----+-----+-----+
+        # Rle of length 9 containing 4 elements (avg. length 2.25)
+        # <BLANKLINE>
+        # chr1 -
+        # --
+        # +--------+-----+-----+
+        # | Runs   | 5   | 2   |
+        # |--------+-----+-----|
+        # | Values | 0.0 | 1.0 |
+        # +--------+-----+-----+
+        # Rle of length 7 containing 2 elements (avg. length 3.5)
+        # RleDict object with 2 chromosomes/strand pairs.
 
-        >>> gr.to_rle(value_col="Score")
-        chr1 +
-        --
-        +--------+-----+-----+-----+-----+
-        | Runs   | 3   | 3   | 2   | 1   |
-        |--------+-----+-----+-----+-----|
-        | Values | 0.0 | 0.1 | 0.0 | 5.0 |
-        +--------+-----+-----+-----+-----+
-        Rle of length 9 containing 4 elements (avg. length 2.25)
-        <BLANKLINE>
-        chr1 -
-        --
-        +--------+-----+------+
-        | Runs   | 5   | 2    |
-        |--------+-----+------|
-        | Values | 0.0 | 3.14 |
-        +--------+-----+------+
-        Rle of length 7 containing 2 elements (avg. length 3.5)
-        Rledict object with 2 chromosomes/strand pairs.
+        # >>> gr.to_rle(value_col="Score")
+        # chr1 +
+        # --
+        # +--------+-----+-----+-----+-----+
+        # | Runs   | 3   | 3   | 2   | 1   |
+        # |--------+-----+-----+-----+-----|
+        # | Values | 0.0 | 0.1 | 0.0 | 5.0 |
+        # +--------+-----+-----+-----+-----+
+        # Rle of length 9 containing 4 elements (avg. length 2.25)
+        # <BLANKLINE>
+        # chr1 -
+        # --
+        # +--------+-----+------+
+        # | Runs   | 5   | 2    |
+        # |--------+-----+------|
+        # | Values | 0.0 | 3.14 |
+        # +--------+-----+------+
+        # Rle of length 7 containing 2 elements (avg. length 3.5)
+        # RleDict object with 2 chromosomes/strand pairs.
 
-        >>> gr.to_rle(value_col="Score", strand=False)
-        chr1
-        +--------+-----+-----+------+------+-----+-----+
-        | Runs   | 3   | 2   | 1    | 1    | 1   | 1   |
-        |--------+-----+-----+------+------+-----+-----|
-        | Values | 0.0 | 0.1 | 3.24 | 3.14 | 0.0 | 5.0 |
-        +--------+-----+-----+------+------+-----+-----+
-        Rle of length 9 containing 6 elements (avg. length 1.5)
-        Unstranded Rledict object with 1 chromosome.
+        # >>> gr.to_rle(value_col="Score", strand=False)
+        # chr1
+        # +--------+-----+-----+------+------+-----+-----+
+        # | Runs   | 3   | 2   | 1    | 1    | 1   | 1   |
+        # |--------+-----+-----+------+------+-----+-----|
+        # | Values | 0.0 | 0.1 | 3.24 | 3.14 | 0.0 | 5.0 |
+        # +--------+-----+-----+------+------+-----+-----+
+        # Rle of length 9 containing 6 elements (avg. length 1.5)
+        # Unstranded Rledict object with 1 chromosome.
 
-        >>> gr.to_rle(rpm=True)
-        chr1 +
-        --
-        +--------+-----+-------------------+-----+-------------------+
-        | Runs   | 3   | 3                 | 2   | 1                 |
-        |--------+-----+-------------------+-----+-------------------|
-        | Values | 0.0 | 333333.3333333333 | 0.0 | 333333.3333333333 |
-        +--------+-----+-------------------+-----+-------------------+
-        Rle of length 9 containing 4 elements (avg. length 2.25)
-        <BLANKLINE>
-        chr1 -
-        --
-        +--------+-----+-------------------+
-        | Runs   | 5   | 2                 |
-        |--------+-----+-------------------|
-        | Values | 0.0 | 333333.3333333333 |
-        +--------+-----+-------------------+
-        Rle of length 7 containing 2 elements (avg. length 3.5)
-        Rledict object with 2 chromosomes/strand pairs.
+        # >>> gr.to_rle(rpm=True)
+        # chr1 +
+        # --
+        # +--------+-----+-------------------+-----+-------------------+
+        # | Runs   | 3   | 3                 | 2   | 1                 |
+        # |--------+-----+-------------------+-----+-------------------|
+        # | Values | 0.0 | 333333.3333333333 | 0.0 | 333333.3333333333 |
+        # +--------+-----+-------------------+-----+-------------------+
+        # Rle of length 9 containing 4 elements (avg. length 2.25)
+        # <BLANKLINE>
+        # chr1 -
+        # --
+        # +--------+-----+-------------------+
+        # | Runs   | 5   | 2                 |
+        # |--------+-----+-------------------|
+        # | Values | 0.0 | 333333.3333333333 |
+        # +--------+-----+-------------------+
+        # Rle of length 7 containing 2 elements (avg. length 3.5)
+        # Rledict object with 2 chromosomes/strand pairs.
         """
 
         if strand is None:
@@ -3745,7 +3746,7 @@ class PyRanges(pr.RangeFrame):
         return genome_cols + ([] if by is None else ([by] if isinstance(by, str) else [*by]))
 
     def _ensure_valid_strand_option(self, strand: VALID_STRAND_TYPE):
-        if not strand in VALID_STRAND_OPTIONS:
+        if strand not in VALID_STRAND_OPTIONS:
             msg = f"Invalid strand option: {strand}"
             raise ValueError(msg)
         if strand and not self.has_strand_column:

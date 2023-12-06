@@ -1,5 +1,13 @@
 from typing import Literal
 
+# from typing import Literal, get_args
+#
+# # Define the Literal type
+# VALID_OVERLAP_TYPE = Literal["first", "containment", "all"]
+#
+# # Extract the options from the Literal type
+# VALID_OVERLAP_OPTIONS = list(get_args(VALID_OVERLAP_TYPE))
+
 CHROM_COL = "Chromosome"
 START_COL = "Start"
 END_COL = "End"
@@ -61,11 +69,16 @@ VALID_NEAREST_OPTIONS = [
 ]
 
 TEMP_INDEX_COL = "__temp_index__"
+TEMP_TYPE_COL = "__temp_type__"
 TEMP_START_COL = "__temp_start__"
 TEMP_STRAND_COL = "__temp_strand__"
 TEMP_END_COL = "__temp_end__"
 TEMP_NAME_COL = "__temp_name__"
 TEMP_CUMSUM_COL = "__temp_cumsum__"
+TEMP_NUM_COL = "__temp_num__"
+TEMP_CLUSTER_COL = "__temp_cluster__"
 TEMP_LENGTH_COL = "__temp_length__"
 TEMP_START_SLACK_COL = "__temp_start_slack__"
 TEMP_END_SLACK_COL = "__temp_end_slack__"
+
+DEFAULT_CLUSTER_ID_COL = "Cluster"

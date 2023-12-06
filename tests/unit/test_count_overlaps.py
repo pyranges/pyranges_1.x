@@ -19,16 +19,19 @@ chr1    32    34 -"""
 grs = {n: pr.from_string(s) for n, s in zip(["a", "b", "c"], [a, b, c])}
 unstranded_grs = {n: gr.remove_strand() for n, gr in grs.items()}
 
-features = pr.from_args(
-    chromosomes=["chr1"] * 4,
-    starts=[0, 10, 20, 30],
-    ends=[10, 20, 30, 40],
-    strands=["+", "+", "+", "-"],
+features = pr.PyRanges(
+    {
+        "Chromosome": ["chr1"] * 4,
+        "Start": [0, 10, 20, 30],
+        "End": [10, 20, 30, 40],
+        "Strand": ["+", "+", "+", "-"]
+    }
 )
 unstranded_features = features.remove_strand()
 
 
 def test_strand_vs_strand_same():
+    print(grs)
     expected_result = pr.from_string(
         """Chromosome Start End Strand a b c
 chr1  0 10  + 1 0 1

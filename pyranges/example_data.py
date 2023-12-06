@@ -177,14 +177,14 @@ chrM	0	16571"""
 1	ensembl	exon	120874	120932	.	-	.	gene_id "ENSG00000238009"; gene_version "6"; transcript_id "ENST00000610542"; transcript_version "1"; exon_number "3"; gene_name "AL627309.1"; gene_source "ensembl_havana"; gene_biotype "lincRNA"; transcript_name "AL627309.1-205"; transcript_source "ensembl"; transcript_biotype "lincRNA"; exon_id "ENSE00003740919"; exon_version "1"; tag "basic"; transcript_support_level "5";"""
         return self._read_gtf_from_string(contents)
 
-    @cached_property
+    @property
     def f1(self) -> "pr.PyRanges":
         contents = """chr1	3	6	interval1	0	+
 chr1	5	7	interval2	0	-
 chr1	8	9	interval3	0	+"""
         return self._read_bed_from_string(contents)
 
-    @cached_property
+    @property
     def f2(self) -> "pr.PyRanges":
         contents = """chr1	1	2	a	0	+
 chr1	6	7	b	0	-"""
