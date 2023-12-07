@@ -43,3 +43,14 @@ Homepage="http://github.com/pyranges/pyranges"
 # markers = [
 #     "bedtools: requires bedtools"
 # ]
+
+[tool.ruff]
+
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "C90"]
+
+line-length = 120
+
+[]

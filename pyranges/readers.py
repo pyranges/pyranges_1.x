@@ -8,6 +8,7 @@ import pandas as pd
 from natsort import natsorted  # type: ignore
 
 import pyranges as pr
+pr = pr
 from pyranges.pyranges_main import PyRanges
 
 

@@ -3,7 +3,7 @@ from __future__ import print_function
 TOSTRING_CONSOLE_WIDTH = None
 
 import sys
-from typing import Dict, Iterable, Optional, Tuple, Union, TYPE_CHECKING
+from typing import Dict, Iterable, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
