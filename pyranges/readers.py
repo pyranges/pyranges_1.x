@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import sys
 from pathlib import Path
-from typing import List, Optional, Union, TYPE_CHECKING
+from typing import List, Optional, Union
 
 import pandas as pd
 from natsort import natsorted  # type: ignore
@@ -52,7 +52,6 @@ def read_bed(f: Union[str, Path], /, nrows: Optional[int] = None) -> "PyRanges":
     PyRanges with 5 rows and 6 columns.
     Contains 1 chromosomes and 2 strands.
     """
-    import pyranges as pr
 
     columns = "Chromosome Start End Name Score Strand ThickStart ThickEnd ItemRGB BlockCount BlockSizes BlockStarts".split()
     path = Path(f)

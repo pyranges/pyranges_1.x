@@ -9,24 +9,19 @@ import numpy as np
 import pandas as pd
 import pkg_resources
 from pandas import Series
-from pyranges.range_frame import RangeFrame
 import pyranges as pr
-import pyranges.genomicfeatures as gf
 from pyranges.pyranges_main import PyRanges
+import pyranges.genomicfeatures
 from pyranges.example_data import ExampleData
 from pyranges import data, statistics
 from pyranges.get_fasta import get_fasta, get_sequence, get_transcript_sequence
 from pyranges.helpers import get_key_from_df, single_value_key
 from pyranges.methods.concat import concat
 from pyranges.multioverlap import count_overlaps
-from pyranges.names import (
-    GENOME_LOC_COLS_WITH_STRAND,
-    GENOME_LOC_COLS,
-    CHROM_COL,
-    START_COL,
-)
-if TYPE_CHECKING:
-    from pyranges import PyRanges
+import pyranges.names
+
+gf = genomicfeatures
+RangeFrame = pyranges.range_frame.RangeFrame
 from pyranges.readers import read_bam, read_bed, read_bigwig, read_gff3, read_gtf  # NOQA: F401
 
 __version__ = pkg_resources.get_distribution("pyranges").version
@@ -93,7 +88,7 @@ def empty_df(
     empty = pd.DataFrame(
         columns=list(columns)
         if columns is not None
-        else (GENOME_LOC_COLS_WITH_STRAND if with_strand else GENOME_LOC_COLS),
+        else (names.GENOME_LOC_COLS_WITH_STRAND if with_strand else names.GENOME_LOC_COLS),
     )
     return empty.astype(dtype) if dtype is not None else empty
 
@@ -137,7 +132,7 @@ def from_dfs(
     if not _strand_valid:
         df = pd.concat(empty_removed.values()).reset_index(drop=True)
 
-        groupby_cols = [CHROM_COL]
+        groupby_cols = [names.CHROM_COL]
 
         empty_removed = {k[0]: v for k, v in df.groupby(groupby_cols)}  # type: ignore
 
@@ -241,7 +236,7 @@ def random(
         df = data.chromsizes
     elif isinstance(chromsizes, dict):
         df = pd.DataFrame(
-            {CHROM_COL: list(chromsizes.keys()), "End": list(chromsizes.values())}
+            {names.CHROM_COL: list(chromsizes.keys()), "End": list(chromsizes.values())}
         )
     else:
         df = chromsizes
@@ -251,13 +246,13 @@ def random(
     n_per_chrom = (
         pd.Series(rng.choice(df.index, size=n, p=p)).value_counts(sort=False).to_frame()
     )
-    n_per_chrom.insert(1, CHROM_COL, df.loc[n_per_chrom.index].Chromosome)
+    n_per_chrom.insert(1, names.CHROM_COL, df.loc[n_per_chrom.index].Chromosome)
     n_per_chrom.columns = pd.Index("Count Chromosome".split())
 
     random_dfs = []
     for _, (count, chrom) in n_per_chrom.iterrows():
         r = rng.integers(0, df[df.Chromosome == chrom].End - length, size=count)
-        _df = pd.DataFrame({CHROM_COL: chrom, START_COL: r, "End": r + length})
+        _df = pd.DataFrame({names.CHROM_COL: chrom, names.START_COL: r, "End": r + length})
         random_dfs.append(_df)
 
     random_df = pd.concat(random_dfs)

@@ -1,4 +1,4 @@
-from typing import Dict, Optional, TYPE_CHECKING
+from typing import Dict, Optional
 
 from pyranges.names import GENOME_LOC_COLS_WITH_STRAND, VALID_STRAND_BEHAVIOR_TYPE, VALID_OVERLAP_TYPE
 

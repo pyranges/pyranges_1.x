@@ -18,7 +18,6 @@ chr1                8        9  interval3        0  +
 PyRanges with 3 rows and 6 columns.
 Contains 1 chromosomes and 2 strands.
 """
-import importlib
 import tempfile
 from functools import cached_property
 from importlib.resources import files
@@ -61,6 +60,7 @@ class ExampleData:
         >>> bam = ExampleData.files["smaller.bam"]
         >>> bam.exists()
         True
+        >>> import importlib
         >>> bam == importlib.resources.files().joinpath("data/smaller.bam")
         True
         """

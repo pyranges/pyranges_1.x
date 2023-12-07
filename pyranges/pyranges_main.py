@@ -12,6 +12,7 @@ import pandas as pd
 from natsort import natsorted, natsort  # type: ignore
 
 import pyranges as pr
+from pyranges.range_frame import RangeFrame
 from pyranges import multithreaded
 from pyranges.loci_getter import LociGetter
 from pyranges.methods.merge import _merge
@@ -64,7 +65,7 @@ if TYPE_CHECKING:
 __all__ = ["PyRanges"]
 
 
-class PyRanges(pr.range_frame.RangeFrame):
+class PyRanges(RangeFrame):
 
     """Two-dimensional representation of genomic intervals and their annotations.
 
