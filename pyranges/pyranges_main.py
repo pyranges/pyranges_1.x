@@ -696,7 +696,7 @@ class PyRanges(pr.RangeFrame):
         sorted_p.col[TEMP_LENGTH_COL] = sorted_p.lengths()
 
         # Creating a column saving the cumulative length for the intervals
-        sorted_p.col[TEMP_CUMSUM_COL] = sorted_p.groupby(by=by)[
+        sorted_p.col[TEMP_CUMSUM_COL] = sorted_p.groupby(by)[
             TEMP_LENGTH_COL
         ].cumsum()
 
@@ -1166,7 +1166,7 @@ class PyRanges(pr.RangeFrame):
         chr1                1        7  +
         chr1                6       10  +
         chr1                4        9  -
-        PyRanges with 3 rows and 4 columns
+        PyRanges with 3 rows and 4 columns.
         Contains 1 chromosomes and 2 strands.
 
         >>> gr.extend(-1)
