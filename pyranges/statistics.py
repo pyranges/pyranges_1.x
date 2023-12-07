@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 from math import sqrt
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -14,7 +14,11 @@ import pyranges as pr
 from pyranges.methods.statistics import _relative_distance
 from pyranges.names import VALID_STRAND_BEHAVIOR_TYPE, STRAND_BEHAVIOR_AUTO, STRAND_BEHAVIOR_IGNORE, \
     STRAND_BEHAVIOR_SAME
-from pyranges.pyranges_main import PyRanges
+
+
+if TYPE_CHECKING:
+    from pyranges import PyRanges
+
 
 __all__ = [
     "simes",
@@ -44,7 +48,7 @@ def fdr(p_vals: Series) -> Series:
 
     Examples
     --------
-
+    >>> import pyranges as pr
     >>> d = {'Chromosome': ['chr3', 'chr6', 'chr13'], 'Start': [146419383, 39800100, 24537618], 'End': [146419483, 39800200, 24537718], 'Strand': ['-', '+', '-'], 'PValue': [0.0039591368855297175, 0.0037600512992788937, 0.0075061166500909205]}
     >>> gr = pr.PyRanges(d)
     >>> gr
@@ -686,7 +690,7 @@ def simes(df, groupby, pcol, keep_position=False):
     return simes
 
 
-def chromsizes_as_int(chromsizes: Union[PyRanges, DataFrame, Dict[Any, int]]) -> int:
+def chromsizes_as_int(chromsizes: "PyRanges | DataFrame | dict[Any, int]") -> int:
     if isinstance(chromsizes, dict):
         _chromsizes = sum(chromsizes.values())
     elif isinstance(chromsizes, (pd.DataFrame, pr.PyRanges)):
@@ -713,7 +717,7 @@ class StatisticsMethods:
     def forbes(
         self,
         other: "PyRanges",
-        chromsizes: Union["PyRanges", DataFrame, Dict[Any, int]],
+        chromsizes: "PyRanges | DataFrame | dict[Any, int]",
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto"
     ) -> float:
         """Compute Forbes coefficient.
@@ -769,7 +773,7 @@ class StatisticsMethods:
 
         return forbes
 
-    def jaccard(self, other: PyRanges, chromsizes: dict[str, int], strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto") -> float:
+    def jaccard(self, other: "PyRanges", chromsizes: dict[str, int], strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto") -> float:
         """Compute Jaccards coefficient.
 
         Ratio of the intersection and union of two sets.
@@ -826,7 +830,7 @@ class StatisticsMethods:
 
         return jc
 
-    def relative_distance(self, other: PyRanges, **kwargs) -> DataFrame:
+    def relative_distance(self, other: "PyRanges", **kwargs) -> DataFrame:
         """Compute spatial correllation between two sets.
 
         Metric which describes relative distance between each interval in one

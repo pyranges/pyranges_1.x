@@ -6,16 +6,15 @@ import pandas as pd
 from pandas.core.frame import DataFrame
 from pandas.core.series import Series
 
-import pyranges as pr  # noqa: F401
 from pyranges.names import FORWARD_STRAND
-from pyranges.pyranges_main import PyRanges
 
 if TYPE_CHECKING:
     import pyfaidx  # type: ignore
+    from pyranges import PyRanges
 
 
 def get_sequence(
-    gr: PyRanges,
+    gr: "PyRanges",
     path: Optional[Path] = None,
     pyfaidx_fasta: Optional["pyfaidx.Fasta"] = None,
 ) -> Series:
@@ -64,6 +63,7 @@ def get_sequence(
     Examples
     --------
 
+    >>> import pyranges as pr
     >>> gr = pr.PyRanges({"Chromosome": ["chr1", "chr1"],
     ...                   "Start": [5, 0], "End": [8, 5],
     ...                   "Strand": ["+", "-"]})
@@ -134,7 +134,7 @@ def get_fasta(*args, **kwargs):
 
 
 def get_transcript_sequence(
-    gr: PyRanges,
+    gr: "PyRanges",
     group_by: str,
     path: Optional[Path] = None,
     pyfaidx_fasta: Optional["pyfaidx.Fasta"] = None,
@@ -188,6 +188,7 @@ def get_transcript_sequence(
     Examples
     --------
 
+    >>> import pyranges as pr
     >>> gr = pr.PyRanges({"Chromosome": ['chr1', 'chr1', 'chr1'],
     ...                   "Start": [0, 9, 18], "End": [4, 13, 21],
     ...                   "Strand":['+', '-', '-'],

@@ -64,7 +64,7 @@ if TYPE_CHECKING:
 __all__ = ["PyRanges"]
 
 
-class PyRanges(pr.RangeFrame):
+class PyRanges(pr.range_frame.RangeFrame):
 
     """Two-dimensional representation of genomic intervals and their annotations.
 

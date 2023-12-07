@@ -3,16 +3,17 @@ from __future__ import print_function
 TOSTRING_CONSOLE_WIDTH = None
 
 import sys
-from typing import Dict, Iterable, Optional, Tuple, Union
+from typing import Dict, Iterable, Optional, Tuple, Union, TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 import pkg_resources
 from pandas import Series
-import pyranges.genomicfeatures as gf
-import pyranges as pr
-from pyranges.example_data import ExampleData
 from pyranges.range_frame import RangeFrame
+import pyranges as pr
+import pyranges.genomicfeatures as gf
+from pyranges.pyranges_main import PyRanges
+from pyranges.example_data import ExampleData
 from pyranges import data, statistics
 from pyranges.get_fasta import get_fasta, get_sequence, get_transcript_sequence
 from pyranges.helpers import get_key_from_df, single_value_key
@@ -24,7 +25,8 @@ from pyranges.names import (
     CHROM_COL,
     START_COL,
 )
-from pyranges.pyranges_main import PyRanges
+if TYPE_CHECKING:
+    from pyranges import PyRanges
 from pyranges.readers import read_bam, read_bed, read_bigwig, read_gff3, read_gtf  # NOQA: F401
 
 __version__ = pkg_resources.get_distribution("pyranges").version
@@ -40,7 +42,7 @@ read_gff = read_gtf
 Chromsizes = Union[Dict[str, int], Dict[Tuple[str, str], int]]
 
 
-def concat(grs: Iterable[PyRanges], *args, **kwargs) -> "PyRanges":
+def concat(grs: Iterable["PyRanges"], *args, **kwargs) -> "PyRanges":
     """
     Concatenate PyRanges.
 
@@ -145,7 +147,7 @@ def from_dfs(
     return gr  # type: ignore
 
 
-def from_string(s: str) -> PyRanges:
+def from_string(s: str) -> "PyRanges":
     """Create a PyRanges from multiline string.
 
     Parameters
@@ -311,6 +313,5 @@ __all__ = [
     "read_bed",
     "read_gff3",
     "concat",
-    "PyRanges",
     "version_info",
 ]

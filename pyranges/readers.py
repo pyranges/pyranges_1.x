@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import sys
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Optional, Union, TYPE_CHECKING
 
 import pandas as pd
 from natsort import natsorted  # type: ignore
@@ -11,7 +11,7 @@ import pyranges as pr
 from pyranges.pyranges_main import PyRanges
 
 
-def read_bed(f: Union[str, Path], /, nrows: Optional[int] = None) -> pr.PyRanges:
+def read_bed(f: Union[str, Path], /, nrows: Optional[int] = None) -> "PyRanges":
     """Return bed file as PyRanges.
 
     This is a reader for files that follow the bed format. They can have from
@@ -52,6 +52,7 @@ def read_bed(f: Union[str, Path], /, nrows: Optional[int] = None) -> pr.PyRanges
     PyRanges with 5 rows and 6 columns.
     Contains 1 chromosomes and 2 strands.
     """
+    import pyranges as pr
 
     columns = "Chromosome Start End Name Score Strand ThickStart ThickEnd ItemRGB BlockCount BlockSizes BlockStarts".split()
     path = Path(f)
@@ -87,7 +88,7 @@ def read_bed(f: Union[str, Path], /, nrows: Optional[int] = None) -> pr.PyRanges
 
 def read_bam(
     f: Union[str, Path], /, sparse=True, mapq=0, required_flag=0, filter_flag=1540
-) -> pr.PyRanges:
+) -> "PyRanges":
     """Return bam file as PyRanges.
 
     Parameters
@@ -229,7 +230,7 @@ def read_gtf(
     nrows=None,
     duplicate_attr=False,
     ignore_bad: bool = False,
-) -> pr.PyRanges:
+) -> "PyRanges":
     """Read files in the Gene Transfer Format.
 
     Parameters
@@ -309,7 +310,7 @@ def read_gtf_full(
     duplicate_attr=False,
     ignore_bad: bool = False,
     chunksize: int = int(1e5),  # for unit-testing purposes
-) -> pr.PyRanges:
+) -> "PyRanges":
     dtypes = {"Chromosome": "category", "Feature": "category", "Strand": "category"}
 
     names = "Chromosome Source Feature Start End Score Strand Frame Attribute".split()
@@ -414,7 +415,7 @@ def to_rows_keep_duplicates(anno: pd.Series, ignore_bad: bool = False) -> pd.Dat
 
 def read_gtf_restricted(
     f: Union[str, Path], skiprows: Optional[int], nrows: Optional[int] = None
-) -> pr.PyRanges:
+) -> "PyRanges":
     """seqname - name of the chromosome or scaffold; chromosome names can be given with or without the 'chr' prefix. Important note: the seqname must be one used within Ensembl, i.e. a standard chromosome name or an Ensembl identifier such as a scaffold ID, without any additional content such as species or assembly. See the example GFF output below.
     # source - name of the program that generated this feature, or the data source (database or project name)
     feature - feature type name, e.g. Gene, Variation, Similarity
@@ -481,7 +482,7 @@ def read_gff3(
     full: bool = True,
     as_df: bool = False,
     nrows: Optional[int] = None,
-) -> pr.PyRanges:
+) -> "PyRanges":
     """Read files in the General Feature Format.
 
     Parameters
@@ -552,7 +553,7 @@ def read_gff3(
     return PyRanges(df)
 
 
-def read_bigwig(f: Union[str, Path]) -> pr.PyRanges:
+def read_bigwig(f: Union[str, Path]) -> "PyRanges":
     try:
         import pyBigWig  # type: ignore
     except ModuleNotFoundError:
@@ -621,4 +622,4 @@ def read_bigwig(f: Union[str, Path]) -> pr.PyRanges:
             }
         )
 
-    return pr.from_dfs(dfs)
+    return PyRanges(pd.concat(dfs))
