@@ -3,8 +3,7 @@ from ncls import NCLS
 from sorted_nearest import nearest_nonoverlapping  # type: ignore
 from sorted_nearest import nearest_next_nonoverlapping, nearest_previous_nonoverlapping
 
-from pyranges import START_COL, END_COL
-from pyranges.methods.join import _both_dfs
+from pyranges.names import START_COL, END_COL
 from pyranges.methods.sort import sort_one_by_one
 
 

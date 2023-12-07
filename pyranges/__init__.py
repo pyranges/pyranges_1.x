@@ -1,21 +1,18 @@
 from __future__ import print_function
 
-from pyranges.range_frame import RangeFrame
+TOSTRING_CONSOLE_WIDTH = None
 
-import itertools
 import sys
-from collections import defaultdict
-from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
+from typing import Dict, Iterable, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import pkg_resources
-from natsort import natsorted  # type: ignore
 from pandas import Series
-
+import pyranges.genomicfeatures as gf
 import pyranges as pr
-import pyranges.genomicfeatures as gf  # NOQA: F401
 from pyranges.example_data import ExampleData
+from pyranges.range_frame import RangeFrame
 from pyranges import data, statistics
 from pyranges.get_fasta import get_fasta, get_sequence, get_transcript_sequence
 from pyranges.helpers import get_key_from_df, single_value_key
@@ -24,10 +21,8 @@ from pyranges.multioverlap import count_overlaps
 from pyranges.names import (
     GENOME_LOC_COLS_WITH_STRAND,
     GENOME_LOC_COLS,
-    STRAND_COL,
     CHROM_COL,
     START_COL,
-    END_COL,
 )
 from pyranges.pyranges_main import PyRanges
 from pyranges.readers import read_bam, read_bed, read_bigwig, read_gff3, read_gtf  # NOQA: F401

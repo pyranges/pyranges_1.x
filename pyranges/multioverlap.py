@@ -1,7 +1,5 @@
 from typing import Dict, Optional
 
-import numpy as np
-import pandas as pd
 
 import pyranges as pr
 from pyranges.names import GENOME_LOC_COLS_WITH_STRAND, VALID_STRAND_BEHAVIOR_TYPE, VALID_OVERLAP_TYPE

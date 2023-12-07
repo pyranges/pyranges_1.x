@@ -2,8 +2,7 @@ import numpy as np
 import pandas as pd
 from ncls import NCLS  # type: ignore
 
-from pyranges import empty_df
-from pyranges.names import VALID_JOIN_TYPE, JOIN_INNER, JOIN_RIGHT
+from pyranges.names import VALID_JOIN_TYPE
 
 
 def _both_indexes(

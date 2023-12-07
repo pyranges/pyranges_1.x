@@ -1,12 +1,10 @@
 from functools import cached_property
-from typing import Literal, Iterable, Self, Optional
+from typing import Literal, Iterable, Self
 
 import pandas as pd
-import numpy as np
-from pandas.core.internals import BlockManager
 
 from pyranges.methods.overlap import _overlap
-from pyranges.names import RANGE_COLS, TEMP_TYPE_COL, START_COL, END_COL, DEFAULT_CLUSTER_ID_COL, TEMP_CLUSTER_COL
+from pyranges.names import RANGE_COLS
 from pyranges.tostring import tostring
 
 

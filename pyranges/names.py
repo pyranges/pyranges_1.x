@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Iterable
 
 # from typing import Literal, get_args
 #
@@ -82,3 +82,5 @@ TEMP_START_SLACK_COL = "__temp_start_slack__"
 TEMP_END_SLACK_COL = "__temp_end_slack__"
 
 DEFAULT_CLUSTER_ID_COL = "Cluster"
+
+VALID_BY_TYPES = str | Iterable[str] | None

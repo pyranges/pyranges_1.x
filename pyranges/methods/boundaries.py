@@ -5,7 +5,7 @@ def _bounds(scdf, **kwargs):
     col_order = [c for c in scdf.columns]
 
     by = kwargs.get("group_by")
-    if not type(by) is list:
+    if type(by) is not list:
         by = [by]
 
     agg_dict = kwargs.get("agg") if kwargs.get("agg") else {}

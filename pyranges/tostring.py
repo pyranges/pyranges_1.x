@@ -1,8 +1,9 @@
 import shutil
 from dataclasses import dataclass
-from typing import Optional, Any
 
 from tabulate import tabulate
+
+import pyranges
 
 
 @dataclass
@@ -11,6 +12,15 @@ class AdjustedTableData:
     truncated_headers: list[str]
     truncated_dtypes: list[str]
     included_columns: int
+
+
+def console_width(max_total_width: int | None = None) -> int:
+    """Return console width."""
+    if max_total_width is not None:
+        return max_total_width
+    if width := pyranges.TOSTRING_CONSOLE_WIDTH:
+        return width
+    return shutil.get_terminal_size().columns
 
 
 def tostring(
@@ -37,9 +47,7 @@ def tostring(
         headers=list(self.columns),
         dtypes=[str(t) for t in self.dtypes],
         max_col_width=max_col_width,
-        max_total_width=shutil.get_terminal_size().columns
-        if max_total_width is None
-        else max_total_width,
+        max_total_width=console_width(max_total_width),
     )
     columns_not_shown = "."
     truncated_data = adjusted_data.truncated_data

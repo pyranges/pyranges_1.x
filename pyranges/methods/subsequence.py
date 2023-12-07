@@ -1,4 +1,3 @@
-from time import time
 
 import numpy as np
 
@@ -12,7 +11,7 @@ def _subseq(scdf, **kwargs):
     scdf.insert(0, "__i__", orig_order)
 
     by = kwargs.get("by") if kwargs.get("by") else "__i__"
-    if not type(by) is list:
+    if type(by) is not list:
         by = [by]
 
     strand = kwargs.get("strand")

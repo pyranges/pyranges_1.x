@@ -18,7 +18,6 @@ chr1                8        9  interval3        0  +
 PyRanges with 3 rows and 6 columns.
 Contains 1 chromosomes and 2 strands.
 """
-import functools
 import importlib
 import tempfile
 from functools import cached_property

@@ -6,7 +6,7 @@ def _spliced_subseq(scdf, **kwargs):
     orig_order = scdf.index.copy()
 
     by = kwargs.get("by") if kwargs.get("by") else "__i__"
-    if not type(by) is list:
+    if type(by) is not list:
         by = [by]
 
     strand = kwargs.get("strand")

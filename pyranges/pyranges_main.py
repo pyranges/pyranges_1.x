@@ -2,7 +2,6 @@
 from functools import cached_property
 from typing import (
     TYPE_CHECKING,
-    Any,
     Callable,
     Iterable,
     Optional,
@@ -11,7 +10,6 @@ from typing import (
 import numpy as np
 import pandas as pd
 from natsort import natsorted, natsort  # type: ignore
-from pandas.core.internals import BlockManager
 
 import pyranges as pr
 from pyranges import multithreaded
@@ -47,14 +45,13 @@ from pyranges.names import (
     TEMP_LENGTH_COL,
     FRAME_COL,
     CHROM_AND_STRAND_COLS,
-    TEMP_START_COL,
     TEMP_END_SLACK_COL,
     TEMP_START_SLACK_COL,
     START_COL,
     END_COL,
     VALID_NEAREST_OPTIONS,
     NEAREST_DOWNSTREAM,
-    NEAREST_UPSTREAM, VALID_STRAND_OPTIONS, VALID_BY_OPTIONS, TEMP_NUM_COL,
+    NEAREST_UPSTREAM, VALID_STRAND_OPTIONS, VALID_BY_OPTIONS, TEMP_NUM_COL, VALID_BY_TYPES,
 )
 from pyranges.pyranges_groupby import PyRangesGroupBy
 from pyranges.tostring import tostring
@@ -388,7 +385,7 @@ class PyRanges(pr.RangeFrame):
         return GENOME_LOC_COLS[:]
 
     def __init__(self, *args, **kwargs) -> None:
-        called_constructor_without_arguments = not args and not "data" in kwargs
+        called_constructor_without_arguments = not args and "data" not in kwargs
         if called_constructor_without_arguments:
             # find out whether to include the strand column
             # also remove the strand key from kwargs since the constructor does not expect it.
@@ -508,7 +505,7 @@ class PyRanges(pr.RangeFrame):
         self,
         function,
         *,
-        by: str | list[str] | None = None,
+        by: VALID_BY_TYPES = None,
         **kwargs,
     ) -> "pr.PyRanges":
         _by = [] if by is None else ([by] if isinstance(by, str) else [*by])
@@ -519,7 +516,7 @@ class PyRanges(pr.RangeFrame):
         other: "PyRanges",
         function: Callable[["PyRanges", "PyRanges", dict], "PyRanges"],
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
-        by: str | list[str] | None = None,
+        by: VALID_BY_TYPES = None,
         **kwargs,
     ) -> "pr.PyRanges":
         """Apply function to pairs of overlapping intervals, by chromosome and optionally strand.
@@ -540,6 +537,7 @@ class PyRanges(pr.RangeFrame):
         kwargs : dict
         """
         self.ensure_strand_behavior_options_valid(other, strand_behavior)
+        by = self._by_to_list(by)
 
         if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
             self.col[TEMP_STRAND_COL] = self[STRAND_COL].replace({"+": "-", "-": "+"})
@@ -557,7 +555,7 @@ class PyRanges(pr.RangeFrame):
 
     def boundaries(
         self,
-        group_by: str,
+        by: str | list[str],
         agg: dict[str, str | Callable] | None = None,
     ) -> "PyRanges":
         """Return the boundaries of groups of intervals (e.g. transcripts)
@@ -565,7 +563,7 @@ class PyRanges(pr.RangeFrame):
         Parameters
         ----------
 
-        group_by : str or list of str
+        by : str or list of str
 
             Name(s) of column(s) to group intervals
 
@@ -621,10 +619,14 @@ class PyRanges(pr.RangeFrame):
         """
         from pyranges.methods.boundaries import _bounds
 
+        if not by:
+            msg = "by must be a string or list of strings"
+            raise ValueError(msg)
+
         result = pyrange_apply_single(
             _bounds,
             self,
-            group_by=group_by,
+            group_by=self._by_to_list(by),
             agg=agg,
             strand=self.strand_values_valid,
         )
@@ -681,13 +683,16 @@ class PyRanges(pr.RangeFrame):
 
 
         """
+        if not by:
+            msg = "by must be a string or list of strings"
+            raise ValueError(msg)
+
         gr = self.copy()
         # Column to save the initial index
         gr.col[TEMP_INDEX_COL] = np.arange(len(self))
 
         # Filtering for desired columns
-        lst = [by] if isinstance(by, str) else by
-        sorted_p = gr.get_with_loc_columns([TEMP_INDEX_COL, *lst])
+        sorted_p = gr.get_with_loc_columns([TEMP_INDEX_COL, *self._by_to_list(by)])
 
         # Sorting by 5' (Intervals on + are sorted by ascending order and - are sorted by descending order)
         sorted_p = sorted_p.sort_by_5_prime_ascending_and_3_prime_descending()
@@ -747,7 +752,7 @@ class PyRanges(pr.RangeFrame):
     def cluster(
         self,
         strand: VALID_STRAND_TYPE = "auto",
-        by: list[str] | str | None = None,
+        by: VALID_BY_TYPES = None,
         slack: int = 0,
         cluster_column: str = "Cluster",
         count_column: str | None = None,
@@ -1562,7 +1567,7 @@ class PyRanges(pr.RangeFrame):
         self,
         strand: VALID_STRAND_TYPE = "auto",
         count_col: Optional[str] = None,
-        by: list[str] | str | None = None,
+        by: VALID_BY_TYPES = None,
         slack: int = 0,
     ) -> "PyRanges":
         """Merge overlapping intervals into one.
@@ -1658,7 +1663,7 @@ class PyRanges(pr.RangeFrame):
 
     def _get_by_columns_including_chromosome_and_strand(
         self,
-        by: str | list[str] | None,
+        by: VALID_BY_TYPES,
         strand: bool,
     ) -> list[str]:
         if strand and not self.has_strand_column:
@@ -2210,7 +2215,7 @@ class PyRanges(pr.RangeFrame):
         self,
         start: int = 0,
         end: int | None = None,
-        by: str | None = None,
+        by: VALID_BY_TYPES = None,
         strand: VALID_STRAND_TYPE = "auto",
         **kwargs,
     ) -> "PyRanges":
@@ -2538,7 +2543,7 @@ class PyRanges(pr.RangeFrame):
         self,
         start: int = 0,
         end: int | None = None,
-        by: str | None = None,
+        by: VALID_BY_TYPES = None,
         strand: VALID_STRAND_TYPE = "auto",
         **kwargs,
     ) -> "PyRanges":
@@ -2667,7 +2672,7 @@ class PyRanges(pr.RangeFrame):
         self,
         other: "pr.PyRanges",
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
-        by: str | list[str] | None = None,
+        by: VALID_BY_TYPES = None,
     ) -> "pr.PyRanges":
         """Subtract intervals.
 
@@ -3761,14 +3766,15 @@ class PyRanges(pr.RangeFrame):
     def _group_keys_single(
         self,
         strand: VALID_STRAND_TYPE,
-        by: list[str]
+        by: VALID_BY_OPTIONS = None
     ):
         self._ensure_valid_strand_option(strand)
         if strand == "auto":
             genome_keys = [CHROM_COL, STRAND_COL] if self.has_strand_column else [CHROM_COL]
         else:
             genome_keys = [CHROM_COL, STRAND_COL] if strand else [CHROM_COL]
-        return genome_keys + ([] if by is None else ([by] if isinstance(by, str) else [*by]))
+        return genome_keys + self._by_to_list(by)
+
 
     def intersect_interval_columns(self, *, start2: str, end2: str, start: str = START_COL, end: str = END_COL, drop_old_columns: bool = True) -> "pr.PyRanges":
         """Use two pairs of columns representing intervals to create a new start and end column.

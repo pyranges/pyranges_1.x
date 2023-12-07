@@ -2,13 +2,14 @@ from typing import Dict
 
 import pandas as pd
 from pandas.core.frame import DataFrame
-from sorted_nearest.src.introns import find_introns  # type: ignore
 
-import pyranges as pr
 from pyranges.names import CHROM_COL, END_COL
-from pyranges.pyranges_main import PyRanges
+from typing import TYPE_CHECKING
 
 __all__ = ["genome_bounds", "tile_genome", "GenomicFeaturesMethods"]
+
+if TYPE_CHECKING:
+    from pyranges import PyRanges
 
 
 class GenomicFeaturesMethods:
@@ -17,10 +18,10 @@ class GenomicFeaturesMethods:
 
     Accessed through `gr.features`."""
 
-    def __init__(self, pr: PyRanges) -> None:
+    def __init__(self, pr: "PyRanges") -> None:
         self.pr = pr
 
-    def tss(self) -> PyRanges:
+    def tss(self) -> "PyRanges":
         """Return the transcription start sites.
 
         Returns the 5' for every interval with feature "transcript".
@@ -32,6 +33,7 @@ class GenomicFeaturesMethods:
         Examples
         --------
 
+        >>> import pyranges as pr
         >>> gr = pr.data.ensembl_gtf.get_with_loc_columns(["Source", "Feature"])
         >>> gr
         Chromosome    Start    End      Strand      Source    Feature
@@ -70,9 +72,9 @@ class GenomicFeaturesMethods:
 
         gr.Feature = "tss"
 
-        return pr.PyRanges(gr)
+        return gr
 
-    def tes(self) -> PyRanges:
+    def tes(self) -> "PyRanges":
         """Return the transcription end sites.
 
         Returns the 3' for every interval with feature "transcript".
@@ -84,6 +86,7 @@ class GenomicFeaturesMethods:
         Examples
         --------
 
+        >>> import pyranges as pr
         >>> gr = pr.data.ensembl_gtf.get_with_loc_columns(["Source", "Feature"])
         >>> gr
         Chromosome    Start    End      Strand      Source    Feature
@@ -123,7 +126,7 @@ class GenomicFeaturesMethods:
 
         gr.Feature = "tes"
 
-        return pr.PyRanges(gr)
+        return gr
 
     def introns(
         self,
@@ -131,7 +134,7 @@ class GenomicFeaturesMethods:
         outer_feature: str = "gene",
         inner_feature: str = "exon",
         by: str | list[str] | None = None,
-    ) -> PyRanges:
+    ) -> "PyRanges":
         """Return the introns.
 
         Parameters
@@ -146,6 +149,7 @@ class GenomicFeaturesMethods:
         Examples
         --------
 
+        >>> import pyranges as pr
         >>> gr = pr.data.ensembl_gtf.get_with_loc_columns(["Feature", "gene_id", "transcript_id"])
         >>> gr = gr[gr["gene_id"] == "ENSG00000223972"]
         >>> gr
@@ -207,7 +211,7 @@ def _outside_bounds(df: DataFrame, **kwargs) -> DataFrame:
 
     _chromsizes = kwargs.get("chromsizes")
 
-    if isinstance(_chromsizes, PyRanges):
+    if isinstance(_chromsizes, pd.DataFrame):
         size_df = _chromsizes.df
         if not size_df.Chromosome.is_unique:
             raise ValueError("Chromosomes must be unique in chromsizes.")
@@ -251,11 +255,11 @@ def _outside_bounds(df: DataFrame, **kwargs) -> DataFrame:
 
 
 def genome_bounds(
-    gr: PyRanges,
+    gr: "PyRanges",
     chromsizes: Dict[str, int],
     clip: bool = False,
     only_right: bool = False,
-) -> PyRanges:
+) -> "PyRanges":
     """Remove or clip intervals outside of genome bounds.
 
     Parameters
@@ -285,6 +289,7 @@ def genome_bounds(
     Examples
     --------
 
+    >>> import pyranges as pr
     >>> d = {"Chromosome": [1, 1, 3], "Start": [1, 249250600, 5], "End": [2, 249250640, 7]}
     >>> gr = pr.PyRanges(d)
     >>> gr
@@ -332,7 +337,7 @@ def genome_bounds(
     Chromosome col had type: int64 while keys were of type: int
     """
 
-    if isinstance(chromsizes, pr.PyRanges):
+    if isinstance(chromsizes, pd.DataFrame):
         chromsizes = {k: v for k, v in zip(chromsizes.Chromosome, chromsizes.End)}
 
     elif isinstance(chromsizes, dict):
@@ -357,7 +362,7 @@ Chromosome col had type: {gr[CHROM_COL].dtype} while keys were of type: {', '.jo
         chromsizes, dict
     ), "ERROR chromsizes must be a dictionary, or a PyRanges, or a pyfaidx.Fasta object"
 
-    return pr.PyRanges(
+    return (
         gr.groupby(CHROM_COL)
         .apply(
             _outside_bounds,
@@ -376,10 +381,10 @@ def _last_tile(df: DataFrame, sizes: dict[str, int]) -> DataFrame:
 
 
 def tile_genome(
-    chromsizes: PyRanges,
+    chromsizes: "PyRanges",
     tile_size: int,
     tile_last: bool = False,
-) -> PyRanges:
+) -> "PyRanges":
     """Create a tiled genome.
 
     Parameters
@@ -403,6 +408,7 @@ def tile_genome(
     Examples
     --------
 
+    >>> import pyranges as pr
     >>> chromsizes = pr.data.chromsizes
     >>> chromsizes
     Chromosome    Start    End
@@ -455,7 +461,7 @@ def tile_genome(
             .reset_index(drop=True)
         )
 
-    return pr.PyRanges(gr)
+    return gr
 
 
 def _keep_transcript_with_most_exons(df: pd.DataFrame) -> DataFrame:

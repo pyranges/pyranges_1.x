@@ -1,21 +1,13 @@
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Tuple, Union, Literal
+from typing import TYPE_CHECKING, Callable
 
 import numpy as np
 import pandas as pd
-from natsort import natsorted  # type: ignore
 from pandas.core.frame import DataFrame
 
-import pyranges as pr
 from pyranges.names import (
     CHROM_COL,
     STRAND_COL,
     GENOME_LOC_COLS_WITH_STRAND,
-    TEMP_INDEX_COL,
-    VALID_STRAND_BEHAVIOR_OPTIONS,
-    STRAND_BEHAVIOR_OPPOSITE,
-    VALID_STRAND_BEHAVIOR_TYPE,
-    STRAND_BEHAVIOR_AUTO,
-    STRAND_BEHAVIOR_IGNORE,
 )
 
 if TYPE_CHECKING:
@@ -30,7 +22,7 @@ def pyrange_apply_single(
     temp_index_col = "__index_column_for_apply__"
     strand = kwargs["strand"]
 
-    if strand and not STRAND_COL in self.columns:
+    if strand and STRAND_COL not in self.columns:
         msg = "Can only do stranded operation when PyRange contains strand info"
         raise ValueError(msg)
 

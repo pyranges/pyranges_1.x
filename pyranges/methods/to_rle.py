@@ -1,4 +1,3 @@
-from pyranges.multithreaded import pyrange_apply_single
 
 
 def _to_rle(ranges: "pr.PyRanges", value_col=None, strand=True, rpm=False, **kwargs):

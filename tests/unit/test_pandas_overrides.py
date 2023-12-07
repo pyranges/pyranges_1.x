@@ -4,8 +4,6 @@ import pandas as pd
 import pytest
 
 import pyranges as pr
-from pyranges import PyRanges
-from pyranges.pyranges_groupby import PyRangesGroupBy
 
 
 def test_getitem():

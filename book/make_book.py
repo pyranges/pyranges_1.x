@@ -1,4 +1,3 @@
-import yaml
 
 rmds = [
     "index.Rmd",

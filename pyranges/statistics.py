@@ -13,7 +13,7 @@ from pandas.core.series import Series
 import pyranges as pr
 from pyranges.methods.statistics import _relative_distance
 from pyranges.names import VALID_STRAND_BEHAVIOR_TYPE, STRAND_BEHAVIOR_AUTO, STRAND_BEHAVIOR_IGNORE, \
-    STRAND_BEHAVIOR_SAME, START_COL
+    STRAND_BEHAVIOR_SAME
 from pyranges.pyranges_main import PyRanges
 
 __all__ = [
