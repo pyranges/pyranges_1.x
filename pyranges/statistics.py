@@ -324,7 +324,7 @@ def mcc(
 
         else:
             j = t.interval_join(f, strand_behavior=strand_behavior)
-            tp_gr = j.intersect_columns(start2="Start_b", end2="End_b").merge_overlaps(strand=strand)
+            tp_gr = j.intersect_interval_columns(start2="Start_b", end2="End_b").merge_overlaps(strand=strand)
             if strand:
                 for _strand in "+ -".split():
                     tp = tp_gr[_strand].length

@@ -375,6 +375,15 @@ def to_rows(anno: pd.Series, ignore_bad: bool = False) -> pd.DataFrame:
 
 
 def to_rows_keep_duplicates(anno: pd.Series, ignore_bad: bool = False) -> pd.DataFrame:
+    """If an entry is found multiple times in the attribute string, keep all of them.
+
+    Examples
+    --------
+    >>> anno = pd.Series(["gene DDX11L1; gene sonic; unique hi"])
+    >>> result = to_rows_keep_duplicates(anno)
+    >>> result.to_dict(orient="records")
+    [{'gene': 'DDX11L1,sonic', 'unique': 'hi'}]
+    """
     rowdicts = []
     try:
         for line in anno:

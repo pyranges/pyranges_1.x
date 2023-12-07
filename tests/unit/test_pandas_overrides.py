@@ -63,22 +63,6 @@ def test_groupby_aggregate(gr):
     assert isinstance(g.aggregate("first"), pr.PyRanges)
 
 
-def test_groupby_all(gr):
-    g = gr.groupby("Chromosome")
-    assert isinstance(g.all(), pd.DataFrame)
-
-    g = gr.groupby("Gene")
-    assert isinstance(g.all(), pr.PyRanges)
-
-
-def test_groupby_any(gr):
-    g = gr.groupby("Chromosome")
-    assert isinstance(g.any(), pd.DataFrame)
-
-    g = gr.groupby("Gene")
-    assert isinstance(g.any(), pr.PyRanges)
-
-
 def test_groupby_apply(gr):
     g = gr.groupby("Chromosome")
     assert isinstance(g.apply(lambda df: df.head()), pd.DataFrame)

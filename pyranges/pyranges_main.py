@@ -1166,7 +1166,7 @@ class PyRanges(pr.RangeFrame):
         chr1                1        7  +
         chr1                6       10  +
         chr1                4        9  -
-        PyRanges with 3 rows and 4 columns.
+        PyRanges with 3 rows and 4 columns
         Contains 1 chromosomes and 2 strands.
 
         >>> gr.extend(-1)
@@ -3770,7 +3770,7 @@ class PyRanges(pr.RangeFrame):
             genome_keys = [CHROM_COL, STRAND_COL] if strand else [CHROM_COL]
         return genome_keys + ([] if by is None else ([by] if isinstance(by, str) else [*by]))
 
-    def intersect_columns(self, *, start2: str, end2: str, start: str = START_COL, end: str = END_COL, drop_old_columns: bool = True) -> "pr.PyRanges":
+    def intersect_interval_columns(self, *, start2: str, end2: str, start: str = START_COL, end: str = END_COL, drop_old_columns: bool = True) -> "pr.PyRanges":
         """Use two pairs of columns representing intervals to create a new start and end column.
 
         Parameters
@@ -3802,7 +3802,7 @@ class PyRanges(pr.RangeFrame):
         PyRanges with 9 rows and 8 columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> j.intersect_columns(start="Start", end="End", start2="Start_b", end2="End_b")
+        >>> j.intersect_interval_columns(start="Start", end="End", start2="Start_b", end2="End_b")
         Chromosome    Start    End      Strand      Chromosome_b    Strand_b
         category      int64    int64    category    category        category
         ------------  -------  -------  ----------  --------------  ----------

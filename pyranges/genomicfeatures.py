@@ -1,12 +1,10 @@
 from typing import Dict
 
-import numpy as np
 import pandas as pd
 from pandas.core.frame import DataFrame
 from sorted_nearest.src.introns import find_introns  # type: ignore
 
 import pyranges as pr
-from pyranges.methods.subtraction import _subtraction
 from pyranges.names import CHROM_COL, END_COL
 from pyranges.pyranges_main import PyRanges
 
@@ -519,111 +517,3 @@ def _tes(df: DataFrame, slack: int = 0) -> DataFrame:
 
 
 by_to_id = {"gene": "gene_id", "transcript": "transcript_id"}
-
-
-def _introns2(df: DataFrame, exons: DataFrame, **kwargs) -> DataFrame:
-    """TODO: refactor"""
-
-    if df.empty or exons.empty:
-        return pd.DataFrame(columns=df.columns)
-
-    original_order = df.columns
-    by = kwargs["by"]
-    id_column = by_to_id[by]
-
-    exons = exons[["Start", "End", id_column]]
-    genes = df[["Start", "End", id_column]]
-    exons.columns = pd.Index(["Start", "End", "by_id"])
-    genes.columns = pd.Index(["Start", "End", "by_id"])
-
-    intersection = pd.Series(np.intersect1d(exons["by_id"], genes["by_id"]))
-    if len(intersection) == 0:
-        return pd.DataFrame(columns=df.columns)
-
-    exons = (
-        exons[exons["by_id"].isin(intersection)]
-        .reset_index(drop=True)
-        .sort_values(["by_id", "Start"])
-    )
-    genes = (
-        genes[genes["by_id"].isin(intersection)]
-        .reset_index(drop=True)
-        .sort_values(["by_id", "Start"])
-    )
-    df = df[df[id_column].isin(intersection)].reset_index(drop=True)
-
-    assert len(genes) == len(
-        genes.drop_duplicates("by_id")
-    ), "The {id_column}s need to be unique to compute the introns.".format(
-        id_column=id_column
-    )
-
-    exon_ids = exons["by_id"].shift() != exons["by_id"]
-    by_ids = pd.Series(range(1, len(genes) + 1))
-    df.insert(0, "__temp__", by_ids)
-
-    if len(exons) > 1 and exons["by_id"].iloc[0] == exons["by_id"].iloc[1]:
-        exon_ids.iloc[0] = False
-        exon_ids = exon_ids.cumsum() + 1
-    else:
-        exon_ids = exon_ids.cumsum()
-
-    assert (by_ids == exon_ids.drop_duplicates().values).all()
-    starts, ends, ids = find_introns(
-        genes.Start.values,
-        genes.End.values,
-        by_ids.values,
-        exons.Start.values,
-        exons.End.values,
-        exon_ids.values,
-    )
-
-    introns = pd.DataFrame(
-        data={
-            "Chromosome": df.Chromosome.iloc[0],
-            "Start": starts,
-            "End": ends,
-            "by_id": ids,
-        }
-    )
-
-    vc = introns["by_id"].value_counts(sort=False).to_frame().reset_index()
-    vc.columns = pd.Index(["by_id", "counts"])
-
-    genes_without_introns = pd.DataFrame(
-        data={
-            "by_id": np.setdiff1d(np.array(by_ids.values), np.array(vc.by_id.values)),
-            "counts": 0,
-        }
-    )
-
-    vc = pd.concat([vc, genes_without_introns]).sort_values("by_id")
-
-    original_ids = pd.Series(np.repeat(vc.by_id, vc.counts)).to_frame()
-    original_ids = original_ids.merge(
-        df[["__temp__", id_column]],
-        right_on="__temp__",
-        left_on="by_id",
-        suffixes=("_drop", ""),
-    )
-    original_ids = original_ids.drop(
-        ["__temp__"] + [c for c in original_ids.columns if c.endswith("_drop")], axis=1
-    ).sort_values("by_id")
-    introns.loc[:, "by_id"] = original_ids[id_column].values
-    introns = introns.merge(
-        df, left_on="by_id", right_on=id_column, suffixes=("", "_dropme")
-    )
-    introns = introns.drop(
-        [c for c in introns.columns if c.endswith("_dropme")], axis=1
-    )
-
-    if (
-        introns.Feature.dtype.name == "category"
-        and "intron" not in introns.Feature.cat.categories
-    ):
-        introns.Feature.cat.add_categories(["intron"])
-    introns.loc[:, "Feature"] = "intron"
-
-    introns = introns[original_order]
-
-    return introns
