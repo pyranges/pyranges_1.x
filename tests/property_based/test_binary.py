@@ -6,8 +6,12 @@ from itertools import product
 import numpy as np
 import pandas as pd
 import pytest
-from hypothesis import reproduce_failure  # noqa: F401
-from hypothesis import HealthCheck, given, settings
+from hypothesis import (
+    HealthCheck,
+    given,
+    reproduce_failure,  # noqa: F401
+    settings,
+)
 
 from tests.helpers import assert_df_equal
 from tests.property_based.hypothesis_helper import (

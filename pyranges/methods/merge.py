@@ -1,7 +1,7 @@
 import pandas as pd
 from sorted_nearest import find_clusters, merge_by  # type: ignore
 
-from pyranges.names import START_COL, END_COL
+from pyranges.names import END_COL, START_COL
 
 
 def _merge(df, **kwargs):

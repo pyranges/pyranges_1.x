@@ -1,10 +1,9 @@
-from typing import Dict
+from typing import TYPE_CHECKING, Dict
 
 import pandas as pd
 from pandas.core.frame import DataFrame
 
 from pyranges.names import CHROM_COL, END_COL
-from typing import TYPE_CHECKING
 
 __all__ = ["genome_bounds", "tile_genome", "GenomicFeaturesMethods"]
 

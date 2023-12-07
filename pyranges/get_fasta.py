@@ -10,6 +10,7 @@ from pyranges.names import FORWARD_STRAND
 
 if TYPE_CHECKING:
     import pyfaidx  # type: ignore
+
     from pyranges import PyRanges
 
 

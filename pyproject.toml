@@ -47,10 +47,8 @@ Homepage="http://github.com/pyranges/pyranges"
 [tool.ruff]
 
 target-version = "py312"
+line-length = 120
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "C90"]
-
-line-length = 120
-
-[]
+ignore = ["E501"]

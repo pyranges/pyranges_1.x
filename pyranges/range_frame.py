@@ -1,5 +1,5 @@
 from functools import cached_property
-from typing import Literal, Iterable, Self
+from typing import Iterable, Literal, Self
 
 import pandas as pd
 
@@ -183,7 +183,7 @@ class RangeFrame(pd.DataFrame):
         function,
         by: str | list[str] | None = None,
         **kwargs,
-    ) -> "pr.RangeFrame":
+    ) -> "RangeFrame":
         if not by:
             return RangeFrame(function(self, **kwargs))
         return self.groupby(by).apply(function, by=by, **kwargs).reset_index(drop=True)

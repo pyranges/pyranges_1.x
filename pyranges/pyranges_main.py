@@ -9,10 +9,9 @@ from typing import (
 
 import numpy as np
 import pandas as pd
-from natsort import natsorted, natsort  # type: ignore
+from natsort import natsort, natsorted  # type: ignore
 
 import pyranges as pr
-from pyranges.range_frame import RangeFrame
 from pyranges import multithreaded
 from pyranges.loci_getter import LociGetter
 from pyranges.methods.merge import _merge
@@ -24,41 +23,47 @@ from pyranges.multithreaded import (
     pyrange_apply_single,
 )
 from pyranges.names import (
-    STRAND_COL,
+    CHROM_AND_STRAND_COLS,
+    CHROM_COL,
+    END_COL,
+    FRAME_COL,
     GENOME_LOC_COLS,
     GENOME_LOC_COLS_WITH_STRAND,
-    VALID_GENOMIC_STRAND_INFO,
-    VALID_STRAND_BEHAVIOR_TYPE,
-    VALID_OVERLAP_TYPE,
-    CHROM_COL,
+    NEAREST_DOWNSTREAM,
+    NEAREST_UPSTREAM,
     RANGE_COLS,
-    VALID_JOIN_TYPE,
-    VALID_STRAND_TYPE,
-    STRAND_BEHAVIOR_SAME,
+    START_COL,
     STRAND_AUTO,
-    VALID_STRAND_BEHAVIOR_OPTIONS,
-    STRAND_BEHAVIOR_OPPOSITE,
     STRAND_BEHAVIOR_AUTO,
     STRAND_BEHAVIOR_IGNORE,
-    TEMP_STRAND_COL,
-    TEMP_INDEX_COL,
+    STRAND_BEHAVIOR_OPPOSITE,
+    STRAND_BEHAVIOR_SAME,
+    STRAND_COL,
     TEMP_CUMSUM_COL,
-    TEMP_LENGTH_COL,
-    FRAME_COL,
-    CHROM_AND_STRAND_COLS,
     TEMP_END_SLACK_COL,
+    TEMP_INDEX_COL,
+    TEMP_LENGTH_COL,
+    TEMP_NUM_COL,
     TEMP_START_SLACK_COL,
-    START_COL,
-    END_COL,
+    TEMP_STRAND_COL,
+    VALID_BY_OPTIONS,
+    VALID_BY_TYPES,
+    VALID_GENOMIC_STRAND_INFO,
+    VALID_JOIN_TYPE,
     VALID_NEAREST_OPTIONS,
-    NEAREST_DOWNSTREAM,
-    NEAREST_UPSTREAM, VALID_STRAND_OPTIONS, VALID_BY_OPTIONS, TEMP_NUM_COL, VALID_BY_TYPES,
+    VALID_OVERLAP_TYPE,
+    VALID_STRAND_BEHAVIOR_OPTIONS,
+    VALID_STRAND_BEHAVIOR_TYPE,
+    VALID_STRAND_OPTIONS,
+    VALID_STRAND_TYPE,
 )
 from pyranges.pyranges_groupby import PyRangesGroupBy
+from pyranges.range_frame import RangeFrame
 from pyranges.tostring import tostring
 
 if TYPE_CHECKING:
     from pyrle.rledict import Rledict  # type: ignore
+
     from pyranges.genomicfeatures import GenomicFeaturesMethods
     from pyranges.statistics import StatisticsMethods
 

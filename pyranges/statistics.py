@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 from math import sqrt
-from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -12,9 +12,12 @@ from pandas.core.series import Series
 
 import pyranges as pr
 from pyranges.methods.statistics import _relative_distance
-from pyranges.names import VALID_STRAND_BEHAVIOR_TYPE, STRAND_BEHAVIOR_AUTO, STRAND_BEHAVIOR_IGNORE, \
-    STRAND_BEHAVIOR_SAME
-
+from pyranges.names import (
+    STRAND_BEHAVIOR_AUTO,
+    STRAND_BEHAVIOR_IGNORE,
+    STRAND_BEHAVIOR_SAME,
+    VALID_STRAND_BEHAVIOR_TYPE,
+)
 
 if TYPE_CHECKING:
     from pyranges import PyRanges
@@ -173,7 +176,7 @@ def fisher_exact(
     return df
 
 
-def mcc(
+def mcc(  # noqa: C901
     grs: List["PyRanges"],
     genome: Optional[Union["PyRanges", pd.DataFrame, Dict[str, int]]] = None,
     labels: Optional[str] = None,

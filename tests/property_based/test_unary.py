@@ -5,8 +5,12 @@ from io import StringIO
 import numpy as np
 import pandas as pd
 import pytest
-from hypothesis import reproduce_failure  # noqa: F401
-from hypothesis import HealthCheck, given, settings
+from hypothesis import (
+    HealthCheck,
+    given,
+    reproduce_failure,  # noqa: F401
+    settings,
+)
 from natsort import natsorted  # type: ignore
 
 import pyranges as pr

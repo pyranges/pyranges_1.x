@@ -1,10 +1,13 @@
 import pandas as pd
 from ncls import NCLS
-from sorted_nearest import nearest_nonoverlapping  # type: ignore
-from sorted_nearest import nearest_next_nonoverlapping, nearest_previous_nonoverlapping
+from sorted_nearest import (
+    nearest_next_nonoverlapping,
+    nearest_nonoverlapping,  # type: ignore
+    nearest_previous_nonoverlapping,
+)
 
-from pyranges.names import START_COL, END_COL
 from pyranges.methods.sort import sort_one_by_one
+from pyranges.names import END_COL, START_COL
 
 
 def _insert_distance(ocdf, dist, suffix):

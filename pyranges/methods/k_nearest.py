@@ -3,7 +3,7 @@ import pandas as pd
 from sorted_nearest import (
     k_nearest_next_nonoverlapping,
     k_nearest_previous_nonoverlapping,
-)  # type: ignore
+)
 
 
 def nearest_previous_idx(d1, d2, k, ties=None):

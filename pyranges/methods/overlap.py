@@ -5,10 +5,10 @@ import pandas as pd
 from ncls import NCLS  # type: ignore
 
 from pyranges.names import (
-    VALID_OVERLAP_OPTIONS,
-    OVERLAP_FIRST,
     OVERLAP_ALL,
     OVERLAP_CONTAINMENT,
+    OVERLAP_FIRST,
+    VALID_OVERLAP_OPTIONS,
 )
 
 

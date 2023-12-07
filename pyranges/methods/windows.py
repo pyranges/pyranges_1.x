@@ -1,7 +1,12 @@
+from typing import TYPE_CHECKING
+
 import numpy as np
 from sorted_nearest import maketiles, makewindows  # type: ignore
 
-from pyranges.names import TEMP_START_COL, TEMP_END_COL, END_COL, START_COL
+from pyranges.names import END_COL, START_COL, TEMP_END_COL, TEMP_START_COL
+
+if TYPE_CHECKING:
+    from pyranges import RangeFrame
 
 
 def _windows(df, *, window_size: int, **_):
@@ -16,7 +21,7 @@ def _windows(df, *, window_size: int, **_):
     return df
 
 
-def _tiles(df: "pr.RangeFrame", tile_size: int, overlap_column: str | None, **_):
+def _tiles(df: "RangeFrame", tile_size: int, overlap_column: str | None, **_):
     if overlap_column is not None:
         df = df.copy()
         df.insert(df.shape[1], TEMP_START_COL, df.Start)

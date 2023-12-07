@@ -8,8 +8,9 @@ import pandas as pd
 from natsort import natsorted  # type: ignore
 
 import pyranges as pr
-pr = pr
 from pyranges.pyranges_main import PyRanges
+
+pr = pr
 
 
 def read_bed(f: Union[str, Path], /, nrows: Optional[int] = None) -> "PyRanges":
@@ -215,8 +216,8 @@ def skiprows(f: Path) -> int:
         zh.close()
     except (OSError, TypeError):  # not a gzipped file, or StringIO
         fh = open(f)
-        for i, l in enumerate(fh):
-            if l[0] != "#":
+        for i, line in enumerate(fh):
+            if line[0] != "#":
                 break
         fh.close()
 

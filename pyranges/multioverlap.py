@@ -1,11 +1,8 @@
 from typing import Dict, Optional
 
-from pyranges.names import GENOME_LOC_COLS_WITH_STRAND, VALID_STRAND_BEHAVIOR_TYPE, VALID_OVERLAP_TYPE
-
-
 import pyranges as pr
+from pyranges.names import GENOME_LOC_COLS_WITH_STRAND, VALID_OVERLAP_TYPE, VALID_STRAND_BEHAVIOR_TYPE
 from pyranges.pyranges_main import PyRanges
-
 
 # def count_overlaps(*args, **kwargs):
 #     print(args)

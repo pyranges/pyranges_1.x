@@ -6,8 +6,8 @@ from pandas.core.frame import DataFrame
 
 from pyranges.names import (
     CHROM_COL,
-    STRAND_COL,
     GENOME_LOC_COLS_WITH_STRAND,
+    STRAND_COL,
 )
 
 if TYPE_CHECKING:

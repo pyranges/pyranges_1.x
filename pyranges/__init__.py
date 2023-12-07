@@ -9,16 +9,17 @@ import numpy as np
 import pandas as pd
 import pkg_resources
 from pandas import Series
+
 import pyranges as pr
-from pyranges.pyranges_main import PyRanges
 import pyranges.genomicfeatures
-from pyranges.example_data import ExampleData
+import pyranges.names
 from pyranges import data, statistics
+from pyranges.example_data import ExampleData
 from pyranges.get_fasta import get_fasta, get_sequence, get_transcript_sequence
 from pyranges.helpers import get_key_from_df, single_value_key
 from pyranges.methods.concat import concat
 from pyranges.multioverlap import count_overlaps
-import pyranges.names
+from pyranges.pyranges_main import PyRanges
 
 gf = genomicfeatures
 RangeFrame = pyranges.range_frame.RangeFrame

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-from pyranges.names import CHROM_COL, STRAND_COL, START_COL, END_COL
+from pyranges.names import CHROM_COL, END_COL, START_COL, STRAND_COL
 
 if typing.TYPE_CHECKING:
     from pyranges import PyRanges

@@ -1,9 +1,13 @@
 import shutil
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from tabulate import tabulate
 
 import pyranges
+
+if TYPE_CHECKING:
+    import pyranges as pr
 
 
 @dataclass
