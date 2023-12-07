@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import pandas as pd
@@ -11,10 +11,14 @@ from pyranges.names import (
     VALID_OVERLAP_OPTIONS,
 )
 
+if TYPE_CHECKING:
+    import pyranges as pr
+    from pyranges import RangeFrame
+
 
 def _overlap_indices(
-    scdf,
-    ocdf,
+    scdf: "RangeFrame",
+    ocdf: "RangeFrame",
     how: Literal["first", "containment", "all"] = "first",
     **_,
 ) -> "pd.Series[np.int64]":
@@ -63,7 +67,7 @@ def _overlap(
     return result
 
 
-def _count_overlaps(scdf, ocdf, name: str, return_indexes: bool, **_) -> "pd.Series[int]":
+def _count_overlaps(scdf: "RangeFrame", ocdf: "RangeFrame", name: str, return_indexes: bool, **_) -> "pd.Series[int]":
     # FIXME: Modifies in-place.
     idx = _overlap(scdf, ocdf, return_indexes=return_indexes)
     vc = pd.Series(idx, dtype=np.int32).value_counts(sort=False)

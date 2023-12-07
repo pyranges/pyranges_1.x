@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 from math import sqrt
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -11,17 +11,15 @@ from pandas.core.frame import DataFrame
 from pandas.core.series import Series
 
 import pyranges as pr
+from pyranges import PyRanges
 from pyranges.methods.statistics import _relative_distance
 from pyranges.names import (
+    GENOME_LOC_COLS,
     STRAND_BEHAVIOR_AUTO,
     STRAND_BEHAVIOR_IGNORE,
     STRAND_BEHAVIOR_SAME,
     VALID_STRAND_BEHAVIOR_TYPE,
 )
-
-if TYPE_CHECKING:
-    from pyranges import PyRanges
-
 
 __all__ = [
     "simes",
@@ -75,7 +73,6 @@ def fdr(p_vals: Series) -> Series:
     PyRanges with 3 rows and 6 columns.
     Contains 3 chromosomes and 2 strands.
     """
-
     from scipy.stats import rankdata  # type: ignore
 
     ranked_p_values = rankdata(p_vals)
@@ -85,9 +82,7 @@ def fdr(p_vals: Series) -> Series:
     return fdr
 
 
-def fisher_exact(
-    tp: Series, fp: Series, fn: Series, tn: Series, pseudocount: int = 0
-) -> DataFrame:
+def fisher_exact(tp: Series, fp: Series, fn: Series, tn: Series, pseudocount: int = 0) -> DataFrame:
     """Fisher's exact for contingency tables.
 
     Computes the hypotheses two-sided, less and greater at the same time.
@@ -118,7 +113,6 @@ def fisher_exact(
 
     Notes
     -----
-
     The odds-ratio is computed thusly:
 
     ``((tp + pseudocount) / (fp + pseudocount)) / ((fn + pseudocount) / (tn + pseudocount))``
@@ -127,16 +121,14 @@ def fisher_exact(
     -------
     pandas.DataFrame
 
-        DataFrame with columns OR and P, PLeft and PRight.
+        DataFrame with columns odds_ratio and P, PLeft and PRight.
 
     See Also
     --------
-
     pr.stats.fdr : correct for multiple testing
 
     Examples
     --------
-
     >>> d = {"TP": [12, 0], "FP": [5, 12], "TN": [29, 10], "FN": [2, 2]}
     >>> df = pd.DataFrame(d)
     >>> df
@@ -145,11 +137,10 @@ def fisher_exact(
     1   0  12  10   2
 
     >>> pr.stats.fisher_exact(df.TP, df.FP, df.TN, df.FN)
-             OR         P     PLeft    PRight
-    0  0.165517  0.080269  0.044555  0.994525
-    1  0.000000  0.000067  0.000034  1.000000
+       odds_ratio         P     PLeft    PRight
+    0    0.165517  0.080269  0.044555  0.994525
+    1    0.000000  0.000067  0.000034  1.000000
     """
-
     try:
         from fisher import pvalue_npy  # type: ignore
     except ImportError:
@@ -167,19 +158,17 @@ def fisher_exact(
 
     left, right, twosided = pvalue_npy(_tp, _fp, _fn, _tn)
 
-    OR = ((_tp + pseudocount) / (_fp + pseudocount)) / (
-        (_fn + pseudocount) / (_tn + pseudocount)
-    )
+    odds_ratio = ((_tp + pseudocount) / (_fp + pseudocount)) / ((_fn + pseudocount) / (_tn + pseudocount))
 
-    df = pd.DataFrame({"OR": OR, "P": twosided, "PLeft": left, "PRight": right})
+    df = pd.DataFrame({"odds_ratio": odds_ratio, "P": twosided, "PLeft": left, "PRight": right})
 
     return df
 
 
 def mcc(  # noqa: C901
-    grs: List["PyRanges"],
-    genome: Optional[Union["PyRanges", pd.DataFrame, Dict[str, int]]] = None,
-    labels: Optional[str] = None,
+    grs: list["PyRanges"],
+    genome: PyRanges | pd.DataFrame | dict[str, int] | None = None,
+    labels: str | None = None,
     strand: bool = False,
     verbose: bool = False,
 ) -> DataFrame:
@@ -211,7 +200,7 @@ def mcc(  # noqa: C901
 
     Examples
     --------
-    >>> grs = [pr.data.aorta, pr.data.aorta, pr.data.aorta2]
+    >>> grs = [pr.example_data.aorta, pr.example_data.aorta, pr.example_data.aorta2]
     >>> mcc = pr.stats.mcc(grs, labels="abc", genome={"chr1": 2100000})
     >>> mcc
        T  F   TP   FP       TN   FN      MCC
@@ -233,7 +222,6 @@ def mcc(  # noqa: C901
     b  1.00000  1.00000  0.55168
     c  0.55168  0.55168  1.00000
     """
-
     import sys
     from itertools import chain, combinations_with_replacement
 
@@ -284,7 +272,7 @@ def mcc(  # noqa: C901
 
         if strand:
 
-            def make_stranded(df):
+            def make_stranded(df: DataFrame) -> DataFrame:
                 df = df.copy()
                 df2 = df.copy()
                 df.insert(df.shape[1], "Strand", "+")
@@ -306,9 +294,7 @@ def mcc(  # noqa: C901
                 fn = 0
                 tn = genome_length - tp
                 fp = 0
-                rowdicts.append(
-                    {"T": lt, "F": lf, "TP": tp, "FP": fp, "TN": tn, "FN": fn, "MCC": 1}
-                )
+                rowdicts.append({"T": lt, "F": lf, "TP": tp, "FP": fp, "TN": tn, "FN": fn, "MCC": 1})
             else:
                 for _strand in "+ -".split():
                     tp = t[strand].length
@@ -419,13 +405,11 @@ def rowbased_spearman(x: ndarray, y: ndarray) -> ndarray:
 
     See Also
     --------
-
     pyranges.statistics.rowbased_pearson : fast row-based Pearson's correlation.
     pr.stats.fdr : correct for multiple testing
 
     Examples
     --------
-
     >>> x = np.array([[7, 2, 9], [3, 6, 0], [0, 6, 3]])
     >>> y = np.array([[5, 3, 2], [9, 6, 0], [7, 3, 5]])
 
@@ -434,7 +418,6 @@ def rowbased_spearman(x: ndarray, y: ndarray) -> ndarray:
     >>> pr.stats.rowbased_spearman(x, y)
     array([-0.5,  0.5, -1. ])
     """
-
     x = np.asarray(x)
     y = np.asarray(y)
 
@@ -444,9 +427,7 @@ def rowbased_spearman(x: ndarray, y: ndarray) -> ndarray:
     return rowbased_pearson(rx, ry)
 
 
-def rowbased_pearson(
-    x: Union[ndarray, DataFrame], y: Union[ndarray, DataFrame]
-) -> ndarray:
+def rowbased_pearson(x: ndarray | DataFrame, y: ndarray | DataFrame) -> ndarray:
     """Fast row-based Pearson's correlation.
 
     Parameters
@@ -467,13 +448,11 @@ def rowbased_pearson(
 
     See Also
     --------
-
     pyranges.statistics.rowbased_spearman : fast row-based Spearman's correlation.
     pr.stats.fdr : correct for multiple testing
 
     Examples
     --------
-
     >>> x = np.array([[7, 2, 9], [3, 6, 0], [0, 6, 3]])
     >>> y = np.array([[5, 3, 2], [9, 6, 0], [7, 3, 5]])
 
@@ -482,10 +461,9 @@ def rowbased_pearson(
     >>> pr.stats.rowbased_pearson(x, y)
     array([-0.09078413,  0.65465367, -1.        ])
     """
-
     # Thanks to https://github.com/dengemann
 
-    def ss(a, axis):
+    def ss(a: np.array, axis: int) -> np.array:
         return np.sum(a * a, axis=axis)
 
     x = np.asarray(x)
@@ -524,7 +502,6 @@ def rowbased_rankdata(data: ndarray) -> DataFrame:
 
     Examples
     --------
-
     >>> x = np.random.randint(10, size=(3, 4))
     >>> x = np.array([[3, 7, 6, 0], [1, 3, 8, 9], [5, 9, 3, 5]])
     >>> pr.stats.rowbased_rankdata(x)
@@ -533,7 +510,6 @@ def rowbased_rankdata(data: ndarray) -> DataFrame:
     1  1.0  2.0  3.0  4.0
     2  2.5  4.0  1.0  2.5
     """
-
     dc = np.asarray(data).copy()
     sorter = np.apply_along_axis(np.argsort, 1, data)
 
@@ -549,9 +525,7 @@ def rowbased_rankdata(data: ndarray) -> DataFrame:
 
     obs = np.column_stack([np.ones(len(res), dtype=bool), res])
 
-    dense = pd.DataFrame(
-        np.take_along_axis(np.apply_along_axis(np.cumsum, 1, obs), inv, 1)
-    )
+    dense = pd.DataFrame(np.take_along_axis(np.apply_along_axis(np.cumsum, 1, obs), inv, 1))
 
     len_r = obs.shape[1]
 
@@ -564,11 +538,7 @@ def rowbased_rankdata(data: ndarray) -> DataFrame:
         _count = np.column_stack([nz, np.ones(len(nz)) * len_r])
         _dense = dense.reindex(nzdf.index).values
 
-        _result = 0.5 * (
-            np.take_along_axis(_count, _dense, 1)
-            + np.take_along_axis(_count, _dense - 1, 1)
-            + 1
-        )
+        _result = 0.5 * (np.take_along_axis(_count, _dense, 1) + np.take_along_axis(_count, _dense - 1, 1) + 1)
 
         result = pd.DataFrame(_result, index=nzdf.index)
         _ranks.append(result)
@@ -578,7 +548,12 @@ def rowbased_rankdata(data: ndarray) -> DataFrame:
     return final
 
 
-def simes(df, groupby, pcol, keep_position=False):
+def simes(
+    df: "pr.PyRanges",
+    by: str | list[str],
+    pcol: str,
+    keep_position: bool = False,
+) -> "pr.PyRanges":
     """Apply Simes method for giving dependent events a p-value.
 
     Parameters
@@ -587,7 +562,7 @@ def simes(df, groupby, pcol, keep_position=False):
 
         Data to analyse with Simes.
 
-    groupby : str or list of str
+    by : str or list of str
 
         Features equal in these columns will be merged with Simes.
 
@@ -601,12 +576,10 @@ def simes(df, groupby, pcol, keep_position=False):
 
     See Also
     --------
-
     pr.stats.fdr : correct for multiple testing
 
     Examples
     --------
-
     >>> s = '''Chromosome Start End Strand Gene PValue
     ... 1 10 20 + P53 0.0001
     ... 1 20 35 + P53 0.0002
@@ -644,23 +617,20 @@ def simes(df, groupby, pcol, keep_position=False):
     PyRanges with 2 rows and 6 columns.
     Contains 2 chromosomes and 2 strands.
     """
-
-    if isinstance(groupby, str):
-        groupby = [groupby]
+    if isinstance(by, str):
+        by = [by]
 
     positions = []
-    if "Strand" in df:
-        stranded = True
 
     if keep_position:
-        positions += ["Chromosome", "Start", "End"]
-        if stranded:
+        positions += GENOME_LOC_COLS
+        if df.has_strand_column:
             positions += ["Strand"]
 
-    sorter = groupby + [pcol]
+    sorter = by + [pcol]
 
     sdf = df[positions + sorter].sort_values(sorter)
-    g = sdf.groupby(positions + groupby)
+    g = sdf.groupby(positions + by)
 
     ranks = g.cumcount().values + 1
     size = g.size().values
@@ -679,16 +649,16 @@ def simes(df, groupby, pcol, keep_position=False):
             "Simes": "min",
         }
 
-        if stranded:
+        if sdf.has_strand_column:
             grpby_dict["Strand"] = "first"
 
-        simes = sdf.groupby(groupby).agg(grpby_dict).reset_index()
+        simes = sdf.groupby(by).agg(grpby_dict).reset_index()
         columns = list(simes.columns)
         columns.append(columns[0])
         del columns[0]
         simes = pr.PyRanges(simes[columns])
     else:
-        simes = sdf.groupby(groupby).Simes.min().reset_index()
+        simes = sdf.groupby(by).Simes.min().reset_index()
 
     return simes
 
@@ -696,23 +666,19 @@ def simes(df, groupby, pcol, keep_position=False):
 def chromsizes_as_int(chromsizes: "PyRanges | DataFrame | dict[Any, int]") -> int:
     if isinstance(chromsizes, dict):
         _chromsizes = sum(chromsizes.values())
-    elif isinstance(chromsizes, (pd.DataFrame, pr.PyRanges)):
+    elif isinstance(chromsizes, pd.DataFrame | pr.PyRanges):
         _chromsizes = chromsizes.End.sum()
     else:
-        raise TypeError(
-            "chromsizes must be dict, DataFrame or PyRanges, was {}".format(
-                type(chromsizes)
-            )
-        )
+        raise TypeError(f"chromsizes must be dict, DataFrame or PyRanges, was {type(chromsizes)}")
 
     return _chromsizes
 
 
 class StatisticsMethods:
-
     """Namespace for statistical comparsion-operations.
 
-    Accessed with gr.stats."""
+    Accessed with gr.stats.
+    """
 
     def __init__(self, pr: "PyRanges") -> None:
         self.pr = pr
@@ -720,8 +686,8 @@ class StatisticsMethods:
     def forbes(
         self,
         other: "PyRanges",
-        chromsizes: "PyRanges | DataFrame | dict[Any, int]",
-        strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto"
+        chromsizes: PyRanges | DataFrame | dict[Any, int],
+        strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
     ) -> float:
         """Compute Forbes coefficient.
 
@@ -752,31 +718,33 @@ class StatisticsMethods:
 
         See Also
         --------
-
         pyranges.statistics.jaccard : compute the jaccard coefficient
 
         Examples
         --------
-        >>> gr, gr2 = pr.data.f1, pr.data.f2
+        >>> gr, gr2 = pr.example_data.f1, pr.example_data.f2
         >>> gr.stats.forbes(gr2, chromsizes={"chr1": 10})
         1.6666666666666667
         """
-
         _chromsizes = chromsizes_as_int(chromsizes)
 
         self.pr.ensure_strand_behavior_options_valid(other, strand_behavior=strand_behavior)
-        strand = self.pr.strand_values_valid and other.strand_values_valid and strand_behavior in [STRAND_BEHAVIOR_AUTO, True]
+        strand = (
+            self.pr.strand_values_valid
+            and other.strand_values_valid
+            and strand_behavior in [STRAND_BEHAVIOR_AUTO, True]
+        )
         reference_length = self.pr.merge_overlaps(strand=strand).length
         query_length = other.merge_overlaps(strand=strand).length
 
-        intersection_sum = (
-            self.pr.set_intersect(other, strand_behavior=strand_behavior).lengths().sum()
-        )
+        intersection_sum = self.pr.set_intersect(other, strand_behavior=strand_behavior).lengths().sum()
         forbes = _chromsizes * intersection_sum / (reference_length * query_length)
 
         return forbes
 
-    def jaccard(self, other: "PyRanges", chromsizes: dict[str, int], strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto") -> float:
+    def jaccard(
+        self, other: "PyRanges", chromsizes: dict[str, int], strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto"
+    ) -> float:
         """Compute Jaccards coefficient.
 
         Ratio of the intersection and union of two sets.
@@ -804,20 +772,21 @@ class StatisticsMethods:
 
         See Also
         --------
-
         pyranges.statistics.forbes : compute the forbes coefficient
 
         Examples
         --------
-
-        >>> gr, gr2 = pr.data.f1, pr.data.f2
-        >>> chromsizes = pr.data.chromsizes
+        >>> gr, gr2 = pr.example_data.f1, pr.example_data.f2
+        >>> chromsizes = pr.example_data.chromsizes
         >>> gr.stats.jaccard(gr2, chromsizes=chromsizes)
         0.3333333333333333
         """
-
         self.pr.ensure_strand_behavior_options_valid(other, strand_behavior=strand_behavior)
-        strand = self.pr.strand_values_valid and other.strand_values_valid and strand_behavior in [STRAND_BEHAVIOR_AUTO, True]
+        strand = (
+            self.pr.strand_values_valid
+            and other.strand_values_valid
+            and strand_behavior in [STRAND_BEHAVIOR_AUTO, True]
+        )
 
         intersection_sum = self.pr.set_intersect(other).lengths().sum()
 
@@ -862,16 +831,14 @@ class StatisticsMethods:
 
         See Also
         --------
-
         pyranges.statistics.jaccard : compute the jaccard coefficient
         pyranges.statistics.forbes : compute the forbes coefficient
 
         Examples
         --------
-
-        >>> gr1, gr2 = pr.data.chipseq, pr.data.chipseq_background
+        >>> gr1, gr2 = pr.example_data.chipseq, pr.example_data.chipseq_background
         >>> gr = pd.concat([gr1, gr1.head(4), gr2.tail(4)])
-        >>> chromsizes = pr.data.chromsizes
+        >>> chromsizes = pr.example_data.chromsizes
         >>> gr.stats.relative_distance(gr2)
             reldist  count  total  fraction
         0      0.00      4     18  0.222222
@@ -888,7 +855,6 @@ class StatisticsMethods:
         11     0.42      1     18  0.055556
         12     0.43      2     18  0.111111
         """
-
         result = pd.Series(_relative_distance(self.pr, other))
 
         not_nan = ~np.isnan(result)

@@ -1,10 +1,14 @@
 from collections import OrderedDict
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from tabulate import tabulate
 
+if TYPE_CHECKING:
+    from pyranges import PyRanges
 
-def _summary(self, return_df=False):
+
+def _summary(self: "PyRanges", return_df: bool = False) -> pd.DataFrame | None:
     lengths = {}
     total_lengths = {}
     lengths["pyrange"] = self.lengths()

@@ -55,9 +55,7 @@ def test_merge(gr, strand):
         print(cmd)
 
         # ignoring bandit security warning. All strings created by test suite
-        result = subprocess.check_output(
-            cmd, shell=True, executable="/bin/bash"
-        ).decode()  # nosec  # nosec
+        result = subprocess.check_output(cmd, shell=True, executable="/bin/bash").decode()  # nosec  # nosec
 
         print("result" * 10)
         print(result)
@@ -125,9 +123,7 @@ def test_cluster(gr, strand):
         print(cmd)
 
         # ignoring bandit security warning. All strings created by test suite
-        result = subprocess.check_output(
-            cmd, shell=True, executable="/bin/bash"
-        ).decode()  # nosec  # nosec
+        result = subprocess.check_output(cmd, shell=True, executable="/bin/bash").decode()  # nosec  # nosec
 
         bedtools_df = pd.read_csv(
             StringIO(result),
@@ -167,9 +163,7 @@ def test_cluster(gr, strand):
         result_df.Cluster.replace(cluster_ids, inplace=True)
 
         bedtools_df.Cluster = bedtools_df.Cluster.astype("int32")
-        assert_df_equal(
-            result_df.drop("Cluster", axis=1), bedtools_df.drop("Cluster", axis=1)
-        )
+        assert_df_equal(result_df.drop("Cluster", axis=1), bedtools_df.drop("Cluster", axis=1))
     else:
         assert bedtools_df.empty == result.df.empty
 
@@ -262,9 +256,7 @@ def test_windows(gr):
         print(cmd)
 
         # ignoring bandit security warning. All strings created by test suite
-        result = subprocess.check_output(
-            cmd, shell=True, executable="/bin/bash"
-        ).decode()  # nosec  # nosec
+        result = subprocess.check_output(cmd, shell=True, executable="/bin/bash").decode()  # nosec  # nosec
 
         bedtools_df = pd.read_csv(
             StringIO(result),
@@ -301,7 +293,7 @@ def test_init(gr, strand):
         pr.PyRanges(chromosomes=c, starts=s, ends=e)
 
 
-chipseq = pr.data.chipseq()
+chipseq = pr.example_data.chipseq()
 
 
 @settings(

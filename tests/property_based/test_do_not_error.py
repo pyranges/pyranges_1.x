@@ -31,15 +31,11 @@ unary_methods = [
 
 method_chain = product(binary_methods, binary_methods)
 # cannot start with an operation that makes pyrange unstranded and then try a stranded op
-strandedness_chain = list(product(["same", "opposite"], strandedness)) + list(
-    product(strandedness, [None])
-)
+strandedness_chain = list(product(["same", "opposite"], strandedness)) + list(product(strandedness, [None]))
 
 
 @pytest.mark.bedtools
-@pytest.mark.parametrize(
-    "strandedness_chain,method_chain", product(strandedness_chain, method_chain)
-)
+@pytest.mark.parametrize("strandedness_chain,method_chain", product(strandedness_chain, method_chain))
 @settings(
     max_examples=max_examples,
     deadline=deadline,

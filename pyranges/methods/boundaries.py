@@ -1,17 +1,24 @@
-def _bounds(scdf, **kwargs):
+from typing import TYPE_CHECKING
+
+from pyranges.names import CHROM_COL, END_COL, START_COL, STRAND_COL
+
+if TYPE_CHECKING:
+    import pyranges as pr
+
+
+def _bounds(scdf: "pr.PyRanges", **kwargs):
     if scdf.empty:
         return None
 
     col_order = [c for c in scdf.columns]
 
-    by = kwargs.get("group_by")
-    if type(by) is not list:
-        by = [by]
+    by = kwargs.get("by")
+    by = [by] if isinstance(by, str) else (by or [])
 
-    agg_dict = kwargs.get("agg") if kwargs.get("agg") else {}
-    agg_dict.update({"Start": "min", "End": "max", "Chromosome": "first"})
-    if "Strand" in scdf.columns:
-        agg_dict["Strand"] = "first"
+    agg_dict = agg if (agg := kwargs.get("agg")) else {}
+    agg_dict.update({START_COL: "min", END_COL: "max", CHROM_COL: "first"})
+    if STRAND_COL in scdf.columns:
+        agg_dict[STRAND_COL] = "first"
 
     res = scdf.groupby(by).agg(agg_dict).reset_index()
     res = res.reindex(columns=[c for c in col_order if c in res.columns])

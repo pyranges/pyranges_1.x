@@ -22,11 +22,12 @@ Feel free to ask questions of the type "how do I do X with pyranges?" on public 
 
 ```python
 import pyranges as pr
+
 # load example datasets
-exons, cpg = pr.data.exons(), pr.data.cpg()
+exons, cpg = pr.example_data.exons(), pr.example_data.cpg()
 
 # subsetting pyranges is easy
-exons["chrY", "-",  15591259:27197945]
+exons["chrY", "-", 15591259:27197945]
 # +--------------|-----------|-----------|----------------------------------------|-----------|--------------+
 # | Chromosome   | Start     | End       | Name                                   | Score     | Strand       |
 # | (category)   | (int32)   | (int32)   | (object)                               | (int64)   | (category)   |
@@ -44,7 +45,7 @@ exons["chrY", "-",  15591259:27197945]
 # Stranded PyRanges object has 22 rows and 6 columns from 1 chromosomes.
 
 # you can use your pandas-skills with pyranges
-exons[~exons.Name.str.startswith("NR")] # all rows where the name column does not start with "NR"
+exons[~exons.Name.str.startswith("NR")]  # all rows where the name column does not start with "NR"
 # +--------------|-----------|-----------|----------------------------------------|-----------|--------------+
 # | Chromosome   | Start     | End       | Name                                   | Score     | Strand       |
 # | (category)   | (int32)   | (int32)   | (object)                               | (int64)   | (category)   |
@@ -62,17 +63,17 @@ exons[~exons.Name.str.startswith("NR")] # all rows where the name column does no
 # Stranded PyRanges object has 847 rows and 6 columns from 2 chromosomes.
 
 # the API allows for easy and terse chaining
-(cpg # use the cpg dataset
-  .join(exons, suffix="_xn") # join with exons, use suffix _xn for duplicate cols
-  .subset(lambda df: df.CpG > 30) # keep only rows with a CpG score over 30
-  .sort(nb_cpu=2) # sort on Chromosome, Start and End
-                  # note that virtually all pyranges-methods take a nb_cpu argument
-                  # to use multiple cores, you need to install ray with pip install ray
+(cpg  # use the cpg dataset
+ .join(exons, suffix="_xn")  # join with exons, use suffix _xn for duplicate cols
+ .subset(lambda df: df.CpG > 30)  # keep only rows with a CpG score over 30
+ .sort(nb_cpu=2)  # sort on Chromosome, Start and End
+ # note that virtually all pyranges-methods take a nb_cpu argument
+ # to use multiple cores, you need to install ray with pip install ray
  .pc(formatting={"Start": "{:,}", "End": "{:,}", "Name": "{:2.2}"})
- # print, while keeping the chain (c) going. Try .sp(), msp(), rp(), spc(), mspc() also :)
-  ["chrX"] # keep only chromosome X
-  .assign("CpGDecile", lambda df: df.CpG / 10) # Insert new column
-  .unstrand()) # remove the strand info
+     # print, while keeping the chain (c) going. Try .sp(), msp(), rp(), spc(), mspc() also :)
+ ["chrX"]  # keep only chromosome X
+ .assign("CpGDecile", lambda df: df.CpG / 10)  # Insert new column
+ .unstrand())  # remove the strand info
 # +--------------|-------------|-------------|-----------|------------|-----------|------------|-----------|--------------+
 # | Chromosome   | Start       | End         | CpG       | Start_xn   | End_xn    | Name       | Score     | Strand       |
 # | (category)   | (int32)     | (int32)     | (int64)   | (int32)    | (int32)   | (object)   | (int64)   | (category)   |
@@ -104,7 +105,7 @@ exons[~exons.Name.str.startswith("NR")] # all rows where the name column does no
 # +--------------|-----------|-----------|-----------|------------|-----------|-----------------------------------------|-----------|-------------+
 # Unstranded PyRanges object has 58 rows and 9 columns from 1 chromosomes.
 
-cpg_rle = cpg.to_rle(value_col="CpG") # ignore value_col for regular coverage
+cpg_rle = cpg.to_rle(value_col="CpG")  # ignore value_col for regular coverage
 cpg_rle
 # chrX
 # ----

@@ -1,10 +1,14 @@
-
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from pyranges import PyRanges
+    try:
+        from pyrle import PyRles
+    except ImportError:
+        pass
 
-def _to_rle(ranges: "PyRanges", value_col=None, strand=True, rpm=False, **kwargs):
+
+def _to_rle(ranges: "PyRanges", value_col: str | None = None, strand: bool = True, rpm: bool = False, **kwargs) -> "PyRles":
     try:
         from pyrle import PyRles  # type: ignore
         from pyrle.methods import coverage  # type: ignore

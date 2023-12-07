@@ -25,14 +25,10 @@ strandedness = [False, "same", "opposite"]
 no_opposite = [False, "same"]
 
 
-def run_bedtools(
-    command, gr, gr2, strandedness, nearest_overlap=False, nearest_how=None, ties=""
-):
+def run_bedtools(command, gr, gr2, strandedness, nearest_overlap=False, nearest_how=None, ties=""):
     bedtools_strand = {False: "", "same": "-s", "opposite": "-S"}[strandedness]
     bedtools_overlap = {True: "", False: "-io"}[nearest_overlap]
-    bedtools_how = {"upstream": "-id", "downstream": "-iu", None: ""}[
-        nearest_how
-    ] + " -D a"
+    bedtools_how = {"upstream": "-id", "downstream": "-iu", None: ""}[nearest_how] + " -D a"
     # print("bedtools how:", bedtools_how)
     ties = "-t " + ties if ties else ""
 
@@ -54,9 +50,7 @@ def run_bedtools(
         print(cmd)
         # ignoring the below line in bandit as only strings created by
         # the test suite is run here; no user input ever sought
-        result = subprocess.check_output(
-            cmd, shell=True, executable="/bin/bash"
-        ).decode()  # nosec  # nosec
+        result = subprocess.check_output(cmd, shell=True, executable="/bin/bash").decode()  # nosec  # nosec
 
     return result
 
@@ -213,9 +207,7 @@ def test_coverage(gr, gr2, strandedness):
 
     # assert len(result) > 0
     assert np.all(bedtools_df.NumberOverlaps.values == result.NumberOverlaps.values)
-    np.testing.assert_allclose(
-        bedtools_df.FractionOverlaps, result.FractionOverlaps, atol=1e-5
-    )
+    np.testing.assert_allclose(bedtools_df.FractionOverlaps, result.FractionOverlaps, atol=1e-5)
     # compare_results(bedtools_df, result)
 
 
@@ -289,9 +281,7 @@ overlaps = [True, False]
 
 
 @pytest.mark.bedtools
-@pytest.mark.parametrize(
-    "nearest_how,overlap,strandedness", product(nearest_hows, overlaps, strandedness)
-)
+@pytest.mark.parametrize("nearest_how,overlap,strandedness", product(nearest_hows, overlaps, strandedness))
 @settings(
     max_examples=max_examples,
     deadline=deadline,
@@ -301,9 +291,7 @@ overlaps = [True, False]
 def test_nearest(gr, gr2, nearest_how, overlap, strandedness):
     nearest_command = "bedtools closest {bedtools_how} {strand} {overlap} -t first -d -a <(sort -k1,1 -k2,2n {f1}) -b <(sort -k1,1 -k2,2n {f2})"
 
-    bedtools_result = run_bedtools(
-        nearest_command, gr, gr2, strandedness, overlap, nearest_how
-    )
+    bedtools_result = run_bedtools(nearest_command, gr, gr2, strandedness, overlap, nearest_how)
 
     bedtools_df = pd.read_csv(
         StringIO(bedtools_result),
@@ -318,9 +306,7 @@ def test_nearest(gr, gr2, nearest_how, overlap, strandedness):
     bedtools_df = bedtools_df[bedtools_df.Chromosome2 != "."]
     bedtools_df = bedtools_df.drop("Chromosome2", axis=1)
 
-    result = gr.nearest(
-        gr2, strandedness=strandedness, overlap=overlap, how=nearest_how
-    )
+    result = gr.nearest(gr2, strandedness=strandedness, overlap=overlap, how=nearest_how)
 
     print("bedtools " * 5)
     print(bedtools_df)
@@ -390,9 +376,7 @@ def test_join(gr, gr2, strandedness):
 )
 @given(gr=dfs_min2(), gr2=dfs_min2())  # pylint: disable=no-value-for-parameter
 def test_reldist(gr, gr2):
-    reldist_command = (
-        "bedtools reldist -a <(sort -k1,1 -k2,2n {f1}) -b <(sort -k1,1 -k2,2n {f2})"
-    )
+    reldist_command = "bedtools reldist -a <(sort -k1,1 -k2,2n {f1}) -b <(sort -k1,1 -k2,2n {f2})"
 
     bedtools_result = run_bedtools(reldist_command, gr, gr2, False)
     bedtools_result = pd.read_csv(StringIO(bedtools_result), sep="\t")
@@ -469,9 +453,7 @@ k_nearest_ties = ["first", "last", None]
 # k_nearest_ties = ["first", None]
 k_nearest_ties = ["last"]
 
-k_nearest_params = reversed(
-    list(product(nearest_hows, [True, False], strandedness, k_nearest_ties))
-)
+k_nearest_params = reversed(list(product(nearest_hows, [True, False], strandedness, k_nearest_ties)))
 
 
 # @pytest.mark.bedtools

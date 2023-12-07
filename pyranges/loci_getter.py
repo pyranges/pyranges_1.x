@@ -21,11 +21,7 @@ class LociGetter:
 
     def __getitem__(
         self,
-        key: str
-        | int
-        | tuple[str | int, str]
-        | tuple[str | int, slice]
-        | tuple[str | int, str, slice],
+        key: str | int | tuple[str | int, str] | tuple[str | int, slice] | tuple[str | int, str, slice],
     ) -> "PyRanges":
         from pyranges import PyRanges  # local import to avoid circular import
 
@@ -38,40 +34,27 @@ class LociGetter:
                 rows = _rows_matching_chrom_and_strand(self.pr, chrom, strand)
             elif len(key) == 2 and isinstance(loc := key[1], slice):
                 chrom_or_strand = key[0]
-                if (
-                    chrom_or_strand
-                    in (col := self.pr[CHROM_COL].astype(type(chrom_or_strand))).values
-                ):
+                if chrom_or_strand in (col := self.pr[CHROM_COL].astype(type(chrom_or_strand))).values:
                     gr = self.pr[col == chrom_or_strand]
                     rows = _rows_matching_range(gr, loc)
                 elif (
                     self.pr.strand_values_valid
-                    and chrom_or_strand
-                    in (col := self.pr[STRAND_COL].astype(type(chrom_or_strand))).values
+                    and chrom_or_strand in (col := self.pr[STRAND_COL].astype(type(chrom_or_strand))).values
                 ):
-                    rows = _rows_matching_range(
-                        PyRanges(self.pr[col == chrom_or_strand]), loc
-                    )
+                    rows = _rows_matching_range(PyRanges(self.pr[col == chrom_or_strand]), loc)
                 else:
-                    msg = (
-                        f"Chromosome or strand {chrom_or_strand} not found in PyRanges."
-                    )
+                    msg = f"Chromosome or strand {chrom_or_strand} not found in PyRanges."
                     raise KeyError(msg)
             elif len(key) == 3:
                 chrom, strand, range = key
-                rows = _rows_matching_chrom_and_strand_and_range(
-                    self.pr, chrom, strand, range
-                )
+                rows = _rows_matching_chrom_and_strand_and_range(self.pr, chrom, strand, range)
             else:
                 msg = f"Indexing tuple must be of length 2 or 3, but was {len(key)}."
                 raise ValueError(msg)
         elif not isinstance(key, list):
             if str(key) in (col := self.pr[CHROM_COL].astype(str)).values:
                 rows = col == str(key)
-            elif (
-                self.pr.has_strand_column
-                and str(key) in (col := self.pr[STRAND_COL].astype(str)).values
-            ):
+            elif self.pr.has_strand_column and str(key) in (col := self.pr[STRAND_COL].astype(str)).values:
                 rows = col == str(key)
             else:
                 msg = f'Chromosome or strand "{key}" not found in PyRanges.'
@@ -81,7 +64,7 @@ class LociGetter:
             raise TypeError(msg)
         return rows
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value) -> None:
         rows = self._matching_rows(key)
         self.pr.loc[rows] = value
 

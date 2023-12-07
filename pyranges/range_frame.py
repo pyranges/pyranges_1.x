@@ -1,10 +1,11 @@
+from collections.abc import Iterable
 from functools import cached_property
-from typing import Iterable, Literal, Self
+from typing import Any, Literal, Self
 
 import pandas as pd
 
 from pyranges.methods.overlap import _overlap
-from pyranges.names import RANGE_COLS
+from pyranges.names import RANGE_COLS, VALID_BY_TYPES
 from pyranges.tostring import tostring
 
 
@@ -12,7 +13,11 @@ class ColUpdater:
     def __init__(self, r: "RangeFrame") -> Self:
         self.__dict__["r"] = r
 
-    def __setattr__(self, key, value) -> None:
+    def __setattr__(
+        self,
+        key: str,
+        value: Any,
+    ) -> None:
         if key not in self.r:
             self.r.insert(self.r.shape[-1], key, value)
         else:
@@ -26,7 +31,7 @@ class ColUpdater:
 
 
 class RangeFrame(pd.DataFrame):
-    """Class for range based operations"""
+    """Class for range based operations."""
 
     @cached_property
     def _required_columns(self) -> Iterable[str]:
@@ -40,20 +45,12 @@ class RangeFrame(pd.DataFrame):
             msg = f"Missing required columns: {missing_columns}"
             raise ValueError(msg)
 
-    def __str__(
-        self, max_col_width: int | None = None, max_total_width: int | None = None
-    ) -> str:
+    def __str__(self, max_col_width: int | None = None, max_total_width: int | None = None) -> str:
         """Return string representation."""
-        return tostring(
-            self, max_col_width=max_col_width, max_total_width=max_total_width
-        )
+        return tostring(self, max_col_width=max_col_width, max_total_width=max_total_width)
 
-    def __repr__(
-        self, max_col_width: int | None = None, max_total_width: int | None = None
-    ) -> str:
-        return self.__str__(
-            max_col_width=max_col_width, max_total_width=max_total_width
-        )
+    def __repr__(self, max_col_width: int | None = None, max_total_width: int | None = None) -> str:
+        return self.__str__(max_col_width=max_col_width, max_total_width=max_total_width)
 
     @property
     def col(self) -> "ColUpdater":
@@ -63,6 +60,7 @@ class RangeFrame(pd.DataFrame):
         -------
 
         Examples
+        --------
         >>> gr = RangeFrame({"Start": [0, 1], "End": [2, 3]})
         >>> gr.col.Frame = ["Hi", "There"]
         >>> gr
@@ -91,7 +89,6 @@ class RangeFrame(pd.DataFrame):
            1000        3  words
         RangeFrame with 2 rows and 3 columns.
         """
-
         return ColUpdater(self)
 
     def overlap(
@@ -101,8 +98,7 @@ class RangeFrame(pd.DataFrame):
         by: str | list[str] | None = None,
         **_,
     ) -> "RangeFrame":
-        """
-        Find intervals in self overlapping other..
+        """Find intervals in self overlapping other..
 
         Parameters
         ----------
@@ -180,7 +176,7 @@ class RangeFrame(pd.DataFrame):
 
     def apply_single(
         self,
-        function,
+        function: callable[["RangeFrame"], "RangeFrame"],
         by: str | list[str] | None = None,
         **kwargs,
     ) -> "RangeFrame":
@@ -188,7 +184,13 @@ class RangeFrame(pd.DataFrame):
             return RangeFrame(function(self, **kwargs))
         return self.groupby(by).apply(function, by=by, **kwargs).reset_index(drop=True)
 
-    def apply_pair(self, other, function, by, **kwargs) -> "RangeFrame":
+    def apply_pair(
+        self,
+        other: "RangeFrame",
+        function: callable[["RangeFrame", "RangeFrame"], "RangeFrame"],
+        by: VALID_BY_TYPES = None,
+        **kwargs,
+    ) -> "RangeFrame":
         if by is None:
             return RangeFrame(function(self, other, **kwargs))
 
@@ -230,5 +232,3 @@ class RangeFrame(pd.DataFrame):
     #     outer.col[TEMP_TYPE_COL] = "outer"
     #     inner.col[TEMP_TYPE_COL] = "inner"
     #     inner.merge()
-
-

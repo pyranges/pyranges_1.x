@@ -28,9 +28,7 @@ def gr():
 
 @pytest.fixture
 def gr2():
-    return pr.PyRanges(
-        chromosomes="chr1", starts=[11, 11, 20, 20, 50], ends=[16, 20, 21, 22, 100]
-    )
+    return pr.PyRanges(chromosomes="chr1", starts=[11, 11, 20, 20, 50], ends=[16, 20, 21, 22, 100])
 
 
 @pytest.fixture
@@ -72,9 +70,7 @@ def result_k_nearest_different2():
     return df
 
 
-def test_k_nearest_different(
-    result_k_nearest_different, result_k_nearest_different2, gr, gr2
-):
+def test_k_nearest_different(result_k_nearest_different, result_k_nearest_different2, gr, gr2):
     k = [3, 2, 1]
     r = gr.k_nearest(gr2, ties="different", k=k).df
 
@@ -134,9 +130,7 @@ def result_k_nearest_first2():
     return df
 
 
-def test_k_nearest_first(
-    result_k_nearest_first, result_k_nearest_first2, gr, gr2
-):  # result_k_nearest_first,
+def test_k_nearest_first(result_k_nearest_first, result_k_nearest_first2, gr, gr2):  # result_k_nearest_first,
     print(gr)
     print(gr2)
     k = [3, 2, 1]
@@ -193,9 +187,7 @@ def result_k_nearest_last2():
     return df
 
 
-def test_k_nearest_last(
-    result_k_nearest_last, result_k_nearest_last2, gr, gr2
-):  # result_k_nearest_last,
+def test_k_nearest_last(result_k_nearest_last, result_k_nearest_last2, gr, gr2):  # result_k_nearest_last,
     # print(gr)
     # print(gr2)
     k = [3, 2, 1]

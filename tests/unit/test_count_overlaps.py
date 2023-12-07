@@ -1,4 +1,3 @@
-
 import pyranges as pr
 from tests.helpers import assert_df_equal
 
@@ -19,12 +18,7 @@ grs = {n: pr.from_string(s) for n, s in zip(["a", "b", "c"], [a, b, c])}
 unstranded_grs = {n: gr.remove_strand() for n, gr in grs.items()}
 
 features = pr.PyRanges(
-    {
-        "Chromosome": ["chr1"] * 4,
-        "Start": [0, 10, 20, 30],
-        "End": [10, 20, 30, 40],
-        "Strand": ["+", "+", "+", "-"]
-    }
+    {"Chromosome": ["chr1"] * 4, "Start": [0, 10, 20, 30], "End": [10, 20, 30, 40], "Strand": ["+", "+", "+", "-"]}
 )
 unstranded_features = features.remove_strand()
 

@@ -1,33 +1,32 @@
-from __future__ import print_function
-
-TOSTRING_CONSOLE_WIDTH = None
-
+import importlib.metadata
 import sys
-from typing import Dict, Iterable, Optional, Tuple, Union
+from collections.abc import Iterable
 
 import numpy as np
 import pandas as pd
-import pkg_resources
 from pandas import Series
 
 import pyranges as pr
-import pyranges.genomicfeatures
-import pyranges.names
-from pyranges import data, statistics
+import pyranges.names as names
+from pyranges import genomicfeatures, statistics
 from pyranges.example_data import ExampleData
 from pyranges.get_fasta import get_fasta, get_sequence, get_transcript_sequence
 from pyranges.helpers import get_key_from_df, single_value_key
-from pyranges.methods.concat import concat
 from pyranges.multioverlap import count_overlaps
 from pyranges.pyranges_main import PyRanges
-
-gf = genomicfeatures
-RangeFrame = pyranges.range_frame.RangeFrame
+from pyranges.range_frame import RangeFrame
 from pyranges.readers import read_bam, read_bed, read_bigwig, read_gff3, read_gtf  # NOQA: F401
 
-__version__ = pkg_resources.get_distribution("pyranges").version
+RangeFrame = RangeFrame
 
-data = ExampleData()
+gf = genomicfeatures
+
+__version__ = importlib.metadata.version("pyranges")
+
+
+TOSTRING_CONSOLE_WIDTH = None
+
+example_data = ExampleData()
 stats = statistics
 get_fasta = get_fasta
 get_sequence = get_sequence
@@ -35,12 +34,11 @@ get_transcript_sequence = get_transcript_sequence
 
 read_gff = read_gtf
 
-Chromsizes = Union[Dict[str, int], Dict[Tuple[str, str], int]]
+Chromsizes = dict[str, int] | dict[tuple[str, str], int]
 
 
 def concat(grs: Iterable["PyRanges"], *args, **kwargs) -> "PyRanges":
-    """
-    Concatenate PyRanges.
+    """Concatenate PyRanges.
 
     Parameters
     ----------
@@ -50,10 +48,10 @@ def concat(grs: Iterable["PyRanges"], *args, **kwargs) -> "PyRanges":
     -------
     pyranges.PyRanges
 
-    Examples:
-    ---------
-    >>> gr1 = pr.data.f2
-    >>> gr2 = pr.data.f1
+    Examples
+    --------
+    >>> gr1 = pr.example_data.f2
+    >>> gr2 = pr.example_data.f1
     >>> pr.concat([gr1, gr2])
     Chromosome      Start      End  Name         Score  Strand
     category        int64    int64  object       int64  category
@@ -109,9 +107,7 @@ def empty(
     return pr.PyRanges(empty_df(with_strand=with_strand, columns=columns, dtype=dtype))
 
 
-def from_dfs(
-    dfs: Union[Dict[str, pd.DataFrame], Dict[Tuple[str, str], pd.DataFrame]]
-) -> "PyRanges":
+def from_dfs(dfs: dict[str, pd.DataFrame] | dict[tuple[str, str], pd.DataFrame]) -> "PyRanges":
     df: pd.DataFrame
     empty_removed = {k: v.copy() for k, v in dfs.items() if not v.empty}
 
@@ -126,9 +122,7 @@ def from_dfs(
             _strand_valid = _strand_valid and (_key[1] in ["+", "-"])
 
         if _strand_valid and not _key_same:
-            raise ValueError(
-                f"All keys must be the same, but df has {_key} and dict had {key}."
-            )
+            raise ValueError(f"All keys must be the same, but df has {_key} and dict had {key}.")
 
     if not _strand_valid:
         df = pd.concat(empty_removed.values()).reset_index(drop=True)
@@ -154,7 +148,6 @@ def from_string(s: str) -> "PyRanges":
 
     Examples
     --------
-
     >>> s = '''Chromosome      Start        End Strand
     ... chr1  246719402  246719502      +
     ... chr5   15400908   15401008      +
@@ -174,7 +167,6 @@ def from_string(s: str) -> "PyRanges":
     PyRanges with 5 rows and 4 columns.
     Contains 4 chromosomes and 2 strands.
     """
-
     from io import StringIO
 
     df = pd.read_csv(StringIO(s), sep=r"\s+", index_col=None)
@@ -185,10 +177,10 @@ def from_string(s: str) -> "PyRanges":
 def random(
     n: int = 1000,
     length: int = 100,
-    chromsizes: Optional[Chromsizes] = None,
+    chromsizes: Chromsizes | None = None,
     strand: bool = True,
-    seed: Optional[int] = None,
-):
+    seed: int | None = None,
+) -> "pr.PyRanges":
     """Return PyRanges with random intervals.
 
     Parameters
@@ -234,19 +226,15 @@ def random(
     rng = np.random.default_rng(seed=seed)
 
     if chromsizes is None:
-        df = data.chromsizes
+        df = example_data.chromsizes
     elif isinstance(chromsizes, dict):
-        df = pd.DataFrame(
-            {names.CHROM_COL: list(chromsizes.keys()), "End": list(chromsizes.values())}
-        )
+        df = pd.DataFrame({names.CHROM_COL: list(chromsizes.keys()), "End": list(chromsizes.values())})
     else:
         df = chromsizes
 
     p = df.End / df.End.sum()
 
-    n_per_chrom = (
-        pd.Series(rng.choice(df.index, size=n, p=p)).value_counts(sort=False).to_frame()
-    )
+    n_per_chrom = pd.Series(rng.choice(df.index, size=n, p=p)).value_counts(sort=False).to_frame()
     n_per_chrom.insert(1, names.CHROM_COL, df.loc[n_per_chrom.index].Chromosome)
     n_per_chrom.columns = pd.Index("Count Chromosome".split())
 
@@ -274,7 +262,7 @@ pyranges.statistics : statistcal methods for genomics."""
 def version_info() -> None:
     import importlib
 
-    def update_version_info(_version_info, library) -> None:
+    def update_version_info(_version_info: dict[str, str], library: str) -> None:
         if importlib.util.find_spec(library):  # type: ignore
             version = importlib.import_module(library).__version__
         else:

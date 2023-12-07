@@ -1,4 +1,5 @@
-from typing import Iterable, Literal
+from collections.abc import Iterable
+from typing import Literal
 
 # from typing import Literal, get_args
 #
@@ -21,6 +22,7 @@ FRAME_COL = "Frame"
 
 FORWARD_STRAND = "+"
 REVERSE_STRAND = "-"
+VALID_GENOMIC_STRAND_TYPE = Literal["+", "-"]
 VALID_GENOMIC_STRAND_INFO = [FORWARD_STRAND, REVERSE_STRAND]
 
 VALID_BY_OPTIONS = str | list[str] | None
@@ -33,9 +35,7 @@ STRAND_BEHAVIOR_AUTO = "auto"
 STRAND_BEHAVIOR_SAME = "same"
 STRAND_BEHAVIOR_OPPOSITE = "opposite"
 STRAND_BEHAVIOR_IGNORE = "ignore"
-VALID_STRAND_BEHAVIOR_TYPE = (
-    Literal["auto"] | Literal["same"] | Literal["opposite"] | Literal["ignore"]
-)
+VALID_STRAND_BEHAVIOR_TYPE = Literal["auto"] | Literal["same"] | Literal["opposite"] | Literal["ignore"]
 VALID_STRAND_BEHAVIOR_OPTIONS = [
     STRAND_BEHAVIOR_SAME,
     STRAND_BEHAVIOR_OPPOSITE,
@@ -53,9 +53,7 @@ JOIN_OUTER = "outer"
 JOIN_INNER = "inner"
 JOIN_RIGHT = "right"
 JOIN_LEFT = "left"
-VALID_JOIN_TYPE = (
-    Literal["inner"] | Literal["left"] | Literal["outer"] | Literal["right"]
-)
+VALID_JOIN_TYPE = Literal["inner"] | Literal["left"] | Literal["outer"] | Literal["right"]
 VALID_JOIN_OPTIONS = [JOIN_INNER, JOIN_LEFT, JOIN_OUTER, JOIN_RIGHT]
 
 NEAREST_ANY_DIRECTION = "any"
@@ -71,11 +69,15 @@ VALID_NEAREST_OPTIONS = [
 TEMP_INDEX_COL = "__temp_index__"
 TEMP_TYPE_COL = "__temp_type__"
 TEMP_START_COL = "__temp_start__"
+TEMP_END_COL = "__temp_end__"
 TEMP_STRAND_COL = "__temp_strand__"
 TEMP_END_COL = "__temp_end__"
 TEMP_NAME_COL = "__temp_name__"
 TEMP_CUMSUM_COL = "__temp_cumsum__"
 TEMP_NUM_COL = "__temp_num__"
+TEMP_ID_COL = "__temp_id__"
+TEMP_MIN_COL = "__temp_min__"
+TEMP_MAX_COL = "__temp_max__"
 TEMP_CLUSTER_COL = "__temp_cluster__"
 TEMP_LENGTH_COL = "__temp_length__"
 TEMP_START_SLACK_COL = "__temp_start_slack__"

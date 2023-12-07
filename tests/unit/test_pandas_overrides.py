@@ -32,7 +32,7 @@ def gr():
             "Start": [0, 10],
             "End": [40, 20],
             "Gene": ["DonkeyKong", "Mario"],
-            "Val": [50, 30]
+            "Val": [50, 30],
         }
     )
 

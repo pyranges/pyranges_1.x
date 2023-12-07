@@ -22,9 +22,7 @@ datatype = st.sampled_from([pd.Series, np.array, list])
 
 feature_data = st.sampled_from(["ensembl_gtf", "gencode_gtf", "ucsc_bed"])
 
-chromosomes = st.sampled_from(
-    ["chr{}".format(str(e)) for e in list(range(1, 23)) + "X Y M".split()]
-)
+chromosomes = st.sampled_from(["chr{}".format(str(e)) for e in list(range(1, 23)) + "X Y M".split()])
 chromosomes_small = st.sampled_from(["chr1"])
 cs = st.one_of(chromosomes, chromosomes_small)
 
@@ -247,7 +245,7 @@ def dfs_min_single_chromosome(draw):
 def genomicfeature(draw):
     dataset_name = draw(feature_data)
     print("dataset name " * 5, dataset_name)
-    dataset = getattr(pr.data, dataset_name)()
+    dataset = getattr(pr.example_data, dataset_name)()
     dataset = dataset[dataset.Feature.isin(["gene", "transcript", "exon"])]
 
     # subsetter = draw(arrays(np.bool, shape=len(dataset)))

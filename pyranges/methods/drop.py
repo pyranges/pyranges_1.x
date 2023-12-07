@@ -9,13 +9,9 @@ def _drop(self, drop=None, like=None):
 
     if drop is not None:
         for i in "Chromosome Start End".split():
-            assert i not in drop, "Cannot drop {}".format(i)
+            assert i not in drop, f"Cannot drop {i}"
 
-    want_to_drop_strand = (
-        isinstance(drop, str)
-        and drop == "Strand"
-        or (isinstance(drop, list) and "Strand" in drop)
-    )
+    want_to_drop_strand = isinstance(drop, str) and drop == "Strand" or (isinstance(drop, list) and "Strand" in drop)
     if not self.strand_values_valid or want_to_drop_strand:
         always_keep = "Chromosome Start End".split()
     else:

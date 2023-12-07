@@ -1,4 +1,3 @@
-
 rmds = [
     "index.Rmd",
     "creating.Rmd",

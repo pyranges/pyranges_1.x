@@ -1,13 +1,27 @@
-def _spliced_subseq(scdf, **kwargs):
+from typing import TYPE_CHECKING
+
+from pyranges.names import END_COL, REVERSE_STRAND, START_COL, TEMP_CUMSUM_COL, TEMP_INDEX_COL, TEMP_LENGTH_COL
+
+if TYPE_CHECKING:
+    import pyranges as pr
+
+
+TOTAL_EXON_LENGTH_COL = "__temp_total_exon_len__"
+
+
+def _spliced_subseq(
+    scdf: "pr.PyRanges",
+    **kwargs,
+) -> "pr.PyRanges":
     if scdf.empty:
-        return None
+        return scdf
 
     scdf = scdf.copy()
     orig_order = scdf.index.copy()
 
-    by = kwargs.get("by") if kwargs.get("by") else "__i__"
-    if type(by) is not list:
-        by = [by]
+    by_argument_given = kwargs.get("by")
+    _by = kwargs.get("by", TEMP_INDEX_COL)
+    by = [_by] if isinstance(_by, str) else (_by or [])
 
     strand = kwargs.get("strand")
 
@@ -18,83 +32,71 @@ def _spliced_subseq(scdf, **kwargs):
     #     which updates it to '-' or '+' before calling _spliced_subseq, or
     #  2. it was called with strand=None and self is stranded
 
-    if strand:
-        assert "Strand" in scdf, "Cannot have strand=True on unstranded pyranges!"
+    if strand and not scdf.strand_values_valid:
+        msg = "Cannot have strand=True on unstranded pyranges!"
+        raise AssertionError(msg)
 
-    scdf.insert(scdf.shape[1], "__length__", scdf.End - scdf.Start)
-    scdf.insert(scdf.shape[1], "__i__", scdf.index)
+    scdf.insert(scdf.shape[1], TEMP_LENGTH_COL, scdf.End - scdf.Start)
+    scdf.insert(scdf.shape[1], TEMP_INDEX_COL, scdf.index)
 
     g = scdf.groupby(by, dropna=False)
-    scdf.insert(scdf.shape[1], "__cumsum__", g.__length__.cumsum())
+    scdf.insert(scdf.shape[1], TEMP_CUMSUM_COL, g[TEMP_LENGTH_COL].cumsum())
 
     start = kwargs.get("start") if kwargs.get("start") else 0
-    end = kwargs.get("end") if kwargs.get("end") else scdf.__cumsum__.max()
+    end = kwargs.get("end") if kwargs.get("end") else scdf[TEMP_CUMSUM_COL].max()
 
-    minstart_idx = g.__i__.first()
+    minstart_idx = g[TEMP_INDEX_COL].first()
 
     if start < 0 or (end is not None and end < 0):
         # len_per_transc is total sum of exon length per transcript
-        len_per_transc = scdf.loc[g.__i__.last(), by + ["__cumsum__"]].rename(
-            columns={"__cumsum__": "__totexonlen__"}
+        len_per_transc = scdf.loc[g[TEMP_INDEX_COL].last(), by + [TEMP_CUMSUM_COL]].rename(
+            columns={TEMP_CUMSUM_COL: TOTAL_EXON_LENGTH_COL}
         )
 
         # exp_len_per_transc has same rows of scdf with total sum of exon length
         # had to add bits to keep the order of rows right, or merge would destroy it
-        if kwargs.get("by"):
+        if by_argument_given:
             exp_len_per_transc = (
-                scdf.loc[:, by + ["__i__"]]
+                scdf.loc[:, by + [TEMP_INDEX_COL]]
                 .merge(len_per_transc, on=by)
-                .set_index("__i__")
+                .set_index(TEMP_INDEX_COL)
                 .loc[scdf.index]
             )
         else:
-            exp_len_per_transc = (
-                scdf.loc[:, by]
-                .merge(len_per_transc, on=by)
-                .set_index("__i__")
-                .loc[scdf.index]
-            )
+            exp_len_per_transc = scdf.loc[:, by].merge(len_per_transc, on=by).set_index(TEMP_INDEX_COL).loc[scdf.index]
 
         if start < 0:
-            start = exp_len_per_transc["__totexonlen__"] + start
+            start = exp_len_per_transc[TOTAL_EXON_LENGTH_COL] + start
 
         if end is not None and end < 0:
-            end = exp_len_per_transc["__totexonlen__"] + end
+            end = exp_len_per_transc[TOTAL_EXON_LENGTH_COL] + end
 
-    cs_start = g.__cumsum__.shift(1, fill_value=0)
+    cs_start = g[TEMP_CUMSUM_COL].shift(1, fill_value=0)
     cs_start.loc[minstart_idx] = 0
 
-    cs_end = scdf["__cumsum__"]
+    cs_end = scdf[TEMP_CUMSUM_COL]
 
     # NOTE
     # here below, start is a scalar if originally provided > 0, or a Series if < 0
     #             end is a scalar if originally None or provided >0, or a Series if provided < 0
-    if strand == "-":  # and use_strand:
+    if strand == REVERSE_STRAND:  # and use_strand:
         start_adjustments = start - cs_start
         adjust_start = start_adjustments > 0
-        scdf.loc[adjust_start, "End"] -= start_adjustments[adjust_start].astype(
-            scdf.End.dtype
-        )
+        scdf.loc[adjust_start, END_COL] -= start_adjustments[adjust_start].astype(scdf[END_COL].dtype)
 
         end_adjustments = cs_end - end
         adjust_end = end_adjustments > 0
-        scdf.loc[adjust_end, "Start"] += end_adjustments[adjust_end].astype(
-            scdf.Start.dtype
-        )
+        scdf.loc[adjust_end, START_COL] += end_adjustments[adjust_end].astype(scdf[START_COL].dtype)
     else:
         start_adjustments = start - cs_start
         adjust_start = start_adjustments > 0
-        scdf.loc[adjust_start, "Start"] += start_adjustments[adjust_start].astype(
-            scdf.Start.dtype
-        )
+        scdf.loc[adjust_start, START_COL] += start_adjustments[adjust_start].astype(scdf[START_COL].dtype)
 
         end_adjustments = cs_end - end
         adjust_end = end_adjustments > 0
-        scdf.loc[adjust_end, "End"] -= end_adjustments[adjust_end].astype(
-            scdf.End.dtype
-        )
+        scdf.loc[adjust_end, END_COL] -= end_adjustments[adjust_end].astype(scdf[END_COL].dtype)
 
     scdf = scdf.loc[orig_order]
-    scdf = scdf[(scdf.Start < scdf.End)]
+    scdf = scdf[(scdf[START_COL] < scdf[END_COL])]
 
-    return scdf.drop(["__i__", "__length__", "__cumsum__"], axis=1)
+    return scdf.drop([TEMP_INDEX_COL, TEMP_LENGTH_COL, TEMP_CUMSUM_COL], axis=1)

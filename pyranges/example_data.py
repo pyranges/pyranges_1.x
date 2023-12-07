@@ -2,13 +2,11 @@
 
 See Also
 --------
-
 pyranges.random : generate random PyRanges
 
 Examples
 --------
-
->>> pr.data.f1
+>>> pr.example_data.f1
 Chromosome      Start      End  Name         Score  Strand
 category        int64    int64  object       int64  category
 ------------  -------  -------  ---------  -------  ----------
@@ -17,6 +15,7 @@ chr1                5        7  interval2        0  -
 chr1                8        9  interval3        0  +
 PyRanges with 3 rows and 6 columns.
 Contains 1 chromosomes and 2 strands.
+
 """
 import tempfile
 from functools import cached_property
@@ -66,11 +65,7 @@ class ExampleData:
         """
         if cls._files:
             return cls._files
-        cls._files = {
-            f.name: f
-            for f in files("pyranges").joinpath("data").iterdir()
-            if "__" not in f.name
-        }
+        cls._files = {f.name: f for f in files("pyranges").joinpath("data").iterdir() if "__" not in f.name}
         return cls._files
 
     @staticmethod
@@ -157,7 +152,6 @@ chrM	0	16571"""
     @cached_property
     def ensembl_gtf(self) -> "pr.PyRanges":
         """Example gtf file from Ensembl."""
-
         contents = """#!genome-build GRCh38.p10
 #!genome-version GRCh38
 #!genome-date 2013-12
@@ -202,18 +196,17 @@ chr1	6	7	b	0	-"""
 
 
 def get_example_path(basename) -> Path:
-    full_path = pkg_resources.resource_filename("pyranges", "data/{}".format(basename))
+    full_path = pkg_resources.resource_filename("pyranges", f"data/{basename}")
 
     if full_path.endswith(".bam"):
         # hack to load index too
-        pkg_resources.resource_filename("pyranges", "data/{}.bai".format(basename))
+        pkg_resources.resource_filename("pyranges", f"data/{basename}.bai")
 
     return Path(full_path)
 
 
 def aorta() -> "pr.PyRanges":
-    """
-    >>> # +--------------+-----------+-----------+------------+-----------+--------------+
+    """>>> # +--------------+-----------+-----------+------------+-----------+--------------+
     >>> # | Chromosome   | Start     | End       | Name       | Score     | Strand       |
     >>> # | (category)   | (int64)   | (int64)   | (object)   | (int64)   | (category)   |
     >>> # |--------------+-----------+-----------+------------+-----------+--------------|
@@ -230,15 +223,13 @@ def aorta() -> "pr.PyRanges":
     >>> # Stranded PyRanges object has 11 rows and 6 columns from 1 chromosomes.
     >>> # For printing, the PyRanges was sorted on Chromosome and Strand.
     """
-
     full_path = get_example_path("aorta.bed")
 
     return pr.read_bed(full_path)
 
 
 def aorta2() -> "pr.PyRanges":
-    """
-    >>> # +--------------+-----------+-----------+------------+-----------+--------------+
+    """>>> # +--------------+-----------+-----------+------------+-----------+--------------+
     >>> # | Chromosome   | Start     | End       | Name       | Score     | Strand       |
     >>> # | (category)   | (int64)   | (int64)   | (object)   | (int64)   | (category)   |
     >>> # |--------------+-----------+-----------+------------+-----------+--------------|
@@ -255,7 +246,6 @@ def aorta2() -> "pr.PyRanges":
     >>> # Stranded PyRanges object has 10 rows and 6 columns from 1 chromosomes.
     >>> # For printing, the PyRanges was sorted on Chromosome and Strand.
     """
-
     full_path = get_example_path("aorta2.bed")
 
     return pr.read_bed(full_path)
@@ -268,8 +258,7 @@ def bw() -> "pr.PyRanges":
 
 
 def chipseq() -> "pr.PyRanges":
-    """
-    >>> # +--------------+-----------+-----------+------------+-----------+--------------+
+    """>>> # +--------------+-----------+-----------+------------+-----------+--------------+
     >>> # | Chromosome   | Start     | End       | Name       | Score     | Strand       |
     >>> # | (category)   | (int64)   | (int64)   | (object)   | (int64)   | (category)   |
     >>> # |--------------+-----------+-----------+------------+-----------+--------------|
@@ -286,15 +275,13 @@ def chipseq() -> "pr.PyRanges":
     >>> # Stranded PyRanges object has 10,000 rows and 6 columns from 24 chromosomes.
     >>> # For printing, the PyRanges was sorted on Chromosome and Strand.
     """
-
     full_path = get_example_path("chipseq.bed")
 
     return pr.read_bed(full_path)
 
 
 def chipseq_background() -> "pr.PyRanges":
-    """
-    >>> # +--------------+-----------+-----------+------------+-----------+--------------+
+    """>>> # +--------------+-----------+-----------+------------+-----------+--------------+
     >>> # | Chromosome   | Start     | End       | Name       | Score     | Strand       |
     >>> # | (category)   | (int64)   | (int64)   | (object)   | (int64)   | (category)   |
     >>> # |--------------+-----------+-----------+------------+-----------+--------------|
@@ -311,15 +298,13 @@ def chipseq_background() -> "pr.PyRanges":
     >>> # Stranded PyRanges object has 10,000 rows and 6 columns from 25 chromosomes.
     >>> # For printing, the PyRanges was sorted on Chromosome and Strand.
     """
-
     full_path = get_example_path("chipseq_background.bed")
 
     return pr.read_bed(full_path)
 
 
 def chromsizes() -> "pr.PyRanges":
-    """
-    >>> # +--------------+-----------+-----------+
+    """>>> # +--------------+-----------+-----------+
     >>> # | Chromosome   | Start     | End       |
     >>> # | (category)   | (int64)   | (int64)   |
     >>> # |--------------+-----------+-----------|
@@ -336,15 +321,13 @@ def chromsizes() -> "pr.PyRanges":
     >>> # Unstranded PyRanges object has 25 rows and 3 columns from 25 chromosomes.
     >>> # For printing, the PyRanges was sorted on Chromosome.
     """
-
     full_path = get_example_path("chromsizes.bed")
 
     return pr.read_bed(full_path)
 
 
 def control_bam() -> "pr.PyRanges":
-    """
-    >>> # +--------------+-----------+-----------+--------------+------------+
+    """>>> # +--------------+-----------+-----------+--------------+------------+
     >>> # | Chromosome   | Start     | End       | Strand       | Flag       |
     >>> # | (category)   | (int64)   | (int64)   | (category)   | (uint16)   |
     >>> # |--------------+-----------+-----------+--------------+------------|
@@ -361,15 +344,13 @@ def control_bam() -> "pr.PyRanges":
     >>> # Stranded PyRanges object has 10,000 rows and 5 columns from 25 chromosomes.
     >>> # For printing, the PyRanges was sorted on Chromosome and Strand.
     """
-
     full_path = get_example_path("control.bam")
 
     return pr.read_bam(full_path)
 
 
 def cpg() -> "pr.PyRanges":
-    """
-    >>> # +--------------+-----------+-----------+-----------+
+    """>>> # +--------------+-----------+-----------+-----------+
     >>> # | Chromosome   | Start     | End       | CpG       |
     >>> # | (category)   | (int64)   | (int64)   | (int64)   |
     >>> # |--------------+-----------+-----------+-----------|
@@ -386,19 +367,15 @@ def cpg() -> "pr.PyRanges":
     >>> # Unstranded PyRanges object has 1,077 rows and 4 columns from 2 chromosomes.
     >>> # For printing, the PyRanges was sorted on Chromosome.
     """
-
     full_path = get_example_path("cpg.bed")
 
-    df = pd.read_csv(
-        full_path, sep="\t", header=None, names="Chromosome Start End CpG".split()
-    )
+    df = pd.read_csv(full_path, sep="\t", header=None, names="Chromosome Start End CpG".split())
 
     return pr.PyRanges(df)
 
 
 def ensembl_gtf() -> "pr.PyRanges":
-    """
-    >>> # +--------------+------------+--------------+-----------+-----------+------------+--------------+------------+------------------------------------+-------+
+    """>>> # +--------------+------------+--------------+-----------+-----------+------------+--------------+------------+------------------------------------+-------+
     >>> # | Chromosome   | Source     | Feature      | Start     | End       | Score      | Strand       | Frame      | gene_biotype                       | +19   |
     >>> # | (category)   | (object)   | (category)   | (int64)   | (int64)   | (object)   | (category)   | (object)   | (object)                           | ...   |
     >>> # |--------------+------------+--------------+-----------+-----------+------------+--------------+------------+------------------------------------+-------|
@@ -414,17 +391,15 @@ def ensembl_gtf() -> "pr.PyRanges":
     >>> # +--------------+------------+--------------+-----------+-----------+------------+--------------+------------+------------------------------------+-------+
     >>> # Stranded PyRanges object has 2,446 rows and 28 columns from 1 chromosomes.
     >>> # For printing, the PyRanges was sorted on Chromosome and Strand.
-    >>> # 19 hidden columns: gene_id, gene_name, gene_source, gene_version, tag, transcript_biotype, transcript_id, transcript_name, transcript_source, transcript_support_level, ... (+ 9 more.)
+    >>> # 19 hidden columns: gene_id, gene_name, gene_source, gene_version, tag, transcript_biotype, transcript_id, transcript_name, transcript_source, transcript_support_level, ... (+ 9 more.).
     """
-
     full_path = get_example_path("ensembl_human.gtf.gz")
 
     return pr.read_gtf(full_path)
 
 
 def exons() -> "pr.PyRanges":
-    """
-    >>> # +--------------+-----------+-----------+----------------------------------------+-----------+--------------+
+    """>>> # +--------------+-----------+-----------+----------------------------------------+-----------+--------------+
     >>> # | Chromosome   | Start     | End       | Name                                   | Score     | Strand       |
     >>> # | (category)   | (int64)   | (int64)   | (object)                               | (int64)   | (category)   |
     >>> # |--------------+-----------+-----------+----------------------------------------+-----------+--------------|
@@ -441,15 +416,13 @@ def exons() -> "pr.PyRanges":
     >>> # Stranded PyRanges object has 1,000 rows and 6 columns from 2 chromosomes.
     >>> # For printing, the PyRanges was sorted on Chromosome and Strand.
     """
-
     full_path = get_example_path("exons.bed")
 
     return pr.read_bed(full_path)
 
 
 def f1() -> "pr.PyRanges":
-    """
-    >>> # +--------------+-----------+-----------+------------+-----------+--------------+
+    """>>> # +--------------+-----------+-----------+------------+-----------+--------------+
     >>> # | Chromosome   |     Start |       End | Name       |     Score | Strand       |
     >>> # | (category)   |   (int64) |   (int64) | (object)   |   (int64) | (category)   |
     >>> # |--------------+-----------+-----------+------------+-----------+--------------|
@@ -460,15 +433,13 @@ def f1() -> "pr.PyRanges":
     >>> # Stranded PyRanges object has 3 rows and 6 columns from 1 chromosomes.
     >>> # For printing, the PyRanges was sorted on Chromosome and Strand.
     """
-
     full_path = get_example_path("f1.bed")
 
     return pr.read_bed(full_path)
 
 
 def f2() -> "pr.PyRanges":
-    """
-    >>> # +--------------+-----------+-----------+------------+-----------+--------------+
+    """>>> # +--------------+-----------+-----------+------------+-----------+--------------+
     >>> # | Chromosome   |     Start |       End | Name       |     Score | Strand       |
     >>> # | (category)   |   (int64) |   (int64) | (object)   |   (int64) | (category)   |
     >>> # |--------------+-----------+-----------+------------+-----------+--------------|
@@ -478,15 +449,13 @@ def f2() -> "pr.PyRanges":
     >>> # Stranded PyRanges object has 2 rows and 6 columns from 1 chromosomes.
     >>> # For printing, the PyRanges was sorted on Chromosome and Strand.
     """
-
     full_path = get_example_path("f2.bed")
 
     return pr.read_bed(full_path)
 
 
 def gencode_gtf() -> "pr.PyRanges":
-    """
-    >>> # +--------------+------------+--------------+-----------+-----------+------------+--------------+------------+-------------------+-------+
+    """>>> # +--------------+------------+--------------+-----------+-----------+------------+--------------+------------+-------------------+-------+
     >>> # | Chromosome   | Source     | Feature      | Start     | End       | Score      | Strand       | Frame      | gene_id           | +15   |
     >>> # | (category)   | (object)   | (category)   | (int64)   | (int64)   | (object)   | (category)   | (object)   | (object)          | ...   |
     >>> # |--------------+------------+--------------+-----------+-----------+------------+--------------+------------+-------------------+-------|
@@ -502,17 +471,15 @@ def gencode_gtf() -> "pr.PyRanges":
     >>> # +--------------+------------+--------------+-----------+-----------+------------+--------------+------------+-------------------+-------+
     >>> # Stranded PyRanges object has 4,995 rows and 24 columns from 1 chromosomes.
     >>> # For printing, the PyRanges was sorted on Chromosome and Strand.
-    >>> # 15 hidden columns: gene_type, gene_name, level, havana_gene, transcript_id, transcript_type, transcript_name, transcript_support_level, tag, ... (+ 6 more.)
+    >>> # 15 hidden columns: gene_type, gene_name, level, havana_gene, transcript_id, transcript_type, transcript_name, transcript_support_level, tag, ... (+ 6 more.).
     """
-
     full_path = get_example_path("gencode_human.gtf.gz")
 
     return pr.read_gtf(full_path)
 
 
 def ucsc_bed() -> "pr.PyRanges":
-    """
-    >>> # +--------------+-----------+-----------+------------+------------+-----------------+--------------+---------------+-------------------+
+    """>>> # +--------------+-----------+-----------+------------+------------+-----------------+--------------+---------------+-------------------+
     >>> # | Chromosome   | Start     | End       | Feature    | gene_id    | transcript_id   | Strand       | exon_number   | transcript_name   |
     >>> # | (category)   | (int64)   | (int64)   | (object)   | (object)   | (float64)       | (category)   | (float64)     | (object)          |
     >>> # |--------------+-----------+-----------+------------+------------+-----------------+--------------+---------------+-------------------|
@@ -529,7 +496,6 @@ def ucsc_bed() -> "pr.PyRanges":
     >>> # Stranded PyRanges object has 5,519 rows and 9 columns from 30 chromosomes.
     >>> # For printing, the PyRanges was sorted on Chromosome and Strand.
     """
-
     full_path = get_example_path("ucsc_human.bed.gz")
 
     names = "Chromosome Start End Feature gene_id transcript_id Strand exon_number transcript_name".split()

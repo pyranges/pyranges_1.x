@@ -1,7 +1,13 @@
+from typing import TYPE_CHECKING
+
 import numpy as np
+import pandas as pd
+
+if TYPE_CHECKING:
+    from pyranges import RangeFrame
 
 
-def _relative_distance(scdf, ocdf, **kwargs):
+def _relative_distance(scdf: "RangeFrame", ocdf: "RangeFrame", **kwargs) -> pd.Series:
     if scdf.empty or ocdf.empty:
         return np.array([])
 

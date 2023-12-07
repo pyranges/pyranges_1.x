@@ -1,9 +1,9 @@
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from pandas.core.frame import DataFrame
 
-from pyranges.names import CHROM_COL, END_COL
+from pyranges.names import CHROM_COL, END_COL, START_COL
 
 __all__ = ["genome_bounds", "tile_genome", "GenomicFeaturesMethods"]
 
@@ -12,10 +12,10 @@ if TYPE_CHECKING:
 
 
 class GenomicFeaturesMethods:
-
     """Namespace for methods using feature information.
 
-    Accessed through `gr.features`."""
+    Accessed through `gr.features`.
+    """
 
     def __init__(self, pr: "PyRanges") -> None:
         self.pr = pr
@@ -31,9 +31,8 @@ class GenomicFeaturesMethods:
 
         Examples
         --------
-
         >>> import pyranges as pr
-        >>> gr = pr.data.ensembl_gtf.get_with_loc_columns(["Source", "Feature"])
+        >>> gr = pr.example_data.ensembl_gtf.get_with_loc_columns(["Source", "Feature"])
         >>> gr
         Chromosome    Start    End      Strand      Source    Feature
         category      int64    int64    category    object    category
@@ -84,9 +83,8 @@ class GenomicFeaturesMethods:
 
         Examples
         --------
-
         >>> import pyranges as pr
-        >>> gr = pr.data.ensembl_gtf.get_with_loc_columns(["Source", "Feature"])
+        >>> gr = pr.example_data.ensembl_gtf.get_with_loc_columns(["Source", "Feature"])
         >>> gr
         Chromosome    Start    End      Strand      Source    Feature
         category      int64    int64    category    object    category
@@ -112,7 +110,6 @@ class GenomicFeaturesMethods:
         PyRanges with 2 rows and 6 columns.
         Contains 1 chromosomes and 2 strands.
         """
-
         gr = self.pr
 
         if not gr.strand_values_valid:
@@ -147,9 +144,8 @@ class GenomicFeaturesMethods:
 
         Examples
         --------
-
         >>> import pyranges as pr
-        >>> gr = pr.data.ensembl_gtf.get_with_loc_columns(["Feature", "gene_id", "transcript_id"])
+        >>> gr = pr.example_data.ensembl_gtf.get_with_loc_columns(["Feature", "gene_id", "transcript_id"])
         >>> gr = gr[gr["gene_id"] == "ENSG00000223972"]
         >>> gr
           Chromosome    Start      End  Strand      Feature     gene_id          transcript_id
@@ -194,7 +190,6 @@ class GenomicFeaturesMethods:
         PyRanges with 5 rows and 6 columns.
         Contains 1 chromosomes and 1 strands.
         """
-
         gr = self.pr
         if gr.empty:
             return gr
@@ -255,7 +250,7 @@ def _outside_bounds(df: DataFrame, **kwargs) -> DataFrame:
 
 def genome_bounds(
     gr: "PyRanges",
-    chromsizes: Dict[str, int],
+    chromsizes: dict[str, int],
     clip: bool = False,
     only_right: bool = False,
 ) -> "PyRanges":
@@ -263,7 +258,6 @@ def genome_bounds(
 
     Parameters
     ----------
-
     gr : PyRanges
 
         Input intervals
@@ -287,7 +281,6 @@ def genome_bounds(
 
     Examples
     --------
-
     >>> import pyranges as pr
     >>> d = {"Chromosome": [1, 1, 3], "Start": [1, 249250600, 5], "End": [2, 249250640, 7]}
     >>> gr = pr.PyRanges(d)
@@ -335,7 +328,6 @@ def genome_bounds(
     Missing keys: {3}.
     Chromosome col had type: int64 while keys were of type: int
     """
-
     if isinstance(chromsizes, pd.DataFrame):
         chromsizes = {k: v for k, v in zip(chromsizes.Chromosome, chromsizes.End)}
 
@@ -401,14 +393,12 @@ def tile_genome(
 
     See Also
     --------
-
     pyranges.PyRanges.tile : split intervals into adjacent non-overlapping tiles.
 
     Examples
     --------
-
     >>> import pyranges as pr
-    >>> chromsizes = pr.data.chromsizes
+    >>> chromsizes = pr.example_data.chromsizes
     >>> chromsizes
     Chromosome    Start    End
     category      int64    int64
@@ -444,21 +434,15 @@ def tile_genome(
     if isinstance(chromsizes, dict):
         chromsize_dict = chromsizes
         chromosomes, ends = list(chromsizes.keys()), list(chromsizes.values())
-        df = pd.DataFrame({"Chromosome": chromosomes, "Start": 0, "End": ends})
-        chromsizes = pr.PyRanges(df)
+        df = pd.DataFrame({CHROM_COL: chromosomes, START_COL: 0, END_COL: ends})
+        chromsizes = pd.DataFrame(df)
     else:
-        chromsize_dict = dict(
-            zip(chromsizes[CHROM_COL], chromsizes[END_COL], strict=True)
-        )
+        chromsize_dict = dict(zip(chromsizes[CHROM_COL], chromsizes[END_COL], strict=True))
 
     gr = chromsizes.tile(tile_size)
 
     if not tile_last:
-        gr = (
-            gr.groupby(CHROM_COL)
-            .apply(_last_tile, sizes=chromsize_dict)
-            .reset_index(drop=True)
-        )
+        gr = gr.groupby(CHROM_COL).apply(_last_tile, sizes=chromsize_dict).reset_index(drop=True)
 
     return gr
 

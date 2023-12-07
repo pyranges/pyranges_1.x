@@ -42,9 +42,7 @@ def _both_dfs(scdf, ocdf, join_type: VALID_JOIN_TYPE, **kwargs):
         ocdf_missing = ocdf.reindex(missing_indices_other)
         ocdf_missing.index = -np.arange(1, len(ocdf_missing) + 1)
         scdf_missing = scdf.reindex(missing_indices_self)
-        scdf_missing.index = -np.arange(
-            len(ocdf_missing) + 1, len(ocdf_missing) + 1 + len(scdf_missing)
-        )
+        scdf_missing.index = -np.arange(len(ocdf_missing) + 1, len(ocdf_missing) + 1 + len(scdf_missing))
         scdf = pd.concat([scdf_matching, scdf_missing])
         ocdf = pd.concat([ocdf_matcing, ocdf_missing])
     suffixes = ("", kwargs["suffix"]) if kwargs["suffix"] else None

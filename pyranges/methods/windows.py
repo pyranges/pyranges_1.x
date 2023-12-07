@@ -9,10 +9,8 @@ if TYPE_CHECKING:
     from pyranges import RangeFrame
 
 
-def _windows(df, *, window_size: int, **_):
-    idxs, starts, ends = makewindows(
-        df.index.values, df.Start.values, df.End.values, window_size
-    )
+def _windows(df: "RangeFrame", *, window_size: int, **_) -> "RangeFrame":
+    idxs, starts, ends = makewindows(df.index.values, df.Start.values, df.End.values, window_size)
 
     df = df.reindex(idxs)
     df.loc[:, START_COL] = starts
@@ -21,7 +19,7 @@ def _windows(df, *, window_size: int, **_):
     return df
 
 
-def _tiles(df: "RangeFrame", tile_size: int, overlap_column: str | None, **_):
+def _tiles(df: "RangeFrame", tile_size: int, overlap_column: str | None, **_) -> "RangeFrame":
     if overlap_column is not None:
         df = df.copy()
         df.insert(df.shape[1], TEMP_START_COL, df.Start)
@@ -39,9 +37,7 @@ def _tiles(df: "RangeFrame", tile_size: int, overlap_column: str | None, **_):
     df.loc[:, END_COL] = ends
 
     if overlap_column is not None:
-        overlap = np.minimum(df.End, df[TEMP_END_COL]) - np.maximum(
-            df.Start, df[TEMP_START_COL]
-        )
+        overlap = np.minimum(df.End, df[TEMP_END_COL]) - np.maximum(df.Start, df[TEMP_START_COL])
         df.insert(df.shape[1], overlap_column, overlap)
         df = df.drop([TEMP_START_COL, TEMP_END_COL], axis=1)
 

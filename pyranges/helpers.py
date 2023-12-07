@@ -1,9 +1,7 @@
-from typing import List, Tuple, Union
-
 import pandas as pd
 
 
-def get_chromosomes_from_dict(dfs) -> List[str]:
+def get_chromosomes_from_dict(dfs) -> list[str]:
     keys = list(dfs.keys())
     if isinstance(keys[0], tuple):
         chromosomes = [k[0] for k in keys]
@@ -13,7 +11,7 @@ def get_chromosomes_from_dict(dfs) -> List[str]:
     return chromosomes
 
 
-def get_strands_from_dict(dfs) -> Union[List[str], List[Tuple[str, str]]]:
+def get_strands_from_dict(dfs) -> list[str] | list[tuple[str, str]]:
     keys = list(dfs.keys())
     if isinstance(keys[0], tuple):
         strands = [k[1] for k in keys]
@@ -23,7 +21,7 @@ def get_strands_from_dict(dfs) -> Union[List[str], List[Tuple[str, str]]]:
     return strands
 
 
-def get_key_from_df(df: pd.DataFrame) -> Union[str, Tuple[str, str]]:
+def get_key_from_df(df: pd.DataFrame) -> str | tuple[str, str]:
     chromosome = df.Chromosome.head(1).iloc[0]
     if "Strand" in df:
         strand = df.Strand.head(1).iloc[0]
@@ -34,9 +32,6 @@ def get_key_from_df(df: pd.DataFrame) -> Union[str, Tuple[str, str]]:
 
 def single_value_key(df: pd.DataFrame) -> bool:
     if "Strand" in df:
-        return (
-            len(df[["Chromosome", "Strand"]].drop_duplicates(["Chromosome", "Strand"]))
-            == 1
-        )
+        return len(df[["Chromosome", "Strand"]].drop_duplicates(["Chromosome", "Strand"])) == 1
     else:
         return len(df.Chromosome.drop_duplicates()) == 1

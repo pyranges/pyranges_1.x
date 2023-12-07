@@ -1,10 +1,15 @@
+from typing import TYPE_CHECKING
+
 import pandas as pd
 from ncls import NCLS  # type: ignore
 
 from pyranges.names import TEMP_NUM_COL
 
+if TYPE_CHECKING:
+    from pyranges import RangeFrame
 
-def add_rows_per_group(df):
+
+def add_rows_per_group(df: "RangeFrame") -> "RangeFrame":
     last_rows = df.groupby("__ix__").last().reset_index()
     last_rows.loc[:, "__last__"] = True
     df = pd.concat([df, last_rows], ignore_index=True)
@@ -46,7 +51,7 @@ def add_rows_per_group(df):
 #     return scdf[~remove_mask]
 
 
-def _subtraction(scdf, ocdf, **kwargs):
+def _subtraction(scdf: "RangeFrame", ocdf: "RangeFrame", **kwargs) -> "RangeFrame":
     if ocdf.empty or scdf.empty:
         return scdf
 

@@ -16,10 +16,10 @@ if TYPE_CHECKING:
 
 def get_sequence(
     gr: "PyRanges",
-    path: Optional[Path] = None,
+    path: Path | None = None,
     pyfaidx_fasta: Optional["pyfaidx.Fasta"] = None,
 ) -> Series:
-    """Get the sequence of the intervals from a fasta file
+    r"""Get the sequence of the intervals from a fasta file.
 
     Parameters
     ----------
@@ -56,14 +56,13 @@ def get_sequence(
 
     Note that the names in the fasta header and gr must be the same.
 
-    See also
+    See Also
     --------
     get_transcript_sequence : obtain mRNA sequences, by joining exons belonging to the same transcript
 
 
     Examples
     --------
-
     >>> import pyranges as pr
     >>> gr = pr.PyRanges({"Chromosome": ["chr1", "chr1"],
     ...                   "Start": [5, 0], "End": [8, 5],
@@ -100,7 +99,6 @@ def get_sequence(
     PyRanges with 2 rows and 5 columns.
     Contains 1 chromosomes and 2 strands.
     """
-
     try:
         import pyfaidx  # type: ignore
     except ImportError:
@@ -111,9 +109,7 @@ def get_sequence(
 
     if pyfaidx_fasta is None:
         if path is None:
-            raise Exception(
-                "ERROR get_sequence : you must provide a fasta path or pyfaidx_fasta object"
-            )
+            raise Exception("ERROR get_sequence : you must provide a fasta path or pyfaidx_fasta object")
         pyfaidx_fasta = pyfaidx.Fasta(path, read_ahead=int(1e5))
 
     seqs = []
@@ -130,17 +126,17 @@ def get_sequence(
 
 
 def get_fasta(*args, **kwargs):
-    """Deprecated: this function has been moved to Pyranges.get_sequence"""
+    """Deprecated: this function has been moved to Pyranges.get_sequence."""
     return get_sequence(*args, **kwargs)
 
 
 def get_transcript_sequence(
     gr: "PyRanges",
     group_by: str,
-    path: Optional[Path] = None,
+    path: Path | None = None,
     pyfaidx_fasta: Optional["pyfaidx.Fasta"] = None,
 ) -> DataFrame:
-    """Get the sequence of mRNAs, e.g. joining intervals corresponding to exons of the same transcript
+    r"""Get the sequence of mRNAs, e.g. joining intervals corresponding to exons of the same transcript.
 
     Parameters
     ----------
@@ -181,14 +177,13 @@ def get_transcript_sequence(
 
     Note that the names in the fasta header and gr must be the same.
 
-    See also
+    See Also
     --------
     get_sequence : obtain sequence of single intervals
 
 
     Examples
     --------
-
     >>> import pyranges as pr
     >>> gr = pr.PyRanges({"Chromosome": ['chr1', 'chr1', 'chr1'],
     ...                   "Start": [0, 9, 18], "End": [4, 13, 21],
@@ -222,7 +217,6 @@ def get_transcript_sequence(
     ...         s = '\\n'.join([ row.Sequence[i:i+nchars] for i in range(0, len(row.Sequence), nchars)])
     ...         _bytes_written = fw.write(f'>{row.transcript}\\n{s}\\n')
     """
-
     if gr.strand_values_valid:
         gr = gr.sort_by_5_prime_ascending_and_3_prime_descending()
     else:

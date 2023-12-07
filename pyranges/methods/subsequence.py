@@ -1,20 +1,42 @@
+from typing import TYPE_CHECKING
 
 import numpy as np
 
+from pyranges.names import (
+    END_COL,
+    FORWARD_STRAND,
+    REVERSE_STRAND,
+    START_COL,
+    TEMP_END_COL,
+    TEMP_INDEX_COL,
+    TEMP_MAX_COL,
+    TEMP_MIN_COL,
+    TEMP_START_COL,
+    VALID_GENOMIC_STRAND_TYPE,
+)
 
-def _subseq(scdf, **kwargs):
+if TYPE_CHECKING:
+    from pyranges import PyRanges
+
+
+def _subseq(
+    scdf: "PyRanges",
+    start: int = 0,
+    end: int | None = None,
+    strand: VALID_GENOMIC_STRAND_TYPE = FORWARD_STRAND,
+    **kwargs,
+) -> "PyRanges":
     if scdf.empty:
         return None
 
     scdf = scdf.copy()
     orig_order = scdf.index.copy()
-    scdf.insert(0, "__i__", orig_order)
+    scdf.insert(0, TEMP_INDEX_COL, orig_order)
 
-    by = kwargs.get("by") if kwargs.get("by") else "__i__"
-    if type(by) is not list:
-        by = [by]
+    by_argument_given = kwargs.get("by")
+    _by = kwargs.get("by", TEMP_INDEX_COL)
+    by = [_by] if isinstance(_by, str) else (_by or [])
 
-    strand = kwargs.get("strand")
     # at this point, strand is False if:
     #   1. subsequence was called with strand=False or
     #   2. it was called with strand=None and self is not stranded
@@ -22,65 +44,51 @@ def _subseq(scdf, **kwargs):
     #   1. it was input as True to subsequence and passed  to pyrange_apply_single as True,
     #      which updates it to '-' or '+' before calling _subseq, or
     #   2. it was called with strand=None and self is stranded
-    if strand != "-":
-        strand = "+"
+    strand = FORWARD_STRAND if strand != REVERSE_STRAND else strand
     # now, unstranded or strand==None cases are treated like all intervals are on the + strand
 
     # creating j which holds the boundaries per group
     # j contains one row per group; columns: Start  End (+ by columns); indexed by __i__
-    agg_dict = {"__i__": "first", "Start": "min", "End": "max"}
-    for b in by:
-        agg_dict[b] = "first"
+    agg_dict = {TEMP_INDEX_COL: "first", START_COL: "min", END_COL: "max"} | {k: "first" for k in by}
 
-    if kwargs.get("by"):
+    if by_argument_given:
         j = (
-            scdf.groupby(by, dropna=False)[["Start", "End", "__i__"] + by]
+            scdf.groupby(by, dropna=False)[[START_COL, END_COL, TEMP_INDEX_COL] + by]
             .agg(agg_dict)
-            .set_index("__i__")
+            .set_index(TEMP_INDEX_COL)
         )
     else:
-        j = (
-            scdf.groupby(by, dropna=False)[["Start", "End", "__i__"]]
-            .agg(agg_dict)
-            .set_index("__i__")
-        )
-        j.insert(0, "__i__", j.index)
+        j = scdf.groupby(by, dropna=False)[[START_COL, END_COL, TEMP_INDEX_COL]].agg(agg_dict).set_index(TEMP_INDEX_COL)
+        j.insert(0, TEMP_INDEX_COL, j.index)
         j.index.name = None
 
-    start = kwargs.get("start") if kwargs.get("start") else 0
-    end = kwargs.get("end") if kwargs.get("end") else (j.End - j.Start).max()
+    _end = end if end is not None else (j.End - j.Start).max()
 
     # below we add columns starts, ends to j
     # start and ends define the desired start and end, with one row per group (transcript).
     # they may be out of bounds of the interval, though (this is dealt with later)
 
-    if (strand == "+" and start >= 0) or (strand == "-" and start < 0):
-        j["starts"] = j.Start + abs(start)
+    if (strand == FORWARD_STRAND and start >= 0) or (strand == REVERSE_STRAND and start < 0):
+        j.loc[:, TEMP_START_COL] = j.Start + abs(start)
     else:
-        j["starts"] = j.End - abs(start)
+        j.loc[:, TEMP_START_COL] = j.End - abs(start)
 
-    if (strand == "+" and end >= 0) or (strand == "-" and end < 0):
-        j["ends"] = j.Start + abs(end)
+    if (strand == FORWARD_STRAND and _end >= 0) or (strand == REVERSE_STRAND and _end < 0):
+        j.loc[:, TEMP_END_COL] = j.Start + abs(_end)
     else:
-        j["ends"] = j.End - abs(end)
+        j.loc[:, TEMP_END_COL] = j.End - abs(_end)
 
-    if strand == "-":
-        j.rename(columns={"ends": "__min__", "starts": "__max__"}, inplace=True)
+    if strand == REVERSE_STRAND:
+        j.rename(columns={TEMP_END_COL: TEMP_MIN_COL, TEMP_START_COL: TEMP_MAX_COL}, inplace=True)
     else:
-        j.rename(columns={"starts": "__min__", "ends": "__max__"}, inplace=True)
+        j.rename(columns={TEMP_START_COL: TEMP_MIN_COL, TEMP_END_COL: TEMP_MAX_COL}, inplace=True)
 
     # I'm maintaing the original row order
-    scdf = (
-        scdf.merge(j[by + ["__min__", "__max__"]], on=by)
-        .set_index("__i__")
-        .loc[orig_order]
-    )
+    scdf = scdf.merge(j[by + [TEMP_MIN_COL, TEMP_MAX_COL]], on=by).set_index(TEMP_INDEX_COL).loc[orig_order]
 
     # instead of simply using starts and ends as computed above, we're dealing here with potential out of bounds:
-    r = scdf[~((scdf.Start >= scdf.__max__) | (scdf.End <= scdf.__min__))].copy()
-    r.loc[:, "Start"] = np.maximum(r.Start, r.__min__)
-    r.loc[:, "End"] = np.minimum(r.End, r.__max__)
+    r = scdf[~((scdf[START_COL] >= scdf[TEMP_MAX_COL]) | (scdf[END_COL] <= scdf[TEMP_MIN_COL]))].copy()
+    r.loc[:, START_COL] = np.maximum(r.Start, r[TEMP_MIN_COL])
+    r.loc[:, END_COL] = np.minimum(r.End, r[TEMP_MAX_COL])
 
-    r = r.drop(["__min__", "__max__"], axis=1)
-
-    return r
+    return r.drop([TEMP_MIN_COL, TEMP_MAX_COL], axis=1)

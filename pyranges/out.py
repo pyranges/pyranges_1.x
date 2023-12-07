@@ -1,6 +1,5 @@
 import csv
 from pathlib import Path
-from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -50,7 +49,7 @@ _ordered_gff3_columns = [
 ]
 
 
-def _fill_missing(df: DataFrame, all_columns: List[str]) -> DataFrame:
+def _fill_missing(df: DataFrame, all_columns: list[str]) -> DataFrame:
     columns = list(df.columns)
 
     if set(columns).intersection(set(all_columns)) == set(all_columns):
@@ -110,9 +109,9 @@ def _gtf(df: DataFrame) -> DataFrame:
 
 def _to_gtf(
     self: PyRanges,
-    path: Optional[str] = None,
+    path: str | None = None,
     compression: str = "infer",
-) -> Optional[str]:
+) -> str | None:
     df = _gtf(self)
 
     return df.to_csv(
@@ -128,11 +127,11 @@ def _to_gtf(
 
 def _to_csv(
     self: PyRanges,
-    path: Optional[Union[Path, str]] = None,
+    path: Path | str | None = None,
     sep: str = ",",
     header: bool = True,
     compression: str = "infer",
-) -> Optional[str]:
+) -> str | None:
     gr = self
 
     if path:
@@ -153,9 +152,7 @@ def _to_csv(
     else:
         return "".join(
             [
-                outdf.to_csv(
-                    index=False, header=header, sep=sep, quoting=csv.QUOTE_NONE
-                )
+                outdf.to_csv(index=False, header=header, sep=sep, quoting=csv.QUOTE_NONE)
                 for _, outdf in sorted(gr.dfs.items())
             ]
         )
@@ -163,10 +160,10 @@ def _to_csv(
 
 def _to_bed(
     self: PyRanges,
-    path: Optional[str] = None,
+    path: str | None = None,
     keep: bool = True,
     compression: str = "infer",
-) -> Optional[str]:
+) -> str | None:
     df = _bed(self, keep)
 
     return df.to_csv(
@@ -183,12 +180,12 @@ def _to_bed(
 def _to_bigwig(
     self: PyRanges,
     path: None,
-    chromosome_sizes: Union[PyRanges, dict],
+    chromosome_sizes: PyRanges | dict,
     rpm: bool = True,
-    divide: Optional[bool] = False,
-    value_col: Optional[str] = None,
+    divide: bool | None = False,
+    value_col: str | None = None,
     dryrun: bool = False,
-) -> Optional[PyRanges]:
+) -> PyRanges | None:
     try:
         import pyBigWig  # type: ignore
     except ModuleNotFoundError:
@@ -261,7 +258,7 @@ def _to_gff3(
     )  # type: ignore
 
 
-def _gff3(df) -> pd.DataFrame:
+def _gff3(df: pd.DataFrame) -> pd.DataFrame:
     df = df.rename(columns=PYRANGES_TO_GFF3_COLUMNS)  # copying here
     df.loc[:, "start"] = df.start + 1
     all_columns = _ordered_gff3_columns[:-1]
@@ -285,9 +282,7 @@ def _gff3(df) -> pd.DataFrame:
         rest_df.loc[~isnull, c] = new_val
         rest_df.loc[isnull, c] = ""
 
-    attribute = rest_df.apply(
-        lambda r: "".join([v for v in r if v]), axis=1
-    ).str.replace(";$", "", regex=True)
+    attribute = rest_df.apply(lambda r: "".join([v for v in r if v]), axis=1).str.replace(";$", "", regex=True)
     outdf.insert(outdf.shape[1], "attribute", attribute)
 
     return outdf

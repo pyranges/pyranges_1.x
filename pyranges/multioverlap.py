@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Optional
 
 import pyranges as pr
 from pyranges.names import GENOME_LOC_COLS_WITH_STRAND, VALID_OVERLAP_TYPE, VALID_STRAND_BEHAVIOR_TYPE
@@ -10,10 +10,10 @@ from pyranges.pyranges_main import PyRanges
 
 
 def count_overlaps(
-    grs: Dict[str, "PyRanges"],
+    grs: dict[str, "PyRanges"],
     features: Optional["PyRanges"] = None,
     strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
-    by: Optional[list[str]] = None,
+    by: list[str] | None = None,
     how: VALID_OVERLAP_TYPE = "all",
 ) -> "PyRanges":
     """Count overlaps in multiple pyranges.
@@ -41,7 +41,6 @@ def count_overlaps(
 
     Examples
     --------
-
     >>> a = '''Chromosome Start End
     ... chr1    6    12
     ... chr1    10    20
@@ -128,7 +127,6 @@ def count_overlaps(
     PyRanges with 4 rows and 6 columns.
     Contains 1 chromosomes.
     """
-
     if features is None:
         features = pr.concat(list(grs.values())).split(between=True)
     else:
@@ -138,5 +136,7 @@ def count_overlaps(
 
     for name, gr in grs.items():
         gr = gr[[c for c in gr.columns if c in GENOME_LOC_COLS_WITH_STRAND]]
-        features = features.apply_pair(gr, _count_overlaps, by=by, strand_behavior=strand_behavior, how=how, return_indexes=True, name=name)
+        features = features.apply_pair(
+            gr, _count_overlaps, by=by, strand_behavior=strand_behavior, how=how, return_indexes=True, name=name
+        )
     return features.astype({k: int for k in grs.keys()})

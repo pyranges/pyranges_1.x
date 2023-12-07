@@ -1,14 +1,20 @@
+from typing import TYPE_CHECKING
+
 import pandas as pd
 
-from pyranges.names import RANGE_COLS, VALID_STRAND_TYPE
+from pyranges.names import CHROM_COL, END_COL, RANGE_COLS, START_COL, STRAND_COL, VALID_STRAND_TYPE
+from pyranges.readers import pr
+
+if TYPE_CHECKING:
+    from pyranges import PyRanges
 
 
-def _split(df, strand: VALID_STRAND_TYPE = "auto"):
-    dtype = df.Start.dtype
+def _split(df: "PyRanges", strand: VALID_STRAND_TYPE = "auto") -> "PyRanges":
+    dtype = df[START_COL].dtype
 
-    starts = df.Start
-    ends = df.End
-    points = pd.concat([starts, ends]).sort_values().drop_duplicates()
+    starts = df[START_COL]
+    ends = df[END_COL]
+    points = pr.concat([starts, ends]).sort_by_position().drop_duplicates()
 
     _ends = points.shift(-1)
 
@@ -17,8 +23,8 @@ def _split(df, strand: VALID_STRAND_TYPE = "auto"):
     features = pd.concat([points, _ends], axis=1).astype(dtype)
     features.columns = RANGE_COLS
 
-    features.insert(0, "Chromosome", df.Chromosome.iloc[0])
-    if strand and "Strand" in df:
-        features.insert(features.shape[1], "Strand", df["Strand"].iloc[0])
+    features.insert(0, CHROM_COL, df[CHROM_COL].iloc[0])
+    if df.has_strand_column:
+        features.insert(features.shape[1], STRAND_COL, df[STRAND_COL].iloc[0])
 
     return features
