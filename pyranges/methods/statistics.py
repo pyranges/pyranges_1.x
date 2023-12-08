@@ -11,8 +11,8 @@ def _relative_distance(scdf: "RangeFrame", ocdf: "RangeFrame", **kwargs) -> pd.S
     if scdf.empty or ocdf.empty:
         return np.array([])
 
-    midpoints_self = ((scdf.Start + scdf.End) / 2).astype(int).sort_values().values
-    midpoints_other = ((ocdf.Start + ocdf.End) / 2).astype(int).sort_values().values
+    midpoints_self = ((scdf.Start + scdf.End) / 2).astype(int).sort_values().to_numpy()
+    midpoints_other = ((ocdf.Start + ocdf.End) / 2).astype(int).sort_values().to_numpy()
 
     left_idx = np.searchsorted(midpoints_other, midpoints_self)
     left_idx[left_idx >= len(midpoints_other)] -= 1

@@ -7,7 +7,7 @@ from typing import (
 
 import numpy as np
 import pandas as pd
-from natsort import natsort, natsorted  # type: ignore
+from natsort import natsort, natsorted  # type: ignore[import]
 
 import pyranges as pr
 from pyranges import multithreaded
@@ -62,7 +62,7 @@ from pyranges.strand_behavior_validators import (
 from pyranges.tostring import tostring
 
 if TYPE_CHECKING:
-    from pyrle.rledict import Rledict  # type: ignore
+    from pyrle.rledict import Rledict  # type: ignore[import]
 
     from pyranges.genomicfeatures import GenomicFeaturesMethods
     from pyranges.statistics import StatisticsMethods
@@ -70,7 +70,7 @@ if TYPE_CHECKING:
 __all__ = ["PyRanges"]
 
 
-class PyRanges(RangeFrame):
+class PyRanges(RangeFrame):  # noqa: PLR0904
     """Two-dimensional representation of genomic intervals and their annotations.
 
     A PyRanges object must have the columns Chromosome, Start and End. These
@@ -193,7 +193,7 @@ class PyRanges(RangeFrame):
         if missing_any_required_columns:
             return df
 
-        any_missing_values = df[RANGE_COLS].isnull().any().any() or df[CHROM_COL].isnull().any()
+        any_missing_values = df[RANGE_COLS].isna().any().any() or df[CHROM_COL].isna().any()
         if any_missing_values:
             return df
 
@@ -548,7 +548,7 @@ class PyRanges(RangeFrame):
         res = PyRanges(super().apply_pair(other, function, by=grpby_ks, **kwargs))
 
         if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
-            other.drop(TEMP_STRAND_COL, axis="columns", inplace=True)
+            other = other.drop(TEMP_STRAND_COL, axis="columns")
             return res.drop(TEMP_STRAND_COL, axis="columns")
 
         return res
@@ -1731,7 +1731,7 @@ class PyRanges(RangeFrame):
         """
         from pyranges.methods.nearest import _nearest
 
-        if how in [NEAREST_UPSTREAM, NEAREST_DOWNSTREAM] and not other.strand_values_valid:
+        if how in {NEAREST_UPSTREAM, NEAREST_DOWNSTREAM} and not other.strand_values_valid:
             msg = "If doing upstream or downstream nearest, other pyranges must be stranded"
             raise AssertionError(msg)
 
@@ -3636,12 +3636,12 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
         """
         new_starts = pd.Series(
-            np.where(self[start] > self[start2].values, self[start], self[start2]),
+            np.where(self[start] > self[start2].to_numpy(), self[start], self[start2]),
             index=self.index,
         )
 
         new_ends = pd.Series(
-            np.where(self[end] < self[end2].values, self[end], self[end2]),
+            np.where(self[end] < self[end2].to_numpy(), self[end], self[end2]),
             index=self.index,
         )
 

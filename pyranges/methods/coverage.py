@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from ncls import NCLS  # type: ignore
+from ncls import NCLS  # type: ignore[import]
 
 
 def _number_overlapping(scdf: pd.DataFrame, ocdf: pd.DataFrame, **kwargs) -> pd.DataFrame:
@@ -17,11 +17,11 @@ def _number_overlapping(scdf: pd.DataFrame, ocdf: pd.DataFrame, **kwargs) -> pd.
         else:
             return None
 
-    oncls = NCLS(ocdf.Start.values, ocdf.End.values, ocdf.index.values)
+    oncls = NCLS(ocdf.Start.to_numpy(), ocdf.End.to_numpy(), ocdf.index.to_numpy())
 
-    starts = scdf.Start.values
-    ends = scdf.End.values
-    indexes = scdf.index.values
+    starts = scdf.Start.to_numpy()
+    ends = scdf.End.to_numpy()
+    indexes = scdf.index.to_numpy()
 
     _self_indexes, _other_indexes = oncls.all_overlaps_both(starts, ends, indexes)
 
@@ -55,11 +55,11 @@ def _coverage(scdf: pd.DataFrame, ocdf: pd.DataFrame, **kwargs) -> pd.DataFrame:
         df.insert(df.shape[1], fraction_col, 0.0)
         return df
 
-    oncls = NCLS(ocdf.Start.values, ocdf.End.values, ocdf.index.values)
+    oncls = NCLS(ocdf.Start.to_numpy(), ocdf.End.to_numpy(), ocdf.index.to_numpy())
 
-    starts = scdf.Start.values
-    ends = scdf.End.values
-    indexes = scdf.index.values
+    starts = scdf.Start.to_numpy()
+    ends = scdf.End.to_numpy()
+    indexes = scdf.index.to_numpy()
 
     _lengths = oncls.coverage(starts, ends, indexes)
     _lengths = _lengths / (ends - starts)

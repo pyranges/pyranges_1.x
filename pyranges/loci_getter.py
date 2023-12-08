@@ -35,61 +35,20 @@ class LociGetter:
         key: LociKeyType,
     ) -> "PyRanges":
         if isinstance(key, tuple):
-            if self.is_chrom_and_strand(key):
-                rows = self.chrom_and_strand(key)
-            elif self.is_chrom_or_strand_with_slice(key):
-                rows = self.chrom_or_strand_with_slice(key)
+            if is_chrom_and_strand(key):
+                rows = chrom_and_strand(self.pr, key)
+            elif is_chrom_or_strand_with_slice(key):
+                rows = chrom_or_strand_with_slice(self.pr, key)
             elif is_3_tuple(key):
-                rows = self.get_chrom_strand_and_range(key)
+                rows = get_chrom_strand_and_range(self.pr, key)
             else:
                 msg = f"Indexing tuple must be of length 2 or 3, but was {len(key)}."
                 raise ValueError(msg)
         elif not isinstance(key, list):
-            rows = self.get_chrom_and_strand(key)
+            rows = get_chrom_and_strand(self.pr, key)
         else:
             msg = "The loci accessor does not accept a list. If you meant to retrieve columns, use gr.get_with_loc_columns instead."
             raise TypeError(msg)
-        return rows
-
-    def is_chrom_or_strand_with_slice(self, key: tuple) -> bool:
-        return is_2_tuple(key) and isinstance(key[1], slice)
-
-    def is_chrom_and_strand(self, key: tuple) -> bool:
-        return is_2_tuple(key) and isinstance(key[1], str)
-
-    def chrom_and_strand(self, key: tuple) -> "PyRanges":
-        chrom, strand = key
-        rows = _rows_matching_chrom_and_strand(self.pr, chrom, strand)
-        return rows
-
-    def chrom_or_strand_with_slice(self, key: tuple) -> "PyRanges":
-        chrom_or_strand, loc = key
-        if chrom_or_strand in (col := self.pr[CHROM_COL].astype(type(chrom_or_strand))).values:
-            gr = self.pr[col == chrom_or_strand]
-            rows = _rows_matching_range(gr, loc)
-        elif (
-            self.pr.strand_values_valid
-            and chrom_or_strand in (col := self.pr[STRAND_COL].astype(type(chrom_or_strand))).values
-        ):
-            rows = _rows_matching_range(PyRanges(self.pr[col == chrom_or_strand]), loc)
-        else:
-            msg = f"Chromosome or strand {chrom_or_strand} not found in PyRanges."
-            raise KeyError(msg)
-        return rows
-
-    def get_chrom_strand_and_range(self, key: tuple[str, str, range]) -> "PyRanges":
-        chrom, strand, range = key
-        rows = _rows_matching_chrom_and_strand_and_range(self.pr, chrom, strand, range)
-        return rows
-
-    def get_chrom_and_strand(self, key: tuple) -> "PyRanges":
-        if str(key) in (col := self.pr[CHROM_COL].astype(str)).values:
-            rows = col == str(key)
-        elif self.pr.has_strand_column and str(key) in (col := self.pr[STRAND_COL].astype(str)).values:
-            rows = col == str(key)
-        else:
-            msg = f'Chromosome or strand "{key}" not found in PyRanges.'
-            raise KeyError(msg)
         return rows
 
     def __setitem__(self, key: typing.Any, value: typing.Any) -> None:
@@ -122,3 +81,46 @@ def is_3_tuple(key: tuple) -> bool:
 
 def is_2_tuple(key: tuple) -> bool:
     return len(key) == 2  # noqa: PLR2004
+
+def is_chrom_or_strand_with_slice(key: tuple) -> bool:
+    return is_2_tuple(key) and isinstance(key[1], slice)
+
+def is_chrom_and_strand(key: tuple) -> bool:
+    return is_2_tuple(key) and isinstance(key[1], str)
+
+def chrom_and_strand(pr: "PyRanges", key: tuple) -> "PyRanges":
+    chrom, strand = key
+    rows = _rows_matching_chrom_and_strand(pr, chrom, strand)
+    return rows
+
+def chrom_or_strand_with_slice(pr: "PyRanges", key: tuple) -> "PyRanges":
+    chrom_or_strand, loc = key
+    if chrom_or_strand in (col := pr[CHROM_COL].astype(type(chrom_or_strand))).to_numpy():
+        gr = pr[col == chrom_or_strand]
+        rows = _rows_matching_range(gr, loc)
+    elif (
+            pr.strand_values_valid
+            and chrom_or_strand in (col := pr[STRAND_COL].astype(type(chrom_or_strand))).to_numpy()
+    ):
+        rows = _rows_matching_range(PyRanges(pr[col == chrom_or_strand]), loc)
+    else:
+        msg = f"Chromosome or strand {chrom_or_strand} not found in PyRanges."
+        raise KeyError(msg)
+    return rows
+
+
+def get_chrom_strand_and_range(pr: "PyRanges", key: tuple[str, str, range]) -> "PyRanges":
+    chrom, strand, range = key
+    rows = _rows_matching_chrom_and_strand_and_range(pr, chrom, strand, range)
+    return rows
+
+
+def get_chrom_and_strand(pr, key: tuple) -> "PyRanges":
+    if str(key) in (col := pr[CHROM_COL].astype(str)).to_numpy():
+        rows = col == str(key)
+    elif pr.has_strand_column and str(key) in (col := pr[STRAND_COL].astype(str)).to_numpy():
+        rows = col == str(key)
+    else:
+        msg = f'Chromosome or strand "{key}" not found in PyRanges.'
+        raise KeyError(msg)
+    return rows

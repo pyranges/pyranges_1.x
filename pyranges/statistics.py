@@ -78,7 +78,7 @@ def fdr(p_vals: Series) -> Series:
     PyRanges with 3 rows and 6 columns.
     Contains 3 chromosomes and 2 strands.
     """
-    from scipy.stats import rankdata  # type: ignore
+    from scipy.stats import rankdata  # type: ignore[import]
 
     ranked_p_values = rankdata(p_vals)
     fdr = p_vals * len(p_vals) / ranked_p_values
@@ -147,7 +147,7 @@ def fisher_exact(tp: Series, fp: Series, fn: Series, tn: Series, pseudocount: in
     1    0.000000  0.000067  0.000034  1.000000
     """
     try:
-        from fisher import pvalue_npy  # type: ignore
+        from fisher import pvalue_npy  # type: ignore[import]
     except ImportError:
         import sys
 
@@ -487,7 +487,7 @@ def rowbased_rankdata(data: ndarray) -> DataFrame:
         nz = np.apply_along_axis(lambda r: np.nonzero(r)[0], 1, nzdf)
 
         _count = np.column_stack([nz, np.ones(len(nz)) * len_r])
-        _dense = dense.reindex(nzdf.index).values
+        _dense = dense.reindex(nzdf.index).to_numpy()
 
         _result = 0.5 * (np.take_along_axis(_count, _dense, 1) + np.take_along_axis(_count, _dense - 1, 1) + 1)
 
@@ -583,10 +583,10 @@ def simes(
     sdf = df[positions + sorter].sort_values(sorter)
     g = sdf.groupby(positions + by)
 
-    ranks = g.cumcount().values + 1
-    size = g.size().values
+    ranks = g.cumcount().to_numpy() + 1
+    size = g.size().to_numpy()
     size = np.repeat(size, size)
-    multiplied = sdf[pcol].values * size
+    multiplied = sdf[pcol].to_numpy() * size
 
     simes = multiplied / ranks
 

@@ -1,5 +1,5 @@
 import pandas as pd
-from sorted_nearest import annotate_clusters, cluster_by  # type: ignore
+from sorted_nearest import annotate_clusters, cluster_by  # type: ignore[import]
 
 
 def _cluster(df: pd.DataFrame, **kwargs) -> pd.DataFrame:

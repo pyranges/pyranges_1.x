@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import pandas as pd
-from sorted_nearest import max_disjoint  # type: ignore
+from sorted_nearest import max_disjoint  # type: ignore[import]
 
 
 def _max_disjoint(df: pd.DataFrame, **kwargs) -> pd.DataFrame:

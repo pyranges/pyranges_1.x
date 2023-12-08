@@ -2,7 +2,7 @@ import pandas as pd
 from ncls import NCLS
 from sorted_nearest import (
     nearest_next_nonoverlapping,
-    nearest_nonoverlapping,  # type: ignore
+    nearest_nonoverlapping,  # type: ignore[import]
     nearest_previous_nonoverlapping,
 )
 
@@ -34,9 +34,9 @@ def _insert_distance(ocdf: pd.DataFrame, dist: pd.DataFrame, suffix: str) -> pd.
 def _overlapping_for_nearest(scdf: pd.DataFrame, ocdf: pd.DataFrame, suffix: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     nearest_df = pd.DataFrame(columns="Chromosome Start End Strand".split())
 
-    it = NCLS(ocdf.Start.values, ocdf.End.values, ocdf.index.values)
+    it = NCLS(ocdf.Start.to_numpy(), ocdf.End.to_numpy(), ocdf.index.to_numpy())
 
-    idx_self, idx_other = it.first_overlap_both(scdf[START_COL].values, scdf[END_COL].values, scdf.index.values)
+    idx_self, idx_other = it.first_overlap_both(scdf[START_COL].to_numpy(), scdf[END_COL].to_numpy(), scdf.index.to_numpy())
     scdf2, ocdf2 = scdf.reindex(idx_self), ocdf.reindex(idx_other)
 
     if not ocdf2.empty:
@@ -64,9 +64,9 @@ def _next_nonoverlapping(
 ) -> tuple[pd.Series, pd.Series]:
     left_ends = left_ends.sort_values()
     right_starts = right_starts.sort_values()
-    r_idx, dist = nearest_next_nonoverlapping(left_ends.values - 1, right_starts.values, right_indexes)
-    r_idx = pd.Series(r_idx, index=left_ends.index).sort_index().values
-    dist = pd.Series(dist, index=left_ends.index).sort_index().values
+    r_idx, dist = nearest_next_nonoverlapping(left_ends.to_numpy() - 1, right_starts.to_numpy(), right_indexes)
+    r_idx = pd.Series(r_idx, index=left_ends.index).sort_index().to_numpy()
+    dist = pd.Series(dist, index=left_ends.index).sort_index().to_numpy()
 
     return r_idx, dist
 
@@ -74,10 +74,10 @@ def _next_nonoverlapping(
 def _previous_nonoverlapping(left_starts: pd.Series, right_ends: pd.Series) -> tuple[pd.Series, pd.Series]:
     left_starts = left_starts.sort_values()
     right_ends = right_ends.sort_values()
-    r_idx, dist = nearest_previous_nonoverlapping(left_starts.values, right_ends.values - 1, right_ends.index.values)
+    r_idx, dist = nearest_previous_nonoverlapping(left_starts.to_numpy(), right_ends.to_numpy() - 1, right_ends.index.to_numpy())
 
-    r_idx = pd.Series(r_idx, index=left_starts.index).sort_index().values
-    dist = pd.Series(dist, index=left_starts.index).sort_index().values
+    r_idx = pd.Series(r_idx, index=left_starts.index).sort_index().to_numpy()
+    dist = pd.Series(dist, index=left_starts.index).sort_index().to_numpy()
 
     return r_idx, dist
 
@@ -110,13 +110,13 @@ def _nearest(scdf: "PyRanges", ocdf: "PyRanges", **kwargs) -> "PyRanges":
         df_to_find_nearest_in.index = pd.Index(range(len(df_to_find_nearest_in)))
 
         if how == "next":
-            r_idx, dist = _next_nonoverlapping(df_to_find_nearest_in.End, ocdf.Start, ocdf.index.values)
+            r_idx, dist = _next_nonoverlapping(df_to_find_nearest_in.End, ocdf.Start, ocdf.index.to_numpy())
         elif how == "previous":
             r_idx, dist = _previous_nonoverlapping(df_to_find_nearest_in.Start, ocdf.End)
         else:
             previous_r_idx, previous_dist = _previous_nonoverlapping(df_to_find_nearest_in.Start, ocdf.End)
 
-            next_r_idx, next_dist = _next_nonoverlapping(df_to_find_nearest_in.End, ocdf.Start, ocdf.index.values)
+            next_r_idx, next_dist = _next_nonoverlapping(df_to_find_nearest_in.End, ocdf.Start, ocdf.index.to_numpy())
 
             r_idx, dist = nearest_nonoverlapping(previous_r_idx, previous_dist, next_r_idx, next_dist)
 

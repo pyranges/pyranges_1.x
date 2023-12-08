@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 import pandas as pd
-from ncls import NCLS  # type: ignore
+from ncls import NCLS  # type: ignore[import]
 
 from pyranges.names import TEMP_NUM_COL
 
@@ -55,10 +55,10 @@ def _subtraction(scdf: "RangeFrame", ocdf: "RangeFrame", **kwargs) -> "RangeFram
     if ocdf.empty or scdf.empty:
         return scdf
 
-    o = NCLS(ocdf.Start.values, ocdf.End.values, ocdf.index.values)
+    o = NCLS(ocdf.Start.to_numpy(), ocdf.End.to_numpy(), ocdf.index.to_numpy())
 
     idx_self, new_starts, new_ends = o.set_difference_helper(
-        scdf.Start.values, scdf.End.values, scdf.index.values, scdf[TEMP_NUM_COL].values
+        scdf.Start.values, scdf.End.values, scdf.index.values, scdf[TEMP_NUM_COL].to_numpy()
     )
 
     missing_idx = pd.Index(scdf.index).difference(idx_self)
@@ -77,8 +77,8 @@ def _subtraction(scdf: "RangeFrame", ocdf: "RangeFrame", **kwargs) -> "RangeFram
     new_ends = new_ends.sort_index()
 
     if len(idx_self):
-        scdf.loc[scdf.index.isin(idx_self), "Start"] = new_starts.values
-        scdf.loc[scdf.index.isin(idx_self), "End"] = new_ends.values
+        scdf.loc[scdf.index.isin(idx_self), "Start"] = new_starts.to_numpy()
+        scdf.loc[scdf.index.isin(idx_self), "End"] = new_ends.to_numpy()
 
     if not scdf.empty:
         return scdf

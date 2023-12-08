@@ -53,14 +53,14 @@ class ExampleData:
 
     @staticmethod
     def _read_bed_from_string(contents: str) -> "PyRanges":
-        with tempfile.NamedTemporaryFile("w") as f:
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8") as f:
             f.write(contents)
             f.flush()
             return pr.read_bed(f.name)
 
     @staticmethod
     def _read_gtf_from_string(contents: str) -> "PyRanges":
-        with tempfile.NamedTemporaryFile("w") as f:
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8") as f:
             f.write(contents)
             f.flush()
             return pr.read_gtf(f.name)
@@ -164,7 +164,7 @@ chr1	8	9	interval3	0	+"""
     def f2(self) -> "pr.PyRanges":
         contents = """chr1	1	2	a	0	+
 chr1	6	7	b	0	-"""
-        with tempfile.NamedTemporaryFile("w") as f:
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8") as f:
             f.write(contents)
             f.flush()
             return pr.read_bed(f.name)

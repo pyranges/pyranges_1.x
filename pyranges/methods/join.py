@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from ncls import NCLS  # type: ignore
+from ncls import NCLS  # type: ignore[import]
 
 from pyranges.names import VALID_JOIN_TYPE
 
@@ -12,11 +12,11 @@ def _both_indexes(
     if ocdf.empty:
         return scdf.index, np.array([], dtype=np.int64)
 
-    starts = scdf.Start.values
-    ends = scdf.End.values
-    indexes = scdf.index.values
+    starts = scdf.Start.to_numpy()
+    ends = scdf.End.to_numpy()
+    indexes = scdf.index.to_numpy()
 
-    it = NCLS(ocdf.Start.values, ocdf.End.values, ocdf.index.values)
+    it = NCLS(ocdf.Start.to_numpy(), ocdf.End.to_numpy(), ocdf.index.to_numpy())
 
     return it.all_overlaps_both(starts, ends, indexes)
 

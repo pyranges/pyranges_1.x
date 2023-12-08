@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 
 import pandas as pd
-from natsort import natsorted  # type: ignore
+from natsort import natsorted  # type: ignore[import]
 
 from pyranges.pyranges_main import PyRanges
 
@@ -45,7 +45,7 @@ def from_string(s: str) -> "PyRanges":
     return PyRanges(df)
 
 
-def read_bed(f: str | Path, /, nrows: int | None = None) -> "PyRanges":
+def read_bed(f: Path, /, nrows: int | None = None) -> "PyRanges":
     """Return bed file as PyRanges.
 
     This is a reader for files that follow the bed format. They can have from
@@ -94,7 +94,7 @@ def read_bed(f: str | Path, /, nrows: int | None = None) -> "PyRanges":
 
         first_start = gzip.open(path).readline().decode().split()[1]
     else:
-        first_start = open(path).readline().split()[1]
+        first_start = path.open().readline().split()[1]
 
     header = None
 
@@ -107,7 +107,7 @@ def read_bed(f: str | Path, /, nrows: int | None = None) -> "PyRanges":
 
     df = pd.read_csv(
         path,
-        dtype={"Chromosome": "category", "Strand": "category"},  # type: ignore
+        dtype={"Chromosome": "category", "Strand": "category"},
         nrows=nrows,
         header=header,
         names=columns[:ncols] if header != 0 else None,
@@ -180,14 +180,14 @@ def read_bam(
     """
     path = Path(f)
     try:
-        import bamread  # type: ignore
+        import bamread  # type: ignore[import]
     except ImportError:
         print(
             "bamread must be installed to read bam. Use `conda install -c bioconda bamread` or `pip install bamread` to install it."
         )
         sys.exit(1)
 
-    if bamread.__version__ in [
+    if bamread.__version__ in {
         "0.0.1",
         "0.0.2",
         "0.0.3",
@@ -197,7 +197,7 @@ def read_bam(
         "0.0.7",
         "0.0.8",
         "0.0.9",
-    ]:
+    }:
         print(
             "bamread not recent enough. Must be 0.0.10 or higher. Use `conda install -c bioconda 'bamread>=0.0.10'` or `pip install bamread>=0.0.10` to install it."
         )
@@ -247,7 +247,7 @@ def skiprows(f: Path) -> int:
                 break
         zh.close()
     except (OSError, TypeError):  # not a gzipped file, or StringIO
-        fh = open(f)
+        fh = f.open()
         for i, line in enumerate(fh):
             if line[0] != "#":
                 break
@@ -352,7 +352,7 @@ def read_gtf_full(
         sep="\t",
         header=None,
         names=names,
-        dtype=dtypes,  # type: ignore
+        dtype=dtypes,
         chunksize=chunksize,
         skiprows=skiprows,
         nrows=nrows,
@@ -364,7 +364,7 @@ def read_gtf_full(
     for df in df_iter:
         extra = _to_rows(df.Attribute.astype(str), ignore_bad=ignore_bad)
         _df = df.drop("Attribute", axis=1)
-        extra.set_index(_df.index, inplace=True)
+        extra = extra.set_index(_df.index)
         ndf = pd.concat([_df, extra], axis=1, sort=False)
         dfs.append(ndf)
 
@@ -452,7 +452,7 @@ def read_gtf_restricted(f: str | Path, skiprows: int | None, nrows: int | None =
         usecols=[0, 2, 3, 4, 5, 6, 8],
         header=None,
         names="Chromosome Feature Start End Score Strand Attribute".split(),
-        dtype=dtypes,  # type: ignore
+        dtype=dtypes,
         chunksize=int(1e5),
         skiprows=skiprows if skiprows is not None else False,
         nrows=nrows,
@@ -470,7 +470,7 @@ def read_gtf_restricted(f: str | Path, skiprows: int | None, nrows: int | None =
 
         extract.exon_number = extract.exon_number.astype(float)
 
-        extract.set_index(df.index, inplace=True)
+        extract = extract.set_index(df.index)
         _df = pd.concat([df[cols_to_concat], extract], axis=1, sort=False)
 
         dfs.append(_df)
@@ -545,7 +545,7 @@ def read_gff3(
         sep="\t",
         header=None,
         names=names,
-        dtype=dtypes,  # type: ignore
+        dtype=dtypes,
         chunksize=int(1e5),
         skiprows=_skiprows,
         nrows=nrows,
@@ -555,7 +555,7 @@ def read_gff3(
     for df in df_iter:
         extra = to_rows_gff3(df.Attribute.astype(str))
         _df = df.drop("Attribute", axis=1)
-        extra.set_index(_df.index, inplace=True)
+        extra = extra.set_index(_df.index)
         ndf = pd.concat([_df, extra], axis=1, sort=False)
         dfs.append(ndf)
 
@@ -568,7 +568,7 @@ def read_gff3(
 
 def read_bigwig(f: str | Path) -> "PyRanges":
     try:
-        import pyBigWig  # type: ignore
+        import pyBigWig  # type: ignore[import]
     except ModuleNotFoundError:
         print(
             "bwread must be installed to read bigwigs. Use `conda install -c bioconda bwread` or `pip install bwread` to install it."

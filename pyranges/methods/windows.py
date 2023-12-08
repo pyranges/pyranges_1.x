@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 import numpy as np
-from sorted_nearest import maketiles, makewindows  # type: ignore
+from sorted_nearest import maketiles, makewindows
 
 from pyranges.names import END_COL, START_COL, TEMP_END_COL, TEMP_START_COL
 

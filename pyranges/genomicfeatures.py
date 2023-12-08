@@ -338,7 +338,7 @@ def genome_bounds(
 
     else:
         try:
-            import pyfaidx  # type: ignore
+            import pyfaidx  # type: ignore[import]
 
             if isinstance(chromsizes, pyfaidx.Fasta):
                 chromsizes = {k: len(chromsizes[k]) for k in chromsizes.keys()}

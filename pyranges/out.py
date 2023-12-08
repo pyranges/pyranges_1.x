@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from natsort import natsorted  # type: ignore
+from natsort import natsorted  # type: ignore[import]
 from pandas.core.frame import DataFrame
 
 from pyranges.pyranges_main import PyRanges
@@ -94,7 +94,7 @@ def _gtf(df: DataFrame) -> DataFrame:
     rest_df = df[rest].copy()
     for c in rest_df:
         col = pd.Series(rest_df[c])
-        isnull = col.isnull()
+        isnull = col.isna()
         col = col.astype(str).str.replace("nan", "")
         new_val = str(c) + ' "' + col + '";'
         rest_df.loc[:, c] = rest_df[c].astype(str)
@@ -122,7 +122,7 @@ def _to_gtf(
         compression=compression,
         mode="w+",
         quoting=csv.QUOTE_NONE,
-    )  # type: ignore
+    )
 
 
 def _to_csv(
@@ -174,7 +174,7 @@ def _to_bed(
         mode="w+",
         sep="\t",
         quoting=csv.QUOTE_NONE,
-    )  # type: ignore
+    )
 
 
 def _to_bigwig(
@@ -187,7 +187,7 @@ def _to_bigwig(
     dryrun: bool = False,
 ) -> PyRanges | None:
     try:
-        import pyBigWig  # type: ignore
+        import pyBigWig  # type: ignore[import]
     except ModuleNotFoundError:
         print(
             "pybigwig must be installed to create bigwigs. Use `conda install -c bioconda pybigwig` or `pip install pybigwig` to install it."
@@ -255,7 +255,7 @@ def _to_gff3(
         mode="w+",
         sep="\t",
         quoting=csv.QUOTE_NONE,
-    )  # type: ignore
+    )
 
 
 def _gff3(df: pd.DataFrame) -> pd.DataFrame:
@@ -272,7 +272,7 @@ def _gff3(df: pd.DataFrame) -> pd.DataFrame:
     total_cols = rest_df.shape[1]
     for i, c in enumerate(rest_df, 1):
         col = rest_df[c]
-        isnull = col.isnull()
+        isnull = col.isna()
         col = col.astype(str).str.replace("nan", "")
         if i != total_cols:
             new_val = c + "=" + col + ";"

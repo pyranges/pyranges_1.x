@@ -1,5 +1,5 @@
 import pandas as pd
-from sorted_nearest import find_clusters  # type: ignore
+from sorted_nearest import find_clusters  # type: ignore[import]
 
 from pyranges.names import END_COL, START_COL
 

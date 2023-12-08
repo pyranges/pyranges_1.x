@@ -13,8 +13,8 @@ def _to_rle(
     ranges: "PyRanges", value_col: str | None = None, strand: bool = True, rpm: bool = False, **kwargs
 ) -> "PyRles":
     try:
-        from pyrle import PyRles  # type: ignore
-        from pyrle.methods import coverage  # type: ignore
+        from pyrle import PyRles  # type: ignore[import]
+        from pyrle.methods import coverage  # type: ignore[import]
     except ImportError as e:
         msg = "Using the coverage method requires that pyrle is installed."
         raise ImportError(msg) from e

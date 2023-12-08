@@ -79,9 +79,9 @@ def _subseq(
         j.loc[:, TEMP_END_COL] = j.End - abs(_end)
 
     if strand == REVERSE_STRAND:
-        j.rename(columns={TEMP_END_COL: TEMP_MIN_COL, TEMP_START_COL: TEMP_MAX_COL}, inplace=True)
+        j = j.rename(columns={TEMP_END_COL: TEMP_MIN_COL, TEMP_START_COL: TEMP_MAX_COL})
     else:
-        j.rename(columns={TEMP_START_COL: TEMP_MIN_COL, TEMP_END_COL: TEMP_MAX_COL}, inplace=True)
+        j = j.rename(columns={TEMP_START_COL: TEMP_MIN_COL, TEMP_END_COL: TEMP_MAX_COL})
 
     # I'm maintaing the original row order
     scdf = scdf.merge(j[[*by, TEMP_MIN_COL, TEMP_MAX_COL]], on=by).set_index(TEMP_INDEX_COL).loc[orig_order]

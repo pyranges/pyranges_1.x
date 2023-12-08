@@ -22,7 +22,7 @@ def return_pyranges_if_possible(
     return wrapper
 
 
-class PyRangesGroupBy(pd.core.groupby.DataFrameGroupBy):
+class PyRangesGroupBy(pd.core.groupby.DataFrameGroupBy):  # noqa: PLR0904
     @return_pyranges_if_possible
     def agg(self, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":
         return super().agg(*args, **kwargs)

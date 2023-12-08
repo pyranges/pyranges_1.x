@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import pandas as pd
-from ncls import NCLS  # type: ignore
+from ncls import NCLS  # type: ignore[import]
 
 from pyranges.names import (
     OVERLAP_ALL,
@@ -25,11 +25,11 @@ def _overlap_indices(
     if scdf.empty or ocdf.empty:
         return np.array([], dtype=np.int64)
 
-    starts = scdf.Start.values
-    ends = scdf.End.values
-    indexes = scdf.index.values
+    starts = scdf.Start.to_numpy()
+    ends = scdf.End.to_numpy()
+    indexes = scdf.index.to_numpy()
 
-    it = NCLS(ocdf.Start.values, ocdf.End.values, ocdf.index.values)
+    it = NCLS(ocdf.Start.to_numpy(), ocdf.End.to_numpy(), ocdf.index.to_numpy())
 
     if how == OVERLAP_ALL:
         _indices = it.all_overlaps_self(starts, ends, indexes)
@@ -38,7 +38,7 @@ def _overlap_indices(
     elif how == OVERLAP_FIRST:
         _indices, _2 = it.first_overlap_both(starts, ends, indexes)
     else:
-        msg = f"{VALID_OVERLAP_OPTIONS} are the only valid values for how."
+        msg = f"{VALID_OVERLAP_OPTIONS} are the only valid to_numpy() for how."
         raise ValueError(msg)
     return _indices
 
@@ -73,7 +73,7 @@ def _count_overlaps(scdf: "RangeFrame", ocdf: "RangeFrame", name: str, return_in
     vc = pd.Series(idx, dtype=np.int32).value_counts(sort=False)
     sx = pd.DataFrame(np.zeros(len(scdf), dtype=np.int64), index=scdf.index)
 
-    sx.loc[vc.index, 0] = vc.values
+    sx.loc[vc.index, 0] = vc.to_numpy()
 
     scdf.insert(scdf.shape[1], name, sx)
     return scdf

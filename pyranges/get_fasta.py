@@ -9,7 +9,7 @@ from pandas.core.series import Series
 from pyranges.names import FORWARD_STRAND
 
 if TYPE_CHECKING:
-    import pyfaidx  # type: ignore
+    import pyfaidx  # type: ignore[import]
 
     from pyranges import PyRanges
 
@@ -100,7 +100,7 @@ def get_sequence(
     Contains 1 chromosomes and 2 strands.
     """
     try:
-        import pyfaidx  # type: ignore
+        import pyfaidx  # type: ignore[import]
     except ImportError:
         print(
             "pyfaidx must be installed to get fasta sequences. Use `conda install -c bioconda pyfaidx` or `pip install pyfaidx` to install it."
