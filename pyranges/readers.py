@@ -1,3 +1,4 @@
+import logging
 import sys
 from pathlib import Path
 
@@ -6,6 +7,11 @@ from natsort import natsorted  # type: ignore[import]
 
 from pyranges.pyranges_main import PyRanges
 
+logging.basicConfig(level=logging.INFO)
+LOGGER = logging.getLogger(__name__)
+LOGGER.Formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+LOGGER.setLevel(logging.INFO)
+
 
 def from_string(s: str) -> "PyRanges":
     """Create a PyRanges from multiline string.
@@ -13,7 +19,6 @@ def from_string(s: str) -> "PyRanges":
     Parameters
     ----------
     s : str
-
         String with data.
 
     Examples
@@ -27,15 +32,15 @@ def from_string(s: str) -> "PyRanges":
     ... chr14  103456471  103456571      -'''
 
     >>> pr.from_string(s)
-    Chromosome        Start        End  Strand
-    object            int64      int64  object
-    ------------  ---------  ---------  --------
-    chr1          246719402  246719502  +
-    chr5           15400908   15401008  +
-    chr9           68366534   68366634  +
-    chr14          79220091   79220191  +
-    chr14         103456471  103456571  -
-    PyRanges with 5 rows and 4 columns.
+      index  |    Chromosome        Start        End  Strand
+      int64  |    object            int64      int64  object
+    -------  ---  ------------  ---------  ---------  --------
+          0  |    chr1          246719402  246719502  +
+          1  |    chr5           15400908   15401008  +
+          2  |    chr9           68366534   68366634  +
+          3  |    chr14          79220091   79220191  +
+          4  |    chr14         103456471  103456571  -
+    PyRanges with 5 rows, 4 columns, and 1 index columns.
     Contains 4 chromosomes and 2 strands.
     """
     from io import StringIO
@@ -57,11 +62,9 @@ def read_bed(f: Path, /, nrows: int | None = None) -> "PyRanges":
     Parameters
     ----------
     f : str
-
         Path to bed file
 
     nrows : Optional int, default None
-
         Number of rows to return.
 
     Notes
@@ -74,15 +77,15 @@ def read_bed(f: Path, /, nrows: int | None = None) -> "PyRanges":
     >>> import pyranges as pr
     >>> path = pr.example_data.files["aorta.bed"]
     >>> pr.read_bed(path, nrows=5)
-    Chromosome      Start      End  Name        Score  Strand
-    category        int64    int64  object      int64  category
-    ------------  -------  -------  --------  -------  ----------
-    chr1             9916    10115  H3K27me3        5  -
-    chr1             9939    10138  H3K27me3        7  +
-    chr1             9951    10150  H3K27me3        8  -
-    chr1             9953    10152  H3K27me3        5  +
-    chr1             9978    10177  H3K27me3        7  -
-    PyRanges with 5 rows and 6 columns.
+      index  |    Chromosome      Start      End  Name        Score  Strand
+      int64  |    category        int64    int64  object      int64  category
+    -------  ---  ------------  -------  -------  --------  -------  ----------
+          0  |    chr1             9916    10115  H3K27me3        5  -
+          1  |    chr1             9939    10138  H3K27me3        7  +
+          2  |    chr1             9951    10150  H3K27me3        8  -
+          3  |    chr1             9953    10152  H3K27me3        5  +
+          4  |    chr1             9978    10177  H3K27me3        7  -
+    PyRanges with 5 rows, 6 columns, and 1 index columns.
     Contains 1 chromosomes and 2 strands.
     """
     columns = (
@@ -133,23 +136,18 @@ def read_bam(
     Parameters
     ----------
     f : str
-
         Path to bam file
 
     sparse : bool, default True
-
         Whether to return only.
 
     mapq : int, default 0
-
         Minimum mapping quality score.
 
     required_flag : int, default 0
-
         Flags which must be present for the interval to be read.
 
     filter_flag : int, default 1540
-
         Ignore reads with these flags. Default 1540, which means that either
         the read is unmapped, the read failed vendor or platfrom quality
         checks, or the read is a PCR or optical duplicate.
@@ -164,26 +162,26 @@ def read_bam(
     >>> import pyranges as pr
     >>> path = pr.example_data.files["smaller.bam"]
     >>> pr.read_bam(path)
-    Chromosome    Start     End       Strand      Flag
-    category      int64     int64     category    uint16
-    ------------  --------  --------  ----------  --------
-    chr1          887771    887796    -           16
-    chr1          994660    994685    -           16
-    chr1          1041102   1041127   +           0
-    chr1          1770383   1770408   -           16
-    ...           ...       ...       ...         ...
-    chr1          18800901  18800926  +           0
-    chr1          18800901  18800926  +           0
-    chr1          18855123  18855148  -           16
-    chr1          19373470  19373495  +           0
-    PyRanges with 100 rows and 5 columns.
+    index    |    Chromosome    Start     End       Strand      Flag
+    int64    |    category      int64     int64     category    uint16
+    -------  ---  ------------  --------  --------  ----------  --------
+    0        |    chr1          887771    887796    -           16
+    1        |    chr1          994660    994685    -           16
+    2        |    chr1          1041102   1041127   +           0
+    3        |    chr1          1770383   1770408   -           16
+    ...      |    ...           ...       ...       ...         ...
+    96       |    chr1          18800901  18800926  +           0
+    97       |    chr1          18800901  18800926  +           0
+    98       |    chr1          18855123  18855148  -           16
+    99       |    chr1          19373470  19373495  +           0
+    PyRanges with 100 rows, 5 columns, and 1 index columns.
     Contains 1 chromosomes and 2 strands.
     """
     path = Path(f)
     try:
         import bamread  # type: ignore[import]
     except ImportError:
-        print(
+        LOGGER.exception(
             "bamread must be installed to read bam. Use `conda install -c bioconda bamread` or `pip install bamread` to install it.",
         )
         sys.exit(1)
@@ -199,7 +197,7 @@ def read_bam(
         "0.0.8",
         "0.0.9",
     }:
-        print(
+        LOGGER.exception(
             "bamread not recent enough. Must be 0.0.10 or higher. Use `conda install -c bioconda 'bamread>=0.0.10'` or `pip install bamread>=0.0.10` to install it.",
         )
         sys.exit(1)
@@ -210,7 +208,7 @@ def read_bam(
         try:
             df = bamread.read_bam_full(path, mapq, required_flag, filter_flag)
         except AttributeError:
-            print("bamread version 0.0.6 or higher is required to read bam non-sparsely.")
+            LOGGER.exception("bamread version 0.0.6 or higher is required to read bam non-sparsely.")
 
     return PyRanges(df)
 
@@ -238,19 +236,20 @@ def _fetch_gene_transcript_exon_id(attribute: pd.Series, annotation: str | None 
     return df
 
 
-def skiprows(f: Path) -> int:
+def find_first_data_line_index(file_path: Path) -> int:
+    """Find the first line that is not a comment."""
     first_non_comment = 0
     try:
         import gzip
 
-        zh = gzip.open(f)
+        zh = gzip.open(file_path)
         for i, zl in enumerate(zh):
             if zl.decode()[0] != "#":
                 first_non_comment = i
                 break
         zh.close()
     except (OSError, TypeError):  # not a gzipped file, or StringIO
-        fh = f.open()
+        fh = file_path.open()
         for i, line in enumerate(fh):
             if line[0] != "#":
                 first_non_comment = i
@@ -274,23 +273,18 @@ def read_gtf(
     Parameters
     ----------
     f : str
-
         Path to GTF file.
 
     full : bool, default True
-
         Whether to read and interpret the annotation column.
 
     nrows : int, default None
-
         Number of rows to read. Default None, i.e. all.
 
     duplicate_attr : bool, default False
-
         Whether to handle (potential) duplicate attributes or just keep last one.
 
     ignore_bad : bool, default False
-
         Whether to ignore bad lines or raise an error.
 
     Note
@@ -314,16 +308,16 @@ def read_gtf(
     >>> _bytes_written = f.write("\n".join(contents))
     >>> f.flush()
     >>> pr.read_gtf(f.name)
-      Chromosome  Source    Feature       Start      End  Score     Strand      Frame     gene_id          ...
-        category  object    category      int64    int64  object    category    object    object           ...
-    ------------  --------  ----------  -------  -------  --------  ----------  --------  ---------------  -----
-               1  havana    gene          11868    14409  .         +           .         ENSG00000223972  ...
-               1  havana    transcript    11868    14409  .         +           .         ENSG00000223972  ...
-    PyRanges with 2 rows and 20 columns (11 columns not shown: "gene_version", "gene_name", "gene_source", ...).
+      index  |      Chromosome  Source    Feature       Start      End  Score     Strand      Frame     gene_id          ...
+      int64  |        category  object    category      int64    int64  object    category    object    object           ...
+    -------  ---  ------------  --------  ----------  -------  -------  --------  ----------  --------  ---------------  -----
+          0  |               1  havana    gene          11868    14409  .         +           .         ENSG00000223972  ...
+          1  |               1  havana    transcript    11868    14409  .         +           .         ENSG00000223972  ...
+    PyRanges with 2 rows, 20 columns, and 1 index columns. (11 columns not shown: "gene_version", "gene_name", "gene_source", ...).
     Contains 1 chromosomes and 1 strands.
     """
     path = Path(f)
-    _skiprows = skiprows(path)
+    _skiprows = find_first_data_line_index(path)
 
     if full:
         gr = read_gtf_full(
@@ -349,6 +343,28 @@ def read_gtf_full(
     duplicate_attr: bool = False,
     ignore_bad: bool = False,
 ) -> "PyRanges":
+    """Read files in the Gene Transfer Format.
+
+    Parameters
+    ----------
+    f : str
+        Path to GTF file.
+
+    nrows : int, default None
+        Number of rows to read. Default None, i.e. all.
+
+    skiprows : int, default 0
+        Number of rows to skip. Default 0.
+
+    chunksize : int, default 100000
+        Number of rows to read at a time. Default 100000.
+
+    duplicate_attr : bool, default False
+        Whether to handle (potential) duplicate attributes or just keep last one.
+
+    ignore_bad : bool, default False
+        Whether to ignore bad lines or raise an error.
+    """
     dtypes = {"Chromosome": "category", "Feature": "category", "Strand": "category"}
 
     names = "Chromosome Source Feature Start End Score Strand Frame Attribute".split()
@@ -382,11 +398,12 @@ def read_gtf_full(
 
 
 def parse_kv_fields(line: str) -> list[list[str]]:
-    # rstrip: allows for GFF not having a last ";", or having final spaces
+    """Parse GTF attribute column."""
     return [kv.replace('""', '"NA"').replace('"', "").split(None, 1) for kv in line.rstrip("; ").split("; ")]
 
 
 def to_rows(anno: pd.Series, *, ignore_bad: bool = False) -> pd.DataFrame:
+    """Parse GTF attribute column into a dataframe of attribute columns."""
     try:
         row = anno.head(1)
         for entry in row:
@@ -401,7 +418,10 @@ def to_rows(anno: pd.Series, *, ignore_bad: bool = False) -> pd.DataFrame:
             rowdicts.append(dict(parse_kv_fields(line)))  # noqa: PERF401
     except ValueError:
         if not ignore_bad:
-            print(f"The following line is not parseable as gtf:\n{line}\n\nTo ignore bad lines use ignore_bad=True.")
+            LOGGER.exception(
+                "The following line is not parseable as gtf:\n%s\n\nTo ignore bad lines use ignore_bad=True.",
+                line,
+            )
             raise
 
     return pd.DataFrame.from_records(rowdicts)
@@ -432,8 +452,10 @@ def to_rows_keep_duplicates(anno: pd.Series, *, ignore_bad: bool = False) -> pd.
             rowdicts.append({k: ",".join(v) if isinstance(v, list) else v for k, v in rowdict.items()})
     except ValueError:
         if not ignore_bad:
-            print(f"The following line is not parseable as gtf:\n\n{line}\n\nTo ignore bad lines use ignore_bad=True.")
-            raise
+            LOGGER.exception(
+                "The following line is not parseable as gtf:\n\n%s\n\nTo ignore bad lines use ignore_bad=True.",
+                line,
+            )
 
     return pd.DataFrame.from_records(rowdicts)
 
@@ -492,12 +514,14 @@ def read_gtf_restricted(f: str | Path, skiprows: int | None, nrows: int | None =
 
 
 def to_rows_gff3(anno: pd.Series) -> pd.DataFrame:
+    """Parse GFF3 attribute column into a dataframe of attribute columns."""
     rowdicts = [to_keys_and_values(line) for line in list(anno)]
 
     return pd.DataFrame.from_records(rowdicts).set_index(anno.index)
 
 
 def to_keys_and_values(line: str) -> dict[str, str]:
+    """Parse GFF3 attribute column."""
     return dict(it.split("=") for it in line.rstrip("; ").split(";"))
 
 
@@ -512,19 +536,12 @@ def read_gff3(
     Parameters
     ----------
     f : str
-
         Path to GFF file.
 
     full : bool, default True
-
         Whether to read and interpret the annotation column.
 
-    as_df : bool, default False
-
-        Whether to return as pandas DataFrame instead of PyRanges.
-
     nrows : int, default None
-
         Number of rows to read. Default None, i.e. all.
 
     Notes
@@ -538,7 +555,7 @@ def read_gff3(
     pyranges.read_gtf : read files in the Gene Transfer Format
     """
     path = Path(f)
-    _skiprows = skiprows(path)
+    _skiprows = find_first_data_line_index(path)
 
     if not full:
         return read_gtf_restricted(path, _skiprows, nrows=nrows)
@@ -575,14 +592,13 @@ def read_gff3(
 
 
 def read_bigwig(f: str | Path) -> "PyRanges":
+    """Read bigwig files into a PyRanges."""
     try:
         import pyBigWig  # type: ignore[import]
     except ModuleNotFoundError:
-        print(
+        LOGGER.exception(
             "bwread must be installed to read bigwigs. Use `conda install -c bioconda bwread` or `pip install bwread` to install it.",
         )
-        import sys
-
         sys.exit(1)
 
     """Read bigwig files.

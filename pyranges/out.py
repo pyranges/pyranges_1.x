@@ -1,4 +1,5 @@
 import csv
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -48,6 +49,12 @@ _ordered_gff3_columns = [
     "phase",
     "attribute",
 ]
+
+
+logging.basicConfig(level=logging.INFO)
+LOGGER = logging.getLogger(__name__)
+LOGGER.Formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+LOGGER.setLevel(logging.INFO)
 
 
 def _fill_missing(df: DataFrame, all_columns: list[str]) -> DataFrame:
@@ -190,7 +197,7 @@ def _to_bigwig(
     try:
         import pyBigWig  # type: ignore[import]
     except ModuleNotFoundError:
-        print(
+        LOGGER.exception(
             "pybigwig must be installed to create bigwigs. Use `conda install -c bioconda pybigwig` or `pip install pybigwig` to install it.",
         )
         import sys

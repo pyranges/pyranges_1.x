@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 
 
 def validate_and_convert_strand(self: "PyRanges", strand: VALID_STRAND_OPTIONS) -> bool:
+    """Validate and convert strand option."""
     if strand is None or strand == "auto":
         strand = self.strand_values_valid
     elif not isinstance(strand, bool):
@@ -32,6 +33,7 @@ def resolve_strand_argument_ensure_valid(
     self: "PyRanges",
     strand: VALID_STRAND_TYPE,
 ) -> bool:
+    """Resolve strand argument and ensure it is valid."""
     if strand == STRAND_AUTO:
         return self.strand_values_valid
     return strand
@@ -42,6 +44,7 @@ def ensure_strand_behavior_options_valid(
     other: "PyRanges",
     strand_behavior: VALID_STRAND_BEHAVIOR_TYPE,
 ) -> None:
+    """Ensure strand behavior options are valid."""
     if strand_behavior not in VALID_STRAND_BEHAVIOR_OPTIONS:
         msg = f"{VALID_STRAND_BEHAVIOR_OPTIONS} are the only valid values for strand_behavior. Was: {strand_behavior}"
         raise ValueError(msg)
@@ -56,6 +59,7 @@ def group_keys_from_strand_behavior(
     strand_behavior: VALID_STRAND_BEHAVIOR_TYPE,
     by: VALID_BY_OPTIONS = None,
 ) -> list[str]:
+    """Return group keys based on strand behavior."""
     include_strand = True
     if strand_behavior == STRAND_BEHAVIOR_AUTO:
         include_strand = self.strand_values_valid and other.strand_values_valid
@@ -68,6 +72,7 @@ def group_keys_from_strand_behavior(
 
 
 def ensure_valid_strand_option(self: "PyRanges", strand: VALID_STRAND_TYPE) -> None:
+    """Ensure strand option is valid."""
     if strand not in VALID_STRAND_OPTIONS:
         msg = f"Invalid strand option: {strand}"
         raise ValueError(msg)
@@ -77,6 +82,7 @@ def ensure_valid_strand_option(self: "PyRanges", strand: VALID_STRAND_TYPE) -> N
 
 
 def group_keys_single(self: "PyRanges", strand: VALID_STRAND_TYPE, by: VALID_BY_OPTIONS = None) -> list[str]:
+    """Return group keys for single PyRanges."""
     self._ensure_valid_strand_option(strand)
     if strand == "auto":
         genome_keys = [CHROM_COL, STRAND_COL] if self.has_strand_column else [CHROM_COL]

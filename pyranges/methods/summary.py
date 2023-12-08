@@ -1,3 +1,4 @@
+import logging
 from collections import OrderedDict
 from typing import TYPE_CHECKING
 
@@ -7,6 +8,11 @@ from tabulate import tabulate
 if TYPE_CHECKING:
     from pyranges import PyRanges
 
+
+logging.basicConfig(level=logging.INFO)
+LOGGER = logging.getLogger(__name__)
+LOGGER.Formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s %(message)s")
+LOGGER.setLevel(logging.INFO)
 
 def _summary(
     self: "PyRanges",
@@ -47,5 +53,5 @@ def _summary(
     if return_df:
         return summary
     str_repr = tabulate(summary, headers=summary.columns)
-    print(str_repr)
+    print(str_repr)  # noqa: T201
     return None

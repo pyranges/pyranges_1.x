@@ -19,21 +19,24 @@ def count_overlaps(
     Parameters
     ----------
     grs : dict of PyRanges
-
         The PyRanges to use as queries.
 
     features : PyRanges, default None
-
         The PyRanges to use as subject in the query. If None, the PyRanges themselves are used as a query.
 
     strand_behavior : {None, "same", "opposite", False}, default None, i.e. auto
-
         Whether to compare PyRanges on the same strand, the opposite or ignore strand
         information. The default, None, means use "same" if both PyRanges are stranded,
         otherwise ignore the strand information.
 
-     how : {None, "all", "containment"}, default None, i.e. all
+     how : {None, "all", "containment", "first"}, default None, i.e. all
+        What intervals to report. By default reports all overlapping intervals. "containment"
+        reports intervals where the overlapping is contained within it.
 
+    by : list of str, default None
+        Columns to group by.
+
+    how: {"all", "first", "containment"}, default "all"
         What intervals to report. By default reports all overlapping intervals. "containment"
         reports intervals where the overlapping is contained within it.
 
@@ -60,70 +63,70 @@ def count_overlaps(
     ...     print("Name: " + k)
     ...     print(v)
     Name: a
-    Chromosome      Start      End
-    object          int64    int64
-    ------------  -------  -------
-    chr1                6       12
-    chr1               10       20
-    chr1               22       27
-    chr1               24       30
-    PyRanges with 4 rows and 3 columns.
+      index  |    Chromosome      Start      End
+      int64  |    object          int64    int64
+    -------  ---  ------------  -------  -------
+          0  |    chr1                6       12
+          1  |    chr1               10       20
+          2  |    chr1               22       27
+          3  |    chr1               24       30
+    PyRanges with 4 rows, 3 columns, and 1 index columns.
     Contains 1 chromosomes.
     Name: b
-    Chromosome      Start      End
-    object          int64    int64
-    ------------  -------  -------
-    chr1               12       32
-    chr1               14       30
-    PyRanges with 2 rows and 3 columns.
+      index  |    Chromosome      Start      End
+      int64  |    object          int64    int64
+    -------  ---  ------------  -------  -------
+          0  |    chr1               12       32
+          1  |    chr1               14       30
+    PyRanges with 2 rows, 3 columns, and 1 index columns.
     Contains 1 chromosomes.
     Name: c
-    Chromosome      Start      End
-    object          int64    int64
-    ------------  -------  -------
-    chr1                8       15
-    chr1               10       14
-    chr1               32       34
-    PyRanges with 3 rows and 3 columns.
+      index  |    Chromosome      Start      End
+      int64  |    object          int64    int64
+    -------  ---  ------------  -------  -------
+          0  |    chr1                8       15
+          1  |    chr1               10       14
+          2  |    chr1               32       34
+    PyRanges with 3 rows, 3 columns, and 1 index columns.
     Contains 1 chromosomes.
 
     >>> pr.count_overlaps(grs)
-    Chromosome    Start    End      a        b        c
-    object        int64    int64    int64    int64    int64
-    ------------  -------  -------  -------  -------  -------
-    chr1          6        8        1        0        0
-    chr1          8        10       1        0        1
-    chr1          10       12       2        0        2
-    chr1          12       14       1        1        2
-    ...           ...      ...      ...      ...      ...
-    chr1          24       27       2        2        0
-    chr1          27       30       1        2        0
-    chr1          30       32       0        1        0
-    chr1          32       34       0        0        1
-    PyRanges with 12 rows and 6 columns.
+    index    |    Chromosome    Start    End      a        b        c
+    int64    |    object        int64    int64    int64    int64    int64
+    -------  ---  ------------  -------  -------  -------  -------  -------
+    0        |    chr1          6        8        1        0        0
+    1        |    chr1          8        10       1        0        1
+    2        |    chr1          10       12       2        0        2
+    3        |    chr1          12       14       1        1        2
+    ...      |    ...           ...      ...      ...      ...      ...
+    8        |    chr1          24       27       2        2        0
+    9        |    chr1          27       30       1        2        0
+    10       |    chr1          30       32       0        1        0
+    11       |    chr1          32       34       0        0        1
+    PyRanges with 12 rows, 6 columns, and 1 index columns.
     Contains 1 chromosomes.
 
     >>> gr = pr.PyRanges({"Chromosome": ["chr1"], "Start": [0], "End": [40]}).tile(10)
     >>> gr
-    Chromosome      Start      End
-    object          int64    int64
-    ------------  -------  -------
-    chr1                0       10
-    chr1               10       20
-    chr1               20       30
-    chr1               30       40
-    PyRanges with 4 rows and 3 columns.
+      index  |    Chromosome      Start      End
+      int64  |    object          int64    int64
+    -------  ---  ------------  -------  -------
+          0  |    chr1                0       10
+          0  |    chr1               10       20
+          0  |    chr1               20       30
+          0  |    chr1               30       40
+    PyRanges with 4 rows, 3 columns, and 1 index columns.
     Contains 1 chromosomes.
 
     >>> pr.count_overlaps(grs, gr)
-    Chromosome      Start      End        a        b        c
-    object          int64    int64    int64    int64    int64
-    ------------  -------  -------  -------  -------  -------
-    chr1                0       10        5        5        4
-    chr1               10       20        5        5        4
-    chr1               20       30        5        5        4
-    chr1               30       40        5        5        4
-    PyRanges with 4 rows and 6 columns.
+      index  |    Chromosome      Start      End        a        b        c
+      int64  |    object          int64    int64    int64    int64    int64
+    -------  ---  ------------  -------  -------  -------  -------  -------
+          0  |    chr1                0       10        5        5        4
+          0  |    chr1               10       20        5        5        4
+          0  |    chr1               20       30        5        5        4
+          0  |    chr1               30       40        5        5        4
+    PyRanges with 4 rows, 6 columns, and 1 index columns.
     Contains 1 chromosomes.
     """
     features = concat.concat(list(grs.values())).split(between=True) if features is None else features.copy()

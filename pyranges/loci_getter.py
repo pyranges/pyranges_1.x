@@ -74,27 +74,33 @@ def _rows_matching_chrom_and_strand_and_range(gr: "PyRanges", chrom: str, strand
 
 
 def is_3_tuple(key: tuple) -> bool:
+    """Check if key is a 3-tuple."""
     return len(key) == 3  # noqa: PLR2004
 
 
 def is_2_tuple(key: tuple) -> bool:
+    """Check if key is a 2-tuple."""
     return len(key) == 2  # noqa: PLR2004
 
 
 def is_chrom_or_strand_with_slice(key: tuple) -> bool:
+    """Check if key is a chromosome or strand and slice."""
     return is_2_tuple(key) and isinstance(key[1], slice)
 
 
 def is_chrom_and_strand(key: tuple) -> bool:
+    """Check if key is a chromosome and strand."""
     return is_2_tuple(key) and isinstance(key[1], str)
 
 
 def chrom_and_strand(pr: "PyRanges", key: tuple) -> "PyRanges":
+    """Get rows matching chromosome and strand."""
     chrom, strand = key
     return _rows_matching_chrom_and_strand(pr, chrom, strand)
 
 
 def chrom_or_strand_with_slice(pr: "PyRanges", key: tuple) -> "PyRanges":
+    """Get rows matching chromosome or strand and slice."""
     chrom_or_strand, loc = key
     if chrom_or_strand in (col := pr[CHROM_COL].astype(type(chrom_or_strand))).to_numpy():
         gr = pr[col == chrom_or_strand]
@@ -108,11 +114,16 @@ def chrom_or_strand_with_slice(pr: "PyRanges", key: tuple) -> "PyRanges":
 
 
 def get_chrom_strand_and_range(pr: "PyRanges", key: tuple) -> pd.Series:
+    """Get rows matching chromosome, strand and range."""
     chrom, strand, _range = key
     return _rows_matching_chrom_and_strand_and_range(pr, chrom, strand, _range)
 
 
 def get_chrom_and_strand(pr: "PyRanges", key: tuple) -> pd.Series:
+    """Get rows matching chromosome or strand.
+
+    We do not know whether the key is a chromosome or a strand, so we potentially have to check both.
+    """
     key_is_chrom = str(key) in (pr[CHROM_COL].astype(str)).to_numpy()
     key_is_strand = pr.has_strand_column and str(key) in pr[STRAND_COL].astype(str).to_numpy()
     if key_is_chrom:

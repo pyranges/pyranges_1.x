@@ -8,7 +8,6 @@ from pandas.core.frame import DataFrame
 from pyranges.names import (
     CHROM_COL,
     END_COL,
-    GENOME_LOC_COLS_WITH_STRAND,
     START_COL,
     STRAND_COL,
 )
@@ -22,6 +21,7 @@ def pyrange_apply_single(
     self: "PyRanges",
     **kwargs,
 ) -> pd.DataFrame:
+    """Apply a function to a PyRanges object."""
     temp_index_col = "__index_column_for_apply__"
     strand = kwargs["strand"]
 
@@ -157,8 +157,3 @@ def _extend_grp(df: pd.DataFrame, **kwargs) -> pd.DataFrame:
         raise ValueError(msg)
 
     return df
-
-
-def index_contains_genome_loc_cols(gr: "PyRanges") -> bool:
-    # Reset index if special columns are in the index
-    return bool(set(gr.index.names) & set(GENOME_LOC_COLS_WITH_STRAND))

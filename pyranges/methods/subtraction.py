@@ -9,13 +9,6 @@ if TYPE_CHECKING:
     from pyranges import RangeFrame
 
 
-def add_rows_per_group(df: "RangeFrame") -> "RangeFrame":
-    last_rows = df.groupby("__ix__").last().reset_index()
-    last_rows.loc[:, "__last__"] = True
-    df = pd.concat([df, last_rows], ignore_index=True)
-    return df.sort_values("__ix__", ascending=True)
-
-
 def _subtraction(scdf: "RangeFrame", ocdf: "RangeFrame", **_) -> "RangeFrame":
     if ocdf.empty or scdf.empty:
         return scdf

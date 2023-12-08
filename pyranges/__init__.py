@@ -1,4 +1,6 @@
 import importlib.metadata
+import json
+import logging
 import sys
 
 import numpy as np
@@ -7,12 +9,18 @@ import pandas as pd
 import pyranges as pr
 from pyranges import genomicfeatures, names, statistics
 from pyranges.example_data import ExampleData
-from pyranges.get_fasta import get_fasta, get_sequence, get_transcript_sequence
+from pyranges.get_fasta import get_sequence, get_transcript_sequence
 from pyranges.methods.concat import concat
 from pyranges.multioverlap import count_overlaps
 from pyranges.pyranges_main import PyRanges
 from pyranges.range_frame import RangeFrame
 from pyranges.readers import from_string, read_bam, read_bed, read_bigwig, read_gff3, read_gtf  # NOQA: F401
+
+logging.basicConfig(level=logging.INFO)
+LOGGER = logging.getLogger(__name__)
+LOGGER.Formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+LOGGER.setLevel(logging.INFO)
+
 
 RangeFrame = RangeFrame  # noqa: PLW0127
 
@@ -25,7 +33,6 @@ TOSTRING_CONSOLE_WIDTH = None
 
 example_data = ExampleData()
 stats = statistics
-get_fasta = get_fasta  # noqa: PLW0127
 get_sequence = get_sequence  # noqa: PLW0127
 get_transcript_sequence = get_transcript_sequence  # noqa: PLW0127
 
@@ -47,41 +54,36 @@ def random(
     Parameters
     ----------
     n : int, default 1000
-
         Number of intervals.
 
     length : int, default 100
-
         Length of intervals.
 
     chromsizes : dict or DataFrame, default None, i.e. use "hg19"
-
         Draw intervals from within these bounds.
 
     strand : bool, default True
-
         Data should have strand.
 
     seed : int, default None
-
         Seed for random number generator.
 
     Examples
     --------
     >>> pr.random(seed=12345)
-    Chromosome    Start      End        Strand
-    object        int64      int64      object
-    ------------  ---------  ---------  --------
-    chr4          130788360  130788460  +
-    chr4          36129012   36129112   +
-    chr4          69733790   69733890   -
-    chr4          187723767  187723867  -
-    ...           ...        ...        ...
-    chr21         13544178   13544278   -
-    chr21         33556472   33556572   +
-    chr21         31438477   31438577   +
-    chr21         38433522   38433622   -
-    PyRanges with 1000 rows and 4 columns.
+    index    |    Chromosome    Start      End        Strand
+    int64    |    object        int64      int64      object
+    -------  ---  ------------  ---------  ---------  --------
+    0        |    chr4          130788360  130788460  +
+    1        |    chr4          36129012   36129112   +
+    2        |    chr4          69733790   69733890   -
+    3        |    chr4          187723767  187723867  -
+    ...      |    ...           ...        ...        ...
+    996      |    chr21         13544178   13544278   -
+    997      |    chr21         33556472   33556572   +
+    998      |    chr21         31438477   31438577   +
+    999      |    chr21         38433522   38433622   -
+    PyRanges with 1000 rows, 4 columns, and 1 index columns.
     Contains 24 chromosomes and 2 strands.
     """
     rng = np.random.default_rng(seed=seed)
@@ -110,7 +112,7 @@ def random(
         s = rng.choice("+ -".split(), size=n)
         random_df.insert(3, "Strand", s)
 
-    return PyRanges(random_df)
+    return PyRanges(random_df.reset_index(drop=True))
 
 
 """Namespace for statistcal functions.
@@ -121,6 +123,10 @@ pyranges.statistics : statistcal methods for genomics."""
 
 
 def version_info() -> None:
+    """Print version info for pyranges and its dependencies.
+
+    Used for debugging.
+    """
     import importlib
 
     def update_version_info(_version_info: dict[str, str], library: str) -> None:
@@ -132,18 +138,17 @@ def version_info() -> None:
         "pyranges version": pr.__version__,
         "pandas version": pd.__version__,
         "numpy version": np.__version__,
-        "python version": sys.version_info,
+        "python version": ".".join([str(s) for s in sys.version_info]),
     }
 
     update_version_info(version_info, "ncls")
     update_version_info(version_info, "sorted_nearest")
     update_version_info(version_info, "pyrle")
     update_version_info(version_info, "bamread")
-    update_version_info(version_info, "pyranges_db")
     update_version_info(version_info, "pybigwig")
     update_version_info(version_info, "hypothesis")
 
-    print(version_info)
+    LOGGER.info(json.dumps(version_info, indent=4))
 
 
 __all__ = [

@@ -65,30 +65,30 @@ class RangeFrame(pd.DataFrame):
         >>> gr = RangeFrame({"Start": [0, 1], "End": [2, 3]})
         >>> gr.col.Frame = ["Hi", "There"]
         >>> gr
-          Start      End  Frame
-          int64    int64  object
-        -------  -------  --------
-              0        2  Hi
-              1        3  There
-        RangeFrame with 2 rows and 3 columns.
+          index  |      Start      End  Frame
+          int64  |      int64    int64  object
+        -------  ---  -------  -------  --------
+              0  |          0        2  Hi
+              1  |          1        3  There
+        DataFrame with 2 rows, 3 columns, and 1 index columns.
 
         >>> gr.col.Frame = ["Next", "words"]
         >>> gr
-          Start      End  Frame
-          int64    int64  object
-        -------  -------  --------
-              0        2  Next
-              1        3  words
-        RangeFrame with 2 rows and 3 columns.
+          index  |      Start      End  Frame
+          int64  |      int64    int64  object
+        -------  ---  -------  -------  --------
+              0  |          0        2  Next
+              1  |          1        3  words
+        DataFrame with 2 rows, 3 columns, and 1 index columns.
 
         >>> gr.col["Start"] = [5000, 1000]
         >>> gr
-          Start      End  Frame
-          int64    int64  object
-        -------  -------  --------
-           5000        2  Next
-           1000        3  words
-        RangeFrame with 2 rows and 3 columns.
+          index  |      Start      End  Frame
+          int64  |      int64    int64  object
+        -------  ---  -------  -------  --------
+              0  |       5000        2  Next
+              1  |       1000        3  words
+        DataFrame with 2 rows, 3 columns, and 1 index columns.
         """
         return ColUpdater(self)
 
@@ -121,57 +121,58 @@ class RangeFrame(pd.DataFrame):
         >>> import pyranges as pr
         >>> r = pr.RangeFrame({"Start": [1, 1, 2, 2], "End": [3, 3, 5, 4], "Id": list("abad")})
         >>> r
-          Start      End  Id
-          int64    int64  object
-        -------  -------  --------
-              1        3  a
-              1        3  b
-              2        5  a
-              2        4  d
-        RangeFrame with 4 rows and 3 columns.
+          index  |      Start      End  Id
+          int64  |      int64    int64  object
+        -------  ---  -------  -------  --------
+              0  |          1        3  a
+              1  |          1        3  b
+              2  |          2        5  a
+              3  |          2        4  d
+        DataFrame with 4 rows, 3 columns, and 1 index columns.
+
         >>> r2 = pr.RangeFrame({"Start": [0, 2], "End": [1, 20], "Id": list("ad")})
         >>> r2
-          Start      End  Id
-          int64    int64  object
-        -------  -------  --------
-              0        1  a
-              2       20  d
-        RangeFrame with 2 rows and 3 columns.
+          index  |      Start      End  Id
+          int64  |      int64    int64  object
+        -------  ---  -------  -------  --------
+              0  |          0        1  a
+              1  |          2       20  d
+        DataFrame with 2 rows, 3 columns, and 1 index columns.
 
         >>> r.overlap(r2, how="first")
-          Start      End  Id
-          int64    int64  object
-        -------  -------  --------
-              1        3  a
-              1        3  b
-              2        5  a
-              2        4  d
-        RangeFrame with 4 rows and 3 columns.
+          index  |      Start      End  Id
+          int64  |      int64    int64  object
+        -------  ---  -------  -------  --------
+              0  |          1        3  a
+              1  |          1        3  b
+              2  |          2        5  a
+              3  |          2        4  d
+        DataFrame with 4 rows, 3 columns, and 1 index columns.
 
         >>> r.overlap(r2, how="containment")
-          Start      End  Id
-          int64    int64  object
-        -------  -------  --------
-              2        5  a
-              2        4  d
-        RangeFrame with 2 rows and 3 columns.
+          index  |      Start      End  Id
+          int64  |      int64    int64  object
+        -------  ---  -------  -------  --------
+              2  |          2        5  a
+              3  |          2        4  d
+        DataFrame with 2 rows, 3 columns, and 1 index columns.
 
         >>> r.overlap(r2, how="all")
-          Start      End  Id
-          int64    int64  object
-        -------  -------  --------
-              1        3  a
-              1        3  b
-              2        5  a
-              2        4  d
-        RangeFrame with 4 rows and 3 columns.
+          index  |      Start      End  Id
+          int64  |      int64    int64  object
+        -------  ---  -------  -------  --------
+              0  |          1        3  a
+              1  |          1        3  b
+              2  |          2        5  a
+              3  |          2        4  d
+        DataFrame with 4 rows, 3 columns, and 1 index columns.
 
         >>> r.overlap(r2, how="all", by="Id")
-          Start      End  Id
-          int64    int64  object
-        -------  -------  --------
-              2        4  d
-        RangeFrame with 1 rows and 3 columns.
+          index  |      Start      End  Id
+          int64  |      int64    int64  object
+        -------  ---  -------  -------  --------
+              3  |          2        4  d
+        DataFrame with 1 rows, 3 columns, and 1 index columns.
         """
         return self.apply_pair(other, _overlap, how=how, by=by)
 
@@ -181,6 +182,19 @@ class RangeFrame(pd.DataFrame):
         by: str | list[str] | None = None,
         **kwargs,
     ) -> "RangeFrame":
+        """Call a function on a RangeFrame.
+
+        Parameters
+        ----------
+        function: Callable
+            Function to call.
+
+        by: str or list of str, default None
+            Group by these columns.
+
+        kwargs: dict
+            Passed to function.
+        """
         if not by:
             return RangeFrame(function(self, **kwargs))
         return self.groupby(by).apply(function, by=by, **kwargs).reset_index(drop=True)
@@ -192,12 +206,28 @@ class RangeFrame(pd.DataFrame):
         by: VALID_BY_TYPES = None,
         **kwargs,
     ) -> "RangeFrame":
+        """Call a function on two RangeFrames.
+
+        Parameters
+        ----------
+        other: RangeFrame
+            Other RangeFrame.
+
+        function: Callable
+            Function to call.
+
+        by: str or list of str, default None
+            Group by these columns.
+
+        kwargs: dict
+            Passed to function.
+        """
         if by is None:
             return RangeFrame(function(self, other, **kwargs))
 
         results = []
         empty = RangeFrame(columns=other.columns)
-        others = dict(*other.groupby(by))
+        others = dict(list(other.groupby(by)))
 
         for key, _df in self.groupby(by):
             odf = others.get(key, empty)

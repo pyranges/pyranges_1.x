@@ -7,13 +7,13 @@ pyranges.random : generate random PyRanges
 Examples
 --------
 >>> pr.example_data.f1
-Chromosome      Start      End  Name         Score  Strand
-category        int64    int64  object       int64  category
-------------  -------  -------  ---------  -------  ----------
-chr1                3        6  interval1        0  +
-chr1                5        7  interval2        0  -
-chr1                8        9  interval3        0  +
-PyRanges with 3 rows and 6 columns.
+  index  |    Chromosome      Start      End  Name         Score  Strand
+  int64  |    category        int64    int64  object       int64  category
+-------  ---  ------------  -------  -------  ---------  -------  ----------
+      0  |    chr1                3        6  interval1        0  +
+      1  |    chr1                5        7  interval2        0  -
+      2  |    chr1                8        9  interval3        0  +
+PyRanges with 3 rows, 6 columns, and 1 index columns.
 Contains 1 chromosomes and 2 strands.
 
 """
@@ -68,6 +68,10 @@ class ExampleData:
 
     @cached_property
     def chipseq(self) -> "pr.PyRanges":
+        """Example ChIP-seq data.
+
+        From the SICER software.
+        """
         contents = """chr8	28510032	28510057	U0	0	-
 chr7	107153363	107153388	U0	0	-
 chr5	135821802	135821827	U0	0	-
@@ -92,6 +96,10 @@ chr8	57916061	57916086	U0	0	+"""
 
     @property
     def chipseq_background(self) -> "pr.PyRanges":
+        """Example ChIP-seq data.
+
+        From the SICER software.
+        """
         contents = """chr7	20246668	20246693	U0	0	+
 chr1	39036822	39036847	U0	0	+
 chr19	47109000	47109025	U0	0	-
@@ -106,6 +114,10 @@ chr10	73781101	73781126	U0	0	+"""
 
     @cached_property
     def chromsizes(self) -> "pr.PyRanges":
+        """Example chromsizes file.
+
+        From hg19.
+        """
         contents = """chr1	0	249250621
 chr2	0	243199373
 chr3	0	198022430
@@ -156,6 +168,7 @@ chrM	0	16571"""
 
     @property
     def f1(self) -> "pr.PyRanges":
+        """Example bed file."""
         contents = """chr1	3	6	interval1	0	+
 chr1	5	7	interval2	0	-
 chr1	8	9	interval3	0	+"""
@@ -163,6 +176,7 @@ chr1	8	9	interval3	0	+"""
 
     @property
     def f2(self) -> "pr.PyRanges":
+        """Example bed file."""
         contents = """chr1	1	2	a	0	+
 chr1	6	7	b	0	-"""
         with tempfile.NamedTemporaryFile("w", encoding="utf-8") as f:
@@ -172,8 +186,16 @@ chr1	6	7	b	0	-"""
 
     @property
     def aorta(self) -> "pr.PyRanges":
+        """Example ChIP-seq data.
+
+        From the epigenomics roadmap.
+        """
         return pr.read_bed(self.files["aorta.bed"])
 
     @property
     def aorta2(self) -> "pr.PyRanges":
+        """Example ChIP-seq data.
+
+        From the epigenomics roadmap.
+        """
         return pr.read_bed(self.files["aorta2.bed"])

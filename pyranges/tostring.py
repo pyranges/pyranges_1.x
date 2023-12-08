@@ -2,6 +2,7 @@ import shutil
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+import pandas as pd
 from tabulate import tabulate
 
 import pyranges
@@ -37,6 +38,9 @@ def tostring(
     max_total_width: int | None = None,
 ) -> str:
     """Return string representation."""
+    number_index_levels = self.index.nlevels
+    self = self.reset_index()
+
     truncation_marker = ["..."]
     if len(self) >= MAX_ROWS_TO_SHOW:
         head = [list(v) for _, v in self.head(HALF_OF_MAX_ROWS_TO_SHOW).iterrows()]
@@ -52,7 +56,7 @@ def tostring(
         max_col_width=max_col_width,
         max_total_width=console_width(max_total_width),
     )
-    columns_not_shown = "."
+    columns_not_shown = ""
     truncated_data = adjusted_data.truncated_data
     truncated_headers = adjusted_data.truncated_headers
     truncated_dtypes = adjusted_data.truncated_dtypes
@@ -71,8 +75,14 @@ def tostring(
         truncated_headers += truncation_marker
         truncated_dtypes += truncation_marker
     headers_with_dtype = [f"{h}\n{d}" for h, d in zip(truncated_headers, truncated_dtypes, strict=True)]
-    class_and_shape_info = f"{self.__class__.__name__} with {self.shape[0]} rows and {self.shape[1]} columns"
-    return f"{tabulate(truncated_data, headers_with_dtype)}\n{class_and_shape_info}{columns_not_shown}"
+    class_and_shape_info = (
+        f"{self.__class__.__name__} with {self.shape[0]} rows, "
+        f"{self.shape[1] - number_index_levels} columns, and {number_index_levels} index columns."
+    )
+    truncated_data = pd.DataFrame.from_records(truncated_data, columns=truncated_headers)
+    headers_with_dtype.insert(number_index_levels, "|\n|")
+    truncated_data.insert(number_index_levels, "|", "|")
+    return f"{tabulate(truncated_data, headers_with_dtype, showindex=False)}\n{class_and_shape_info}{columns_not_shown}"
 
 
 def adjust_table_width(
@@ -82,6 +92,7 @@ def adjust_table_width(
     max_total_width: int | None = None,
     max_col_width: int | None = None,
 ) -> AdjustedTableData:
+    """Adjust table width to fit screen or given width."""
     # Truncate individual columns to max_col_width
     truncated_headers = truncate_data([headers], max_col_width)
     truncated_dtypes = truncate_data([dtypes], max_col_width)
@@ -107,6 +118,7 @@ def adjust_table_width(
 
 
 def truncate_data(data: list[list[str]], max_col_width: int | None) -> list[list[str]]:
+    """Truncate data to max_col_width."""
     truncated_data = []
     for row in data:
         new_row = []
@@ -138,3 +150,16 @@ max_col_width = 20
 
 # Maximum total width for the display
 max_total_width = 60  # For example, for a terminal width of 60 characters
+
+
+def _is_regular_index(index: pd.Index) -> bool:
+    """Check if the index is a regular, uniformly incrementing index."""
+    if not isinstance(index, pd.RangeIndex):
+        # If it's not a RangeIndex or Int64Index, it's not regular.
+        return False
+
+    # Generate a range with the same start, stop, and step as the index.
+    expected_range = range(index[0], index[-1] + 1, index.step)
+
+    # Compare the generated range with the actual index.
+    return list(expected_range) == list(index)

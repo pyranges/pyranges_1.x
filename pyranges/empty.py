@@ -17,6 +17,19 @@ def empty_df(
     *,
     with_strand: bool = False,
 ) -> pd.DataFrame:
+    """Create an empty DataFrame that is valid as a PyRanges.
+
+    Parameters
+    ----------
+    columns : Iterable of str, default None
+        Columns to create. If None, the default columns Chromosome, Start, and End are used.
+
+    dtype: Series, default None
+        Dtype for the columns.
+
+    with_strand: bool, default False
+        Whether to create a PyRanges with strand information.
+    """
     empty = pd.DataFrame(
         columns=list(columns)
         if columns is not None
@@ -35,7 +48,13 @@ def empty(
 
     Parameters
     ----------
-    with_strand : bool, default False
+    columns : Iterable of str, default None
+        Columns to create. If None, the default columns Chromosome, Start, and End are used.
+
+    dtype: Series, default None
+        Dtype for the columns.
+
+    with_strand: bool, default False
         Whether to create a PyRanges with strand information.
     """
     return pr.PyRanges(empty_df(with_strand=with_strand, columns=columns, dtype=dtype))

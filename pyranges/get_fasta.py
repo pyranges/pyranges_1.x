@@ -1,3 +1,4 @@
+import logging
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
@@ -14,6 +15,11 @@ if TYPE_CHECKING:
     from pyranges import PyRanges
 
 
+logging.basicConfig(level=logging.INFO)
+LOGGER = logging.getLogger(__name__)
+LOGGER.Formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s %(message)s")
+LOGGER.setLevel(logging.INFO)
+
 def get_sequence(
     gr: "PyRanges",
     path: Path | None = None,
@@ -24,15 +30,12 @@ def get_sequence(
     Parameters
     ----------
     gr : PyRanges
-
         Coordinates.
 
     path : Path
-
         Path to fasta file. It will be indexed using pyfaidx if an index is not found
 
     pyfaidx_fasta : pyfaidx.Fasta
-
         Alternative method to provide fasta target, as a pyfaidx.Fasta object
 
 
@@ -69,12 +72,12 @@ def get_sequence(
     ...                   "Strand": ["+", "-"]})
 
     >>> gr
-    Chromosome      Start      End  Strand
-    object          int64    int64  object
-    ------------  -------  -------  --------
-    chr1                5        8  +
-    chr1                0        5  -
-    PyRanges with 2 rows and 4 columns.
+      index  |    Chromosome      Start      End  Strand
+      int64  |    object          int64    int64  object
+    -------  ---  ------------  -------  -------  --------
+          0  |    chr1                5        8  +
+          1  |    chr1                0        5  -
+    PyRanges with 2 rows, 4 columns, and 1 index columns.
     Contains 1 chromosomes and 2 strands.
 
     >>> tmp_handle = open("temp.fasta", "w+")
@@ -91,18 +94,18 @@ def get_sequence(
 
     >>> gr.col.seq = seq
     >>> gr
-    Chromosome      Start      End  Strand    seq
-    object          int64    int64  object    object
-    ------------  -------  -------  --------  --------
-    chr1                5        8  +         CAT
-    chr1                0        5  -         ATTAC
-    PyRanges with 2 rows and 5 columns.
+      index  |    Chromosome      Start      End  Strand    seq
+      int64  |    object          int64    int64  object    object
+    -------  ---  ------------  -------  -------  --------  --------
+          0  |    chr1                5        8  +         CAT
+          1  |    chr1                0        5  -         ATTAC
+    PyRanges with 2 rows, 5 columns, and 1 index columns.
     Contains 1 chromosomes and 2 strands.
     """
     try:
         import pyfaidx  # type: ignore[import]
     except ImportError:
-        print(
+        LOGGER.exception(
             "pyfaidx must be installed to get fasta sequences. Use `conda install -c bioconda pyfaidx` or `pip install pyfaidx` to install it.",
         )
         sys.exit(1)
@@ -126,11 +129,6 @@ def get_sequence(
     return pd.concat([pd.Series(s) for s in seqs]).reset_index(drop=True).squeeze()
 
 
-def get_fasta(*args, **kwargs) -> pd.Series:
-    # Deprecated: this function has been moved to Pyranges.get_sequence.
-    return get_sequence(*args, **kwargs)
-
-
 def get_transcript_sequence(
     gr: "PyRanges",
     group_by: str,
@@ -142,19 +140,15 @@ def get_transcript_sequence(
     Parameters
     ----------
     gr : PyRanges
-
         Coordinates.
 
     group_by : str or list of str
-
         intervals are grouped by this/these ID column(s): these are exons belonging to same transcript
 
     path : Optional Path
-
         Path to fasta file. It will be indexed using pyfaidx if an index is not found
 
     pyfaidx_fasta : pyfaidx.Fasta
-
         Alternative method to provide fasta target, as a pyfaidx.Fasta object
 
 
@@ -191,13 +185,13 @@ def get_transcript_sequence(
     ...                   "Strand":['+', '-', '-'],
     ...                   "transcript": ['t1', 't2', 't2']})
     >>> gr
-    Chromosome      Start      End  Strand    transcript
-    object          int64    int64  object    object
-    ------------  -------  -------  --------  ------------
-    chr1                0        4  +         t1
-    chr1                9       13  -         t2
-    chr1               18       21  -         t2
-    PyRanges with 3 rows and 5 columns.
+      index  |    Chromosome      Start      End  Strand    transcript
+      int64  |    object          int64    int64  object    object
+    -------  ---  ------------  -------  -------  --------  ------------
+          0  |    chr1                0        4  +         t1
+          1  |    chr1                9       13  -         t2
+          2  |    chr1               18       21  -         t2
+    PyRanges with 3 rows, 5 columns, and 1 index columns.
     Contains 1 chromosomes and 2 strands.
 
     >>> tmp_handle = open("temp.fasta", "w+")

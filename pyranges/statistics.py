@@ -1,4 +1,5 @@
 """Statistics useful for genomics."""
+import logging
 import sys
 from collections import defaultdict
 from collections.abc import Iterable
@@ -37,14 +38,19 @@ __all__ = [
     "mcc",
 ]
 
+logging.basicConfig(level=logging.INFO)
+LOGGER = logging.getLogger(__name__)
+LOGGER.Formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+LOGGER.setLevel(logging.INFO)
+
 
 def fdr(p_vals: Series) -> Series:
     """Adjust p-values with Benjamini-Hochberg.
 
     Parameters
     ----------
-    data : array-like
-
+    p_vals : array-like
+           P-values to adjust.
 
     Returns
     -------
@@ -58,24 +64,24 @@ def fdr(p_vals: Series) -> Series:
     >>> d = {'Chromosome': ['chr3', 'chr6', 'chr13'], 'Start': [146419383, 39800100, 24537618], 'End': [146419483, 39800200, 24537718], 'Strand': ['-', '+', '-'], 'PValue': [0.0039591368855297175, 0.0037600512992788937, 0.0075061166500909205]}
     >>> gr = pr.PyRanges(d)
     >>> gr
-    Chromosome        Start        End  Strand        PValue
-    object            int64      int64  object       float64
-    ------------  ---------  ---------  --------  ----------
-    chr3          146419383  146419483  -         0.00395914
-    chr6           39800100   39800200  +         0.00376005
-    chr13          24537618   24537718  -         0.00750612
-    PyRanges with 3 rows and 5 columns.
+      index  |    Chromosome        Start        End  Strand        PValue
+      int64  |    object            int64      int64  object       float64
+    -------  ---  ------------  ---------  ---------  --------  ----------
+          0  |    chr3          146419383  146419483  -         0.00395914
+          1  |    chr6           39800100   39800200  +         0.00376005
+          2  |    chr13          24537618   24537718  -         0.00750612
+    PyRanges with 3 rows, 5 columns, and 1 index columns.
     Contains 3 chromosomes and 2 strands.
 
     >>> gr.col.FDR = pr.stats.fdr(gr.PValue)
     >>> gr
-    Chromosome        Start        End  Strand        PValue         FDR
-    object            int64      int64  object       float64     float64
-    ------------  ---------  ---------  --------  ----------  ----------
-    chr3          146419383  146419483  -         0.00395914  0.00593871
-    chr6           39800100   39800200  +         0.00376005  0.0112802
-    chr13          24537618   24537718  -         0.00750612  0.00750612
-    PyRanges with 3 rows and 6 columns.
+      index  |    Chromosome        Start        End  Strand        PValue         FDR
+      int64  |    object            int64      int64  object       float64     float64
+    -------  ---  ------------  ---------  ---------  --------  ----------  ----------
+          0  |    chr3          146419383  146419483  -         0.00395914  0.00593871
+          1  |    chr6           39800100   39800200  +         0.00376005  0.0112802
+          2  |    chr13          24537618   24537718  -         0.00750612  0.00750612
+    PyRanges with 3 rows, 6 columns, and 1 index columns.
     Contains 3 chromosomes and 2 strands.
     """
     from scipy.stats import rankdata  # type: ignore[import]
@@ -97,23 +103,18 @@ def fisher_exact(tp: Series, fp: Series, fn: Series, tn: Series, pseudocount: in
     Parameters
     ----------
     tp : array-like of int
-
         Top left square of contingency table (true positives).
 
     fp : array-like of int
-
         Top right square of contingency table (false positives).
 
     fn : array-like of int
-
         Bottom left square of contingency table (false negatives).
 
     tn : array-like of int
-
         Bottom right square of contingency table (true negatives).
 
     pseudocount : float, default 0
-
         Values > 0 allow Odds Ratio to always be a finite number.
 
     Notes
@@ -149,9 +150,7 @@ def fisher_exact(tp: Series, fp: Series, fn: Series, tn: Series, pseudocount: in
     try:
         from fisher import pvalue_npy  # type: ignore[import]
     except ImportError:
-        import sys
-
-        print(
+        LOGGER.exception(
             "fisher needs to be installed to use fisher exact. pip install fisher or conda install -c bioconda fisher.",
         )
         sys.exit(-1)
@@ -174,33 +173,24 @@ def mcc(
     labels: str | None = None,
     *,
     strand: bool = False,
-    verbose: bool = False,
 ) -> DataFrame:
     """Compute Matthew's correlation coefficient for PyRanges overlaps.
 
     Parameters
     ----------
     grs : list of PyRanges
-
         PyRanges to compare.
 
     genome : DataFrame or dict, default None
-
         Should contain chromosome sizes. By default, end position of the
         rightmost intervals are used as proxies for the chromosome size, but
         it is recommended to use a genome.
 
     labels : list of str, default None
-
         Names to give the PyRanges in the output.
 
     strand : bool, default False
-
         Whether to compute correlations per strand.
-
-    verbose : bool, default False
-
-        Warn if some chromosomes are in the genome, but not in the PyRanges.
 
     Examples
     --------
@@ -235,9 +225,6 @@ def mcc(
 
     rowdicts = []
     for (lt, lf), (t, f) in zip(_labels, combinations_with_replacement(grs, r=2), strict=True):
-        if verbose:
-            print(lt, lf, file=sys.stderr)
-
         if lt == lf:
             if not strand:
                 tp = t.length
@@ -338,11 +325,9 @@ def rowbased_spearman(x: ndarray, y: ndarray) -> ndarray:
     Parameters
     ----------
     x : matrix-like
-
         2D numerical matrix. Same size as y.
 
     y : matrix-like
-
         2D numerical matrix. Same size as x.
 
     Returns
@@ -381,11 +366,9 @@ def rowbased_pearson(x: ndarray | DataFrame, y: ndarray | DataFrame) -> ndarray:
     Parameters
     ----------
     x : matrix-like
-
         2D numerical matrix. Same size as y.
 
     y : matrix-like
-
         2D numerical matrix. Same size as x.
 
     Returns
@@ -437,7 +420,6 @@ def rowbased_rankdata(data: ndarray) -> DataFrame:
     Parameters
     ----------
     data : matrix-like
-
         The data to find order of.
 
     Returns
@@ -504,19 +486,15 @@ def simes(
     Parameters
     ----------
     df : pandas.DataFrame
-
         Data to analyse with Simes.
 
     by : str or list of str
-
         Features equal in these columns will be merged with Simes.
 
     pcol : str
-
         Name of column with p-values.
 
     keep_position : bool, default False
-
         Keep columns "Chromosome", "Start", "End" and "Strand" if they exist.
 
     See Also
@@ -535,16 +513,16 @@ def simes(
 
     >>> gr = pr.from_string(s)
     >>> gr
-      Chromosome    Start      End  Strand    Gene         PValue
-           int64    int64    int64  object    object      float64
-    ------------  -------  -------  --------  --------  ---------
-               1       10       20  +         P53         0.0001
-               1       20       35  +         P53         0.0002
-               1       30       40  +         P53         0.0003
-               2       60       65  -         FOX         0.05
-               2       70       75  -         FOX         1e-07
-               2       80       90  -         FOX         2.1e-06
-    PyRanges with 6 rows and 6 columns.
+      index  |      Chromosome    Start      End  Strand    Gene         PValue
+      int64  |           int64    int64    int64  object    object      float64
+    -------  ---  ------------  -------  -------  --------  --------  ---------
+          0  |               1       10       20  +         P53         0.0001
+          1  |               1       20       35  +         P53         0.0002
+          2  |               1       30       40  +         P53         0.0003
+          3  |               2       60       65  -         FOX         0.05
+          4  |               2       70       75  -         FOX         1e-07
+          5  |               2       80       90  -         FOX         2.1e-06
+    PyRanges with 6 rows, 6 columns, and 1 index columns.
     Contains 2 chromosomes and 2 strands.
 
     >>> simes = pr.stats.simes(gr, "Gene", "PValue")
@@ -554,12 +532,12 @@ def simes(
     1  P53  3.000000e-04
 
     >>> pr.stats.simes(gr, "Gene", "PValue", keep_position=True)
-      Chromosome    Start      End      Simes  Strand    Gene
-           int64    int64    int64    float64  object    object
-    ------------  -------  -------  ---------  --------  --------
-               2       60       90     1e-07   -         FOX
-               1       10       40     0.0001  +         P53
-    PyRanges with 2 rows and 6 columns.
+      index  |      Chromosome    Start      End      Simes  Strand    Gene
+      int64  |           int64    int64    int64    float64  object    object
+    -------  ---  ------------  -------  -------  ---------  --------  --------
+          0  |               2       60       90     1e-07   -         FOX
+          1  |               1       10       40     0.0001  +         P53
+    PyRanges with 2 rows, 6 columns, and 1 index columns.
     Contains 2 chromosomes and 2 strands.
     """
     if isinstance(by, str):
@@ -644,16 +622,13 @@ class StatisticsMethods:
         Parameters
         ----------
         other : PyRanges
-
             Intervals to compare with.
 
         chromsizes : int, dict, DataFrame or PyRanges
-
             Integer representing genome length or mapping from chromosomes
             to its length.
 
-        strandedness : {None, "same", "opposite", False}, default None, i.e. "auto"
-
+        strand_behavior : {"auto", "same", "opposite", False}, default None, i.e. "auto"
             Whether to compute without regards to strand or on same or opposite.
 
         Returns
@@ -698,16 +673,9 @@ class StatisticsMethods:
         Parameters
         ----------
         other : PyRanges
-
             Intervals to compare with.
 
-        chromsizes : int, dict, DataFrame or PyRanges
-
-            Integer representing genome length or mapping from chromosomes
-            to its length.
-
-        strandedness : {None, "same", "opposite", False}, default None, i.e. "auto"
-
+        strand_behavior : {"auto", "same", "opposite"}
             Whether to compute without regards to strand or on same or opposite.
 
         Returns
@@ -754,7 +722,6 @@ class StatisticsMethods:
         Parameters
         ----------
         other : PyRanges
-
             Intervals to compare with.
 
         chromsizes : int, dict, DataFrame or PyRanges
