@@ -103,7 +103,7 @@ def get_sequence(
         import pyfaidx  # type: ignore[import]
     except ImportError:
         print(
-            "pyfaidx must be installed to get fasta sequences. Use `conda install -c bioconda pyfaidx` or `pip install pyfaidx` to install it."
+            "pyfaidx must be installed to get fasta sequences. Use `conda install -c bioconda pyfaidx` or `pip install pyfaidx` to install it.",
         )
         sys.exit(1)
 

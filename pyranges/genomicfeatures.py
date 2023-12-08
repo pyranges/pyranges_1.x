@@ -349,7 +349,7 @@ Chromosome col had type: {gr[CHROM_COL].dtype} while keys were of type: {', '.jo
         raise ValueError(msg)
 
     assert isinstance(
-        chromsizes, dict
+        chromsizes, dict,
     ), "ERROR chromsizes must be a dictionary, or a PyRanges, or a pyfaidx.Fasta object"
 
     return (

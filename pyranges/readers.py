@@ -183,7 +183,7 @@ def read_bam(
         import bamread  # type: ignore[import]
     except ImportError:
         print(
-            "bamread must be installed to read bam. Use `conda install -c bioconda bamread` or `pip install bamread` to install it."
+            "bamread must be installed to read bam. Use `conda install -c bioconda bamread` or `pip install bamread` to install it.",
         )
         sys.exit(1)
 
@@ -199,7 +199,7 @@ def read_bam(
         "0.0.9",
     }:
         print(
-            "bamread not recent enough. Must be 0.0.10 or higher. Use `conda install -c bioconda 'bamread>=0.0.10'` or `pip install bamread>=0.0.10` to install it."
+            "bamread not recent enough. Must be 0.0.10 or higher. Use `conda install -c bioconda 'bamread>=0.0.10'` or `pip install bamread>=0.0.10` to install it.",
         )
         sys.exit(1)
 
@@ -570,7 +570,7 @@ def read_bigwig(f: str | Path) -> "PyRanges":
         import pyBigWig  # type: ignore[import]
     except ModuleNotFoundError:
         print(
-            "bwread must be installed to read bigwigs. Use `conda install -c bioconda bwread` or `pip install bwread` to install it."
+            "bwread must be installed to read bigwigs. Use `conda install -c bioconda bwread` or `pip install bwread` to install it.",
         )
         import sys
 
@@ -614,7 +614,7 @@ def read_bigwig(f: str | Path) -> "PyRanges":
         starts = list(range(0, length, size))
         ends = list(range(size, length + size, size))
         ends[-1] = length
-        for start, end in zip(starts, ends):
+        for start, end in zip(starts, ends, strict=True):
             intervals = bw.intervals(chromosome, start, end)
             if intervals is not None:
                 for s, e, v in intervals:
@@ -631,7 +631,7 @@ def read_bigwig(f: str | Path) -> "PyRanges":
                 "Start": outstarts,
                 "End": outends,
                 "Value": outvalues,
-            }
+            },
         )
 
     return PyRanges(pd.concat(dfs))

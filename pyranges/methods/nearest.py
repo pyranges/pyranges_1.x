@@ -60,7 +60,7 @@ def _overlapping_for_nearest(scdf: pd.DataFrame, ocdf: pd.DataFrame, suffix: str
 
 
 def _next_nonoverlapping(
-    left_ends: pd.Series, right_starts: pd.Series, right_indexes: pd.Series
+    left_ends: pd.Series, right_starts: pd.Series, right_indexes: pd.Series,
 ) -> tuple[pd.Series, pd.Series]:
     left_ends = left_ends.sort_values()
     right_starts = right_starts.sort_values()

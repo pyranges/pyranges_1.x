@@ -414,7 +414,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
                 nongenomic_strands = sorted(set(self[STRAND_COL]).difference(VALID_GENOMIC_STRAND_INFO))
                 example_strands = ", ".join(
                     [str(s) for s in nongenomic_strands[:max_strands_to_show]]
-                    + (["..."] if len(nongenomic_strands) > max_strands_to_show else [])
+                    + (["..."] if len(nongenomic_strands) > max_strands_to_show else []),
                 )
                 strands += f" (including non-genomic strands: {example_strands})"
             strand_info = strands
@@ -1078,7 +1078,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
                 fraction_col=fraction_col,
                 keep_nonoverlapping=keep_nonoverlapping,
                 overlap_col=overlap_col,
-            )
+            ),
         )
 
     def extend(
@@ -1163,7 +1163,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
 
         func = _extend if by is None else _extend_grp
         return PyRanges(
-            multithreaded.pyrange_apply_single(func, self, ext=ext, strand=self.strand_values_valid, group_by=by)
+            multithreaded.pyrange_apply_single(func, self, ext=ext, strand=self.strand_values_valid, group_by=by),
         )
 
     def five_end(self) -> "PyRanges":
@@ -1362,7 +1362,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
                 join_type=join_type,
                 report_overlap=report_overlap,
                 suffix=suffix,
-            )
+            ),
         )
         if slack and len(gr) > 0:
             gr.col[START_COL] = gr[TEMP_START_SLACK_COL]
@@ -1858,7 +1858,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
                 invert=invert,
                 how=how,
                 strand_behavior=strand_behavior,
-            )
+            ),
         )
 
     def sample(self, *args, **kwargs) -> "PyRanges":
@@ -2091,7 +2091,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
                 [
                     df[df.Strand == "+"].sort_values(by=positive_by, ascending=not reverse),
                     df[df.Strand == "-"].sort_values(by=negative_by, ascending=reverse),
-                ]
+                ],
             )
 
         return PyRanges(pyrange_apply_single(_sort_by_5_prime_ascending_and_3_prime_descending, self, strand=True))
@@ -3480,7 +3480,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
             cols_to_include = {*keys, *GENOME_LOC_COLS_WITH_STRAND}
             cols_to_include_genome_loc_correct_order = [col for col in self.columns if col in cols_to_include]
             cols_to_include_genome_loc_correct_order = _reorder_according_to_b(
-                cols_to_include_genome_loc_correct_order, keys
+                cols_to_include_genome_loc_correct_order, keys,
             )
         else:
             cols_to_include_genome_loc_correct_order = self._loc_columns + keys
@@ -3488,7 +3488,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
         return PyRanges(super().__getitem__(cols_to_include_genome_loc_correct_order))
 
     def intersect_interval_columns(
-        self, *, start2: str, end2: str, start: str = START_COL, end: str = END_COL, drop_old_columns: bool = True
+        self, *, start2: str, end2: str, start: str = START_COL, end: str = END_COL, drop_old_columns: bool = True,
     ) -> "pr.PyRanges":
         """Use two pairs of columns representing intervals to create a new start and end column.
 

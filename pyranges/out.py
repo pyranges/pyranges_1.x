@@ -151,7 +151,7 @@ def _to_csv(
         [
             outdf.to_csv(index=False, header=header, sep=sep, quoting=csv.QUOTE_NONE)
             for _, outdf in sorted(gr.dfs.items())
-        ]
+        ],
     )
 
 
@@ -187,7 +187,7 @@ def _to_bigwig(
         import pyBigWig  # type: ignore[import]
     except ModuleNotFoundError:
         print(
-            "pybigwig must be installed to create bigwigs. Use `conda install -c bioconda pybigwig` or `pip install pybigwig` to install it."
+            "pybigwig must be installed to create bigwigs. Use `conda install -c bioconda pybigwig` or `pip install pybigwig` to install it.",
         )
         import sys
 

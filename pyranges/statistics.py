@@ -152,7 +152,7 @@ def fisher_exact(tp: Series, fp: Series, fn: Series, tn: Series, pseudocount: in
         import sys
 
         print(
-            "fisher needs to be installed to use fisher exact. pip install fisher or conda install -c bioconda fisher."
+            "fisher needs to be installed to use fisher exact. pip install fisher or conda install -c bioconda fisher.",
         )
         sys.exit(-1)
 
@@ -172,6 +172,7 @@ def mcc(
     grs: list["PyRanges"],
     genome: "PyRanges | pd.DataFrame | dict[str, int] | None" = None,
     labels: str | None = None,
+    *,
     strand: bool = False,
     verbose: bool = False,
 ) -> DataFrame:
@@ -233,7 +234,7 @@ def mcc(
     strand_behavior = STRAND_BEHAVIOR_SAME if strand else STRAND_BEHAVIOR_IGNORE
 
     rowdicts = []
-    for (lt, lf), (t, f) in zip(_labels, combinations_with_replacement(grs, r=2)):
+    for (lt, lf), (t, f) in zip(_labels, combinations_with_replacement(grs, r=2), strict=True):
         if verbose:
             print(lt, lf, file=sys.stderr)
 
@@ -260,7 +261,7 @@ def mcc(
                             "TN": tn,
                             "FN": fn,
                             "MCC": 1,
-                        }
+                        },
                     )
             continue
 
@@ -296,7 +297,7 @@ def mcc(
                                 "FN": fp,
                                 "MCC": mcc,
                             },
-                        ]
+                        ],
                     )
             else:
                 tp = tp_gr.length
@@ -325,7 +326,7 @@ def mcc(
                             "FN": fp,
                             "MCC": mcc,
                         },
-                    ]
+                    ],
                 )
 
     return pd.DataFrame.from_records(rowdicts).sort_values(["T", "F"])
@@ -495,6 +496,7 @@ def simes(
     df: "pr.PyRanges",
     by: str | list[str],
     pcol: str,
+    *,
     keep_position: bool = False,
 ) -> "pr.PyRanges":
     """Apply Simes method for giving dependent events a p-value.
@@ -685,7 +687,7 @@ class StatisticsMethods:
         return _chromsizes * intersection_sum / (reference_length * query_length)
 
     def jaccard(
-        self, other: "PyRanges", strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto"
+        self, other: "PyRanges", strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
     ) -> float:
         """Compute Jaccards coefficient.
 
@@ -852,5 +854,7 @@ def compute_genome_length(genome: GenomeType) -> int:
 
 
 def generate_labels(labels: LabelsType, grs: list[Any]) -> Iterable:
-    assert len(labels) == len(grs), "Labels length must match the length of grs"
+    if len(labels) != len(grs):
+        msg = "Labels length must match the length of grs"
+        raise ValueError(msg)
     return combinations_with_replacement(labels, r=2)

@@ -23,7 +23,7 @@ def _subtraction(scdf: "RangeFrame", ocdf: "RangeFrame", **_) -> "RangeFrame":
     o = NCLS(ocdf.Start.to_numpy(), ocdf.End.to_numpy(), ocdf.index.to_numpy())
 
     idx_self, new_starts, new_ends = o.set_difference_helper(
-        scdf.Start.values, scdf.End.values, scdf.index.values, scdf[TEMP_NUM_COL].to_numpy()
+        scdf.Start.values, scdf.End.values, scdf.index.values, scdf[TEMP_NUM_COL].to_numpy(),
     )
 
     missing_idx = pd.Index(scdf.index).difference(idx_self)

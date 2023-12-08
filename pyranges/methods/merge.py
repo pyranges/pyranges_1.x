@@ -22,7 +22,7 @@ def _merge(df: pd.DataFrame, **kwargs) -> pd.DataFrame:
             START_COL: starts,
             END_COL: ends,
         }
-        | by_values
+        | by_values,
     )
     # Sort columns in the original order of the dataframe.
     cluster_df = cluster_df[[c for c in cdf.columns if c in cluster_df]]
