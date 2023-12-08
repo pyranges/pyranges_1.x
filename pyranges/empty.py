@@ -12,9 +12,10 @@ if typing.TYPE_CHECKING:
 
 
 def empty_df(
-    with_strand: bool = False,
     columns: Iterable[str] | None = None,
     dtype: Series | None = None,
+    *,
+    with_strand: bool = False,
 ) -> pd.DataFrame:
     empty = pd.DataFrame(
         columns=list(columns)
@@ -25,9 +26,10 @@ def empty_df(
 
 
 def empty(
-    with_strand: bool = False,
     columns: Iterable[str] | None = None,
     dtype: Series | None = None,
+    *,
+    with_strand: bool = False,
 ) -> "PyRanges":
     """Create an empty PyRanges.
 

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import pandas as pd
 from sorted_nearest import max_disjoint  # type: ignore[import]
 

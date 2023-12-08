@@ -67,8 +67,14 @@ def _overlap(
     return result
 
 
-def _count_overlaps(scdf: "RangeFrame", ocdf: "RangeFrame", name: str, return_indexes: bool, **_) -> "pd.Series[int]":
-    # FIXME: Modifies in-place.
+def _count_overlaps(
+    scdf: "RangeFrame",
+    ocdf: "RangeFrame",
+    name: str,
+    *,
+    return_indexes: bool,
+    **_,
+) -> "pd.Series[int]":
     idx = _overlap(scdf, ocdf, return_indexes=return_indexes)
     vc = pd.Series(idx, dtype=np.int32).value_counts(sort=False)
     sx = pd.DataFrame(np.zeros(len(scdf), dtype=np.int64), index=scdf.index)

@@ -84,7 +84,9 @@ def _extend(df: DataFrame, **kwargs) -> DataFrame:
     dtype = df.Start.dtype
     slack = kwargs["ext"]
 
-    assert isinstance(slack, int | dict), f"Extend parameter must be integer or dict, is {type(slack)}"
+    if not isinstance(slack, int | dict):
+        msg = f"Extend parameter must be integer or dict, is {type(slack)}"
+        raise TypeError(msg)
 
     if isinstance(slack, int):
         df.loc[:, "Start"] = df.Start - slack
@@ -107,7 +109,9 @@ def _extend(df: DataFrame, **kwargs) -> DataFrame:
 
     df = df.astype({"Start": dtype, "End": dtype})
 
-    assert (df.Start < df.End).all(), "Some intervals are negative or zero length after applying extend!"
+    if not (df.Start < df.End).all():
+        msg = "Some intervals are negative or zero length after applying extend!"
+        raise ValueError(msg)
 
     return df
 
@@ -119,15 +123,17 @@ def _extend_grp(df: pd.DataFrame, **kwargs) -> pd.DataFrame:
     by = kwargs["group_by"]
     g = df.groupby(by)
 
-    assert isinstance(slack, int | dict), f"Extend parameter must be integer or dict, is {type(slack)}"
+    if not isinstance(slack, int | dict):
+        msg = f"Extend parameter must be integer or dict, is {type(slack)}"
+        raise TypeError(msg)
 
     minstarts_pos = g.Start.idxmin()
     maxends_pos = g.End.idxmax()
 
     if isinstance(slack, int):
-        df.loc[minstarts_pos, "Start"] = df.Start - slack
-        df.loc[df.Start < 0, "Start"] = 0
-        df.loc[maxends_pos, "End"] = df.End + slack
+        df.loc[minstarts_pos, START_COL] = df.Start - slack
+        df.loc[df.Start < 0, START_COL] = 0
+        df.loc[maxends_pos, END_COL] = df.End + slack
 
     else:
         strand = df.Strand.iloc[0]
@@ -135,18 +141,20 @@ def _extend_grp(df: pd.DataFrame, **kwargs) -> pd.DataFrame:
         three_end_slack = slack.get("3")
 
         if five_end_slack and strand == "+":
-            df.loc[minstarts_pos, "Start"] -= five_end_slack
+            df.loc[minstarts_pos, START_COL] -= five_end_slack
         elif five_end_slack and strand == "-":
-            df.loc[maxends_pos, "End"] += five_end_slack
+            df.loc[maxends_pos, END_COL] += five_end_slack
 
         if three_end_slack and strand == "-":
-            df.loc[minstarts_pos, "Start"] -= three_end_slack
+            df.loc[minstarts_pos, START_COL] -= three_end_slack
         elif three_end_slack and strand == "+":
-            df.loc[maxends_pos, "End"] += three_end_slack
+            df.loc[maxends_pos, END_COL] += three_end_slack
 
-    df = df.astype({"Start": dtype, "End": dtype})
+    df = df.astype({START_COL: dtype, END_COL: dtype})
 
-    assert (df.Start < df.End).all(), "Some intervals are negative or zero length after applying extend!"
+    if not (df.Start < df.End).all():
+        msg = "Some intervals are negative or zero length after applying extend!"
+        raise ValueError(msg)
 
     return df
 

@@ -60,16 +60,16 @@ def _rows_matching_chrom_and_strand(gr: "PyRanges", chrom: str, strand: str) -> 
     return is_chrom_row & is_strand_row
 
 
-def _rows_matching_range(gr: "PyRanges", range: range) -> pd.Series:
-    start_in_range = gr[START_COL] < (range.stop if range.stop is not None else np.inf)
-    end_in_range = gr[END_COL] > (range.start if range.start is not None else -1)
+def _rows_matching_range(gr: "PyRanges", _range: range) -> pd.Series:
+    start_in_range = gr[START_COL] < (_range.stop if _range.stop is not None else np.inf)
+    end_in_range = gr[END_COL] > (_range.start if _range.start is not None else -1)
     return start_in_range & end_in_range
 
 
-def _rows_matching_chrom_and_strand_and_range(gr: "PyRanges", chrom: str, strand: str, range: range) -> pd.Series:
+def _rows_matching_chrom_and_strand_and_range(gr: "PyRanges", chrom: str, strand: str, _range: range) -> pd.Series:
     is_chrom_row = gr[CHROM_COL].astype(type(chrom)) == chrom
     is_strand_row = gr[STRAND_COL].astype(type(strand)) == strand
-    range_rows = _rows_matching_range(gr, range)
+    range_rows = _rows_matching_range(gr, _range)
     return is_chrom_row & is_strand_row & range_rows
 
 
@@ -80,25 +80,26 @@ def is_3_tuple(key: tuple) -> bool:
 def is_2_tuple(key: tuple) -> bool:
     return len(key) == 2  # noqa: PLR2004
 
+
 def is_chrom_or_strand_with_slice(key: tuple) -> bool:
     return is_2_tuple(key) and isinstance(key[1], slice)
+
 
 def is_chrom_and_strand(key: tuple) -> bool:
     return is_2_tuple(key) and isinstance(key[1], str)
 
+
 def chrom_and_strand(pr: "PyRanges", key: tuple) -> "PyRanges":
     chrom, strand = key
     return _rows_matching_chrom_and_strand(pr, chrom, strand)
+
 
 def chrom_or_strand_with_slice(pr: "PyRanges", key: tuple) -> "PyRanges":
     chrom_or_strand, loc = key
     if chrom_or_strand in (col := pr[CHROM_COL].astype(type(chrom_or_strand))).to_numpy():
         gr = pr[col == chrom_or_strand]
         rows = _rows_matching_range(gr, loc)
-    elif (
-            pr.strand_values_valid
-            and chrom_or_strand in (col := pr[STRAND_COL].astype(type(chrom_or_strand))).to_numpy()
-    ):
+    elif pr.strand_values_valid and chrom_or_strand in (col := pr[STRAND_COL].astype(type(chrom_or_strand))).to_numpy():
         rows = _rows_matching_range(PyRanges(pr[col == chrom_or_strand]), loc)
     else:
         msg = f"Chromosome or strand {chrom_or_strand} not found in PyRanges."
@@ -106,12 +107,12 @@ def chrom_or_strand_with_slice(pr: "PyRanges", key: tuple) -> "PyRanges":
     return rows
 
 
-def get_chrom_strand_and_range(pr: "PyRanges", key: tuple[str, str, range]) -> "PyRanges":
-    chrom, strand, range = key
-    return _rows_matching_chrom_and_strand_and_range(pr, chrom, strand, range)
+def get_chrom_strand_and_range(pr: "PyRanges", key: tuple) -> pd.Series:
+    chrom, strand, _range = key
+    return _rows_matching_chrom_and_strand_and_range(pr, chrom, strand, _range)
 
 
-def get_chrom_and_strand(pr: "PyRanges", key: tuple) -> "PyRanges":
+def get_chrom_and_strand(pr: "PyRanges", key: tuple) -> pd.Series:
     key_is_chrom = str(key) in (pr[CHROM_COL].astype(str)).to_numpy()
     key_is_strand = pr.has_strand_column and str(key) in pr[STRAND_COL].astype(str).to_numpy()
     if key_is_chrom:

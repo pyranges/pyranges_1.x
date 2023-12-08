@@ -10,7 +10,7 @@ def _bounds(scdf: "pr.PyRanges", **kwargs) -> "pr.PyRanges":
     if scdf.empty:
         return None
 
-    col_order = [c for c in scdf.columns]
+    col_order = list(scdf.columns)
 
     by = kwargs.get("by")
     by = [by] if isinstance(by, str) else (by or [])

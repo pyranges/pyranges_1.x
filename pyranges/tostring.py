@@ -59,7 +59,10 @@ def tostring(
     if len(adjusted_data.truncated_headers) != len(self.columns):
         num_not_shown = len(self.columns) - len(truncated_headers)
         not_shown = [
-            f'"{e}"' for e in self.columns[adjusted_data.included_columns: adjusted_data.included_columns + MAX_COLUMN_NAMES_TO_SHOW]
+            f'"{e}"'
+            for e in self.columns[
+                adjusted_data.included_columns: adjusted_data.included_columns + MAX_COLUMN_NAMES_TO_SHOW
+            ]
         ]
         if num_not_shown > MAX_COLUMN_NAMES_TO_SHOW:
             not_shown.append("...")
@@ -111,7 +114,9 @@ def truncate_data(data: list[list[str]], max_col_width: int | None) -> list[list
             item_str = str(item)
             if max_col_width is not None:
                 new_row.append(
-                    item_str[: max_col_width - 3] + "..." if len(item_str) > max_col_width else item_str[:max_col_width],
+                    item_str[: max_col_width - 3] + "..."
+                    if len(item_str) > max_col_width
+                    else item_str[:max_col_width],
                 )
             else:
                 new_row.append(item_str)

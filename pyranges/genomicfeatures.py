@@ -211,9 +211,11 @@ def _outside_bounds(df: DataFrame, **kwargs) -> DataFrame:
         if not size_df.Chromosome.is_unique:
             msg = "Chromosomes must be unique in chromsizes."
             raise ValueError(msg)
-        chromsizes = {k: v for k, v in zip(size_df.Chromosome, size_df.End)}
+        chromsizes = dict(*zip(size_df[CHROM_COL], size_df[END_COL], strict=True))
     else:
-        assert isinstance(_chromsizes, dict)
+        if not isinstance(_chromsizes, dict):
+            msg = "chromsizes must be a dictionary or a DataFrame"
+            raise TypeError(msg)
         chromsizes = _chromsizes
 
     size = int(chromsizes[df.Chromosome.iloc[0]])
@@ -250,6 +252,7 @@ def _outside_bounds(df: DataFrame, **kwargs) -> DataFrame:
 def genome_bounds(
     gr: "PyRanges",
     chromsizes: dict[str, int],
+    *,
     clip: bool = False,
     only_right: bool = False,
 ) -> "PyRanges":
@@ -328,7 +331,7 @@ def genome_bounds(
     Chromosome col had type: int64 while keys were of type: int
     """
     if isinstance(chromsizes, pd.DataFrame):
-        chromsizes = {k: v for k, v in zip(chromsizes.Chromosome, chromsizes.End)}
+        chromsizes = dict(*zip(chromsizes[CHROM_COL], chromsizes[END_COL], strict=True))
 
     elif isinstance(chromsizes, dict):
         pass
@@ -345,12 +348,12 @@ def genome_bounds(
     if missing_keys := set(gr[CHROM_COL]).difference(set(chromsizes.keys())):
         msg = f"""Not all chromosomes were in the chromsize dict. This might mean that their types differed.
 Missing keys: {missing_keys}.
-Chromosome col had type: {gr[CHROM_COL].dtype} while keys were of type: {', '.join(set(type(k).__name__ for k in chromsizes))}"""
+Chromosome col had type: {gr[CHROM_COL].dtype} while keys were of type: {', '.join({type(k).__name__ for k in chromsizes})}"""
         raise ValueError(msg)
 
-    assert isinstance(
-        chromsizes, dict,
-    ), "ERROR chromsizes must be a dictionary, or a PyRanges, or a pyfaidx.Fasta object"
+    if not isinstance(chromsizes, dict):
+        msg = "ERROR chromsizes must be a dictionary, or a PyRanges, or a pyfaidx.Fasta object"
+        raise TypeError(msg)
 
     return (
         gr.groupby(CHROM_COL)
@@ -373,6 +376,7 @@ def _last_tile(df: DataFrame, sizes: dict[str, int]) -> DataFrame:
 def tile_genome(
     chromsizes: "PyRanges",
     tile_size: int,
+    *,
     tile_last: bool = False,
 ) -> "PyRanges":
     """Create a tiled genome.
@@ -436,7 +440,7 @@ def tile_genome(
         df = pd.DataFrame({CHROM_COL: chromosomes, START_COL: 0, END_COL: ends})
         chromsizes = pd.DataFrame(df)
     else:
-        chromsize_dict = dict(zip(chromsizes[CHROM_COL], chromsizes[END_COL], strict=True))
+        chromsize_dict = dict(*zip(chromsizes[CHROM_COL], chromsizes[END_COL], strict=True))
 
     gr = chromsizes.tile(tile_size)
 

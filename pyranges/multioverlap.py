@@ -133,6 +133,12 @@ def count_overlaps(
     for name, gr in grs.items():
         _gr = gr[[c for c in gr.columns if c in GENOME_LOC_COLS_WITH_STRAND]]
         features = features.apply_pair(
-            _gr, _count_overlaps, by=by, strand_behavior=strand_behavior, how=how, return_indexes=True, name=name,
+            _gr,
+            _count_overlaps,
+            by=by,
+            strand_behavior=strand_behavior,
+            how=how,
+            return_indexes=True,
+            name=name,
         )
     return features.astype({k: int for k in grs})

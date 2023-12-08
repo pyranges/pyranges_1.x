@@ -8,7 +8,11 @@ if TYPE_CHECKING:
     from pyranges import PyRanges
 
 
-def _summary(self: "PyRanges", return_df: bool = False) -> pd.DataFrame | None:
+def _summary(
+    self: "PyRanges",
+    *,
+    return_df: bool = False,
+) -> pd.DataFrame | None:
     lengths = {}
     total_lengths = {}
     lengths["pyrange"] = self.lengths()

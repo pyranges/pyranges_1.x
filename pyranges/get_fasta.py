@@ -6,7 +6,7 @@ import pandas as pd
 from pandas.core.frame import DataFrame
 from pandas.core.series import Series
 
-from pyranges.names import FORWARD_STRAND
+from pyranges.names import END_COL, FORWARD_STRAND, START_COL
 
 if TYPE_CHECKING:
     import pyfaidx  # type: ignore[import]
@@ -116,10 +116,10 @@ def get_sequence(
     seqs = []
     use_strand = gr.strand_values_valid
     for key, df in gr.groupby(gr.location_cols_include_strand_only_if_valid):
-        chromosome, strand = key + (tuple() if use_strand else (FORWARD_STRAND,))
+        chromosome, strand = key + (() if use_strand else (FORWARD_STRAND,))
         _fasta = pyfaidx_fasta[chromosome]
         forward_strand = strand == FORWARD_STRAND
-        for start, end in zip(df.Start, df.End):
+        for start, end in zip(df[START_COL], df[END_COL], strict=True):
             seq = _fasta[start:end]
             seqs.append(seq.seq if forward_strand else (-seq).seq)
 
@@ -127,7 +127,7 @@ def get_sequence(
 
 
 def get_fasta(*args, **kwargs) -> pd.Series:
-    """Deprecated: this function has been moved to Pyranges.get_sequence."""
+    # Deprecated: this function has been moved to Pyranges.get_sequence.
     return get_sequence(*args, **kwargs)
 
 

@@ -6,6 +6,7 @@ import pandas as pd
 from natsort import natsorted  # type: ignore[import]
 from pandas.core.frame import DataFrame
 
+from pyranges.names import BIGWIG_SCORE_COL, CHROM_COL, END_COL, GENOME_LOC_COLS, START_COL
 from pyranges.pyranges_main import PyRanges
 
 GTF_COLUMNS_TO_PYRANGES = {
@@ -66,7 +67,7 @@ def _fill_missing(df: DataFrame, all_columns: list[str]) -> DataFrame:
     return outdf
 
 
-def _bed(df: DataFrame, keep: bool) -> DataFrame:
+def _bed(df: DataFrame, *, keep: bool) -> DataFrame:
     all_columns = "Chromosome Start End Name Score Strand".split()
 
     outdf = _fill_missing(df, all_columns)
@@ -127,8 +128,9 @@ def _to_csv(
     self: PyRanges,
     path: Path | str | None = None,
     sep: str = ",",
-    header: bool = True,
     compression: str = "infer",
+    *,
+    header: bool = True,
 ) -> str | None:
     gr = self
 
@@ -158,10 +160,11 @@ def _to_csv(
 def _to_bed(
     self: PyRanges,
     path: str | None = None,
-    keep: bool = True,
     compression: str = "infer",
+    *,
+    keep: bool = True,
 ) -> str | None:
-    df = _bed(self, keep)
+    df = _bed(self, keep=keep)
 
     return df.to_csv(
         path,
@@ -178,9 +181,10 @@ def _to_bigwig(
     self: PyRanges,
     path: None,
     chromosome_sizes: PyRanges | dict,
-    rpm: bool = True,
-    divide: bool | None = False,
     value_col: str | None = None,
+    *,
+    divide: bool = False,
+    rpm: bool = True,
     dryrun: bool = False,
 ) -> PyRanges | None:
     try:
@@ -209,7 +213,7 @@ def _to_bigwig(
 
     unique_chromosomes = gr.chromosomes
 
-    subset = ["Chromosome", "Start", "End", "Score"]
+    subset = [*GENOME_LOC_COLS, BIGWIG_SCORE_COL]
 
     gr = gr[subset].remove_strand()
 
@@ -220,17 +224,17 @@ def _to_bigwig(
 
     if not isinstance(chromosome_sizes, dict):
         size_df = chromosome_sizes.df
-        chromosome_sizes = {k: v for k, v in zip(size_df.Chromosome, size_df.End)}
+        chromosome_sizes = dict(zip(size_df[CHROM_COL], size_df[END_COL], strict=True))
 
     header = [(c, int(chromosome_sizes[c])) for c in unique_chromosomes]
 
     bw = pyBigWig.open(path, "w")
     bw.addHeader(header)
 
-    for chromosome, df in gr:
-        chromosomes = df.Chromosome.tolist()
-        starts = df.Start.tolist()
-        ends = df.End.tolist()
+    for _, df in gr.groupby(CHROM_COL):
+        chromosomes = df[CHROM_COL].tolist()
+        starts = df[START_COL].tolist()
+        ends = df[END_COL].tolist()
         values = df.Score.tolist()
 
         bw.addEntries(chromosomes, starts, ends=ends, values=values)

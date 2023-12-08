@@ -687,7 +687,9 @@ class StatisticsMethods:
         return _chromsizes * intersection_sum / (reference_length * query_length)
 
     def jaccard(
-        self, other: "PyRanges", strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
+        self,
+        other: "PyRanges",
+        strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
     ) -> float:
         """Compute Jaccards coefficient.
 

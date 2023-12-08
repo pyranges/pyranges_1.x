@@ -730,7 +730,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
         ValueError: PyRanges has no strand column.
         """
         self._assert_strand_values_valid()
-        return natsorted({*zip(self["Chromosome"], self["Strand"])})
+        return natsorted({*zip(self["Chromosome"], self["Strand"], strict=True)})
 
     def _assert_has_strand(self) -> None:
         if not self.has_strand_column:
@@ -896,8 +896,9 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
         other: "PyRanges",
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
         by: str | list[str] | None = None,
-        keep_nonoverlapping: bool = True,
         overlap_col: str = "NumberOverlaps",
+        *,
+        keep_nonoverlapping: bool = True,
     ) -> "PyRanges":
         """Count number of overlaps per interval.
 
@@ -979,10 +980,11 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
         self,
         other: "PyRanges",
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
-        keep_nonoverlapping: bool = True,
         overlap_col: str = "NumberOverlaps",
         fraction_col: str = "FractionOverlaps",
         by: str | list[str] | None = None,
+        *,
+        keep_nonoverlapping: bool = True,
     ) -> "PyRanges":
         """Count number of overlaps and their fraction per interval.
 
@@ -1158,8 +1160,9 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
         ...
         AssertionError: Some intervals are negative or zero length after applying extend!
         """
-        if isinstance(ext, dict):
-            assert self.strand_values_valid, "PyRanges must be stranded to add 5/3-end specific extend."
+        if isinstance(ext, dict) and not self.strand_values_valid:
+            msg = "PyRanges must be stranded to add 5/3-end specific extend."
+            raise ValueError(msg)
 
         func = _extend if by is None else _extend_grp
         return PyRanges(
@@ -1232,9 +1235,10 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
         other: "PyRanges",
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
         join_type: VALID_JOIN_TYPE = "inner",
-        report_overlap: bool = False,
         slack: int = 0,
         suffix: str = "_b",
+        *,
+        report_overlap: bool = False,
     ) -> "PyRanges":
         """Join PyRanges on genomic location.
 
@@ -1406,9 +1410,6 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
 
     def lengths(self) -> pd.Series:
         """Return the length of each interval.
-
-        Parameters
-        ----------
 
         Returns
         -------
@@ -1599,6 +1600,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
     def _get_by_columns_including_chromosome_and_strand(
         self,
         by: VALID_BY_TYPES,
+        *,
         strand: bool,
     ) -> list[str]:
         if strand and not self.has_strand_column:
@@ -1620,9 +1622,10 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
         self,
         other: "PyRanges",
         strand_behavior: VALID_STRAND_BEHAVIOR_OPTIONS = "ignore",
-        overlap: bool = True,
         how: VALID_NEAREST_OPTIONS = "any",
         suffix: str = "_b",
+        *,
+        overlap: bool = True,
     ) -> "PyRanges":
         """Find closest interval.
 
@@ -1760,6 +1763,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
         other: "PyRanges",
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
         how: VALID_OVERLAP_TYPE = "first",
+        *,
         invert: bool = False,
     ) -> "PyRanges":
         """Return overlapping intervals.
@@ -2097,7 +2101,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
         return PyRanges(pyrange_apply_single(_sort_by_5_prime_ascending_and_3_prime_descending, self, strand=True))
 
     def slack(self, slack: int) -> "PyRanges":
-        """Deprecated: this function has been moved to Pyranges.extend."""
+        # Deprecated: this function has been moved to Pyranges.extend.
         return self.extend(slack)
 
     def spliced_subsequence(
@@ -2234,6 +2238,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
     def split(
         self,
         strand: VALID_STRAND_TYPE = "auto",
+        *,
         between: bool = False,
     ) -> "PyRanges":
         """Split into non-overlapping intervals.
@@ -2590,7 +2595,6 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
         """
         from pyranges.methods.subtraction import _subtraction
 
-
         strand = other.strand_values_valid if strand_behavior == STRAND_BEHAVIOR_AUTO else strand_behavior != "ignore"
 
         other_clusters = other.merge_overlaps(strand=strand, by=by)
@@ -2605,6 +2609,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
 
     def summary(
         self,
+        *,
         return_df: bool = False,
     ) -> pd.DataFrame | None:
         """Return info.
@@ -2826,7 +2831,13 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
             raise AssertionError(msg)
         return pr.PyRanges(pyrange_apply_single(_tes, self, strand=True))
 
-    def to_bed(self, path: str | None = None, keep: bool = True, compression: str = "infer") -> str | None:
+    def to_bed(
+        self,
+        path: str | None = None,
+        compression: str = "infer",
+        *,
+        keep: bool = True,
+    ) -> str | None:
         r"""Write to bed.
 
         Parameters
@@ -2884,10 +2895,11 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
     def to_bigwig(
         self,
         path: None = None,
-        chromosome_sizes: None = None,
-        rpm: bool = True,
+        chromosome_sizes: pd.DataFrame | dict = None,
         divide: bool | None = None,
         value_col: str | None = None,
+        *,
+        rpm: bool = True,
         dryrun: bool = False,
         chain: bool = False,
     ) -> "PyRanges | None":
@@ -3166,6 +3178,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
         self,
         value_col: str | None = None,
         strand: VALID_STRAND_TYPE = "auto",
+        *,
         rpm: bool = False,
     ) -> "Rledict":
         """Return as Rledict.
@@ -3465,11 +3478,10 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
         ...
         ValueError: Duplicate keys not allowed when preserve_loc_order is True.
         """
-        # TODO: move into range_frame
         keys = [key] if isinstance(key, str) else (key or [])
 
         def _reorder_according_to_b(a: list[str], b: list[str]) -> list[str]:
-            for pos, val in zip(sorted([a.index(x) for x in b]), b):
+            for pos, val in zip(sorted([a.index(x) for x in b]), b, strict=True):
                 a[pos] = val
             return a
 
@@ -3480,7 +3492,8 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
             cols_to_include = {*keys, *GENOME_LOC_COLS_WITH_STRAND}
             cols_to_include_genome_loc_correct_order = [col for col in self.columns if col in cols_to_include]
             cols_to_include_genome_loc_correct_order = _reorder_according_to_b(
-                cols_to_include_genome_loc_correct_order, keys,
+                cols_to_include_genome_loc_correct_order,
+                keys,
             )
         else:
             cols_to_include_genome_loc_correct_order = self._loc_columns + keys
@@ -3488,7 +3501,13 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
         return PyRanges(super().__getitem__(cols_to_include_genome_loc_correct_order))
 
     def intersect_interval_columns(
-        self, *, start2: str, end2: str, start: str = START_COL, end: str = END_COL, drop_old_columns: bool = True,
+        self,
+        *,
+        start2: str,
+        end2: str,
+        start: str = START_COL,
+        end: str = END_COL,
+        drop_old_columns: bool = True,
     ) -> "pr.PyRanges":
         """Use two pairs of columns representing intervals to create a new start and end column.
 

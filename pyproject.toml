@@ -53,7 +53,7 @@ line-length = 120
 select = ["ALL"]
 ignore = [
     "E501", "ANN002", "ANN003", "ANN101", "ANN401", "PLR0913", "PLC0415",
-    "PD901", "D101", "D102", "D103", "D100", "D107", "CPY",
+    "PD901", "D101", "D102", "D103", "D100", "D107", "CPY", "D105", "D104",
 
     "D417",  # include in the end
     "T201"

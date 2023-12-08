@@ -31,8 +31,6 @@ if typing.TYPE_CHECKING:
 
 
 class ExampleData:
-    """"""
-
     _files: ClassVar[dict[str, Path]] = {}
 
     @classmethod

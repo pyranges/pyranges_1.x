@@ -10,7 +10,12 @@ if TYPE_CHECKING:
 
 
 def _to_rle(
-    ranges: "PyRanges", value_col: str | None = None, strand: bool = True, rpm: bool = False, **kwargs,
+    ranges: "PyRanges",
+    value_col: str | None = None,
+    *,
+    strand: bool = True,
+    rpm: bool = False,
+    **kwargs,
 ) -> "PyRles":
     try:
         from pyrle import PyRles  # type: ignore[import]

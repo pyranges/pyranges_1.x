@@ -58,6 +58,7 @@ class RangeFrame(pd.DataFrame):
 
         Returns
         -------
+        ColUpdater
 
         Examples
         --------
@@ -196,7 +197,7 @@ class RangeFrame(pd.DataFrame):
 
         results = []
         empty = RangeFrame(columns=other.columns)
-        others = {k: v for k, v in other.groupby(by)}
+        others = dict(*other.groupby(by))
 
         for key, _df in self.groupby(by):
             odf = others.get(key, empty)

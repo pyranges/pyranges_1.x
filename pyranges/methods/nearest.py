@@ -36,7 +36,9 @@ def _overlapping_for_nearest(scdf: pd.DataFrame, ocdf: pd.DataFrame, suffix: str
 
     it = NCLS(ocdf.Start.to_numpy(), ocdf.End.to_numpy(), ocdf.index.to_numpy())
 
-    idx_self, idx_other = it.first_overlap_both(scdf[START_COL].to_numpy(), scdf[END_COL].to_numpy(), scdf.index.to_numpy())
+    idx_self, idx_other = it.first_overlap_both(
+        scdf[START_COL].to_numpy(), scdf[END_COL].to_numpy(), scdf.index.to_numpy(),
+    )
     scdf2, ocdf2 = scdf.reindex(idx_self), ocdf.reindex(idx_other)
 
     if not ocdf2.empty:
@@ -60,7 +62,9 @@ def _overlapping_for_nearest(scdf: pd.DataFrame, ocdf: pd.DataFrame, suffix: str
 
 
 def _next_nonoverlapping(
-    left_ends: pd.Series, right_starts: pd.Series, right_indexes: pd.Series,
+    left_ends: pd.Series,
+    right_starts: pd.Series,
+    right_indexes: pd.Series,
 ) -> tuple[pd.Series, pd.Series]:
     left_ends = left_ends.sort_values()
     right_starts = right_starts.sort_values()
@@ -74,7 +78,9 @@ def _next_nonoverlapping(
 def _previous_nonoverlapping(left_starts: pd.Series, right_ends: pd.Series) -> tuple[pd.Series, pd.Series]:
     left_starts = left_starts.sort_values()
     right_ends = right_ends.sort_values()
-    r_idx, dist = nearest_previous_nonoverlapping(left_starts.to_numpy(), right_ends.to_numpy() - 1, right_ends.index.to_numpy())
+    r_idx, dist = nearest_previous_nonoverlapping(
+        left_starts.to_numpy(), right_ends.to_numpy() - 1, right_ends.index.to_numpy(),
+    )
 
     r_idx = pd.Series(r_idx, index=left_starts.index).sort_index().to_numpy()
     dist = pd.Series(dist, index=left_starts.index).sort_index().to_numpy()

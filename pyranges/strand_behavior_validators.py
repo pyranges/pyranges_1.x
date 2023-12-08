@@ -45,13 +45,16 @@ def ensure_strand_behavior_options_valid(
     if strand_behavior not in VALID_STRAND_BEHAVIOR_OPTIONS:
         msg = f"{VALID_STRAND_BEHAVIOR_OPTIONS} are the only valid values for strand_behavior. Was: {strand_behavior}"
         raise ValueError(msg)
-    if strand_behavior == STRAND_BEHAVIOR_OPPOSITE or not (self.strand_values_valid or other.strand_values_valid):
+    if strand_behavior == STRAND_BEHAVIOR_OPPOSITE and not (self.strand_values_valid or other.strand_values_valid):
         msg = "Can only do opposite strand operations when both PyRanges contain valid strand info."
         raise ValueError(msg)
 
 
 def group_keys_from_strand_behavior(
-    self: "PyRanges", other: "PyRanges", strand_behavior: VALID_STRAND_BEHAVIOR_TYPE, by: VALID_BY_OPTIONS = None,
+    self: "PyRanges",
+    other: "PyRanges",
+    strand_behavior: VALID_STRAND_BEHAVIOR_TYPE,
+    by: VALID_BY_OPTIONS = None,
 ) -> list[str]:
     include_strand = True
     if strand_behavior == STRAND_BEHAVIOR_AUTO:

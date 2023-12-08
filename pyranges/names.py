@@ -17,6 +17,7 @@ CHROM_AND_STRAND_COLS = [CHROM_COL, STRAND_COL]
 GENOME_LOC_COLS = [CHROM_COL, *RANGE_COLS]
 GENOME_LOC_COLS_WITH_STRAND = [*GENOME_LOC_COLS, STRAND_COL]
 
+BIGWIG_SCORE_COL = "Score"
 FRAME_COL = "Frame"
 
 FORWARD_STRAND = "+"
@@ -34,7 +35,7 @@ STRAND_BEHAVIOR_AUTO = "auto"
 STRAND_BEHAVIOR_SAME = "same"
 STRAND_BEHAVIOR_OPPOSITE = "opposite"
 STRAND_BEHAVIOR_IGNORE = "ignore"
-VALID_STRAND_BEHAVIOR_TYPE = Literal["auto"] | Literal["same"] | Literal["opposite"] | Literal["ignore"]
+VALID_STRAND_BEHAVIOR_TYPE = Literal["auto", "same", "opposite", "ignore"]
 VALID_STRAND_BEHAVIOR_OPTIONS = [
     STRAND_BEHAVIOR_SAME,
     STRAND_BEHAVIOR_OPPOSITE,
@@ -46,7 +47,7 @@ JOIN_OUTER = "outer"
 JOIN_INNER = "inner"
 JOIN_RIGHT = "right"
 JOIN_LEFT = "left"
-VALID_JOIN_TYPE = Literal["inner"] | Literal["left"] | Literal["outer"] | Literal["right"]
+VALID_JOIN_TYPE = Literal["inner", "left", "outer", "right"]
 VALID_JOIN_OPTIONS = [JOIN_INNER, JOIN_LEFT, JOIN_OUTER, JOIN_RIGHT]
 
 NEAREST_ANY_DIRECTION = "any"

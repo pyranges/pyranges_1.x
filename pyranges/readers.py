@@ -122,10 +122,11 @@ def read_bed(f: Path, /, nrows: int | None = None) -> "PyRanges":
 def read_bam(
     f: str | Path,
     /,
-    sparse: bool = True,
     mapq: int = 0,
     required_flag: int = 0,
     filter_flag: int = 1540,
+    *,
+    sparse: bool = True,
 ) -> "PyRanges":
     """Return bam file as PyRanges.
 
@@ -238,29 +239,33 @@ def _fetch_gene_transcript_exon_id(attribute: pd.Series, annotation: str | None 
 
 
 def skiprows(f: Path) -> int:
+    first_non_comment = 0
     try:
         import gzip
 
         zh = gzip.open(f)
         for i, zl in enumerate(zh):
             if zl.decode()[0] != "#":
+                first_non_comment = i
                 break
         zh.close()
     except (OSError, TypeError):  # not a gzipped file, or StringIO
         fh = f.open()
         for i, line in enumerate(fh):
             if line[0] != "#":
+                first_non_comment = i
                 break
         fh.close()
 
-    return i
+    return first_non_comment
 
 
 def read_gtf(
     f: str | Path,
     /,
-    full: bool = True,
     nrows: bool | None = None,
+    *,
+    full: bool = True,
     duplicate_attr: bool = False,
     ignore_bad: bool = False,
 ) -> "PyRanges":
@@ -323,9 +328,9 @@ def read_gtf(
     if full:
         gr = read_gtf_full(
             path,
-            nrows,
-            _skiprows,
-            duplicate_attr,
+            nrows=nrows,
+            skiprows=_skiprows,
+            duplicate_attr=duplicate_attr,
             ignore_bad=ignore_bad,
         )
     else:
@@ -336,11 +341,13 @@ def read_gtf(
 
 def read_gtf_full(
     f: str | Path,
+    /,
     nrows: int | None = None,
     skiprows: int = 0,
+    chunksize: int = int(1e5),  # for unit-testing purposes
+    *,
     duplicate_attr: bool = False,
     ignore_bad: bool = False,
-    chunksize: int = int(1e5),  # for unit-testing purposes
 ) -> "PyRanges":
     dtypes = {"Chromosome": "category", "Feature": "category", "Strand": "category"}
 
@@ -379,7 +386,7 @@ def parse_kv_fields(line: str) -> list[list[str]]:
     return [kv.replace('""', '"NA"').replace('"', "").split(None, 1) for kv in line.rstrip("; ").split("; ")]
 
 
-def to_rows(anno: pd.Series, ignore_bad: bool = False) -> pd.DataFrame:
+def to_rows(anno: pd.Series, *, ignore_bad: bool = False) -> pd.DataFrame:
     try:
         row = anno.head(1)
         for entry in row:
@@ -391,7 +398,7 @@ def to_rows(anno: pd.Series, ignore_bad: bool = False) -> pd.DataFrame:
     rowdicts = []
     try:
         for line in anno:
-            rowdicts.append({k: v for k, v in parse_kv_fields(line)})  # noqa: PERF401
+            rowdicts.append(dict(parse_kv_fields(line)))  # noqa: PERF401
     except ValueError:
         if not ignore_bad:
             print(f"The following line is not parseable as gtf:\n{line}\n\nTo ignore bad lines use ignore_bad=True.")
@@ -400,7 +407,7 @@ def to_rows(anno: pd.Series, ignore_bad: bool = False) -> pd.DataFrame:
     return pd.DataFrame.from_records(rowdicts)
 
 
-def to_rows_keep_duplicates(anno: pd.Series, ignore_bad: bool = False) -> pd.DataFrame:
+def to_rows_keep_duplicates(anno: pd.Series, *, ignore_bad: bool = False) -> pd.DataFrame:
     """If an entry is found multiple times in the attribute string, keep all of them.
 
     Examples
@@ -432,7 +439,9 @@ def to_rows_keep_duplicates(anno: pd.Series, ignore_bad: bool = False) -> pd.Dat
 
 
 def read_gtf_restricted(f: str | Path, skiprows: int | None, nrows: int | None = None) -> "PyRanges":
-    """Seqname - name of the chromosome or scaffold; chromosome names can be given with or without the 'chr' prefix. Important note: the seqname must be one used within Ensembl, i.e. a standard chromosome name or an Ensembl identifier such as a scaffold ID, without any additional content such as species or assembly. See the example GFF output below.
+    """Read certain columns from GTF file.
+
+    Seqname - name of the chromosome or scaffold; chromosome names can be given with or without the 'chr' prefix. Important note: the seqname must be one used within Ensembl, i.e. a standard chromosome name or an Ensembl identifier such as a scaffold ID, without any additional content such as species or assembly. See the example GFF output below.
     # source - name of the program that generated this feature, or the data source (database or project name)
     feature - feature type name, e.g. Gene, Variation, Similarity
     start - Start position of the feature, with sequence numbering starting at 1.
@@ -483,20 +492,20 @@ def read_gtf_restricted(f: str | Path, skiprows: int | None, nrows: int | None =
 
 
 def to_rows_gff3(anno: pd.Series) -> pd.DataFrame:
-    rowdicts = []
-
-    for line in list(anno):
-        # stripping last white char if present
-        lx = (it.split("=") for it in line.rstrip("; ").split(";"))
-        rowdicts.append({k: v for k, v in lx})
+    rowdicts = [to_keys_and_values(line) for line in list(anno)]
 
     return pd.DataFrame.from_records(rowdicts).set_index(anno.index)
 
 
+def to_keys_and_values(line: str) -> dict[str, str]:
+    return dict(it.split("=") for it in line.rstrip("; ").split(";"))
+
+
 def read_gff3(
     f: str | Path,
-    full: bool = True,
     nrows: int | None = None,
+    *,
+    full: bool = True,
 ) -> "PyRanges":
     """Read files in the General Feature Format.
 

@@ -38,8 +38,9 @@ def random(
     n: int = 1000,
     length: int = 100,
     chromsizes: Chromsizes | None = None,
-    strand: bool = True,
     seed: int | None = None,
+    *,
+    strand: bool = True,
 ) -> "pr.PyRanges":
     """Return PyRanges with random intervals.
 
