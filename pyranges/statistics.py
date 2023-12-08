@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 from math import sqrt
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -11,7 +11,6 @@ from pandas.core.frame import DataFrame
 from pandas.core.series import Series
 
 import pyranges as pr
-from pyranges import PyRanges
 from pyranges.methods.statistics import _relative_distance
 from pyranges.names import (
     GENOME_LOC_COLS,
@@ -20,6 +19,10 @@ from pyranges.names import (
     STRAND_BEHAVIOR_SAME,
     VALID_STRAND_BEHAVIOR_TYPE,
 )
+from pyranges.strand_behavior_validators import ensure_strand_behavior_options_valid
+
+if TYPE_CHECKING:
+    from pyranges import PyRanges
 
 __all__ = [
     "simes",
@@ -167,7 +170,7 @@ def fisher_exact(tp: Series, fp: Series, fn: Series, tn: Series, pseudocount: in
 
 def mcc(  # noqa: C901
     grs: list["PyRanges"],
-    genome: PyRanges | pd.DataFrame | dict[str, int] | None = None,
+    genome: "PyRanges | pd.DataFrame | dict[str, int] | None" = None,
     labels: str | None = None,
     strand: bool = False,
     verbose: bool = False,
@@ -686,7 +689,7 @@ class StatisticsMethods:
     def forbes(
         self,
         other: "PyRanges",
-        chromsizes: PyRanges | DataFrame | dict[Any, int],
+        chromsizes: "PyRanges | DataFrame | dict[Any, int]",
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
     ) -> float:
         """Compute Forbes coefficient.
@@ -728,7 +731,7 @@ class StatisticsMethods:
         """
         _chromsizes = chromsizes_as_int(chromsizes)
 
-        self.pr.ensure_strand_behavior_options_valid(other, strand_behavior=strand_behavior)
+        ensure_strand_behavior_options_valid(self.pr, other, strand_behavior=strand_behavior)
         strand = (
             self.pr.strand_values_valid
             and other.strand_values_valid
@@ -781,7 +784,7 @@ class StatisticsMethods:
         >>> gr.stats.jaccard(gr2, chromsizes=chromsizes)
         0.3333333333333333
         """
-        self.pr.ensure_strand_behavior_options_valid(other, strand_behavior=strand_behavior)
+        ensure_strand_behavior_options_valid(self.pr, other, strand_behavior=strand_behavior)
         strand = (
             self.pr.strand_values_valid
             and other.strand_values_valid

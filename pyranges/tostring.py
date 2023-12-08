@@ -37,7 +37,7 @@ def tostring(
     if len(self) >= 8:
         head = [list(v) for _, v in self.head(4).iterrows()]
         tail = [list(v) for _, v in self.tail(4).iterrows()]
-        data = head + [truncation_marker * self.shape[1]] + tail if len(self) > 8 else head + tail
+        data = [*head, truncation_marker * self.shape[1], *(tail if len(self) > 8 else head + tail)]
     else:
         data = [list(v) for _, v in self.iterrows()]
 

@@ -1,12 +1,10 @@
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
-import pyranges as pr
+from pyranges.methods import concat
 from pyranges.names import GENOME_LOC_COLS_WITH_STRAND, VALID_OVERLAP_TYPE, VALID_STRAND_BEHAVIOR_TYPE
-from pyranges.pyranges_main import PyRanges
 
-# def count_overlaps(*args, **kwargs):
-#     print(args)
-#     print(kwargs)
+if TYPE_CHECKING:
+    from pyranges.pyranges_main import PyRanges
 
 
 def count_overlaps(
@@ -41,6 +39,7 @@ def count_overlaps(
 
     Examples
     --------
+    >>> import pyranges as pr
     >>> a = '''Chromosome Start End
     ... chr1    6    12
     ... chr1    10    20
@@ -128,7 +127,7 @@ def count_overlaps(
     Contains 1 chromosomes.
     """
     if features is None:
-        features = pr.concat(list(grs.values())).split(between=True)
+        features = concat.concat(list(grs.values())).split(between=True)
     else:
         features = features.copy()
 

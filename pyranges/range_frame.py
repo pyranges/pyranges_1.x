@@ -1,6 +1,6 @@
 from collections.abc import Iterable
 from functools import cached_property
-from typing import Any, Literal, Self
+from typing import Any, Literal, Self, Callable
 
 import pandas as pd
 
@@ -176,7 +176,7 @@ class RangeFrame(pd.DataFrame):
 
     def apply_single(
         self,
-        function: callable[["RangeFrame"], "RangeFrame"],
+        function: Callable[["RangeFrame"], "RangeFrame"],
         by: str | list[str] | None = None,
         **kwargs,
     ) -> "RangeFrame":
@@ -187,7 +187,7 @@ class RangeFrame(pd.DataFrame):
     def apply_pair(
         self,
         other: "RangeFrame",
-        function: callable[["RangeFrame", "RangeFrame"], "RangeFrame"],
+        function: Callable[["RangeFrame", "RangeFrame"], "RangeFrame"],
         by: VALID_BY_TYPES = None,
         **kwargs,
     ) -> "RangeFrame":

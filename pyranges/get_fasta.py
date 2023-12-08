@@ -78,8 +78,8 @@ def get_sequence(
     Contains 1 chromosomes and 2 strands.
 
     >>> tmp_handle = open("temp.fasta", "w+")
-    >>> _ = tmp_handle.write(">chr1\\n")
-    >>> _ = tmp_handle.write("GTAATCAT\\n")
+    >>> _ = tmp_handle.write(">chr1\n")
+    >>> _ = tmp_handle.write("GTAATCAT\n")
     >>> tmp_handle.close()
 
     >>> seq = pr.get_sequence(gr, "temp.fasta")
@@ -200,8 +200,8 @@ def get_transcript_sequence(
     Contains 1 chromosomes and 2 strands.
 
     >>> tmp_handle = open("temp.fasta", "w+")
-    >>> _ = tmp_handle.write(">chr1\\n")
-    >>> _ = tmp_handle.write("AAACCCTTTGGGAAACCCTTTGGG\\n")
+    >>> _ = tmp_handle.write(">chr1\n")
+    >>> _ = tmp_handle.write("AAACCCTTTGGGAAACCCTTTGGG\n")
     >>> tmp_handle.close()
 
     >>> seq = pr.get_transcript_sequence(gr, path="temp.fasta", group_by='transcript')

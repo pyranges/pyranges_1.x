@@ -57,6 +57,9 @@ from pyranges.names import (
 )
 from pyranges.pyranges_groupby import PyRangesGroupBy
 from pyranges.range_frame import RangeFrame
+from pyranges.strand_behavior_validators import (ensure_strand_behavior_options_valid, group_keys_from_strand_behavior,
+                                                 group_keys_single, group_keys_from_strand_behavior,
+                                                 validate_and_convert_strand)
 from pyranges.tostring import tostring
 
 if TYPE_CHECKING:
@@ -531,14 +534,14 @@ class PyRanges(RangeFrame):
 
         kwargs : dict
         """
-        self.ensure_strand_behavior_options_valid(other, strand_behavior)
+        ensure_strand_behavior_options_valid(self, other, strand_behavior)
         by = self._by_to_list(by)
 
         if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
             self.col[TEMP_STRAND_COL] = self[STRAND_COL].replace({"+": "-", "-": "+"})
             other.col[TEMP_STRAND_COL] = other[STRAND_COL]
 
-        grpby_ks = self._group_keys_from_strand_behavior(other, strand_behavior, by=by)
+        grpby_ks = group_keys_from_strand_behavior(self, other, strand_behavior, by=by)
 
         res = PyRanges(super().apply_pair(other, function, by=grpby_ks, **kwargs))
 
@@ -1516,7 +1519,7 @@ class PyRanges(RangeFrame):
         PyRanges with 2 rows and 6 columns.
         Contains 1 chromosomes and 1 strands.
         """
-        strand = self._validate_and_convert_strand(strand)
+        strand = validate_and_convert_strand(self, strand)
         from pyranges.methods.max_disjoint import _max_disjoint
 
         dfs = pyrange_apply_single(_max_disjoint, self, strand=strand, slack=slack)
@@ -1610,7 +1613,7 @@ class PyRanges(RangeFrame):
         PyRanges with 4 rows and 6 columns.
         Contains 1 chromosomes and 2 strands.
         """
-        strand = self._validate_and_convert_strand(strand)
+        strand = validate_and_convert_strand(self, strand)
         _by = self._get_by_columns_including_chromosome_and_strand(by=by, strand=strand)
         df = self.apply_single(_merge, by=_by, strand=strand, count_col=count_col, slack=slack)
 
@@ -1635,15 +1638,6 @@ class PyRanges(RangeFrame):
     @property
     def _chromosome_and_strand_columns(self) -> list[str]:
         return CHROM_AND_STRAND_COLS if self.has_strand_column else CHROM_COL
-
-    def _validate_and_convert_strand(self, strand: VALID_STRAND_OPTIONS) -> bool:
-        if strand is None or strand == "auto":
-            strand = self.strand_values_valid
-        else:
-            if not isinstance(strand, bool):
-                msg = f"Only 'auto'/None, True, and False are valid values for strand. Was: {strand}."
-                raise ValueError(msg)
-        return strand
 
     def nearest(
         self,
@@ -2259,7 +2253,7 @@ class PyRanges(RangeFrame):
         if strand and not self.strand_values_valid:
             raise Exception("spliced_subsequence: you can use strand=True only for stranded PyRanges!")
 
-        strand = self._validate_and_convert_strand(strand)
+        strand = validate_and_convert_strand(self, strand)
 
         sorted_p = self.sort_by_5_prime_ascending_and_3_prime_descending()
 
@@ -2413,7 +2407,7 @@ class PyRanges(RangeFrame):
         if STRAND_COL not in self.columns and len(self) > 0:
             return False
         else:
-            return self[STRAND_COL].isin(VALID_GENOMIC_STRAND_INFO).all()
+            return bool(self[STRAND_COL].isin(VALID_GENOMIC_STRAND_INFO).all())
 
     @property
     def strands(self) -> list:
@@ -2635,7 +2629,7 @@ class PyRanges(RangeFrame):
 
         other_clusters = other.merge_overlaps(strand=strand, by=by)
 
-        _by = self._group_keys_from_strand_behavior(other_clusters, strand_behavior=strand_behavior, by=by)
+        _by = group_keys_from_strand_behavior(self, other_clusters, strand_behavior=strand_behavior, by=by)
 
         gr = self.count_overlaps(other_clusters, strand_behavior=strand_behavior, overlap_col=TEMP_NUM_COL, by=_by)
 
@@ -3154,7 +3148,7 @@ class PyRanges(RangeFrame):
         >>> d = {"Chromosome": [1] * 3, "Start": [1, 3, 5], "End": [4, 6, 9], "Feature": ["gene", "exon", "exon"]}
         >>> gr = pr.PyRanges(d)
         >>> gr.to_gff3()
-        '1\\t.\\tgene\\t2\\t4\\t.\\t.\\t.\\t\\n1\\t.\\texon\\t4\\t6\\t.\\t.\\t.\\t\\n1\\t.\\texon\\t6\\t9\\t.\\t.\\t.\\t\\n'
+        '1\t.\tgene\t2\t4\t.\t.\t.\t\n1\t.\texon\t4\t6\t.\t.\t.\t\n1\t.\texon\t6\t9\t.\t.\t.\t\n'
 
         # How the file would look
         1	.	gene	2	4	.	.	.
@@ -3164,7 +3158,7 @@ class PyRanges(RangeFrame):
         >>> gr.col.Gene = [1, 2, 3]
         >>> gr.col.function = ["a b", "c", "def"]
         >>> gr.to_gff3()
-        '1\\t.\\tgene\\t2\\t4\\t.\\t.\\t.\\tGene=1;function=a b\\n1\\t.\\texon\\t4\\t6\\t.\\t.\\t.\\tGene=2;function=c\\n1\\t.\\texon\\t6\\t9\\t.\\t.\\t.\\tGene=3;function=def\\n'
+        '1\t.\tgene\t2\t4\t.\t.\t.\tGene=1;function=a b\n1\t.\texon\t4\t6\t.\t.\t.\tGene=2;function=c\n1\t.\texon\t6\t9\t.\t.\t.\tGene=3;function=def\n'
 
         # How the file would look
         1	.	gene	2	4	.	.	.	Gene=1;function=a b
@@ -3184,7 +3178,7 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes.
 
         >>> gr.to_gff3()
-        '1\\t.\\tmRNA\\t2\\t4\\t.\\t.\\t0\\tGene=1;function=a b\\n1\\t.\\tCDS\\t4\\t6\\t.\\t.\\t2\\tGene=2;function=c\\n1\\t.\\tCDS\\t6\\t9\\t.\\t.\\t1\\tGene=3;function=def\\n'
+        '1\t.\tmRNA\t2\t4\t.\t.\t0\tGene=1;function=a b\n1\t.\tCDS\t4\t6\t.\t.\t2\tGene=2;function=c\n1\t.\tCDS\t6\t9\t.\t.\t1\tGene=3;function=def\n'
 
         # How the file would look
         1	.	mRNA	2	4	.	.	0	Gene=1;function=a b
@@ -3244,7 +3238,7 @@ class PyRanges(RangeFrame):
         >>> d = {"Chromosome": [1] * 3, "Start": [1, 3, 5], "End": [4, 6, 9], "Feature": ["gene", "exon", "exon"]}
         >>> gr = pr.PyRanges(d)
         >>> gr.to_gtf()  # the raw string output
-        '1\\t.\\tgene\\t2\\t4\\t.\\t.\\t.\\t\\n1\\t.\\texon\\t4\\t6\\t.\\t.\\t.\\t\\n1\\t.\\texon\\t6\\t9\\t.\\t.\\t.\\t\\n'
+        '1\t.\tgene\t2\t4\t.\t.\t.\t\n1\t.\texon\t4\t6\t.\t.\t.\t\n1\t.\texon\t6\t9\t.\t.\t.\t\n'
 
         # What the file contents look like:
         1	.	gene	2	4	.	.	.
@@ -3253,7 +3247,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.col.Feature = ["GENE", "EXON", "EXON"]
         >>> gr.to_gtf()  # the raw string output
-        '1\\t.\\tGENE\\t2\\t4\\t.\\t.\\t.\\t\\n1\\t.\\tEXON\\t4\\t6\\t.\\t.\\t.\\t\\n1\\t.\\tEXON\\t6\\t9\\t.\\t.\\t.\\t\\n'
+        '1\t.\tGENE\t2\t4\t.\t.\t.\t\n1\t.\tEXON\t4\t6\t.\t.\t.\t\n1\t.\tEXON\t6\t9\t.\t.\t.\t\n'
 
         The file would look like:
 
@@ -3592,52 +3586,6 @@ class PyRanges(RangeFrame):
 
         return PyRanges(super().__getitem__(cols_to_include_genome_loc_correct_order))
 
-    def _resolve_strand_argument_ensure_valid(self, strand: VALID_STRAND_TYPE) -> bool:
-        if strand == STRAND_AUTO:
-            return self.strand_values_valid
-        return strand
-
-    def ensure_strand_behavior_options_valid(
-        self, other: "pr.PyRanges", strand_behavior: VALID_STRAND_BEHAVIOR_TYPE
-    ) -> None:
-        if strand_behavior not in VALID_STRAND_BEHAVIOR_OPTIONS:
-            msg = (
-                f"{VALID_STRAND_BEHAVIOR_OPTIONS} are the only valid values for strand_behavior. Was: {strand_behavior}"
-            )
-            raise ValueError(msg)
-        if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
-            assert (
-                self.strand_values_valid and other.strand_values_valid
-            ), "Can only do opposite strand operations when both PyRanges contain valid strand info."
-
-    def _group_keys_from_strand_behavior(
-        self, other: "PyRanges", strand_behavior: VALID_STRAND_BEHAVIOR_TYPE, by: VALID_BY_OPTIONS = None
-    ) -> list[str]:
-        include_strand = True
-        if strand_behavior == STRAND_BEHAVIOR_AUTO:
-            include_strand = self.strand_values_valid and other.strand_values_valid
-        elif strand_behavior == STRAND_BEHAVIOR_IGNORE:
-            include_strand = False
-        elif strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
-            return [CHROM_COL, TEMP_STRAND_COL]
-        genome_cols = [CHROM_COL, STRAND_COL] if include_strand else [CHROM_COL]
-        return genome_cols + ([] if by is None else ([by] if isinstance(by, str) else [*by]))
-
-    def _ensure_valid_strand_option(self, strand: VALID_STRAND_TYPE) -> None:
-        if strand not in VALID_STRAND_OPTIONS:
-            msg = f"Invalid strand option: {strand}"
-            raise ValueError(msg)
-        if strand and not self.has_strand_column:
-            msg = "Cannot use Strand when strand column is missing."
-            raise ValueError(msg)
-
-    def _group_keys_single(self, strand: VALID_STRAND_TYPE, by: VALID_BY_OPTIONS = None) -> list[str]:
-        self._ensure_valid_strand_option(strand)
-        if strand == "auto":
-            genome_keys = [CHROM_COL, STRAND_COL] if self.has_strand_column else [CHROM_COL]
-        else:
-            genome_keys = [CHROM_COL, STRAND_COL] if strand else [CHROM_COL]
-        return genome_keys + self._by_to_list(by)
 
     def intersect_interval_columns(
         self, *, start2: str, end2: str, start: str = START_COL, end: str = END_COL, drop_old_columns: bool = True

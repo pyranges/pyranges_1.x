@@ -23,7 +23,6 @@ from importlib.resources import files
 from pathlib import Path
 
 import pandas as pd
-import pkg_resources
 
 import pyranges as pr
 
@@ -42,6 +41,9 @@ __all__ = [
     "exons",
     "chromsizes",
 ]
+
+from pyranges.pyranges_main import PyRanges
+from pyranges import names
 
 
 class ExampleData:

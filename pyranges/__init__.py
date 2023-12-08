@@ -15,7 +15,8 @@ from pyranges.helpers import get_key_from_df, single_value_key
 from pyranges.multioverlap import count_overlaps
 from pyranges.pyranges_main import PyRanges
 from pyranges.range_frame import RangeFrame
-from pyranges.readers import read_bam, read_bed, read_bigwig, read_gff3, read_gtf  # NOQA: F401
+from pyranges.readers import read_bam, read_bed, read_bigwig, read_gff3, read_gtf, from_string  # NOQA: F401
+from pyranges.methods.concat import concat
 
 RangeFrame = RangeFrame
 
@@ -35,143 +36,6 @@ get_transcript_sequence = get_transcript_sequence
 read_gff = read_gtf
 
 Chromsizes = dict[str, int] | dict[tuple[str, str], int]
-
-
-def concat(grs: Iterable["PyRanges"], *args, **kwargs) -> "PyRanges":
-    """Concatenate PyRanges.
-
-    Parameters
-    ----------
-    grs
-
-    Returns
-    -------
-    pyranges.PyRanges
-
-    Examples
-    --------
-    >>> gr1 = pr.example_data.f2
-    >>> gr2 = pr.example_data.f1
-    >>> pr.concat([gr1, gr2])
-    Chromosome      Start      End  Name         Score  Strand
-    category        int64    int64  object       int64  category
-    ------------  -------  -------  ---------  -------  ----------
-    chr1                1        2  a                0  +
-    chr1                6        7  b                0  -
-    chr1                3        6  interval1        0  +
-    chr1                5        7  interval2        0  -
-    chr1                8        9  interval3        0  +
-    PyRanges with 5 rows and 6 columns.
-    Contains 1 chromosomes and 2 strands.
-
-    >>> pr.concat([gr1, gr2.remove_strand()])
-    Chromosome      Start      End  Name         Score  Strand
-    category        int64    int64  object       int64  category
-    ------------  -------  -------  ---------  -------  ----------
-    chr1                1        2  a                0  +
-    chr1                6        7  b                0  -
-    chr1                3        6  interval1        0  nan
-    chr1                5        7  interval2        0  nan
-    chr1                8        9  interval3        0  nan
-    PyRanges with 5 rows and 6 columns.
-    Contains 1 chromosomes and 2 strands (including non-genomic strands: nan).
-    """
-    return PyRanges(pd.concat(grs, *args, **kwargs))
-
-
-def empty_df(
-    with_strand: bool = False,
-    columns: Iterable[str] | None = None,
-    dtype: Series | None = None,
-) -> pd.DataFrame:
-    empty = pd.DataFrame(
-        columns=list(columns)
-        if columns is not None
-        else (names.GENOME_LOC_COLS_WITH_STRAND if with_strand else names.GENOME_LOC_COLS),
-    )
-    return empty.astype(dtype) if dtype is not None else empty
-
-
-def empty(
-    with_strand: bool = False,
-    columns: Iterable[str] | None = None,
-    dtype: Series | None = None,
-) -> "PyRanges":
-    """Create an empty PyRanges.
-
-    Parameters
-    ----------
-    with_strand : bool, default False
-        Whether to create a PyRanges with strand information.
-    """
-    return pr.PyRanges(empty_df(with_strand=with_strand, columns=columns, dtype=dtype))
-
-
-def from_dfs(dfs: dict[str, pd.DataFrame] | dict[tuple[str, str], pd.DataFrame]) -> "PyRanges":
-    df: pd.DataFrame
-    empty_removed = {k: v.copy() for k, v in dfs.items() if not v.empty}
-
-    _strand_valid = True
-    for key, df in empty_removed.items():
-        _key = get_key_from_df(df)
-        if not single_value_key(df):
-            raise ValueError("All Chromosome/Strand vals in a df must be the same.")
-        _key_same = _key == key
-
-        if isinstance(_key, tuple):
-            _strand_valid = _strand_valid and (_key[1] in ["+", "-"])
-
-        if _strand_valid and not _key_same:
-            raise ValueError(f"All keys must be the same, but df has {_key} and dict had {key}.")
-
-    if not _strand_valid:
-        df = pd.concat(empty_removed.values()).reset_index(drop=True)
-
-        groupby_cols = [names.CHROM_COL]
-
-        empty_removed = {k[0]: v for k, v in df.groupby(groupby_cols)}  # type: ignore
-
-    gr = PyRanges()
-    gr.__dict__["dfs"] = empty_removed
-
-    return gr  # type: ignore
-
-
-def from_string(s: str) -> "PyRanges":
-    """Create a PyRanges from multiline string.
-
-    Parameters
-    ----------
-    s : str
-
-        String with data.
-
-    Examples
-    --------
-    >>> s = '''Chromosome      Start        End Strand
-    ... chr1  246719402  246719502      +
-    ... chr5   15400908   15401008      +
-    ... chr9   68366534   68366634      +
-    ... chr14   79220091   79220191      +
-    ... chr14  103456471  103456571      -'''
-
-    >>> pr.from_string(s)
-    Chromosome        Start        End  Strand
-    object            int64      int64  object
-    ------------  ---------  ---------  --------
-    chr1          246719402  246719502  +
-    chr5           15400908   15401008  +
-    chr9           68366534   68366634  +
-    chr14          79220091   79220191  +
-    chr14         103456471  103456571  -
-    PyRanges with 5 rows and 4 columns.
-    Contains 4 chromosomes and 2 strands.
-    """
-    from io import StringIO
-
-    df = pd.read_csv(StringIO(s), sep=r"\s+", index_col=None)
-
-    return PyRanges(df)
 
 
 def random(

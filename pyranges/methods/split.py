@@ -3,7 +3,8 @@ from typing import TYPE_CHECKING
 import pandas as pd
 
 from pyranges.names import CHROM_COL, END_COL, RANGE_COLS, START_COL, STRAND_COL, VALID_STRAND_TYPE
-from pyranges.readers import pr
+
+from pyranges.strand_behavior_validators import validate_and_convert_strand
 
 if TYPE_CHECKING:
     from pyranges import PyRanges
@@ -14,7 +15,8 @@ def _split(df: "PyRanges", strand: VALID_STRAND_TYPE = "auto") -> "PyRanges":
 
     starts = df[START_COL]
     ends = df[END_COL]
-    points = pr.concat([starts, ends]).sort_by_position().drop_duplicates()
+    points = [starts, ends]
+    points = pd.concat(points).sort_values().drop_duplicates()
 
     _ends = points.shift(-1)
 
@@ -24,7 +26,7 @@ def _split(df: "PyRanges", strand: VALID_STRAND_TYPE = "auto") -> "PyRanges":
     features.columns = RANGE_COLS
 
     features.insert(0, CHROM_COL, df[CHROM_COL].iloc[0])
-    if df.has_strand_column:
+    if validate_and_convert_strand(df, strand):
         features.insert(features.shape[1], STRAND_COL, df[STRAND_COL].iloc[0])
 
     return features

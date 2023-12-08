@@ -1,18 +1,52 @@
+"""Module for PyRanges concat method."""
+
+from collections.abc import Iterable
+from typing import TYPE_CHECKING
+
 import pandas as pd
 
 import pyranges as pr
+if TYPE_CHECKING:
+    from pyranges import PyRanges
 
 
-def concat(pyranges: list["pr.PyRanges"], strand: bool | None = None) -> "pr.PyRanges":
-    non_empty_pyranges = [gr for gr in pyranges if not gr.empty]
-    if not non_empty_pyranges:
-        return pr.empty()
+def concat(grs: Iterable["PyRanges"], *args, **kwargs) -> "PyRanges":
+    """Concatenate PyRanges.
 
-    consider_strand = all(gr.strand_values_valid for gr in non_empty_pyranges) if strand is None else strand
+    Parameters
+    ----------
+    grs
 
-    if consider_strand and not all(gr.strand_values_valid for gr in non_empty_pyranges):
-        raise ValueError("Cannot do stranded concat, not all pyranges contain strand info.")
+    Returns
+    -------
+    pyranges.PyRanges
 
-    dfs_to_concat = [gr.remove_strand() if not consider_strand else gr for gr in non_empty_pyranges]
+    Examples
+    --------
+    >>> gr1 = pr.example_data.f2
+    >>> gr2 = pr.example_data.f1
+    >>> pr.concat([gr1, gr2])
+    Chromosome      Start      End  Name         Score  Strand
+    category        int64    int64  object       int64  category
+    ------------  -------  -------  ---------  -------  ----------
+    chr1                1        2  a                0  +
+    chr1                6        7  b                0  -
+    chr1                3        6  interval1        0  +
+    chr1                5        7  interval2        0  -
+    chr1                8        9  interval3        0  +
+    PyRanges with 5 rows and 6 columns.
+    Contains 1 chromosomes and 2 strands.
 
-    return pr.PyRanges(pd.concat(dfs_to_concat))
+    >>> pr.concat([gr1, gr2.remove_strand()])
+    Chromosome      Start      End  Name         Score  Strand
+    category        int64    int64  object       int64  category
+    ------------  -------  -------  ---------  -------  ----------
+    chr1                1        2  a                0  +
+    chr1                6        7  b                0  -
+    chr1                3        6  interval1        0  nan
+    chr1                5        7  interval2        0  nan
+    chr1                8        9  interval3        0  nan
+    PyRanges with 5 rows and 6 columns.
+    Contains 1 chromosomes and 2 strands (including non-genomic strands: nan).
+    """
+    return pr.PyRanges(pd.concat(grs, *args, **kwargs))

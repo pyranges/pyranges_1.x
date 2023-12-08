@@ -9,6 +9,42 @@ from pyranges.pyranges_main import PyRanges
 
 pr = pr
 
+def from_string(s: str) -> "PyRanges":
+    """Create a PyRanges from multiline string.
+
+    Parameters
+    ----------
+    s : str
+
+        String with data.
+
+    Examples
+    --------
+    >>> s = '''Chromosome      Start        End Strand
+    ... chr1  246719402  246719502      +
+    ... chr5   15400908   15401008      +
+    ... chr9   68366534   68366634      +
+    ... chr14   79220091   79220191      +
+    ... chr14  103456471  103456571      -'''
+
+    >>> pr.from_string(s)
+    Chromosome        Start        End  Strand
+    object            int64      int64  object
+    ------------  ---------  ---------  --------
+    chr1          246719402  246719502  +
+    chr5           15400908   15401008  +
+    chr9           68366534   68366634  +
+    chr14          79220091   79220191  +
+    chr14         103456471  103456571  -
+    PyRanges with 5 rows and 4 columns.
+    Contains 4 chromosomes and 2 strands.
+    """
+    from io import StringIO
+
+    df = pd.read_csv(StringIO(s), sep=r"\s+", index_col=None)
+
+    return PyRanges(df)
+
 
 def read_bed(f: str | Path, /, nrows: int | None = None) -> "PyRanges":
     """Return bed file as PyRanges.
@@ -265,10 +301,10 @@ def read_gtf(
     --------
     >>> from tempfile import NamedTemporaryFile
     >>> contents = ['#!genome-build GRCh38.p10']
-    >>> contents.append('1\\thavana\\tgene\\t11869\\t14409\\t.\\t+\\t.\\tgene_id "ENSG00000223972"; gene_version "5"; gene_name "DDX11L1"; gene_source "havana"; gene_biotype "transcribed_unprocessed_pseudogene";')
-    >>> contents.append('1\\thavana\\ttranscript\\t11869\\t14409\\t.\\t+\\t.\\tgene_id "ENSG00000223972"; gene_version "5"; transcript_id "ENST00000456328"; transcript_version "2"; gene_name "DDX11L1"; gene_source "havana"; gene_biotype "transcribed_unprocessed_pseudogene"; transcript_name "DDX11L1-202"; transcript_source "havana"; transcript_biotype "processed_transcript"; tag "basic"; transcript_support_level "1";')
+    >>> contents.append('1\thavana\tgene\t11869\t14409\t.\t+\t.\tgene_id "ENSG00000223972"; gene_version "5"; gene_name "DDX11L1"; gene_source "havana"; gene_biotype "transcribed_unprocessed_pseudogene";')
+    >>> contents.append('1\thavana\ttranscript\t11869\t14409\t.\t+\t.\tgene_id "ENSG00000223972"; gene_version "5"; transcript_id "ENST00000456328"; transcript_version "2"; gene_name "DDX11L1"; gene_source "havana"; gene_biotype "transcribed_unprocessed_pseudogene"; transcript_name "DDX11L1-202"; transcript_source "havana"; transcript_biotype "processed_transcript"; tag "basic"; transcript_support_level "1";')
     >>> f = NamedTemporaryFile("w")
-    >>> _bytes_written = f.write("\\n".join(contents))
+    >>> _bytes_written = f.write("\n".join(contents))
     >>> f.flush()
     >>> pr.read_gtf(f.name)
       Chromosome  Source    Feature       Start      End  Score     Strand      Frame     gene_id          ...
