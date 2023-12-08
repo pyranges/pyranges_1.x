@@ -165,9 +165,7 @@ def fisher_exact(tp: Series, fp: Series, fn: Series, tn: Series, pseudocount: in
 
     odds_ratio = ((_tp + pseudocount) / (_fp + pseudocount)) / ((_fn + pseudocount) / (_tn + pseudocount))
 
-    df = pd.DataFrame({"odds_ratio": odds_ratio, "P": twosided, "PLeft": left, "PRight": right})
-
-    return df
+    return pd.DataFrame({"odds_ratio": odds_ratio, "P": twosided, "PLeft": left, "PRight": right})
 
 
 def mcc(
@@ -266,7 +264,7 @@ def mcc(
                     )
             continue
 
-        else:
+        else:  # noqa: RET507
             j = t.interval_join(f, strand_behavior=strand_behavior)
             tp_gr = j.intersect_interval_columns(start2="Start_b", end2="End_b").merge_overlaps(strand=strand)
             if strand:
@@ -330,9 +328,7 @@ def mcc(
                     ]
                 )
 
-    df = pd.DataFrame.from_records(rowdicts).sort_values(["T", "F"])
-
-    return df
+    return pd.DataFrame.from_records(rowdicts).sort_values(["T", "F"])
 
 
 def rowbased_spearman(x: ndarray, y: ndarray) -> ndarray:
@@ -429,9 +425,7 @@ def rowbased_pearson(x: ndarray | DataFrame, y: ndarray | DataFrame) -> ndarray:
     r_den = np.sqrt(ss(xm, axis=-1) * ss(ym, axis=-1))
 
     with np.errstate(divide="ignore", invalid="ignore"):
-        r = r_num / r_den
-
-    return r
+        return r_num / r_den
 
 
 def rowbased_rankdata(data: ndarray) -> DataFrame:
@@ -494,9 +488,7 @@ def rowbased_rankdata(data: ndarray) -> DataFrame:
         result = pd.DataFrame(_result, index=nzdf.index)
         _ranks.append(result)
 
-    final = pd.concat(_ranks).sort_index(kind="mergesort")
-
-    return final
+    return pd.concat(_ranks).sort_index(kind="mergesort")
 
 
 def simes(
@@ -690,12 +682,10 @@ class StatisticsMethods:
         query_length = other.merge_overlaps(strand=strand).length
 
         intersection_sum = self.pr.set_intersect(other, strand_behavior=strand_behavior).lengths().sum()
-        forbes = _chromsizes * intersection_sum / (reference_length * query_length)
-
-        return forbes
+        return _chromsizes * intersection_sum / (reference_length * query_length)
 
     def jaccard(
-        self, other: "PyRanges", chromsizes: dict[str, int], strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto"
+        self, other: "PyRanges", strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto"
     ) -> float:
         """Compute Jaccards coefficient.
 
@@ -730,7 +720,7 @@ class StatisticsMethods:
         --------
         >>> gr, gr2 = pr.example_data.f1, pr.example_data.f2
         >>> chromsizes = pr.example_data.chromsizes
-        >>> gr.stats.jaccard(gr2, chromsizes=chromsizes)
+        >>> gr.stats.jaccard(gr2)
         0.3333333333333333
         """
         ensure_strand_behavior_options_valid(self.pr, other, strand_behavior=strand_behavior)
@@ -749,12 +739,9 @@ class StatisticsMethods:
         denominator = union_sum - intersection_sum
         if denominator == 0:
             return 1.0
-        else:
-            jc = intersection_sum / denominator
+        return intersection_sum / denominator
 
-        return jc
-
-    def relative_distance(self, other: "PyRanges", **kwargs) -> DataFrame:
+    def relative_distance(self, other: "PyRanges", **_) -> DataFrame:
         """Compute spatial correllation between two sets.
 
         Metric which describes relative distance between each interval in one
@@ -816,9 +803,7 @@ class StatisticsMethods:
         vc.insert(vc.shape[1], "total", len(result))
         vc.insert(vc.shape[1], "fraction", vc["count"] / len(result))
         vc = vc.sort_values("reldist", ascending=True)
-        vc = vc.reset_index(drop=True)
-
-        return vc
+        return vc.reset_index(drop=True)
 
 
 def _mcc(tp: int, fp: int, tn: int, fn: int) -> float:

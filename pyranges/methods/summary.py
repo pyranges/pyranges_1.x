@@ -42,6 +42,6 @@ def _summary(self: "PyRanges", return_df: bool = False) -> pd.DataFrame | None:
 
     if return_df:
         return summary
-    else:
-        str_repr = tabulate(summary, headers=summary.columns)
-        print(str_repr)
+    str_repr = tabulate(summary, headers=summary.columns)
+    print(str_repr)
+    return None

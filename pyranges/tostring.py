@@ -56,7 +56,7 @@ def tostring(
     truncated_data = adjusted_data.truncated_data
     truncated_headers = adjusted_data.truncated_headers
     truncated_dtypes = adjusted_data.truncated_dtypes
-    if not len(adjusted_data.truncated_headers) == len(self.columns):
+    if len(adjusted_data.truncated_headers) != len(self.columns):
         num_not_shown = len(self.columns) - len(truncated_headers)
         not_shown = [
             f'"{e}"' for e in self.columns[adjusted_data.included_columns: adjusted_data.included_columns + MAX_COLUMN_NAMES_TO_SHOW]

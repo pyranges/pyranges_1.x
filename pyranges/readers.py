@@ -496,7 +496,6 @@ def to_rows_gff3(anno: pd.Series) -> pd.DataFrame:
 def read_gff3(
     f: str | Path,
     full: bool = True,
-    as_df: bool = False,
     nrows: int | None = None,
 ) -> "PyRanges":
     """Read files in the General Feature Format.

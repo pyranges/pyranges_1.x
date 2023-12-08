@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     from pyranges import RangeFrame
 
 
-def _relative_distance(scdf: "RangeFrame", ocdf: "RangeFrame", **kwargs) -> pd.Series:
+def _relative_distance(scdf: "RangeFrame", ocdf: "RangeFrame", **_) -> pd.Series:
     if scdf.empty or ocdf.empty:
         return np.array([])
 
@@ -35,6 +35,4 @@ def _relative_distance(scdf: "RangeFrame", ocdf: "RangeFrame", **kwargs) -> pd.S
 
     result[np.isnan(result)] = 0
 
-    result = result[~np.isinf(result)]
-
-    return result
+    return result[~np.isinf(result)]

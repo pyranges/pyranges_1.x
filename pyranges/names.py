@@ -1,13 +1,12 @@
 from collections.abc import Iterable
-from typing import Literal
+from typing import Literal, get_args
 
-# from typing import Literal, get_args
-#
-# # Define the Literal type
-# VALID_OVERLAP_TYPE = Literal["first", "containment", "all"]
-#
-# # Extract the options from the Literal type
-# VALID_OVERLAP_OPTIONS = list(get_args(VALID_OVERLAP_TYPE))
+# Define the Literal type
+VALID_OVERLAP_TYPE = Literal["first", "containment", "all"]
+
+# Extract the options from the Literal type
+VALID_OVERLAP_OPTIONS = list(get_args(VALID_OVERLAP_TYPE))
+OVERLAP_FIRST, OVERLAP_CONTAINMENT, OVERLAP_ALL = VALID_OVERLAP_OPTIONS
 
 CHROM_COL = "Chromosome"
 START_COL = "Start"
@@ -42,12 +41,6 @@ VALID_STRAND_BEHAVIOR_OPTIONS = [
     STRAND_BEHAVIOR_AUTO,
     STRAND_BEHAVIOR_IGNORE,
 ]
-
-OVERLAP_FIRST = "first"
-OVERLAP_CONTAINMENT = "containment"
-OVERLAP_ALL = "all"
-VALID_OVERLAP_TYPE = Literal["first"] | Literal["containment"] | Literal["all"]
-VALID_OVERLAP_OPTIONS = [OVERLAP_FIRST, OVERLAP_CONTAINMENT, OVERLAP_ALL]
 
 JOIN_OUTER = "outer"
 JOIN_INNER = "inner"

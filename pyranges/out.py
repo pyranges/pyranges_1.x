@@ -54,17 +54,16 @@ def _fill_missing(df: DataFrame, all_columns: list[str]) -> DataFrame:
 
     if set(columns).intersection(set(all_columns)) == set(all_columns):
         return df[all_columns]
-    else:
-        missing = set(all_columns) - set(columns)
-        missing_idx = {all_columns.index(m): m for m in missing}
-        not_missing = set(columns).intersection(set(all_columns))
-        not_missing_ordered = sorted(not_missing, key=all_columns.index)
-        outdf = df[not_missing_ordered]
+    missing = set(all_columns) - set(columns)
+    missing_idx = {all_columns.index(m): m for m in missing}
+    not_missing = set(columns).intersection(set(all_columns))
+    not_missing_ordered = sorted(not_missing, key=all_columns.index)
+    outdf = df[not_missing_ordered]
 
-        for idx, _missing in sorted(missing_idx.items()):
-            outdf.insert(idx, _missing, ".")
+    for idx, _missing in sorted(missing_idx.items()):
+        outdf.insert(idx, _missing, ".")
 
-        return outdf
+    return outdf
 
 
 def _bed(df: DataFrame, keep: bool) -> DataFrame:
@@ -77,8 +76,7 @@ def _bed(df: DataFrame, keep: bool) -> DataFrame:
 
     if keep:
         return pd.concat([outdf, df[noncanonical]], axis=1)
-    else:
-        return outdf
+    return outdf
 
 
 def _gtf(df: DataFrame) -> DataFrame:
@@ -149,13 +147,12 @@ def _to_csv(
             mode = "a"
             header = False
         return None
-    else:
-        return "".join(
-            [
-                outdf.to_csv(index=False, header=header, sep=sep, quoting=csv.QUOTE_NONE)
-                for _, outdf in sorted(gr.dfs.items())
-            ]
-        )
+    return "".join(
+        [
+            outdf.to_csv(index=False, header=header, sep=sep, quoting=csv.QUOTE_NONE)
+            for _, outdf in sorted(gr.dfs.items())
+        ]
+    )
 
 
 def _to_bed(
@@ -274,10 +271,7 @@ def _gff3(df: pd.DataFrame) -> pd.DataFrame:
         col = rest_df[c]
         isnull = col.isna()
         col = col.astype(str).str.replace("nan", "")
-        if i != total_cols:
-            new_val = c + "=" + col + ";"
-        else:
-            new_val = c + "=" + col
+        new_val = c + "=" + col + ";" if i != total_cols else c + "=" + col
         rest_df.loc[:, c] = rest_df[c].astype(str)
         rest_df.loc[~isnull, c] = new_val
         rest_df.loc[isnull, c] = ""
@@ -286,31 +280,3 @@ def _gff3(df: pd.DataFrame) -> pd.DataFrame:
     outdf.insert(outdf.shape[1], "attribute", attribute)
 
     return outdf
-
-
-# def _to_bam(df, filename, header=None, chromsizes=None):
-
-#     def _header_from_chromsizes(chromsizes):
-
-#         try:
-#             chromsizes = {k: v for k, v in zip(chromsizes.Chromosome, chromsizes.End)}
-#         except:
-#             pass
-
-#         chromosomes = []
-#         for chromosome, length in chromsizes.items():
-#             chromosomes.append({"LN": length, "SN": chromosome})
-
-#         return {"SQ": chromosomes}
-
-#     if chromsizes:
-#         header = _header_from_chromsizes(chromsizes)
-
-
-#     import sys
-
-#     try:
-#         import bamread
-#     except ModuleNotFoundError as e:
-#         print("bamread must be installed to write bam. Use `conda install -c bioconda bamread` or `pip install bamread` to install it.")
-#         sys.exit(1)

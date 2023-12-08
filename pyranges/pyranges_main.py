@@ -32,6 +32,7 @@ from pyranges.names import (
     RANGE_COLS,
     START_COL,
     STRAND_AUTO,
+    STRAND_BEHAVIOR_AUTO,
     STRAND_BEHAVIOR_IGNORE,
     STRAND_BEHAVIOR_OPPOSITE,
     STRAND_BEHAVIOR_SAME,
@@ -497,9 +498,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
         return f"{formatted_df}\n{self._chrom_and_strand_info()}."
 
     def set_index(self, *args, **kwargs) -> "PyRanges | None":
-        # Custom behavior for set_index
-        result = PyRanges(super().set_index(*args, **kwargs))
-        return result
+        return PyRanges(super().set_index(*args, **kwargs))
 
     def apply_single(
         self,
@@ -1065,12 +1064,12 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
             strand_behavior=strand_behavior,
         )
 
-        strand = True if strand_behavior != "auto" else False
+        strand = strand_behavior != "auto"
         other = other.merge_overlaps(count_col="Count", strand=strand)
 
         from pyranges.methods.coverage import _coverage
 
-        counts = pr.PyRanges(
+        return pr.PyRanges(
             counts.apply_pair(
                 other,
                 _coverage,
@@ -1081,13 +1080,6 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
                 overlap_col=overlap_col,
             )
         )
-
-        return counts
-
-    # def drop(self, *args, **kwargs) -> "PyRanges | None":
-    #     res = super().drop(*args, **kwargs)
-    #     if res is not None:
-    #         return PyRanges(res)
 
     def extend(
         self,
@@ -1173,23 +1165,6 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
         return PyRanges(
             multithreaded.pyrange_apply_single(func, self, ext=ext, strand=self.strand_values_valid, group_by=by)
         )
-
-    # # TODO: use subtract code here instead, easier
-    # def no_overlap(self, other, **kwargs):
-
-    #     kwargs = fill_kwargs(kwargs)
-    #     kwargs["invert"] = True
-
-    #     # if kwargs["strand_behavior"] in ["same", "opposite"]:
-    #     #     kwargs["strand_behavior"] = {
-    #     #         "same": "opposite",
-    #     #         "opposite": "same"
-    #     #     }[kwargs["strand_behavior"]]
-    #     dfs = pyrange_apply(_overlap, self, other, **kwargs)
-
-    #     return PyRanges(dfs)
-
-    # @profile
 
     def five_end(self) -> "PyRanges":
         """Return the five prime end of intervals.
@@ -1479,7 +1454,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
         self,
         strand: VALID_STRAND_TYPE = "auto",
         slack: int = 0,
-        **kwargs,
+        **_,
     ) -> "PyRanges":
         """Find the maximal disjoint set of intervals.
 
@@ -1743,9 +1718,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
             overlap=overlap,
             suffix=suffix,
         )
-        gr = pr.PyRanges(df)
-
-        return gr
+        return pr.PyRanges(df)
 
     def organize_genomic_location_columns(self) -> "PyRanges":
         """Move genomic location columns to the left, in chrom, start, end (optionally strand) order.
@@ -1973,14 +1946,14 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
         """
         from pyranges.methods.overlap import _overlap
 
-        strand = True if strand_behavior else False
+        strand = validate_and_convert_strand(self, strand_behavior)
         self_clusters = self.merge_overlaps(strand=strand and self.has_strand_column)
         other_clusters = other.merge_overlaps(strand=strand and other.has_strand_column)
         dfs = self_clusters.apply_pair(other_clusters, _overlap, strand_behavior=strand_behavior, how=how)
 
         return pr.PyRanges(dfs)
 
-    def set_union(self, other: "PyRanges", strand_behavior: None = None) -> "PyRanges":
+    def set_union(self, other: "PyRanges", strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto") -> "PyRanges":
         """Return set-theoretical union.
 
         Parameters
@@ -2042,7 +2015,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
         if self.empty and other.empty:
             return pr.PyRanges()
 
-        strand = True if strand_behavior else False
+        strand = validate_and_convert_strand(self, strand_behavior)
 
         if not strand:
             self = self.remove_strand()
@@ -2054,9 +2027,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
 
         gr = pr.concat([self, other])
 
-        gr = gr.merge_overlaps(strand=strand)
-
-        return gr
+        return gr.merge_overlaps(strand=strand)
 
     def sort_by_5_prime_ascending_and_3_prime_descending(
         self,
@@ -2135,7 +2106,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
         end: int | None = None,
         by: VALID_BY_TYPES = None,
         strand: VALID_STRAND_TYPE = "auto",
-        **kwargs,
+        **_,
     ) -> "PyRanges":
         """Get subsequences of the intervals, using coordinates mapping to spliced transcripts (without introns).
 
@@ -2405,8 +2376,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
         """
         if STRAND_COL not in self.columns and len(self) > 0:
             return False
-        else:
-            return bool(self[STRAND_COL].isin(VALID_GENOMIC_STRAND_INFO).all())
+        return bool(self[STRAND_COL].isin(VALID_GENOMIC_STRAND_INFO).all())
 
     @property
     def strands(self) -> list:
@@ -2446,7 +2416,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
         end: int | None = None,
         by: VALID_BY_TYPES = None,
         strand: VALID_STRAND_TYPE = "auto",
-        **kwargs,
+        **_,
     ) -> "PyRanges":
         """Get subsequences of the intervals.
 
@@ -2558,8 +2528,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
         """
         from pyranges.methods.subsequence import _subseq
 
-        if strand is None:
-            strand = True if self.strand_values_valid else False
+        strand = strand if strand is not None else self.strand_values_valid
 
         result = super().apply_single(_subseq, strand=strand, by=by, start=start, end=end)
 
@@ -2621,10 +2590,8 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
         """
         from pyranges.methods.subtraction import _subtraction
 
-        if strand_behavior == "auto":
-            strand = True if other.strand_values_valid else False
-        else:
-            strand = strand_behavior != "ignore"
+
+        strand = other.strand_values_valid if strand_behavior == STRAND_BEHAVIOR_AUTO else strand_behavior != "ignore"
 
         other_clusters = other.merge_overlaps(strand=strand, by=by)
 
@@ -2638,7 +2605,6 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
 
     def summary(
         self,
-        to_stdout: bool = True,
         return_df: bool = False,
     ) -> pd.DataFrame | None:
         """Return info.
@@ -2654,10 +2620,6 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
 
         Parameters
         ----------
-        to_stdout : bool, default True
-
-            Print summary.
-
         return_df : bool, default False
 
             Return df with summary.
@@ -2864,60 +2826,6 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
             raise AssertionError(msg)
         return pr.PyRanges(pyrange_apply_single(_tes, self, strand=True))
 
-    #     def to_bam(self, path=None, header=None, chromosome_sizes=None, chain=False):
-
-    #         r"""Write to bam.
-
-    #         Parameters
-    #         ----------
-    #         path : str, default None
-    #             Where to write. If None, returns string representation.
-
-    #         keep : bool, default True
-
-    #             Whether to keep all columns, not just Chromosome, Start, End,
-    #             Name, Score, Strand when writing.
-
-    #         compression : str, compression type to use, by default infer based on extension.
-    #             See pandas.DataFree.to_csv for more info.
-
-    #         header : dict
-
-    #             Header to use in the bamfile. See the pysam docs for how it should look.
-    #             Or use the header attribute from another pyasam.AlignmentFile.
-
-    #         chromosome_sizes : PyRanges or dict
-
-    #             If dict: map of chromosome names to chromosome length.
-
-    #         chain : bool, default False
-    #             Whether to return the PyRanges after writing.
-
-    #         Note
-    #         ----
-
-    #         The following pyranges columns are used when writing:
-
-    #         Chromosome, Start, End, Strand, MapQ, Flag, QueryStart, QueryEnd, Name, Cigar, Quality
-
-    #         Examples
-    #         --------
-
-    #         >>> header = {"SQ": [{"SN": 1, "LN": 249250621}]}
-
-    #         >>> c = '''Name	Flag Chromosome Start End MapQ Cigar QuerySequence Quality
-    # read1	115	1	142618765 142618790	255	25M	CGACCCACTCCGCCATTTTCATCCG	IIGIIIHIGIIFIIIIIIIGIGIII	NM:i:0ZP:i:65536	ZL:i:25
-    # read2	115	1	142618765 142618790  255	25M	CGACCCACTCCGCCATTTTCATCCG	IIGIIIHIGIIFIIIIIIIGIGIII	NM:i:0ZP:i:214748	ZL:i:25
-    # read3	115	1	142618765 142618790  255	25M	CGACCCACTCCGCCATTTTCATCCG	IIGIIIHIGIIFIIIIIIIGIGIII	NM:i:0ZP:i:2147484	ZL:i:25
-    # read4	115	1	142618765 142618790  255	25M	CGACCCACTCCGCCATTTTCATCCG	IIGIIIHIGIIFIIIIIIIGIGIII	NM:i:0ZP:i:2147483647	ZL:i:25
-    # read5	115	1	142618765 142618790  255	25M	CGACCCACTCCGCCATTTTCATCCG	IIGIIIHIGIIFIIIIIIIGIGIII	NM:i:0ZP:i:-65536	ZL:i:25
-    # read6	115	1	142618765 142618790  255	25M	CGACCCACTCCGCCATTTTCATCCG	IIGIIIHIGIIFIIIIIIIGIGIII	NM:i:0ZP:i:-214748	ZL:i:25
-    # read7	115	1	142618765 142618790  255	25M	CGACCCACTCCGCCATTTTCATCCG	IIGIIIHIGIIFIIIIIIIGIGIII	NM:i:0ZP:i:-2147484	ZL:i:25
-    # read8	115	1	142618765 142618790  255	25M	CGACCCACTCCGCCATTTTCATCCG	IIGIIIHIGIIFIIIIIIIGIGIII	NM:i:0ZP:i:-2147483647	ZL:i:25'''
-
-    #         >>>
-    #         """
-
     def to_bed(self, path: str | None = None, keep: bool = True, compression: str = "infer") -> str | None:
         r"""Write to bed.
 
@@ -2971,9 +2879,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
         """
         from pyranges.out import _to_bed
 
-        result = _to_bed(self, path, keep=keep, compression=compression)
-
-        return result
+        return _to_bed(self, path, keep=keep, compression=compression)
 
     def to_bigwig(
         self,
@@ -3090,8 +2996,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
 
         if chain:
             return self
-        else:
-            return None
+        return None
 
     def to_gff3(
         self,
@@ -3192,7 +3097,6 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
         self,
         path: None = None,
         compression: str = "infer",
-        map_cols: dict[str, str] | None = None,
     ) -> str | None:
         r"""Write to Gene Transfer Format.
 
@@ -3256,9 +3160,7 @@ class PyRanges(RangeFrame):  # noqa: PLR0904
         """
         from pyranges.out import _to_gtf
 
-        result = _to_gtf(self, path, compression=compression)
-
-        return result
+        return _to_gtf(self, path, compression=compression)
 
     def to_rle(
         self,

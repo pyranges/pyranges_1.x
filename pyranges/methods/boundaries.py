@@ -21,6 +21,4 @@ def _bounds(scdf: "pr.PyRanges", **kwargs) -> "pr.PyRanges":
         agg_dict[STRAND_COL] = "first"
 
     res = scdf.groupby(by).agg(agg_dict).reset_index()
-    res = res.reindex(columns=[c for c in col_order if c in res.columns])
-
-    return res
+    return res.reindex(columns=[c for c in col_order if c in res.columns])

@@ -18,13 +18,16 @@ Contains 1 chromosomes and 2 strands.
 
 """
 import tempfile
+import typing
 from functools import cached_property
 from importlib.resources import files
 from pathlib import Path
 from typing import ClassVar
 
 import pyranges as pr
-from pyranges.pyranges_main import PyRanges
+
+if typing.TYPE_CHECKING:
+    from pyranges.pyranges_main import PyRanges
 
 
 class ExampleData:

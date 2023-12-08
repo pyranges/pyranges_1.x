@@ -16,8 +16,7 @@ def return_pyranges_if_possible(
         # Check if the result should be a MySpecialDataFrame
         if isinstance(result, pd.DataFrame) and set(GENOME_LOC_COLS).issubset(result.columns):
             return pr.PyRanges(result)
-        else:
-            return result
+        return result
 
     return wrapper
 

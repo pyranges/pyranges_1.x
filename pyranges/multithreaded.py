@@ -29,23 +29,18 @@ def pyrange_apply_single(
         msg = "Can only do stranded operation when PyRange contains strand info"
         raise ValueError(msg)
 
-    if not self.strand_values_valid:
-        keys = [CHROM_COL]
-    else:
-        keys = [CHROM_COL, STRAND_COL] if strand else [CHROM_COL]
+    keys = [CHROM_COL] if not self.strand_values_valid else [CHROM_COL, STRAND_COL] if strand else [CHROM_COL]
     range_index = np.arange(len(self))
     if isinstance(self.index, pd.RangeIndex):
         self = self.set_index(pd.Series(name=temp_index_col, data=range_index))
-        res = self.groupby(keys, as_index=False, observed=True).apply(function, **kwargs).reset_index(drop=True)
-        return res
+        return self.groupby(keys, as_index=False, observed=True).apply(function, **kwargs).reset_index(drop=True)
+    if self.index.name is None and self.index.names == [None]:
+        original_index = None
     else:
-        if self.index.name is None and self.index.names == [None]:
-            original_index = None
-        else:
-            original_index = self.index.names if self.index.name is None else self.index.names
-        self = self.reset_index().set_index(pd.Series(name=temp_index_col, data=range_index), append=False)
-        res = self.groupby(keys, as_index=False, observed=True).apply(function, **kwargs)
-        return res.reset_index(drop=True) if original_index is None else res.set_index(original_index)
+        original_index = self.index.names if self.index.name is None else self.index.names
+    self = self.reset_index().set_index(pd.Series(name=temp_index_col, data=range_index), append=False)
+    res = self.groupby(keys, as_index=False, observed=True).apply(function, **kwargs)
+    return res.reset_index(drop=True) if original_index is None else res.set_index(original_index)
 
 
 def _lengths(df: DataFrame) -> pd.Series:

@@ -1,3 +1,4 @@
+import typing
 from collections.abc import Iterable
 
 import pandas as pd
@@ -5,7 +6,9 @@ from pandas import Series
 
 import pyranges as pr
 from pyranges import names
-from pyranges.pyranges_main import PyRanges
+
+if typing.TYPE_CHECKING:
+    from pyranges.pyranges_main import PyRanges
 
 
 def empty_df(

@@ -1,12 +1,12 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    import contextlib
+
     from pyranges import PyRanges
 
-    try:
+    with contextlib.suppress(ImportError):
         from pyrle import PyRles
-    except ImportError:
-        pass
 
 
 def _to_rle(

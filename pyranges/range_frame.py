@@ -211,24 +211,3 @@ class RangeFrame(pd.DataFrame):
     @staticmethod
     def _by_to_list(by: str | list[str] | None) -> list[str]:
         return [by] if isinstance(by, str) else (by or [])
-
-    # def subtract(self, inner: "RangeFrame"):
-    #     """
-
-    #     Parameters
-    #     ----------
-    #     inner_col
-    #     outer_col
-
-    #     Examples
-    #     --------
-    #     >>> r1 = RangeFrame({"Start": [1], "End": [11]})
-    #     >>> r2 = RangeFrame({"Start": [5], "End": [7]})
-    #     >>> r1.subtract(r2)
-
-    #     """
-    #     outer = self.copy()
-    #     inner = inner.copy()
-    #     outer.col[TEMP_TYPE_COL] = "outer"
-    #     inner.col[TEMP_TYPE_COL] = "inner"
-    #     inner.merge()

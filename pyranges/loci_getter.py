@@ -4,11 +4,9 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-from pyranges.names import CHROM_COL, END_COL, START_COL, STRAND_COL
-
 if typing.TYPE_CHECKING:
-    from pyranges import PyRanges
-
+    from pyranges import PyRanges  # noqa: TCH004
+from pyranges.names import CHROM_COL, END_COL, START_COL, STRAND_COL
 
 # Three types of accessors:
 # 1. Columns or columns, rows
@@ -90,8 +88,7 @@ def is_chrom_and_strand(key: tuple) -> bool:
 
 def chrom_and_strand(pr: "PyRanges", key: tuple) -> "PyRanges":
     chrom, strand = key
-    rows = _rows_matching_chrom_and_strand(pr, chrom, strand)
-    return rows
+    return _rows_matching_chrom_and_strand(pr, chrom, strand)
 
 def chrom_or_strand_with_slice(pr: "PyRanges", key: tuple) -> "PyRanges":
     chrom_or_strand, loc = key
@@ -111,15 +108,16 @@ def chrom_or_strand_with_slice(pr: "PyRanges", key: tuple) -> "PyRanges":
 
 def get_chrom_strand_and_range(pr: "PyRanges", key: tuple[str, str, range]) -> "PyRanges":
     chrom, strand, range = key
-    rows = _rows_matching_chrom_and_strand_and_range(pr, chrom, strand, range)
-    return rows
+    return _rows_matching_chrom_and_strand_and_range(pr, chrom, strand, range)
 
 
-def get_chrom_and_strand(pr, key: tuple) -> "PyRanges":
-    if str(key) in (col := pr[CHROM_COL].astype(str)).to_numpy():
-        rows = col == str(key)
-    elif pr.has_strand_column and str(key) in (col := pr[STRAND_COL].astype(str)).to_numpy():
-        rows = col == str(key)
+def get_chrom_and_strand(pr: "PyRanges", key: tuple) -> "PyRanges":
+    key_is_chrom = str(key) in (pr[CHROM_COL].astype(str)).to_numpy()
+    key_is_strand = pr.has_strand_column and str(key) in pr[STRAND_COL].astype(str).to_numpy()
+    if key_is_chrom:
+        rows = pr[CHROM_COL] == str(key)
+    elif key_is_strand:
+        rows = pr[STRAND_COL] == str(key)
     else:
         msg = f'Chromosome or strand "{key}" not found in PyRanges.'
         raise KeyError(msg)

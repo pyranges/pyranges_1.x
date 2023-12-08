@@ -33,10 +33,7 @@ def _cluster_by(df: pd.DataFrame, **kwargs) -> pd.DataFrame:
 
     by = kwargs["by"]
 
-    if isinstance(by, str):
-        cdf = df.sort_values([by, "Start"])
-    else:
-        cdf = df.sort_values([*by, "Start"])
+    cdf = df.sort_values([by, "Start"]) if isinstance(by, str) else df.sort_values([*by, "Start"])
 
     if isinstance(by, str):
         new_ids = (cdf[by] != cdf[by].shift()).cumsum()

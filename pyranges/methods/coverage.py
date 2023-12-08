@@ -14,8 +14,7 @@ def _number_overlapping(scdf: pd.DataFrame, ocdf: pd.DataFrame, **kwargs) -> pd.
             df = scdf.copy()
             df.insert(df.shape[1], column_name, 0)
             return df
-        else:
-            return None
+        return None
 
     oncls = NCLS(ocdf.Start.to_numpy(), ocdf.End.to_numpy(), ocdf.index.to_numpy())
 
@@ -41,8 +40,7 @@ def _number_overlapping(scdf: pd.DataFrame, ocdf: pd.DataFrame, **kwargs) -> pd.
 
     if keep_nonoverlapping:
         return df
-    else:
-        return df[df[column_name] != 0]
+    return df[df[column_name] != 0]
 
 
 def _coverage(scdf: pd.DataFrame, ocdf: pd.DataFrame, **kwargs) -> pd.DataFrame:

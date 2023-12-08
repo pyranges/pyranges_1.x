@@ -136,5 +136,4 @@ def _nearest(scdf: "PyRanges", ocdf: "PyRanges", **kwargs) -> "PyRanges":
     elif overlap and not nearest_df.empty:
         df = nearest_df
 
-    df = df.drop("Chromosome" + suffix, axis=1)
-    return df
+    return df.drop("Chromosome" + suffix, axis=1)
