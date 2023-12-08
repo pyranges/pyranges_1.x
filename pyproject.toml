@@ -51,13 +51,13 @@ line-length = 120
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "C90", "N",
-          # all docstring rules that can be automated
-          "D200", "D201", "D202", "D203", "D204", "D207",
-          "D208", "D209", "D210", "D211", "D212", "D213", "D214",
-          "D215", "D300", "D301", "D400", "D403", "D405", "D406",
-          "D407", "D408", "D409", "D410", "D411", "D412", "D413",
-          "D415", "D416",
-          "UP", "YTT", "ANN", "RUF", "FURB"
-
+    # all docstring rules that can be automated
+    "D200", "D201", "D202", "D203", "D204", "D207",
+    "D208", "D209", "D210", "D211", "D212", "D213", "D214",
+    "D215", "D300", "D301", "D400", "D403", "D405", "D406",
+    "D407", "D408", "D409", "D410", "D411", "D412", "D413",
+    "D415", "D416",
+    "UP", "YTT", "ANN", "RUF", "FURB", "LOG", "PERF", "NPY",
+    "FLY", "TRY", "PL"
 ]
-ignore = ["E501", "ANN002", "ANN003", "ANN101", "ANN401"]
+ignore = ["E501", "ANN002", "ANN003", "ANN101", "ANN401", "PLR0913"]

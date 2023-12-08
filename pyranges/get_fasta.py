@@ -109,7 +109,8 @@ def get_sequence(
 
     if pyfaidx_fasta is None:
         if path is None:
-            raise Exception("ERROR get_sequence : you must provide a fasta path or pyfaidx_fasta object")
+            msg = "ERROR get_sequence : you must provide a fasta path or pyfaidx_fasta object"
+            raise ValueError(msg)
         pyfaidx_fasta = pyfaidx.Fasta(path, read_ahead=int(1e5))
 
     seqs = []
@@ -125,7 +126,7 @@ def get_sequence(
     return pd.concat([pd.Series(s) for s in seqs]).reset_index(drop=True).squeeze()
 
 
-def get_fasta(*args, **kwargs):
+def get_fasta(*args, **kwargs) -> pd.Series:
     """Deprecated: this function has been moved to Pyranges.get_sequence."""
     return get_sequence(*args, **kwargs)
 
@@ -225,13 +226,3 @@ def get_transcript_sequence(
     gr.col["Sequence"] = get_sequence(gr, path=path, pyfaidx_fasta=pyfaidx_fasta)
 
     return gr.groupby(group_by, as_index=False).agg({"Sequence": "".join})
-
-
-def _test():
-    import doctest
-
-    doctest.testmod()
-
-
-if __name__ == "__main__":
-    _test()

@@ -32,7 +32,6 @@ from pyranges.names import (
     RANGE_COLS,
     START_COL,
     STRAND_AUTO,
-    STRAND_BEHAVIOR_AUTO,
     STRAND_BEHAVIOR_IGNORE,
     STRAND_BEHAVIOR_OPPOSITE,
     STRAND_BEHAVIOR_SAME,
@@ -44,7 +43,6 @@ from pyranges.names import (
     TEMP_NUM_COL,
     TEMP_START_SLACK_COL,
     TEMP_STRAND_COL,
-    VALID_BY_OPTIONS,
     VALID_BY_TYPES,
     VALID_GENOMIC_STRAND_INFO,
     VALID_JOIN_TYPE,
@@ -52,14 +50,15 @@ from pyranges.names import (
     VALID_OVERLAP_TYPE,
     VALID_STRAND_BEHAVIOR_OPTIONS,
     VALID_STRAND_BEHAVIOR_TYPE,
-    VALID_STRAND_OPTIONS,
     VALID_STRAND_TYPE,
 )
 from pyranges.pyranges_groupby import PyRangesGroupBy
 from pyranges.range_frame import RangeFrame
-from pyranges.strand_behavior_validators import (ensure_strand_behavior_options_valid, group_keys_from_strand_behavior,
-                                                 group_keys_single, group_keys_from_strand_behavior,
-                                                 validate_and_convert_strand)
+from pyranges.strand_behavior_validators import (
+    ensure_strand_behavior_options_valid,
+    group_keys_from_strand_behavior,
+    validate_and_convert_strand,
+)
 from pyranges.tostring import tostring
 
 if TYPE_CHECKING:
@@ -333,7 +332,7 @@ class PyRanges(RangeFrame):
         >>> gr2.loci[["Score", "Id"]]
         Traceback (most recent call last):
         ...
-        TypeError: The loci accessor does not accept a list. If you meant to retrieve columns, use .gloc instead.
+        TypeError: The loci accessor does not accept a list. If you meant to retrieve columns, use gr.get_with_loc_columns instead.
         """
         return self._loci
 
@@ -405,13 +404,16 @@ class PyRanges(RangeFrame):
         num_chrom = self[CHROM_COL].nunique()
         strand_info = ""
 
+        max_strands_to_show = 3
+
         if self.has_strand_column:
             num_strands = self[STRAND_COL].nunique()
             strands = f" and {num_strands} strands"
             if not self.strand_values_valid:
                 nongenomic_strands = sorted(set(self[STRAND_COL]).difference(VALID_GENOMIC_STRAND_INFO))
                 example_strands = ", ".join(
-                    [str(s) for s in nongenomic_strands[:3]] + (["..."] if len(nongenomic_strands) > 3 else [])
+                    [str(s) for s in nongenomic_strands[:max_strands_to_show]]
+                    + (["..."] if len(nongenomic_strands) > max_strands_to_show else [])
                 )
                 strands += f" (including non-genomic strands: {example_strands})"
             strand_info = strands
@@ -1680,13 +1682,9 @@ class PyRanges(RangeFrame):
 
             A PyRanges with columns representing nearest interval horizontally appended.
 
-        Notes
-        -----
-        A k_nearest also exists, but is less performant.
-
         See Also
         --------
-        PyRanges.k_nearest : find k nearest intervals
+        PyRanges.join : Has a slack argument to find intervals within a distance.
 
         Examples
         --------
@@ -2251,7 +2249,8 @@ class PyRanges(RangeFrame):
         from pyranges.methods.spliced_subsequence import _spliced_subseq
 
         if strand and not self.strand_values_valid:
-            raise Exception("spliced_subsequence: you can use strand=True only for stranded PyRanges!")
+            msg = "spliced_subsequence: you can use strand=True only for stranded PyRanges!"
+            raise ValueError(msg)
 
         strand = validate_and_convert_strand(self, strand)
 
@@ -3124,7 +3123,7 @@ class PyRanges(RangeFrame):
 
             Where to write file.
 
-        compression : {‘infer’, ‘gzip’, ‘bz2’, ‘zip’, ‘xz’, None}, default "infer"
+        compression : {'infer', 'gzip', 'bz2', 'zip', 'xz', None}, default "infer"
 
             Which compression to use. Uses file extension to infer by default.
 
@@ -3220,7 +3219,7 @@ class PyRanges(RangeFrame):
 
             Where to write file.
 
-        compression : {‘infer’, ‘gzip’, ‘bz2’, ‘zip’, ‘xz’, None}, default "infer"
+        compression : {'infer', 'gzip', 'bz2', 'zip', 'xz', None}, default "infer"
 
             Which compression to use. Uses file extension to infer by default.
 
@@ -3585,7 +3584,6 @@ class PyRanges(RangeFrame):
             cols_to_include_genome_loc_correct_order = self._loc_columns + keys
 
         return PyRanges(super().__getitem__(cols_to_include_genome_loc_correct_order))
-
 
     def intersect_interval_columns(
         self, *, start2: str, end2: str, start: str = START_COL, end: str = END_COL, drop_old_columns: bool = True

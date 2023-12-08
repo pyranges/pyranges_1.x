@@ -6,8 +6,8 @@ from pyranges.names import VALID_JOIN_TYPE
 
 
 def _both_indexes(
-    scdf,
-    ocdf,
+    scdf: pd.DataFrame,
+    ocdf: pd.DataFrame,
 ) -> tuple[np.array, np.array]:
     if ocdf.empty:
         return scdf.index, np.array([], dtype=np.int64)
@@ -21,7 +21,7 @@ def _both_indexes(
     return it.all_overlaps_both(starts, ends, indexes)
 
 
-def _both_dfs(scdf, ocdf, join_type: VALID_JOIN_TYPE, **kwargs):
+def _both_dfs(scdf: pd.DataFrame, ocdf: pd.DataFrame, join_type: VALID_JOIN_TYPE, **kwargs) -> pd.DataFrame:
     _self_indexes, _other_indexes = _both_indexes(scdf, ocdf)
     if join_type == "inner":
         scdf = scdf.reindex(_self_indexes)

@@ -61,9 +61,11 @@ class GenomicFeaturesMethods:
         gr = self.pr
 
         if not gr.strand_values_valid:
-            raise Exception(
-                "Cannot compute TSSes or TESes without strand info. Perhaps use extend() or subsequence() or spliced_subsequence() instead?"
+            msg = (
+                "Cannot compute TSSes or TESes without strand info. Perhaps use extend()"
+                "or subsequence() or spliced_subsequence() instead?"
             )
+            raise AssertionError(msg)
 
         gr = gr[gr.Feature == "transcript"]
         gr = gr.groupby(CHROM_COL).apply(_tss).reset_index(drop=True)
@@ -113,9 +115,8 @@ class GenomicFeaturesMethods:
         gr = self.pr
 
         if not gr.strand_values_valid:
-            raise Exception(
-                "Cannot compute TSSes or TESes without strand info. Perhaps use extend() or subsequence() or spliced_subsequence() instead?"
-            )
+            msg = "Cannot compute TSSes or TESes without strand info. Perhaps use extend() or subsequence() or spliced_subsequence() instead?"
+            raise ValueError(msg)
 
         gr = gr[gr.Feature == "transcript"]
         gr = gr.groupby(CHROM_COL).apply(_tes).reset_index(drop=True)
@@ -208,7 +209,8 @@ def _outside_bounds(df: DataFrame, **kwargs) -> DataFrame:
     if isinstance(_chromsizes, pd.DataFrame):
         size_df = _chromsizes.df
         if not size_df.Chromosome.is_unique:
-            raise ValueError("Chromosomes must be unique in chromsizes.")
+            msg = "Chromosomes must be unique in chromsizes."
+            raise ValueError(msg)
         chromsizes = {k: v for k, v in zip(size_df.Chromosome, size_df.End)}
     else:
         assert isinstance(_chromsizes, dict)

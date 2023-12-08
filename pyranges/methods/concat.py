@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 
 import pyranges as pr
+
 if TYPE_CHECKING:
     from pyranges import PyRanges
 

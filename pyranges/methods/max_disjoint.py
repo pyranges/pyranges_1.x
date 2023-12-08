@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-
+import pandas as pd
 from sorted_nearest import max_disjoint  # type: ignore
 
 
-def _max_disjoint(df, **kwargs):
+def _max_disjoint(df: pd.DataFrame, **kwargs) -> pd.DataFrame:
     if df.empty:
         return None
 

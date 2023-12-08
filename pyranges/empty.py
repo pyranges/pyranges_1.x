@@ -1,10 +1,11 @@
-from typing import Iterable
+from collections.abc import Iterable
 
 import pandas as pd
 from pandas import Series
 
-from pyranges.pyranges_main import PyRanges
+import pyranges as pr
 from pyranges import names
+from pyranges.pyranges_main import PyRanges
 
 
 def empty_df(
@@ -33,5 +34,3 @@ def empty(
         Whether to create a PyRanges with strand information.
     """
     return pr.PyRanges(empty_df(with_strand=with_strand, columns=columns, dtype=dtype))
-
-

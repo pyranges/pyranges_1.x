@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     import pyranges as pr
 
 
-def _bounds(scdf: "pr.PyRanges", **kwargs):
+def _bounds(scdf: "pr.PyRanges", **kwargs) -> "pr.PyRanges":
     if scdf.empty:
         return None
 

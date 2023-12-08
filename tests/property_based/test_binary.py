@@ -33,8 +33,8 @@ def run_bedtools(command, gr, gr2, strandedness, nearest_overlap=False, nearest_
     ties = "-t " + ties if ties else ""
 
     with tempfile.TemporaryDirectory() as temp_dir:
-        f1 = "{}/f1.bed".format(temp_dir)
-        f2 = "{}/f2.bed".format(temp_dir)
+        f1 = f"{temp_dir}/f1.bed"
+        f2 = f"{temp_dir}/f2.bed"
         gr.df.to_csv(f1, sep="\t", header=False, index=False)
         gr2.df.to_csv(f2, sep="\t", header=False, index=False)
 
@@ -326,8 +326,7 @@ def test_nearest(gr, gr2, nearest_how, overlap, strandedness):
 )
 @given(gr=dfs_min(), gr2=dfs_min())  # pylint: disable=no-value-for-parameter
 def test_jaccard(gr, gr2, strandedness):
-    """Bedtools segfaults"""
-
+    """Bedtools segfaults."""
     jaccard_command = (  # noqa: F841
         "bedtools jaccard {strand}  -a <(sort -k1,1 -k2,2n {f1}) -b <(sort -k1,1 -k2,2n {f2})"
     )

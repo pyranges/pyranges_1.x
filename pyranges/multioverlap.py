@@ -1,4 +1,4 @@
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from pyranges.methods import concat
 from pyranges.names import GENOME_LOC_COLS_WITH_STRAND, VALID_OVERLAP_TYPE, VALID_STRAND_BEHAVIOR_TYPE
@@ -134,8 +134,8 @@ def count_overlaps(
     from pyranges.methods.overlap import _count_overlaps
 
     for name, gr in grs.items():
-        gr = gr[[c for c in gr.columns if c in GENOME_LOC_COLS_WITH_STRAND]]
+        _gr = gr[[c for c in gr.columns if c in GENOME_LOC_COLS_WITH_STRAND]]
         features = features.apply_pair(
-            gr, _count_overlaps, by=by, strand_behavior=strand_behavior, how=how, return_indexes=True, name=name
+            _gr, _count_overlaps, by=by, strand_behavior=strand_behavior, how=how, return_indexes=True, name=name
         )
     return features.astype({k: int for k in grs.keys()})

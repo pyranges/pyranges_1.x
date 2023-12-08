@@ -1,24 +1,20 @@
 import importlib.metadata
 import sys
-from collections.abc import Iterable
 
 import numpy as np
 import pandas as pd
-from pandas import Series
 
 import pyranges as pr
-import pyranges.names as names
-from pyranges import genomicfeatures, statistics
+from pyranges import genomicfeatures, names, statistics
 from pyranges.example_data import ExampleData
 from pyranges.get_fasta import get_fasta, get_sequence, get_transcript_sequence
-from pyranges.helpers import get_key_from_df, single_value_key
+from pyranges.methods.concat import concat
 from pyranges.multioverlap import count_overlaps
 from pyranges.pyranges_main import PyRanges
 from pyranges.range_frame import RangeFrame
-from pyranges.readers import read_bam, read_bed, read_bigwig, read_gff3, read_gtf, from_string  # NOQA: F401
-from pyranges.methods.concat import concat
+from pyranges.readers import from_string, read_bam, read_bed, read_bigwig, read_gff3, read_gtf  # NOQA: F401
 
-RangeFrame = RangeFrame
+RangeFrame = RangeFrame  # noqa: PLW0127
 
 gf = genomicfeatures
 
@@ -29,9 +25,9 @@ TOSTRING_CONSOLE_WIDTH = None
 
 example_data = ExampleData()
 stats = statistics
-get_fasta = get_fasta
-get_sequence = get_sequence
-get_transcript_sequence = get_transcript_sequence
+get_fasta = get_fasta  # noqa: PLW0127
+get_sequence = get_sequence  # noqa: PLW0127
+get_transcript_sequence = get_transcript_sequence  # noqa: PLW0127
 
 read_gff = read_gtf
 

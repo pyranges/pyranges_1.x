@@ -1,18 +1,20 @@
 """Statistics useful for genomics."""
-
+import sys
 from collections import defaultdict
+from collections.abc import Iterable
+from itertools import combinations_with_replacement
 from math import sqrt
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
 from numpy import ndarray
-from pandas.core.frame import DataFrame
-from pandas.core.series import Series
+from pandas import DataFrame, Series
 
 import pyranges as pr
 from pyranges.methods.statistics import _relative_distance
 from pyranges.names import (
+    END_COL,
     GENOME_LOC_COLS,
     STRAND_BEHAVIOR_AUTO,
     STRAND_BEHAVIOR_IGNORE,
@@ -168,7 +170,7 @@ def fisher_exact(tp: Series, fp: Series, fn: Series, tn: Series, pseudocount: in
     return df
 
 
-def mcc(  # noqa: C901
+def mcc(
     grs: list["PyRanges"],
     genome: "PyRanges | pd.DataFrame | dict[str, int] | None" = None,
     labels: str | None = None,
@@ -225,64 +227,10 @@ def mcc(  # noqa: C901
     b  1.00000  1.00000  0.55168
     c  0.55168  0.55168  1.00000
     """
-    import sys
-    from itertools import chain, combinations_with_replacement
-
-    if genome is None:
-        genome = defaultdict(int)
-        for gr in grs:
-            for k, v in gr:
-                genome[k] = max(genome[k], v.End.max())
-
-    if not isinstance(genome, dict):
-        _genome = genome
-        genome_length = int(_genome.End.sum())
-    else:
-        _genome = pd.DataFrame(
-            {
-                "Chromosome": list(genome.keys()),
-                "Start": 0,
-                "End": list(genome.values()),
-            }
-        )
-        genome_length = sum(genome.values())
-
-    if labels is None:
-        _labels = combinations_with_replacement(np.arange(len(grs)), r=2)
-    else:
-        assert len(labels) == len(grs)
-        _labels = combinations_with_replacement(labels, r=2)
+    _genome, genome_length, _labels = process_genome_data(grs, genome, labels)
 
     # remove all non-loc columns before computation
     grs = [gr.merge_overlaps(strand=strand) for gr in grs]
-
-    if _genome is not None:
-        genome_length = int(_genome.End.sum())
-
-        if verbose:
-            # check that genome definition does not have many more
-            # chromosomes than datafiles
-            gr_cs = set(chain(*[gr.Chromosome for gr in grs]))
-
-            g_cs = set(_genome.keys())
-            surplus = g_cs - gr_cs
-            if len(surplus):
-                print(
-                    "The following chromosomes are in the genome, but not the PyRanges:",
-                    ", ".join(surplus),
-                    file=sys.stderr,
-                )
-
-        if strand:
-
-            def make_stranded(df: DataFrame) -> DataFrame:
-                df = df.copy()
-                df2 = df.copy()
-                df.insert(df.shape[1], "Strand", "+")
-                df2.insert(df2.shape[1], "Strand", "-")
-                return pd.concat([df, df2])
-
-            _genome = _genome.apply(make_stranded)
 
     strand_behavior = STRAND_BEHAVIOR_SAME if strand else STRAND_BEHAVIOR_IGNORE
 
@@ -328,29 +276,29 @@ def mcc(  # noqa: C901
                     fn = t[_strand].length - tp
                     tn = genome_length - (tp + fp + fn)
                     mcc = _mcc(tp, fp, tn, fn)
-                    rowdicts.append(
-                        {
-                            "T": lt,
-                            "F": lf,
-                            "Strand": _strand,
-                            "TP": tp,
-                            "FP": fp,
-                            "TN": tn,
-                            "FN": fn,
-                            "MCC": mcc,
-                        }
-                    )
-                    rowdicts.append(
-                        {
-                            "T": lf,
-                            "F": lt,
-                            "Strand": _strand,
-                            "TP": tp,
-                            "FP": fn,
-                            "TN": tn,
-                            "FN": fp,
-                            "MCC": mcc,
-                        }
+                    rowdicts.extend(
+                        [
+                            {
+                                "T": lt,
+                                "F": lf,
+                                "Strand": _strand,
+                                "TP": tp,
+                                "FP": fp,
+                                "TN": tn,
+                                "FN": fn,
+                                "MCC": mcc,
+                            },
+                            {
+                                "T": lf,
+                                "F": lt,
+                                "Strand": _strand,
+                                "TP": tp,
+                                "FP": fn,
+                                "TN": tn,
+                                "FN": fp,
+                                "MCC": mcc,
+                            },
+                        ]
                     )
             else:
                 tp = tp_gr.length
@@ -359,27 +307,27 @@ def mcc(  # noqa: C901
                 tn = genome_length - (tp + fp + fn)
                 mcc = _mcc(tp, fp, tn, fn)
 
-                rowdicts.append(
-                    {
-                        "T": lt,
-                        "F": lf,
-                        "TP": tp,
-                        "FP": fp,
-                        "TN": tn,
-                        "FN": fn,
-                        "MCC": mcc,
-                    }
-                )
-                rowdicts.append(
-                    {
-                        "T": lf,
-                        "F": lt,
-                        "TP": tp,
-                        "FP": fn,
-                        "TN": tn,
-                        "FN": fp,
-                        "MCC": mcc,
-                    }
+                rowdicts.extend(
+                    [
+                        {
+                            "T": lt,
+                            "F": lf,
+                            "TP": tp,
+                            "FP": fp,
+                            "TN": tn,
+                            "FN": fn,
+                            "MCC": mcc,
+                        },
+                        {
+                            "T": lf,
+                            "F": lt,
+                            "TP": tp,
+                            "FP": fn,
+                            "TN": tn,
+                            "FN": fp,
+                            "MCC": mcc,
+                        },
+                    ]
                 )
 
     df = pd.DataFrame.from_records(rowdicts).sort_values(["T", "F"])
@@ -630,7 +578,7 @@ def simes(
         if df.has_strand_column:
             positions += ["Strand"]
 
-    sorter = by + [pcol]
+    sorter = [*by, pcol]
 
     sdf = df[positions + sorter].sort_values(sorter)
     g = sdf.groupby(positions + by)
@@ -672,7 +620,8 @@ def chromsizes_as_int(chromsizes: "PyRanges | DataFrame | dict[Any, int]") -> in
     elif isinstance(chromsizes, pd.DataFrame | pr.PyRanges):
         _chromsizes = chromsizes.End.sum()
     else:
-        raise TypeError(f"chromsizes must be dict, DataFrame or PyRanges, was {type(chromsizes)}")
+        msg = f"chromsizes must be dict, DataFrame or PyRanges, was {type(chromsizes)}"
+        raise TypeError(msg)
 
     return _chromsizes
 
@@ -735,7 +684,7 @@ class StatisticsMethods:
         strand = (
             self.pr.strand_values_valid
             and other.strand_values_valid
-            and strand_behavior in [STRAND_BEHAVIOR_AUTO, True]
+            and strand_behavior in {STRAND_BEHAVIOR_AUTO, True}
         )
         reference_length = self.pr.merge_overlaps(strand=strand).length
         query_length = other.merge_overlaps(strand=strand).length
@@ -788,7 +737,7 @@ class StatisticsMethods:
         strand = (
             self.pr.strand_values_valid
             and other.strand_values_valid
-            and strand_behavior in [STRAND_BEHAVIOR_AUTO, True]
+            and strand_behavior in {STRAND_BEHAVIOR_AUTO, True}
         )
 
         intersection_sum = self.pr.set_intersect(other).lengths().sum()
@@ -876,3 +825,47 @@ def _mcc(tp: int, fp: int, tn: int, fn: int) -> float:
     # https://stackoverflow.com/a/56875660/992687
     x = (tp + fp) * (tp + fn) * (tn + fp) * (tn + fn)
     return ((tp * tn) - (fp * fn)) / sqrt(x)
+
+
+GenomeType = tuple[dict[str, int], pd.DataFrame]
+LabelsType = tuple[list[str], list[int]]
+
+
+def process_genome_data(grs: list[Any], genome: GenomeType, labels: LabelsType) -> tuple[pd.DataFrame, int, Iterable]:
+    genome = initialize_genome(grs) if genome is None else ensure_genome_dataframe(genome)
+
+    _genome = create_genome_dataframe(genome) if isinstance(genome, dict) else genome
+    genome_length = compute_genome_length(genome)
+
+    _labels = (
+        generate_labels(labels, grs) if labels is not None else combinations_with_replacement(np.arange(len(grs)), r=2)
+    )
+
+    return _genome, genome_length, _labels
+
+
+def ensure_genome_dataframe(genome: GenomeType) -> pd.DataFrame:
+    if isinstance(genome, dict):
+        return create_genome_dataframe(genome)
+    return genome
+
+
+def initialize_genome(grs: list["PyRanges"]) -> dict[str, int]:
+    genome = defaultdict(int)
+    for gr in grs:
+        for k, v in gr:
+            genome[k] = max(genome[k], v[END_COL].max())
+    return genome
+
+
+def create_genome_dataframe(genome: dict[str, int]) -> pd.DataFrame:
+    return pd.DataFrame({"Chromosome": list(genome.keys()), "Start": 0, "End": list(genome.values())})
+
+
+def compute_genome_length(genome: GenomeType) -> int:
+    return int(genome[END_COL].sum()) if not isinstance(genome, dict) else sum(genome.values())
+
+
+def generate_labels(labels: LabelsType, grs: list[Any]) -> Iterable:
+    assert len(labels) == len(grs), "Labels length must match the length of grs"
+    return combinations_with_replacement(labels, r=2)

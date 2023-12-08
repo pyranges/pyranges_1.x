@@ -1,6 +1,6 @@
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from functools import cached_property
-from typing import Any, Literal, Self, Callable
+from typing import Any, Literal, Self
 
 import pandas as pd
 

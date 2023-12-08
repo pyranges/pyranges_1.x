@@ -49,7 +49,7 @@ def _spliced_subseq(
 
     if start < 0 or (end is not None and end < 0):
         # len_per_transc is total sum of exon length per transcript
-        len_per_transc = scdf.loc[g[TEMP_INDEX_COL].last(), by + [TEMP_CUMSUM_COL]].rename(
+        len_per_transc = scdf.loc[g[TEMP_INDEX_COL].last(), [*by, TEMP_CUMSUM_COL]].rename(
             columns={TEMP_CUMSUM_COL: TOTAL_EXON_LENGTH_COL}
         )
 
@@ -57,7 +57,7 @@ def _spliced_subseq(
         # had to add bits to keep the order of rows right, or merge would destroy it
         if by_argument_given:
             exp_len_per_transc = (
-                scdf.loc[:, by + [TEMP_INDEX_COL]]
+                scdf.loc[:, [*by, TEMP_INDEX_COL]]
                 .merge(len_per_transc, on=by)
                 .set_index(TEMP_INDEX_COL)
                 .loc[scdf.index]

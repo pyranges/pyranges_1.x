@@ -48,7 +48,7 @@ def test_merge(gr, strand):
     print(gr)
 
     with tempfile.TemporaryDirectory() as temp_dir:
-        f1 = "{}/f1.bed".format(temp_dir)
+        f1 = f"{temp_dir}/f1.bed"
         gr.df.to_csv(f1, sep="\t", header=False, index=False)
 
         cmd = merge_command.format(bedtools_strand, f1)
@@ -116,7 +116,7 @@ def test_cluster(gr, strand):
     print(gr)
 
     with tempfile.TemporaryDirectory() as temp_dir:
-        f1 = "{}/f1.bed".format(temp_dir)
+        f1 = f"{temp_dir}/f1.bed"
         gr.df.to_csv(f1, sep="\t", header=False, index=False)
 
         cmd = cluster_command.format(bedtools_strand, f1)
@@ -249,7 +249,7 @@ makewindows_command = "bedtools makewindows -w 10 -b <(sort -k1,1 -k2,2n {})"
 # @reproduce_failure('5.5.4', b'AXicY2RgYGAEIzgAsRkBAFsABg==')
 def test_windows(gr):
     with tempfile.TemporaryDirectory() as temp_dir:
-        f1 = "{}/f1.bed".format(temp_dir)
+        f1 = f"{temp_dir}/f1.bed"
         gr.df.to_csv(f1, sep="\t", header=False, index=False)
 
         cmd = makewindows_command.format(f1)

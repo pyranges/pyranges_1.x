@@ -1,7 +1,8 @@
+import pandas as pd
 from sorted_nearest import annotate_clusters, cluster_by  # type: ignore
 
 
-def _cluster(df, **kwargs):
+def _cluster(df: pd.DataFrame, **kwargs) -> pd.DataFrame:
     if df.empty:
         return None
 
@@ -22,7 +23,7 @@ def _cluster(df, **kwargs):
     return cdf
 
 
-def _cluster_by(df, **kwargs):
+def _cluster_by(df: pd.DataFrame, **kwargs) -> pd.DataFrame:
     if df.empty:
         return None
 
@@ -35,7 +36,7 @@ def _cluster_by(df, **kwargs):
     if isinstance(by, str):
         cdf = df.sort_values([by, "Start"])
     else:
-        cdf = df.sort_values(by + ["Start"])
+        cdf = df.sort_values([*by, "Start"])
 
     if isinstance(by, str):
         new_ids = (cdf[by] != cdf[by].shift()).cumsum()

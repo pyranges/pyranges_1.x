@@ -2,18 +2,22 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from pyranges import PyRanges
+
     try:
         from pyrle import PyRles
     except ImportError:
         pass
 
 
-def _to_rle(ranges: "PyRanges", value_col: str | None = None, strand: bool = True, rpm: bool = False, **kwargs) -> "PyRles":
+def _to_rle(
+    ranges: "PyRanges", value_col: str | None = None, strand: bool = True, rpm: bool = False, **kwargs
+) -> "PyRles":
     try:
         from pyrle import PyRles  # type: ignore
         from pyrle.methods import coverage  # type: ignore
-    except ImportError:
-        raise Exception("Using the coverage method requires that pyrle is installed.")
+    except ImportError as e:
+        msg = "Using the coverage method requires that pyrle is installed."
+        raise ImportError(msg) from e
 
     _kwargs = {
         "strand": strand,

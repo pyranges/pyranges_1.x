@@ -3,7 +3,7 @@ import pandas as pd
 from ncls import NCLS  # type: ignore
 
 
-def _number_overlapping(scdf, ocdf, **kwargs):
+def _number_overlapping(scdf: pd.DataFrame, ocdf: pd.DataFrame, **kwargs) -> pd.DataFrame:
     keep_nonoverlapping = kwargs.get("keep_nonoverlapping", True)
     column_name = kwargs.get("overlap_col", True)
 
@@ -45,7 +45,7 @@ def _number_overlapping(scdf, ocdf, **kwargs):
         return df[df[column_name] != 0]
 
 
-def _coverage(scdf, ocdf, **kwargs):
+def _coverage(scdf: pd.DataFrame, ocdf: pd.DataFrame, **kwargs) -> pd.DataFrame:
     fraction_col = kwargs["fraction_col"]
 
     if scdf.empty:

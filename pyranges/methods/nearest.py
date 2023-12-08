@@ -11,7 +11,7 @@ from pyranges.methods.sort import sort_one_by_one
 from pyranges.names import END_COL, START_COL
 
 
-def _insert_distance(ocdf, dist, suffix):
+def _insert_distance(ocdf: pd.DataFrame, dist: pd.DataFrame, suffix: str) -> pd.DataFrame:
     if "Distance" not in ocdf:
         distance_column_name = "Distance"
     elif "Distance" + suffix not in ocdf:
@@ -31,7 +31,7 @@ def _insert_distance(ocdf, dist, suffix):
     return ocdf
 
 
-def _overlapping_for_nearest(scdf, ocdf, suffix):
+def _overlapping_for_nearest(scdf: pd.DataFrame, ocdf: pd.DataFrame, suffix: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     nearest_df = pd.DataFrame(columns="Chromosome Start End Strand".split())
 
     it = NCLS(ocdf.Start.values, ocdf.End.values, ocdf.index.values)
@@ -59,7 +59,9 @@ def _overlapping_for_nearest(scdf, ocdf, suffix):
     return nearest_df, df_to_find_nearest_in
 
 
-def _next_nonoverlapping(left_ends, right_starts, right_indexes):
+def _next_nonoverlapping(
+    left_ends: pd.Series, right_starts: pd.Series, right_indexes: pd.Series
+) -> tuple[pd.Series, pd.Series]:
     left_ends = left_ends.sort_values()
     right_starts = right_starts.sort_values()
     r_idx, dist = nearest_next_nonoverlapping(left_ends.values - 1, right_starts.values, right_indexes)
@@ -69,7 +71,7 @@ def _next_nonoverlapping(left_ends, right_starts, right_indexes):
     return r_idx, dist
 
 
-def _previous_nonoverlapping(left_starts, right_ends):
+def _previous_nonoverlapping(left_starts: pd.Series, right_ends: pd.Series) -> tuple[pd.Series, pd.Series]:
     left_starts = left_starts.sort_values()
     right_ends = right_ends.sort_values()
     r_idx, dist = nearest_previous_nonoverlapping(left_starts.values, right_ends.values - 1, right_ends.index.values)

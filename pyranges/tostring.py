@@ -9,6 +9,10 @@ import pyranges
 if TYPE_CHECKING:
     import pyranges as pr
 
+MAX_COLUMN_NAMES_TO_SHOW = 3
+MAX_ROWS_TO_SHOW = 8
+HALF_OF_MAX_ROWS_TO_SHOW = MAX_ROWS_TO_SHOW // 2
+
 
 @dataclass
 class AdjustedTableData:
@@ -34,10 +38,10 @@ def tostring(
 ) -> str:
     """Return string representation."""
     truncation_marker = ["..."]
-    if len(self) >= 8:
-        head = [list(v) for _, v in self.head(4).iterrows()]
-        tail = [list(v) for _, v in self.tail(4).iterrows()]
-        data = [*head, truncation_marker * self.shape[1], *(tail if len(self) > 8 else head + tail)]
+    if len(self) >= MAX_ROWS_TO_SHOW:
+        head = [list(v) for _, v in self.head(HALF_OF_MAX_ROWS_TO_SHOW).iterrows()]
+        tail = [list(v) for _, v in self.tail(HALF_OF_MAX_ROWS_TO_SHOW).iterrows()]
+        data = [*head, truncation_marker * self.shape[1], *(tail if len(self) > MAX_ROWS_TO_SHOW else head + tail)]
     else:
         data = [list(v) for _, v in self.iterrows()]
 
@@ -57,7 +61,7 @@ def tostring(
         not_shown = [
             f'"{e}"' for e in self.columns[adjusted_data.included_columns : adjusted_data.included_columns + 3]
         ]
-        if num_not_shown > 3:
+        if num_not_shown > MAX_COLUMN_NAMES_TO_SHOW:
             not_shown.append("...")
         columns_not_shown = f" ({num_not_shown} columns not shown: {', '.join(not_shown)})."
         truncated_data = [row + truncation_marker for row in truncated_data]

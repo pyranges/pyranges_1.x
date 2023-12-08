@@ -53,7 +53,7 @@ def _subseq(
 
     if by_argument_given:
         j = (
-            scdf.groupby(by, dropna=False)[[START_COL, END_COL, TEMP_INDEX_COL] + by]
+            scdf.groupby(by, dropna=False)[[START_COL, END_COL, TEMP_INDEX_COL, *by]]
             .agg(agg_dict)
             .set_index(TEMP_INDEX_COL)
         )
@@ -84,7 +84,7 @@ def _subseq(
         j.rename(columns={TEMP_START_COL: TEMP_MIN_COL, TEMP_END_COL: TEMP_MAX_COL}, inplace=True)
 
     # I'm maintaing the original row order
-    scdf = scdf.merge(j[by + [TEMP_MIN_COL, TEMP_MAX_COL]], on=by).set_index(TEMP_INDEX_COL).loc[orig_order]
+    scdf = scdf.merge(j[[*by, TEMP_MIN_COL, TEMP_MAX_COL]], on=by).set_index(TEMP_INDEX_COL).loc[orig_order]
 
     # instead of simply using starts and ends as computed above, we're dealing here with potential out of bounds:
     r = scdf[~((scdf[START_COL] >= scdf[TEMP_MAX_COL]) | (scdf[END_COL] <= scdf[TEMP_MIN_COL]))].copy()

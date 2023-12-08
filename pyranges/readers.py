@@ -4,10 +4,8 @@ from pathlib import Path
 import pandas as pd
 from natsort import natsorted  # type: ignore
 
-import pyranges as pr
 from pyranges.pyranges_main import PyRanges
 
-pr = pr
 
 def from_string(s: str) -> "PyRanges":
     """Create a PyRanges from multiline string.
@@ -20,6 +18,7 @@ def from_string(s: str) -> "PyRanges":
 
     Examples
     --------
+    >>> import pyranges as pr
     >>> s = '''Chromosome      Start        End Strand
     ... chr1  246719402  246719502      +
     ... chr5   15400908   15401008      +
@@ -72,6 +71,7 @@ def read_bed(f: str | Path, /, nrows: int | None = None) -> "PyRanges":
 
     Examples
     --------
+    >>> import pyranges as pr
     >>> path = pr.example_data.files["aorta.bed"]
     >>> pr.read_bed(path, nrows=5)
     Chromosome      Start      End  Name        Score  Strand
@@ -124,7 +124,7 @@ def read_bam(
     /,
     sparse: bool = True,
     mapq: int = 0,
-    required_flag: int = 0 ,
+    required_flag: int = 0,
     filter_flag: int = 1540,
 ) -> "PyRanges":
     """Return bam file as PyRanges.
@@ -160,6 +160,7 @@ def read_bam(
 
     Examples
     --------
+    >>> import pyranges as pr
     >>> path = pr.example_data.files["smaller.bam"]
     >>> pr.read_bam(path)
     Chromosome    Start     End       Strand      Flag
@@ -259,7 +260,7 @@ def read_gtf(
     f: str | Path,
     /,
     full: bool = True,
-    nrows: bool = None,
+    nrows: bool | None = None,
     duplicate_attr: bool = False,
     ignore_bad: bool = False,
 ) -> "PyRanges":
@@ -299,6 +300,7 @@ def read_gtf(
 
     Examples
     --------
+    >>> import pyranges as pr
     >>> from tempfile import NamedTemporaryFile
     >>> contents = ['#!genome-build GRCh38.p10']
     >>> contents.append('1\thavana\tgene\t11869\t14409\t.\t+\t.\tgene_id "ENSG00000223972"; gene_version "5"; gene_name "DDX11L1"; gene_source "havana"; gene_biotype "transcribed_unprocessed_pseudogene";')
@@ -361,9 +363,9 @@ def read_gtf_full(
     dfs = []
     for df in df_iter:
         extra = _to_rows(df.Attribute.astype(str), ignore_bad=ignore_bad)
-        df = df.drop("Attribute", axis=1)
-        extra.set_index(df.index, inplace=True)
-        ndf = pd.concat([df, extra], axis=1, sort=False)
+        _df = df.drop("Attribute", axis=1)
+        extra.set_index(_df.index, inplace=True)
+        ndf = pd.concat([_df, extra], axis=1, sort=False)
         dfs.append(ndf)
 
     df = pd.concat(dfs, sort=False)
@@ -383,12 +385,13 @@ def to_rows(anno: pd.Series, ignore_bad: bool = False) -> pd.DataFrame:
         for entry in row:
             str(entry).replace('"', "").replace(";", "").split()
     except AttributeError:
-        raise Exception(f"Invalid attribute string: {entry}. If the file is in GFF3 format, use pr.read_gff3 instead.")
+        msg = f"Invalid attribute string: {entry}. If the file is in GFF3 format, use pr.read_gff3 instead."
+        raise AttributeError(msg) from AttributeError
 
     rowdicts = []
     try:
         for line in anno:
-            rowdicts.append({k: v for k, v in parse_kv_fields(line)})
+            rowdicts.append({k: v for k, v in parse_kv_fields(line)})  # noqa: PERF401
     except ValueError:
         if not ignore_bad:
             print(f"The following line is not parseable as gtf:\n{line}\n\nTo ignore bad lines use ignore_bad=True.")
@@ -468,9 +471,9 @@ def read_gtf_restricted(f: str | Path, skiprows: int | None, nrows: int | None =
         extract.exon_number = extract.exon_number.astype(float)
 
         extract.set_index(df.index, inplace=True)
-        df = pd.concat([df[cols_to_concat], extract], axis=1, sort=False)
+        _df = pd.concat([df[cols_to_concat], extract], axis=1, sort=False)
 
-        dfs.append(df)
+        dfs.append(_df)
 
     df = pd.concat(dfs, sort=False)
 
@@ -551,9 +554,9 @@ def read_gff3(
     dfs = []
     for df in df_iter:
         extra = to_rows_gff3(df.Attribute.astype(str))
-        df = df.drop("Attribute", axis=1)
-        extra.set_index(df.index, inplace=True)
-        ndf = pd.concat([df, extra], axis=1, sort=False)
+        _df = df.drop("Attribute", axis=1)
+        extra.set_index(_df.index, inplace=True)
+        ndf = pd.concat([_df, extra], axis=1, sort=False)
         dfs.append(ndf)
 
     df = pd.concat(dfs, sort=False)
