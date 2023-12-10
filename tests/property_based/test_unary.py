@@ -34,7 +34,7 @@ from tests.property_based.hypothesis_helper import (
 merge_command = "bedtools merge -o first,count -c 6,1 {} -i <(sort -k1,1 -k2,2n {})"
 
 
-@pytest.mark.bedtools
+@pytest.mark.bedtools()
 @pytest.mark.parametrize("strand", [True, False])
 @settings(
     max_examples=max_examples,
@@ -42,7 +42,7 @@ merge_command = "bedtools merge -o first,count -c 6,1 {} -i <(sort -k1,1 -k2,2n 
     suppress_health_check=HealthCheck.all(),
 )
 @given(gr=dfs_min())  # pylint: disable=no-value-for-parameter
-def test_merge(gr, strand):
+def test_merge(gr, strand) -> None:
     bedtools_strand = {True: "-s", False: ""}[strand]
 
     print(gr)
@@ -102,7 +102,7 @@ def test_merge(gr, strand):
 cluster_command = "bedtools cluster {} -i <(sort -k1,1 -k2,2n {})"
 
 
-@pytest.mark.bedtools
+@pytest.mark.bedtools()
 @pytest.mark.parametrize("strand", [True, False])
 @settings(
     max_examples=max_examples,
@@ -110,7 +110,7 @@ cluster_command = "bedtools cluster {} -i <(sort -k1,1 -k2,2n {})"
     suppress_health_check=HealthCheck.all(),
 )
 @given(gr=dfs_min())  # pylint: disable=no-value-for-parameter
-def test_cluster(gr, strand):
+def test_cluster(gr, strand) -> None:
     bedtools_strand = {True: "-s", False: ""}[strand]
 
     print(gr)
@@ -142,25 +142,21 @@ def test_cluster(gr, strand):
 
     if not bedtools_df.empty:
         # need to sort because bedtools sometimes gives the result in non-natsorted chromosome order!
-        if result.strand_values_valid:
-            sort_values = "Chromosome Start Strand".split()
-        else:
-            sort_values = "Chromosome Start".split()
+        sort_values = "Chromosome Start Strand".split() if result.strand_values_valid else "Chromosome Start".split()
 
         result_df = result.df.sort_values(sort_values)
         print(bedtools_df)
         bedtools_df = bedtools_df.sort_values(sort_values)
 
-        cluster_ids = {
-            k: v
-            for k, v in zip(
+        cluster_ids = dict(
+            zip(
                 result_df.Cluster.drop_duplicates(),
                 bedtools_df.Cluster.drop_duplicates(),
             )
-        }
+        )
 
         # bedtools gives different cluster ids than pyranges
-        result_df.Cluster.replace(cluster_ids, inplace=True)
+        result_df.Cluster = result_df.Cluster.replace(cluster_ids)
 
         bedtools_df.Cluster = bedtools_df.Cluster.astype("int32")
         assert_df_equal(result_df.drop("Cluster", axis=1), bedtools_df.drop("Cluster", axis=1))
@@ -175,15 +171,12 @@ def test_cluster(gr, strand):
     suppress_health_check=HealthCheck.all(),
 )
 @given(gr=dfs_min_with_id())  # pylint: disable=no-value-for-parameter
-def test_cluster_by(gr, strand):
+def test_cluster_by(gr, strand) -> None:
     result = gr.cluster(by="ID", strand=strand).df
     print(result)
     df = gr.df
 
-    if strand:
-        groupby = ["Chromosome", "Strand", "ID"]
-    else:
-        groupby = ["Chromosome", "ID"]
+    groupby = ["Chromosome", "Strand", "ID"] if strand else ["Chromosome", "ID"]
 
     grs = []
 
@@ -217,7 +210,7 @@ def test_cluster_by(gr, strand):
     suppress_health_check=HealthCheck.all(),
 )
 @given(gr=dfs_min_with_id())  # pylint: disable=no-value-for-parameter
-def test_merge_by(gr, strand):
+def test_merge_by(gr, strand) -> None:
     print(gr)
     result = gr.merge_overlaps(by="ID").df.drop("ID", axis=1)
 
@@ -238,7 +231,7 @@ def test_merge_by(gr, strand):
 makewindows_command = "bedtools makewindows -w 10 -b <(sort -k1,1 -k2,2n {})"
 
 
-@pytest.mark.bedtools
+@pytest.mark.bedtools()
 @settings(
     max_examples=max_examples,
     print_blob=True,
@@ -247,7 +240,7 @@ makewindows_command = "bedtools makewindows -w 10 -b <(sort -k1,1 -k2,2n {})"
 )
 @given(gr=dfs_min())  # pylint: disable=no-value-for-parameter
 # @reproduce_failure('5.5.4', b'AXicY2RgYGAEIzgAsRkBAFsABg==')
-def test_windows(gr):
+def test_windows(gr) -> None:
     with tempfile.TemporaryDirectory() as temp_dir:
         f1 = f"{temp_dir}/f1.bed"
         gr.df.to_csv(f1, sep="\t", header=False, index=False)
@@ -284,7 +277,7 @@ def test_windows(gr):
     suppress_health_check=HealthCheck.all(),
 )
 @given(gr=df_data())  # pylint: disable=no-value-for-parameter
-def test_init(gr, strand):
+def test_init(gr, strand) -> None:
     c, s, e, strands = gr
 
     if strand:
@@ -302,7 +295,7 @@ chipseq = pr.example_data.chipseq()
     suppress_health_check=HealthCheck.all(),
 )
 @given(selector=selector())  # pylint: disable=no-value-for-parameter
-def test_getitem(selector):
+def test_getitem(selector) -> None:
     if len(selector) == 3:
         a, b, c = selector
         chipseq[a, b, c]
@@ -315,10 +308,11 @@ def test_getitem(selector):
     elif len(selector) == 0:
         pass
     else:
-        raise Exception("Should never happen")
+        msg = "Should never happen"
+        raise Exception(msg)
 
 
-@pytest.mark.bedtools
+@pytest.mark.bedtools()
 @settings(
     max_examples=max_examples,
     deadline=deadline,
@@ -326,7 +320,7 @@ def test_getitem(selector):
     suppress_health_check=HealthCheck.all(),
 )
 @given(gr=dfs_min())  # pylint: disable=no-value-for-parameter
-def test_summary(gr):
+def test_summary(gr) -> None:
     print(gr.to_example())
     # merely testing that it does not error
     # contents are just (pandas) dataframe.describe()

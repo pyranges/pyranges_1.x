@@ -34,8 +34,8 @@ method_chain = product(binary_methods, binary_methods)
 strandedness_chain = list(product(["same", "opposite"], strandedness)) + list(product(strandedness, [None]))
 
 
-@pytest.mark.bedtools
-@pytest.mark.parametrize("strandedness_chain,method_chain", product(strandedness_chain, method_chain))
+@pytest.mark.bedtools()
+@pytest.mark.parametrize(("strandedness_chain", "method_chain"), product(strandedness_chain, method_chain))
 @settings(
     max_examples=max_examples,
     deadline=deadline,
@@ -46,7 +46,7 @@ strandedness_chain = list(product(["same", "opposite"], strandedness)) + list(pr
 # @reproduce_failure('5.5.4', b'AXicY2RAA4xIJCoLygcAALIABg==') # test_three_in_a_row[strandedness_chain122-method_chain122]
 # @reproduce_failure('5.5.4', b'AXicY2QAAUYGKGBkxM9nAAABEAAJ') # test_three_in_a_row[strandedness_chain45-method_chain45]
 # @reproduce_failure('5.5.4', b'AXicY2RAA4xIJDY+AAC2AAY=') # test_three_in_a_row[strandedness_chain24-method_chain24]
-def test_three_in_a_row(gr, gr2, gr3, strandedness_chain, method_chain):
+def test_three_in_a_row(gr, gr2, gr3, strandedness_chain, method_chain) -> None:
     print(method_chain)
 
     s1, s2 = strandedness_chain
@@ -59,26 +59,30 @@ def test_three_in_a_row(gr, gr2, gr3, strandedness_chain, method_chain):
         gr2 = m1(gr2, strandedness=s1)
         if len(gr2) > 0:
             assert gr2.Start.dtype == np.int64
-            assert (gr2.Start >= 0).all() and (gr2.End >= 0).all()
+            assert (gr2.Start >= 0).all()
+            assert (gr2.End >= 0).all()
         m2 = getattr(gr2, f2)
         gr3 = m2(gr3, strandedness=s2, suffix="_c")
         print(gr3)
         if len(gr3) > 0:
             assert gr3.Start.dtype == np.int64
-            assert (gr3.Start >= 0).all() and (gr3.End >= 0).all()
+            assert (gr3.Start >= 0).all()
+            assert (gr3.End >= 0).all()
 
     else:
         m1 = getattr(gr, f1)
         gr2 = m1(gr2, strandedness=s1)
         if len(gr2) > 0:
             assert gr2.Start.dtype == np.int64
-            assert (gr2.Start >= 0).all() and (gr2.End >= 0).all()
+            assert (gr2.Start >= 0).all()
+            assert (gr2.End >= 0).all()
         m2 = getattr(gr2, f2)
         gr3 = m2(gr3, strandedness=s2)
         print(gr3)
         if len(gr3) > 0:
             assert gr3.Start.dtype == np.int64
-            assert (gr3.Start >= 0).all() and (gr3.End >= 0).all()
+            assert (gr3.Start >= 0).all()
+            assert (gr3.End >= 0).all()
 
 
 # @pytest.mark.bedtools

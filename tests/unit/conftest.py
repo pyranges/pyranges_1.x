@@ -5,7 +5,7 @@ import pytest
 from pyranges import PyRanges
 
 
-def pytest_configure(config):
+def pytest_configure(config) -> None:
     config.addinivalue_line(
         "markers",
         "bedtools: tests rely on",
@@ -15,21 +15,21 @@ def pytest_configure(config):
 
 
 @pytest.fixture(autouse=True, scope="session")
-def numpy_seed():
+def numpy_seed() -> None:
     np.random.RandomState(42)
 
 
 @pytest.fixture(autouse=True)
-def add_np(doctest_namespace):
+def add_np(doctest_namespace) -> None:
     doctest_namespace["np_seed"] = np.random.seed(0)
 
 
-@pytest.fixture
+@pytest.fixture()
 def names():
     return "Chromosome  Start  End  Name Score Strand".split()
 
 
-@pytest.fixture
+@pytest.fixture()
 def chip_10(names):
     df = pd.read_csv("tests/unit/chip_10.bed", header=None, names=names, sep="\t")
 
@@ -40,7 +40,7 @@ def chip_10(names):
     return gr
 
 
-@pytest.fixture
+@pytest.fixture()
 def f1(names):
     df = pd.read_csv(
         "tests/unit/f1.bed",
@@ -52,14 +52,14 @@ def f1(names):
     return PyRanges(df)
 
 
-@pytest.fixture
+@pytest.fixture()
 def f2(names):
     df = pd.read_csv("tests/unit/f2.bed", sep="\t", header=None, names=names)
 
     return PyRanges(df)
 
 
-@pytest.fixture
+@pytest.fixture()
 def chromsizes():
     from io import StringIO
 
@@ -89,7 +89,7 @@ chr20                     63025520
 chrY                      59373566
 chr19                     59128983
 chr22                     51304566
-chr21                     48129895"""
+chr21                     48129895""",
         ),
         sep=r"\s+",
         header=None,

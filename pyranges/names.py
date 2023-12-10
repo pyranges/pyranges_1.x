@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from typing import Literal, get_args
+from typing import Literal, get_args, Any
 
 # Define the Literal type
 VALID_OVERLAP_TYPE = Literal["first", "containment", "all"]
@@ -79,3 +79,6 @@ TEMP_END_SLACK_COL = "__temp_end_slack__"
 DEFAULT_CLUSTER_ID_COL = "Cluster"
 
 VALID_BY_TYPES = str | Iterable[str] | None
+
+
+PANDAS_COMPRESSION_TYPE = Literal["infer", "gzip", "bz2", "zip", "xz", "zstd"] | dict[str, Any] | None

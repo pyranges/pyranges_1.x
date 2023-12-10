@@ -1,13 +1,14 @@
 import csv
 import logging
 from pathlib import Path
+from typing import Literal, Any, Callable
 
 import numpy as np
 import pandas as pd
 from natsort import natsorted  # type: ignore[import]
 from pandas.core.frame import DataFrame
 
-from pyranges.names import BIGWIG_SCORE_COL, CHROM_COL, END_COL, GENOME_LOC_COLS, START_COL
+from pyranges.names import BIGWIG_SCORE_COL, CHROM_COL, END_COL, GENOME_LOC_COLS, START_COL, PANDAS_COMPRESSION_TYPE
 from pyranges.pyranges_main import PyRanges
 
 GTF_COLUMNS_TO_PYRANGES = {
@@ -53,7 +54,6 @@ _ordered_gff3_columns = [
 
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
-LOGGER.Formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 LOGGER.setLevel(logging.INFO)
 
 
@@ -87,46 +87,23 @@ def _bed(df: DataFrame, *, keep: bool) -> DataFrame:
     return outdf
 
 
-def _gtf(df: DataFrame) -> DataFrame:
-    df = df.rename(columns=PYRANGES_TO_GTF_COLUMNS)  # copying here
-    df.loc[:, "start"] = df.start + 1
-    all_columns = _ordered_gtf_columns[:-1]
-    columns = list(df.columns)
-
-    outdf = _fill_missing(df, all_columns)
-
-    _rest = set(df.columns) - set(all_columns)
-    rest = sorted(_rest, key=columns.index)
-    rest_df = df[rest].copy()
-    for c in rest_df:
-        col = pd.Series(rest_df[c])
-        isnull = col.isna()
-        col = col.astype(str).str.replace("nan", "")
-        new_val = str(c) + ' "' + col + '";'
-        rest_df.loc[:, c] = rest_df[c].astype(str)
-        rest_df.loc[~isnull, c] = new_val
-        rest_df.loc[isnull, c] = ""
-
-    attribute = rest_df.apply(lambda r: " ".join([v for v in r if v]), axis=1)
-    outdf.insert(outdf.shape[1], "attribute", attribute)
-
-    return outdf
-
-
-def _to_gtf(
-    self: PyRanges,
-    path: str | None = None,
-    compression: str = "infer",
+def _to_gff_like(
+    gr: PyRanges,
+    out_format: Literal["gtf", "gff3"],
+    path: Path | None = None,
+    compression: PANDAS_COMPRESSION_TYPE = None,
 ) -> str | None:
-    df = _gtf(self)
-
+    df = _pyranges_to_gtf_like(
+        gr,
+        out_format=out_format,
+    )
     return df.to_csv(
         path,
-        sep="\t",
         index=False,
         header=False,
         compression=compression,
-        mode="w+",
+        mode="w",
+        sep="\t",
         quoting=csv.QUOTE_NONE,
     )
 
@@ -135,7 +112,7 @@ def _to_csv(
     self: PyRanges,
     path: Path | str | None = None,
     sep: str = ",",
-    compression: str = "infer",
+    compression: PANDAS_COMPRESSION_TYPE = None,
     *,
     header: bool = True,
 ) -> str | None:
@@ -167,7 +144,7 @@ def _to_csv(
 def _to_bed(
     self: PyRanges,
     path: str | None = None,
-    compression: str = "infer",
+    compression: PANDAS_COMPRESSION_TYPE = None,
     *,
     keep: bool = True,
 ) -> str | None:
@@ -249,45 +226,59 @@ def _to_bigwig(
     return None
 
 
-def _to_gff3(
-    gr: PyRanges,
-    path: None = None,
-    compression: str = "infer",
-) -> str | None:
-    df = _gff3(gr)
-    return df.to_csv(
-        path,
-        index=False,
-        header=False,
-        compression=compression,
-        mode="w+",
-        sep="\t",
-        quoting=csv.QUOTE_NONE,
-    )
+def _pyranges_to_gtf_like(
+    df: pd.DataFrame,
+    out_format: Literal["gtf", "gff3"],
+) -> pd.DataFrame:
+    attribute_formatter: Callable[[str, pd.Series, bool], pd.Series]
+    if out_format == "gtf":
+        all_columns = _ordered_gtf_columns[:-1]
+        rename_columns = PYRANGES_TO_GTF_COLUMNS
+        attribute_formatter = gtf_formatter
+    elif out_format == "gff3":
+        all_columns = _ordered_gff3_columns[:-1]
+        rename_columns = PYRANGES_TO_GFF3_COLUMNS
+        attribute_formatter = gff3_formatter
+    else:
+        msg = f"Invalid output format: {out_format}. Must be one of 'gtf' or 'gff3'."
+        raise ValueError(msg)
 
-
-def _gff3(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.rename(columns=PYRANGES_TO_GFF3_COLUMNS)  # copying here
+    df = df.rename(columns=rename_columns)
     df.loc[:, "start"] = df.start + 1
-    all_columns = _ordered_gff3_columns[:-1]
-    columns = list(df.columns)
 
+    columns = list(df.columns)
     outdf = _fill_missing(df, all_columns)
 
-    rest = set(df.columns) - set(all_columns)
-    _rest = sorted(rest, key=columns.index)
-    rest_df = df.get(_rest).copy()
-    total_cols = rest_df.shape[1]
-    for i, c in enumerate(rest_df, 1):
-        col = rest_df[c]
+    _rest = set(df.columns) - set(all_columns)
+    rest = sorted(_rest, key=columns.index)
+    rest_df = df[rest].copy()
+
+    for i, colname in enumerate(rest_df.columns, 1):
+        col = pd.Series(rest_df[colname])
         isnull = col.isna()
         col = col.astype(str).str.replace("nan", "")
-        new_val = c + "=" + col + ";" if i != total_cols else c + "=" + col
-        rest_df.loc[:, c] = rest_df[c].astype(str)
-        rest_df.loc[~isnull, c] = new_val
-        rest_df.loc[isnull, c] = ""
+        new_val = attribute_formatter(colname, col, final_column=i == len(rest_df.columns))
+        rest_df.loc[:, colname] = rest_df[colname].astype(str)
+        rest_df.loc[~isnull, colname] = new_val
+        rest_df.loc[isnull, colname] = ""
 
-    attribute = rest_df.apply(lambda r: "".join([v for v in r if v]), axis=1).str.replace(";$", "", regex=True)
+    attribute = merge_attributes(rest_df, out_format)
     outdf.insert(outdf.shape[1], "attribute", attribute)
 
     return outdf
+
+
+def gtf_formatter(colname: str, col: pd.Series, final_column: bool = True):
+    attribute_template_string = f"{colname}={{col}}"
+    return col.apply(lambda x: attribute_template_string.format(col=x))
+
+
+def gff3_formatter(colname: str, col: pd.Series, final_column: bool):
+    attribute_template_string = f"{colname}={{col}}" + ("" if final_column else ";")
+    return col.apply(lambda x: attribute_template_string.format(col=x))
+
+
+def merge_attributes(attributes: pd.DataFrame, out_format: Literal["gtf", "gff3"]) -> pd.Series:
+    if out_format == "gff":
+        return attributes.apply(lambda r: " ".join([v for v in r if v]), axis=1)
+    return attributes.apply(lambda r: "".join([v for v in r if v]), axis=1).str.replace(";$", "", regex=True)

@@ -6,7 +6,7 @@ from pyranges.names import END_COL, START_COL
 
 def _merge(df: pd.DataFrame, **kwargs) -> pd.DataFrame:
     if df.empty:
-        return None
+        return df
 
     slack = kwargs.get("slack", 0)
     by = kwargs["by"]

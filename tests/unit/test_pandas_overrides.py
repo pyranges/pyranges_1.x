@@ -6,13 +6,13 @@ import pytest
 import pyranges as pr
 
 
-def test_getitem():
+def test_getitem() -> None:
     gr = pr.PyRanges({"Chromosome": ["chr1"], "Start": [0], "End": [40]})
     res = gr[gr.Chromosome == "chr1"]
     assert isinstance(res, pr.PyRanges)
 
 
-def test_loc_get():
+def test_loc_get() -> None:
     gr = pr.PyRanges({"Chromosome": ["chr1"], "Start": [0], "End": [40]})
     res = gr.loc[gr.Chromosome == "chr1", ["Chromosome", "Start", "End"]]
     assert isinstance(res, pr.PyRanges)
@@ -24,7 +24,7 @@ def test_loc_get():
     assert isinstance(res, pr.PyRanges)
 
 
-@pytest.fixture
+@pytest.fixture()
 def gr():
     return pr.PyRanges(
         {
@@ -33,11 +33,11 @@ def gr():
             "End": [40, 20],
             "Gene": ["DonkeyKong", "Mario"],
             "Val": [50, 30],
-        }
+        },
     )
 
 
-def test_loc_set():
+def test_loc_set() -> None:
     gr = pr.PyRanges({"Chromosome": ["chr1"], "Start": [0], "End": [40]})
 
     gr.loc[gr.Chromosome == "chr1", "Start"] = 1
@@ -45,7 +45,7 @@ def test_loc_set():
     assert gr.Start[0] == 1
 
 
-def test_groupby_agg(gr):
+def test_groupby_agg(gr) -> None:
     g = gr.groupby("Chromosome")
     assert isinstance(g.agg("first"), pd.DataFrame)
 
@@ -53,7 +53,7 @@ def test_groupby_agg(gr):
     assert isinstance(g.agg("first"), pr.PyRanges)
 
 
-def test_groupby_aggregate(gr):
+def test_groupby_aggregate(gr) -> None:
     g = gr.groupby("Chromosome")
     assert isinstance(g.aggregate("first"), pd.DataFrame)
 
@@ -61,7 +61,7 @@ def test_groupby_aggregate(gr):
     assert isinstance(g.aggregate("first"), pr.PyRanges)
 
 
-def test_groupby_apply(gr):
+def test_groupby_apply(gr) -> None:
     g = gr.groupby("Chromosome")
     assert isinstance(g.apply(lambda df: df.head()), pd.DataFrame)
 
@@ -69,7 +69,7 @@ def test_groupby_apply(gr):
     assert isinstance(g.apply(lambda df: df.head()), pr.PyRanges)
 
 
-def test_groupby_bfill(gr):
+def test_groupby_bfill(gr) -> None:
     g = gr.groupby("Chromosome")
     assert isinstance(g.bfill(), pd.DataFrame)
 
@@ -77,7 +77,7 @@ def test_groupby_bfill(gr):
     assert isinstance(g.bfill(), pr.PyRanges)
 
 
-def test_groupby_ffill(gr):
+def test_groupby_ffill(gr) -> None:
     g = gr.groupby("Chromosome")
     assert isinstance(g.ffill(), pd.DataFrame)
 
@@ -85,7 +85,7 @@ def test_groupby_ffill(gr):
     assert isinstance(g.ffill(), pr.PyRanges)
 
 
-def test_groupby_fillna(gr):
+def test_groupby_fillna(gr) -> None:
     g = gr.groupby("Chromosome")
     assert isinstance(g.fillna(0), pd.DataFrame)
 
@@ -93,7 +93,7 @@ def test_groupby_fillna(gr):
     assert isinstance(g.fillna(0), pr.PyRanges)
 
 
-def test_groupby_filter(gr):
+def test_groupby_filter(gr) -> None:
     g = gr.groupby("Chromosome")
     assert isinstance(g.filter(lambda df: True), pd.DataFrame)
 
@@ -101,7 +101,7 @@ def test_groupby_filter(gr):
     assert isinstance(g.filter(lambda df: True), pr.PyRanges)
 
 
-def test_groupby_first(gr):
+def test_groupby_first(gr) -> None:
     g = gr.groupby("Chromosome")
     assert isinstance(g.first(), pd.DataFrame)
 
@@ -109,7 +109,7 @@ def test_groupby_first(gr):
     assert isinstance(g.first(), pr.PyRanges)
 
 
-def test_groupby_get_group(gr):
+def test_groupby_get_group(gr) -> None:
     g = gr.groupby("Chromosome")
     assert isinstance(g.get_group("chr1"), pd.DataFrame)
 
@@ -117,7 +117,7 @@ def test_groupby_get_group(gr):
     assert isinstance(g.get_group("Mario"), pr.PyRanges)
 
 
-def test_groupby_head(gr):
+def test_groupby_head(gr) -> None:
     g = gr.groupby("Chromosome")
     assert isinstance(g.head(), pd.DataFrame)
 
@@ -125,7 +125,7 @@ def test_groupby_head(gr):
     assert isinstance(g.head(), pr.PyRanges)
 
 
-def test_groupby_last(gr):
+def test_groupby_last(gr) -> None:
     g = gr.groupby("Chromosome")
     assert isinstance(g.last(), pd.DataFrame)
 
@@ -133,7 +133,7 @@ def test_groupby_last(gr):
     assert isinstance(g.last(), pr.PyRanges)
 
 
-def test_groupby_min(gr):
+def test_groupby_min(gr) -> None:
     g = gr.groupby("Chromosome")
     assert isinstance(g.min(), pd.DataFrame)
 
@@ -141,7 +141,7 @@ def test_groupby_min(gr):
     assert isinstance(g.min(), pr.PyRanges)
 
 
-def test_groupby_pipe(gr):
+def test_groupby_pipe(gr) -> None:
     g = gr.groupby("Chromosome")
     assert isinstance(g.pipe(lambda df: df).agg("first"), pd.DataFrame)
 
@@ -149,7 +149,7 @@ def test_groupby_pipe(gr):
     assert isinstance(g.pipe(lambda df: df).agg("first"), pr.PyRanges)
 
 
-def test_groupby_prod(gr):
+def test_groupby_prod(gr) -> None:
     g = gr.groupby("Chromosome")
     assert isinstance(g.prod("first"), pd.DataFrame)
 
@@ -157,7 +157,7 @@ def test_groupby_prod(gr):
     assert isinstance(g.prod(), pr.PyRanges)
 
 
-def test_groupby_sample(gr):
+def test_groupby_sample(gr) -> None:
     g = gr.groupby("Chromosome")
     assert isinstance(g.sample(), pd.DataFrame)
 
@@ -165,7 +165,7 @@ def test_groupby_sample(gr):
     assert isinstance(g.sample(), pr.PyRanges)
 
 
-def test_groupby_sum(gr):
+def test_groupby_sum(gr) -> None:
     g = gr.groupby("Chromosome")
     assert isinstance(g.sum(), pd.DataFrame)
 
@@ -173,7 +173,7 @@ def test_groupby_sum(gr):
     assert isinstance(g.sum(), pr.PyRanges)
 
 
-def test_groupby_tail(gr):
+def test_groupby_tail(gr) -> None:
     g = gr.groupby("Chromosome")
     assert isinstance(g.tail(1), pd.DataFrame)
 
@@ -181,7 +181,7 @@ def test_groupby_tail(gr):
     assert isinstance(g.tail(1), pr.PyRanges)
 
 
-def test_groupby_transform(gr):
+def test_groupby_transform(gr) -> None:
     g = gr.groupby("Chromosome")
     assert isinstance(g.transform("first"), pd.DataFrame)
 

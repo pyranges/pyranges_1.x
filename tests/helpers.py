@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-def assert_df_equal(df1, df2):
+def assert_df_equal(df1, df2) -> None:
     print("-" * 100)
     print("df1")
     print(df1)

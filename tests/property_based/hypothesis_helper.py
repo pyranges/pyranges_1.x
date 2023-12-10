@@ -106,14 +106,12 @@ def dfs_min2(draw):  # nosec
     # if not strand:
     #     df = df.drop("Strand", axis=1)
 
-    gr = PyRanges(df)
+    return PyRanges(df)
     # gr = PyRanges(df)
 
     # do not sort like this, use pyranges sort
     # np.random.seed(draw(st.integers(min_value=0, max_value=int(1e6))))
     # gr.df = df.reindex(np.random.permutation(df.index.values))
-
-    return gr
 
 
 @st.composite
@@ -142,14 +140,12 @@ def dfs_no_min(draw):  # nosec
     # if not strand:
     #     df = df.drop("Strand", axis=1)
 
-    gr = PyRanges(df)
+    return PyRanges(df)
     # gr = PyRanges(df)
 
     # do not sort like this, use pyranges sort
     # np.random.seed(draw(st.integers(min_value=0, max_value=int(1e6))))
     # gr.df = df.reindex(np.random.permutation(df.index.values))
-
-    return gr
 
 
 @st.composite
@@ -170,7 +166,7 @@ def dfs_min_with_id(draw):  # nosec
     # if not strand:
     #     df = df.drop("Strand", axis=1)
 
-    gr = PyRanges(df)
+    return PyRanges(df)
     # print(gr)
     # raise
     # gr = PyRanges(df)
@@ -178,8 +174,6 @@ def dfs_min_with_id(draw):  # nosec
     # do not sort like this, use pyranges sort
     # np.random.seed(draw(st.integers(min_value=0, max_value=int(1e6))))
     # gr.df = df.reindex(np.random.permutation(df.index.values))
-
-    return gr
 
 
 @st.composite
@@ -201,7 +195,7 @@ def dfs_min_with_gene_id(draw):  # nosec
     # if not strand:
     #     df = df.drop("Strand", axis=1)
 
-    gr = PyRanges(df)
+    return PyRanges(df)
     # print(gr)
     # raise
     # gr = PyRanges(df)
@@ -209,8 +203,6 @@ def dfs_min_with_gene_id(draw):  # nosec
     # do not sort like this, use pyranges sort
     # np.random.seed(draw(st.integers(min_value=0, max_value=int(1e6))))
     # gr.df = df.reindex(np.random.permutation(df.index.values))
-
-    return gr
 
 
 @st.composite
@@ -251,9 +243,7 @@ def genomicfeature(draw):
     # subsetter = draw(arrays(np.bool, shape=len(dataset)))
     gene_ids = list(dataset.gene_id.drop_duplicates())
     genes = draw(st.lists(st.sampled_from(gene_ids), unique="True", min_size=1))
-    dataset = dataset[dataset.gene_id.isin(genes)]
-
-    return dataset
+    return dataset[dataset.gene_id.isin(genes)]
 
 
 @st.composite

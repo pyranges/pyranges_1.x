@@ -10,6 +10,7 @@ def return_pyranges_if_possible(
     method: Callable[..., "pr.PyRanges"],
 ) -> Callable[..., "pr.PyRanges | pd.DataFrame | pd.Series"]:
     """Return a PyRanges object if possible."""
+
     def wrapper(*args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":
         # Call the original groupby method
         result = method(*args, **kwargs)

@@ -65,7 +65,7 @@ def tostring(
         not_shown = [
             f'"{e}"'
             for e in self.columns[
-                adjusted_data.included_columns: adjusted_data.included_columns + MAX_COLUMN_NAMES_TO_SHOW
+                adjusted_data.included_columns : adjusted_data.included_columns + MAX_COLUMN_NAMES_TO_SHOW
             ]
         ]
         if num_not_shown > MAX_COLUMN_NAMES_TO_SHOW:

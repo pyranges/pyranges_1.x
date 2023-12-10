@@ -20,6 +20,7 @@ LOGGER = logging.getLogger(__name__)
 LOGGER.Formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s %(message)s")
 LOGGER.setLevel(logging.INFO)
 
+
 def get_sequence(
     gr: "PyRanges",
     path: Path | None = None,

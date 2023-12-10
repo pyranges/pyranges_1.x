@@ -50,9 +50,7 @@ def run_bedtools(command, gr, gr2, strandedness, nearest_overlap=False, nearest_
         print(cmd)
         # ignoring the below line in bandit as only strings created by
         # the test suite is run here; no user input ever sought
-        result = subprocess.check_output(cmd, shell=True, executable="/bin/bash").decode()  # nosec  # nosec
-
-    return result
+        return subprocess.check_output(cmd, shell=True, executable="/bin/bash").decode()  # nosec  # nosec
 
 
 def read_bedtools_result_set_op(bedtools_result, strandedness):
@@ -76,7 +74,7 @@ def read_bedtools_result_set_op(bedtools_result, strandedness):
     )
 
 
-def compare_results(bedtools_df, result):
+def compare_results(bedtools_df, result) -> None:
     # from pydbg import dbg
     # dbg(bedtools_df.dtypes)
     # dbg(result.df.dtypes)
@@ -87,13 +85,13 @@ def compare_results(bedtools_df, result):
         assert bedtools_df.empty == result.df.empty
 
 
-def compare_results_nearest(bedtools_df, result):
+def compare_results_nearest(bedtools_df, result) -> None:
     if not bedtools_df.empty:
         bedtools_df = bedtools_df[bedtools_df.Distance != -1]
 
     result = result.df
 
-    if not len(result) == 0:
+    if len(result) != 0:
         bedtools_df = bedtools_df.sort_values("Start End Distance".split())
         result = result.sort_values("Start End Distance".split())
         result_df = result["Chromosome Start End Strand Distance".split()]
@@ -102,7 +100,7 @@ def compare_results_nearest(bedtools_df, result):
         assert bedtools_df.empty
 
 
-@pytest.mark.bedtools
+@pytest.mark.bedtools()
 @pytest.mark.parametrize("strandedness", no_opposite)
 @settings(
     max_examples=max_examples,
@@ -110,7 +108,7 @@ def compare_results_nearest(bedtools_df, result):
     print_blob=True,
 )
 @given(gr=dfs_min(), gr2=dfs_min())  # pylint: disable=no-value-for-parameter
-def test_set_intersect(gr, gr2, strandedness):
+def test_set_intersect(gr, gr2, strandedness) -> None:
     set_intersect_command = "bedtools intersect {strand} -a <(sort -k1,1 -k2,2n {f1} | bedtools merge {strand} -c 4,5,6 -o first -i -) -b <(sort -k1,1 -k2,2n {f2} | bedtools merge {strand} -c 4,5,6 -o first -i -)"
     bedtools_result = run_bedtools(set_intersect_command, gr, gr2, strandedness)
 
@@ -121,7 +119,7 @@ def test_set_intersect(gr, gr2, strandedness):
     compare_results(bedtools_df, result)
 
 
-@pytest.mark.bedtools
+@pytest.mark.bedtools()
 @pytest.mark.parametrize("strandedness", no_opposite)
 @settings(
     max_examples=max_examples,
@@ -130,7 +128,7 @@ def test_set_intersect(gr, gr2, strandedness):
 )
 @given(gr=dfs_min(), gr2=dfs_min())  # pylint: disable=no-value-for-parameter
 # @reproduce_failure('4.15.0', b'AXicY2RAA4zoAgAAVQAD')
-def test_set_union(gr, gr2, strandedness):
+def test_set_union(gr, gr2, strandedness) -> None:
     set_union_command = "cat {f1} {f2} | bedtools sort | bedtools merge {strand} -c 4,5,6 -o first -i -"  # set_union_command = "bedtools merge {strand} -c 4,5,6 -o first -i {f1}"
     bedtools_result = run_bedtools(set_union_command, gr, gr2, strandedness)
 
@@ -141,7 +139,7 @@ def test_set_union(gr, gr2, strandedness):
     compare_results(bedtools_df, result)
 
 
-@pytest.mark.bedtools
+@pytest.mark.bedtools()
 @pytest.mark.parametrize("strandedness", strandedness)
 @settings(
     max_examples=max_examples,
@@ -151,7 +149,7 @@ def test_set_union(gr, gr2, strandedness):
 @given(gr=dfs_min(), gr2=dfs_min())  # pylint: disable=no-value-for-parameter
 # @reproduce_failure('4.32.2', b'AXicY2RAA4wQzIgiCAAAgAAF')
 # @reproduce_failure('5.5.4', b'AXicY2RABYyMEAqKGRgAAHMABg==')
-def test_overlap(gr, gr2, strandedness):
+def test_overlap(gr, gr2, strandedness) -> None:
     overlap_command = "bedtools intersect -u {strand} -a {f1} -b {f2}"
 
     bedtools_result = run_bedtools(overlap_command, gr, gr2, strandedness)
@@ -168,7 +166,7 @@ def test_overlap(gr, gr2, strandedness):
     compare_results(bedtools_df, result)
 
 
-@pytest.mark.bedtools
+@pytest.mark.bedtools()
 @pytest.mark.parametrize("strandedness", strandedness)
 @settings(
     max_examples=max_examples,
@@ -182,7 +180,7 @@ def test_overlap(gr, gr2, strandedness):
 # @reproduce_failure('4.15.0', b'AXicY2RAA4xIJAgAAABcAAQ=')
 # reproduce_failure('4.15.0', b'AXicY2RAAEYGhv9AkhHGgQIAFHQBBQ==')
 # @reproduce_failure('4.15.0', b'AXicY2QAAUYGGGCEYIQAVAgAALUACA==')
-def test_coverage(gr, gr2, strandedness):
+def test_coverage(gr, gr2, strandedness) -> None:
     print(gr.df)
     print(gr2.df)
     coverage_command = "bedtools coverage {strand} -a {f1} -b {f2}"
@@ -243,7 +241,7 @@ def test_coverage(gr, gr2, strandedness):
 #     compare_results(bedtools_df, result)
 
 
-@pytest.mark.bedtools
+@pytest.mark.bedtools()
 @pytest.mark.parametrize("strandedness", ["same", "opposite", False])  #
 @settings(
     max_examples=max_examples,
@@ -253,7 +251,7 @@ def test_coverage(gr, gr2, strandedness):
 @given(gr=dfs_min(), gr2=dfs_min())  # pylint: disable=no-value-for-parameter
 # @reproduce_failure('4.5.7', b'AXicLYaJCQAACIS0/YfuuQRRAbVG94Dk5LHSBgJ3ABU=')
 # @reproduce_failure('4.15.0', b'AXicY2QAAUYGGAVlIQAAAIIABQ==')
-def test_subtraction(gr, gr2, strandedness):
+def test_subtraction(gr, gr2, strandedness) -> None:
     subtract_command = "bedtools subtract {strand} -a {f1} -b {f2}"
 
     bedtools_result = run_bedtools(subtract_command, gr, gr2, strandedness)
@@ -280,15 +278,15 @@ nearest_hows = [None, "upstream", "downstream"]
 overlaps = [True, False]
 
 
-@pytest.mark.bedtools
-@pytest.mark.parametrize("nearest_how,overlap,strandedness", product(nearest_hows, overlaps, strandedness))
+@pytest.mark.bedtools()
+@pytest.mark.parametrize(("nearest_how", "overlap", "strandedness"), product(nearest_hows, overlaps, strandedness))
 @settings(
     max_examples=max_examples,
     deadline=deadline,
     print_blob=True,
 )
 @given(gr=dfs_min(), gr2=dfs_min())  # pylint: disable=no-value-for-parameter
-def test_nearest(gr, gr2, nearest_how, overlap, strandedness):
+def test_nearest(gr, gr2, nearest_how, overlap, strandedness) -> None:
     nearest_command = "bedtools closest {bedtools_how} {strand} {overlap} -t first -d -a <(sort -k1,1 -k2,2n {f1}) -b <(sort -k1,1 -k2,2n {f2})"
 
     bedtools_result = run_bedtools(nearest_command, gr, gr2, strandedness, overlap, nearest_how)
@@ -316,7 +314,7 @@ def test_nearest(gr, gr2, nearest_how, overlap, strandedness):
     compare_results_nearest(bedtools_df, result)
 
 
-@pytest.mark.bedtools
+@pytest.mark.bedtools()
 @pytest.mark.parametrize("strandedness", no_opposite)
 @settings(
     max_examples=max_examples,
@@ -325,7 +323,7 @@ def test_nearest(gr, gr2, nearest_how, overlap, strandedness):
     suppress_health_check=list(HealthCheck),
 )
 @given(gr=dfs_min(), gr2=dfs_min())  # pylint: disable=no-value-for-parameter
-def test_jaccard(gr, gr2, strandedness):
+def test_jaccard(gr, gr2, strandedness) -> None:
     """Bedtools segfaults."""
     jaccard_command = (  # noqa: F841
         "bedtools jaccard {strand}  -a <(sort -k1,1 -k2,2n {f1}) -b <(sort -k1,1 -k2,2n {f2})"
@@ -338,7 +336,7 @@ def test_jaccard(gr, gr2, strandedness):
     assert 0 <= result <= 1
 
 
-@pytest.mark.bedtools
+@pytest.mark.bedtools()
 @pytest.mark.parametrize("strandedness", strandedness)
 @settings(
     max_examples=max_examples,
@@ -346,7 +344,7 @@ def test_jaccard(gr, gr2, strandedness):
     print_blob=True,
 )
 @given(gr=dfs_min(), gr2=dfs_min())  # pylint: disable=no-value-for-parameter
-def test_join(gr, gr2, strandedness):
+def test_join(gr, gr2, strandedness) -> None:
     join_command = "bedtools intersect {strand} -wo -a {f1} -b {f2}"
 
     bedtools_result = run_bedtools(join_command, gr, gr2, strandedness)
@@ -367,14 +365,14 @@ def test_join(gr, gr2, strandedness):
         assert_df_equal(result.df, bedtools_df)
 
 
-@pytest.mark.bedtools
+@pytest.mark.bedtools()
 @settings(
     max_examples=max_examples,
     deadline=deadline,
     print_blob=True,
 )
 @given(gr=dfs_min2(), gr2=dfs_min2())  # pylint: disable=no-value-for-parameter
-def test_reldist(gr, gr2):
+def test_reldist(gr, gr2) -> None:
     reldist_command = "bedtools reldist -a <(sort -k1,1 -k2,2n {f1}) -b <(sort -k1,1 -k2,2n {f2})"
 
     bedtools_result = run_bedtools(reldist_command, gr, gr2, False)

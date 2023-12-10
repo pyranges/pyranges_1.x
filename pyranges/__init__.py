@@ -12,13 +12,13 @@ from pyranges.example_data import ExampleData
 from pyranges.get_fasta import get_sequence, get_transcript_sequence
 from pyranges.methods.concat import concat
 from pyranges.multioverlap import count_overlaps
+from pyranges.names import END_COL
 from pyranges.pyranges_main import PyRanges
 from pyranges.range_frame import RangeFrame
 from pyranges.readers import from_string, read_bam, read_bed, read_bigwig, read_gff3, read_gtf  # NOQA: F401
 
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
-LOGGER.Formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 LOGGER.setLevel(logging.INFO)
 
 
@@ -88,10 +88,11 @@ def random(
     """
     rng = np.random.default_rng(seed=seed)
 
+    df: pd.DataFrame
     if chromsizes is None:
         df = example_data.chromsizes
     elif isinstance(chromsizes, dict):
-        df = pd.DataFrame({names.CHROM_COL: list(chromsizes.keys()), "End": list(chromsizes.values())})
+        df = pd.DataFrame({names.CHROM_COL: list(chromsizes.keys()), END_COL: list(chromsizes.values())})
     else:
         df = chromsizes
 
@@ -127,7 +128,7 @@ def version_info() -> None:
 
     Used for debugging.
     """
-    import importlib
+    import importlib.util
 
     def update_version_info(_version_info: dict[str, str], library: str) -> None:
         version = importlib.import_module(library).__version__ if importlib.util.find_spec(library) else "not installed"

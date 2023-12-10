@@ -27,7 +27,7 @@ dependencies = ["pandas", "ncls>=0.0.63", "tabulate", "sorted_nearest>=0.0.33", 
 pyranges_addons = ["pyrle", "bamread", "bwread", "fisher"]
 
 # [project.development-dependencies]
-# dev = ["ruff", "mypy"]
+# dev = ["ruff", "mypy", "pandas-stubs"]
 
 
 [tool.setuptools.packages.find]
@@ -43,6 +43,9 @@ Homepage="http://github.com/pyranges/pyranges"
 # markers = [
 #     "bedtools: requires bedtools"
 # ]
+
+[tool.mypy]
+python_version = "3.12"
 
 [tool.ruff]
 

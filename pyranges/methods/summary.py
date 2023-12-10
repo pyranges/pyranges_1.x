@@ -14,6 +14,7 @@ LOGGER = logging.getLogger(__name__)
 LOGGER.Formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s %(message)s")
 LOGGER.setLevel(logging.INFO)
 
+
 def _summary(
     self: "PyRanges",
     *,

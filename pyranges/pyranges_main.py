@@ -52,6 +52,7 @@ from pyranges.names import (
     VALID_STRAND_BEHAVIOR_OPTIONS,
     VALID_STRAND_BEHAVIOR_TYPE,
     VALID_STRAND_TYPE,
+    PANDAS_COMPRESSION_TYPE,
 )
 from pyranges.pyranges_groupby import PyRangesGroupBy
 from pyranges.range_frame import RangeFrame
@@ -2834,7 +2835,7 @@ class PyRanges(RangeFrame):
     def to_bed(
         self,
         path: str | None = None,
-        compression: str = "infer",
+        compression: PANDAS_COMPRESSION_TYPE = None,
         *,
         keep: bool = True,
     ) -> str | None:
@@ -3009,7 +3010,7 @@ class PyRanges(RangeFrame):
     def to_gff3(
         self,
         path: None = None,
-        compression: str = "infer",
+        compression: PANDAS_COMPRESSION_TYPE = None,
     ) -> str | None:
         r"""Write to General Feature Format 3.
 
@@ -3089,14 +3090,14 @@ class PyRanges(RangeFrame):
         1	.	CDS	4	6	.	.	2	Gene=2;function=c
         1	.	CDS	6	9	.	.	1	Gene=3;function=def
         """
-        from pyranges.out import _to_gff3
 
-        return _to_gff3(self, path, compression=compression)
+        from pyranges.out import _to_gff_like
+        return _to_gff_like(self, path=path, out_format="gff3", compression=compression)
 
     def to_gtf(
         self,
         path: None = None,
-        compression: str = "infer",
+        compression: PANDAS_COMPRESSION_TYPE = None,
     ) -> str | None:
         r"""Write to Gene Transfer Format.
 
@@ -3156,9 +3157,9 @@ class PyRanges(RangeFrame):
             1	.	EXON	4	6	.	.	.
             1	.	EXON	6	9	.	.	.
         """
-        from pyranges.out import _to_gtf
+        from pyranges.out import _to_gff_like
 
-        return _to_gtf(self, path, compression=compression)
+        return _to_gff_like(self, path=path, out_format="gtf", compression=compression)
 
     def to_rle(
         self,

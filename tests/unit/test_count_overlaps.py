@@ -18,19 +18,19 @@ grs = {n: pr.from_string(s) for n, s in zip(["a", "b", "c"], [a, b, c])}
 unstranded_grs = {n: gr.remove_strand() for n, gr in grs.items()}
 
 features = pr.PyRanges(
-    {"Chromosome": ["chr1"] * 4, "Start": [0, 10, 20, 30], "End": [10, 20, 30, 40], "Strand": ["+", "+", "+", "-"]}
+    {"Chromosome": ["chr1"] * 4, "Start": [0, 10, 20, 30], "End": [10, 20, 30, 40], "Strand": ["+", "+", "+", "-"]},
 )
 unstranded_features = features.remove_strand()
 
 
-def test_strand_vs_strand_same():
+def test_strand_vs_strand_same() -> None:
     print(grs)
     expected_result = pr.from_string(
         """Chromosome Start End Strand a b c
 chr1  0 10  + 1 0 1
 chr1 10 20  + 2 2 1
 chr1 20 30  + 0 2 0
-chr1 30 40  - 0 0 1"""
+chr1 30 40  - 0 0 1""",
     )
     res = pr.count_overlaps(grs, features, strand_behavior="same")
     print(res)

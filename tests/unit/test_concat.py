@@ -3,7 +3,7 @@
 import pyranges as pr
 
 
-def assert_equal_length_before_after(gr1, gr2):
+def assert_equal_length_before_after(gr1, gr2) -> None:
     print("in test")
     l1 = len(gr1)
     l2 = len(gr2)
@@ -16,17 +16,17 @@ def assert_equal_length_before_after(gr1, gr2):
     assert l1 + l2 == lc
 
 
-def test_concat_stranded_tranded(f1, f2):
+def test_concat_stranded_tranded(f1, f2) -> None:
     assert_equal_length_before_after(f1, f2)
 
 
-def test_concat_unstranded_unstranded(f1, f2):
+def test_concat_unstranded_unstranded(f1, f2) -> None:
     assert_equal_length_before_after(f1.remove_strand(), f2.remove_strand())
 
 
-def test_concat_stranded_unstranded(f1, f2):
+def test_concat_stranded_unstranded(f1, f2) -> None:
     assert_equal_length_before_after(f1, f2.remove_strand())
 
 
-def test_concat_unstranded_stranded(f1, f2):
+def test_concat_unstranded_stranded(f1, f2) -> None:
     assert_equal_length_before_after(f1.remove_strand(), f2)

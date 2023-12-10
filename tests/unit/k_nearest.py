@@ -21,17 +21,17 @@ def string_to_df(c):
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def gr():
     return pr.PyRanges(chromosomes="chr1", starts=[1, 15, 200], ends=[10, 20, 2000])
 
 
-@pytest.fixture
+@pytest.fixture()
 def gr2():
     return pr.PyRanges(chromosomes="chr1", starts=[11, 11, 20, 20, 50], ends=[16, 20, 21, 22, 100])
 
 
-@pytest.fixture
+@pytest.fixture()
 def result_k_nearest_different():
     c = """Chromosome  Start   End  Start_b  End_b  Distance
 chr1      1    10       11     16         2
@@ -45,12 +45,10 @@ chr1     15    20       20     21         1
 chr1     15    20       20     22         1
 chr1    200  2000       50    100      -101"""
 
-    df = string_to_df(c)
-
-    return df
+    return string_to_df(c)
 
 
-@pytest.fixture
+@pytest.fixture()
 def result_k_nearest_different2():
     c = """Chromosome  Start  End  Start_b  End_b  Distance
 0        chr1     11   16       15     20         0
@@ -65,12 +63,10 @@ def result_k_nearest_different2():
 9        chr1     50  100       15     20       -31
 10       chr1     50  100        1     10       -41"""
 
-    df = string_to_df(c)
-
-    return df
+    return string_to_df(c)
 
 
-def test_k_nearest_different(result_k_nearest_different, result_k_nearest_different2, gr, gr2):
+def test_k_nearest_different(result_k_nearest_different, result_k_nearest_different2, gr, gr2) -> None:
     k = [3, 2, 1]
     r = gr.k_nearest(gr2, ties="different", k=k).df
 
@@ -94,7 +90,7 @@ def test_k_nearest_different(result_k_nearest_different, result_k_nearest_differ
     pd.testing.assert_frame_equal(r2, result_k_nearest_different2)
 
 
-@pytest.fixture
+@pytest.fixture()
 def result_k_nearest_first():
     c = """Chromosome  Start   End  Start_b  End_b  Distance
 0       chr1      1    10       11     16         2
@@ -104,12 +100,10 @@ def result_k_nearest_first():
 4       chr1     15    20       20     21         1
 5       chr1    200  2000       50    100      -101"""
 
-    df = string_to_df(c)
-
-    return df
+    return string_to_df(c)
 
 
-@pytest.fixture
+@pytest.fixture()
 def result_k_nearest_first2():
     c = """Chromosome  Start  End  Start_b  End_b  Distance
 0        chr1     11   16       15     20         0
@@ -125,12 +119,10 @@ def result_k_nearest_first2():
 10       chr1     50  100        1     10       -41
 11       chr1     50  100      200   2000       101"""
 
-    df = string_to_df(c)
-
-    return df
+    return string_to_df(c)
 
 
-def test_k_nearest_first(result_k_nearest_first, result_k_nearest_first2, gr, gr2):  # result_k_nearest_first,
+def test_k_nearest_first(result_k_nearest_first, result_k_nearest_first2, gr, gr2) -> None:  # result_k_nearest_first,
     print(gr)
     print(gr2)
     k = [3, 2, 1]
@@ -151,7 +143,7 @@ def test_k_nearest_first(result_k_nearest_first, result_k_nearest_first2, gr, gr
     pd.testing.assert_frame_equal(r2, result_k_nearest_first2)
 
 
-@pytest.fixture
+@pytest.fixture()
 def result_k_nearest_last():
     c = """Chromosome  Start   End  Start_b  End_b  Distance
 0       chr1      1    10       11     20         2
@@ -161,12 +153,10 @@ def result_k_nearest_last():
 4       chr1     15    20       20     22         1
 5       chr1    200  2000       50    100      -101"""
 
-    df = string_to_df(c)
-
-    return df
+    return string_to_df(c)
 
 
-@pytest.fixture
+@pytest.fixture()
 def result_k_nearest_last2():
     c = """Chromosome  Start  End  Start_b  End_b  Distance
 0        chr1     11   16       15     20         0
@@ -182,12 +172,10 @@ def result_k_nearest_last2():
 10       chr1     50  100        1     10       -41
 11       chr1     50  100      200   2000       101"""
 
-    df = string_to_df(c)
-
-    return df
+    return string_to_df(c)
 
 
-def test_k_nearest_last(result_k_nearest_last, result_k_nearest_last2, gr, gr2):  # result_k_nearest_last,
+def test_k_nearest_last(result_k_nearest_last, result_k_nearest_last2, gr, gr2) -> None:  # result_k_nearest_last,
     # print(gr)
     # print(gr2)
     k = [3, 2, 1]
