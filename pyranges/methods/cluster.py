@@ -1,24 +1,29 @@
 import pandas as pd
 from sorted_nearest import annotate_clusters, cluster_by  # type: ignore[import]
 
+from pyranges.names import START_COL, END_COL
 
-def _cluster(df: pd.DataFrame, **kwargs) -> pd.DataFrame:
+
+def _cluster(
+    df: pd.DataFrame,
+    cluster_column: str,
+    count_column: str | None = None,
+    slack: int = 0,
+    **_,
+) -> pd.DataFrame:
     if df.empty:
         return None
 
-    slack = kwargs.get("slack", 0)
-    count = kwargs.get("count", False)
+    cdf = df.sort_values(START_COL)
 
-    cdf = df.sort_values("Start")
+    ids = annotate_clusters(cdf[START_COL].to_numpy(), cdf[END_COL].values, slack=slack)
 
-    ids = annotate_clusters(cdf.Start.values, cdf.End.values, slack)
+    cdf.insert(df.shape[1], cluster_column, ids)
 
-    cdf.insert(df.shape[1], "Cluster", ids)
-
-    if count:
-        _count = cdf.groupby("Cluster").Cluster.count()
-        _count.name = "Count"
-        cdf = cdf.merge_overlaps(_count, on="Cluster")
+    if count_column:
+        _count = cdf.groupby(cluster_column).Cluster.count()
+        _count.name = count_column
+        cdf = cdf.merge(_count, on=cluster_column)
 
     return cdf
 

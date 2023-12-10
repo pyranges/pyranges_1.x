@@ -22,7 +22,7 @@ from pyranges.names import (
     STRAND_BEHAVIOR_SAME,
     VALID_STRAND_BEHAVIOR_TYPE,
 )
-from pyranges.strand_behavior_validators import ensure_strand_behavior_options_valid
+from pyranges.pyranges_helpers import ensure_strand_behavior_options_valid
 
 if TYPE_CHECKING:
     from pyranges import PyRanges

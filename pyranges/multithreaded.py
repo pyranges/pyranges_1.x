@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import pandas as pd
@@ -12,40 +12,10 @@ from pyranges.names import (
     VALID_BY_TYPES,
     VALID_STRAND_TYPE,
 )
-from pyranges.strand_behavior_validators import group_keys_single
+from pyranges.pyranges_helpers import group_keys_single
 
 if TYPE_CHECKING:
     from pyranges.pyranges_main import PyRanges
-
-
-def pyrange_apply_single(
-    function: Callable,
-    self: "PyRanges",
-    by: VALID_BY_TYPES,
-    strand: VALID_STRAND_TYPE,
-    **kwargs,
-) -> "PyRanges":
-    """Apply a function to a PyRanges object."""
-    keys = group_keys_single(self=self, strand=strand, by=by)
-    temp_index_col = "__index_column_for_apply__"
-
-    kwargs |= {"strand": strand, "by": by}
-
-    if strand and STRAND_COL not in self.columns:
-        msg = "Can only do stranded operation when PyRange contains strand info"
-        raise ValueError(msg)
-
-    range_index = np.arange(len(self))
-    if isinstance(self.index, pd.RangeIndex):
-        self = self.set_index(pd.Series(name=temp_index_col, data=range_index))
-        return self.groupby(keys, observed=True).apply(function, **kwargs).reset_index(drop=True)
-    if self.index.name is None and self.index.names == [None]:
-        original_index = None
-    else:
-        original_index = self.index.names if self.index.name is None else self.index.names
-    self = self.reset_index().set_index(pd.Series(name=temp_index_col, data=range_index), append=False)
-    res = self.groupby(keys, as_index=False, observed=True).apply(function, **kwargs)
-    return res.reset_index(drop=True) if original_index is None else res.set_index(original_index)
 
 
 def _lengths(df: DataFrame) -> pd.Series:
@@ -84,33 +54,35 @@ def _tes(df: DataFrame, **kwargs) -> DataFrame:
     return df
 
 
-def _extend(df: DataFrame, **kwargs) -> DataFrame:
+def _extend(
+    df: DataFrame,
+    ext: int | None = None,
+    ext_3: int | None = None,
+    ext_5: int | None = None,
+    **kwargs,
+) -> DataFrame:
     df = df.copy()
     dtype = df.Start.dtype
-    slack = kwargs["ext"]
 
-    if not isinstance(slack, int | dict):
-        msg = f"Extend parameter must be integer or dict, is {type(slack)}"
-        raise TypeError(msg)
-
-    if isinstance(slack, int):
-        df.loc[:, "Start"] = df.Start - slack
+    if ext is not None:
+        df.loc[:, "Start"] = df.Start - ext
         df.loc[df.Start < 0, "Start"] = 0
-        df.End = df.End + slack
+        df.End = df.End + ext
     else:
-        strand = df.Strand.iloc[0]
-        five_end_slack = slack.get("5")
-        three_end_slack = slack.get("3")
+        if len(strands := df.Strand.drop_duplicates()) > 1:
+            msg = f"Cannot extend intervals with different strands: {strands}"
+            raise ValueError(msg)
+        strand = strands.iloc[0]
 
-        if five_end_slack and strand == "+":
-            df.loc[:, "Start"] -= five_end_slack
-        elif five_end_slack and strand == "-":
-            df.loc[:, "End"] += five_end_slack
+        if ext_5 and strand == "+":
+            df.loc[:, "Start"] -= ext_5
+        elif ext_5 and strand == "-":
+            df.loc[:, "End"] += ext_5
 
-        if three_end_slack and strand == "-":
-            df.loc[:, "Start"] -= three_end_slack
-        elif three_end_slack and strand == "+":
-            df.loc[:, "End"] += three_end_slack
+        if ext_3 and strand == "-":
+            df.loc[:, "Start"] -= ext_3
+        elif ext_3 and strand == "+":
+            df.loc[:, "End"] += ext_3
 
     df = df.astype({"Start": dtype, "End": dtype})
 

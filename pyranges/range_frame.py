@@ -10,7 +10,9 @@ from pyranges.tostring import tostring
 
 
 class ColUpdater:
-    def __init__(self, r: "RangeFrame") -> Self:
+    r: "RangeFrame"
+
+    def __init__(self, r: "RangeFrame") -> None:
         self.__dict__["r"] = r
 
     def __setattr__(
@@ -23,8 +25,8 @@ class ColUpdater:
         else:
             self.r.loc[:, key] = value
 
-    def __setitem__(self, key: str, value: Iterable) -> None:
-        if key not in self.r:
+    def __setitem__(self, key: str, value: Any) -> None:
+        if key not in self.r.columns:
             self.r.insert(self.r.shape[-1], key, value)
         else:
             self.r.loc[:, key] = value
@@ -45,9 +47,11 @@ class RangeFrame(pd.DataFrame):
             msg = f"Missing required columns: {missing_columns}"
             raise ValueError(msg)
 
-    def __str__(self, max_col_width: int | None = None, max_total_width: int | None = None) -> str:
+    def __str__(
+        self, **kwargs
+    ) -> str:  # , max_col_width: int | None = None, max_total_width: int | None = None) -> str:
         """Return string representation."""
-        return tostring(self, max_col_width=max_col_width, max_total_width=max_total_width)
+        return tostring(self, max_col_width=kwargs.get("max_col_width"), max_total_width=kwargs.get("max_total_width"))
 
     def __repr__(self, max_col_width: int | None = None, max_total_width: int | None = None) -> str:
         return self.__str__(max_col_width=max_col_width, max_total_width=max_total_width)
@@ -197,7 +201,10 @@ class RangeFrame(pd.DataFrame):
         """
         if not by:
             return RangeFrame(function(self, **kwargs))
-        return self.groupby(by).apply(function, by=by, **kwargs).reset_index(drop=True)
+        by = self._by_to_list(by)
+        return _mypy_ensure_rangeframe(
+            self.groupby(by).apply(function, by=by, **kwargs).reset_index(drop=True)  # type: ignore[arg-type]
+        )
 
     def apply_pair(
         self,
@@ -225,20 +232,25 @@ class RangeFrame(pd.DataFrame):
         if by is None:
             return RangeFrame(function(self, other, **kwargs))
 
+        by = self._by_to_list(by)
         results = []
         empty = RangeFrame(columns=other.columns)
         others = dict(list(other.groupby(by)))
 
         for key, _df in self.groupby(by):
             odf = others.get(key, empty)
-            results.append(function(_df, odf, **kwargs))
+            results.append(function(_mypy_ensure_rangeframe(_df), _mypy_ensure_rangeframe(odf), **kwargs))
 
         return RangeFrame(pd.concat(results))
 
     def sort_by_position(self) -> "RangeFrame":
         """Sort by Start and End columns."""
-        return self.sort_values(RANGE_COLS)
+        return _mypy_ensure_rangeframe(self.sort_values(RANGE_COLS))
 
     @staticmethod
-    def _by_to_list(by: str | list[str] | None) -> list[str]:
-        return [by] if isinstance(by, str) else (by or [])
+    def _by_to_list(by: str | Iterable[str] | None) -> list[str]:
+        return [by] if isinstance(by, str) else ([*by] if by is not None else [])
+
+
+def _mypy_ensure_rangeframe(r: pd.DataFrame) -> "RangeFrame":
+    return RangeFrame(r)

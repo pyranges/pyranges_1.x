@@ -33,9 +33,9 @@ if typing.TYPE_CHECKING:
 class ExampleData:
     _files: ClassVar[dict[str, Path]] = {}
 
-    @classmethod
+    @classmethod  # type: ignore[misc]
     @property
-    def files(cls: "ExampleData") -> dict[str, Path]:
+    def files(cls) -> dict[str, Path]:
         """Return a dict of the basenames to full paths of the example data in the project.
 
         Examples
@@ -47,24 +47,32 @@ class ExampleData:
         >>> bam == importlib.resources.files().joinpath("data/smaller.bam")
         True
         """
-        if cls._files:
-            return cls._files
-        cls._files = {f.name: f for f in files("pyranges").joinpath("data").iterdir() if "__" not in f.name}
-        return cls._files
+        if ExampleData._files:
+            return ExampleData._files
+
+        paths = []
+        for f in files("pyranges").joinpath("data").iterdir():
+            if not isinstance(f, Path):
+                msg = f"Expected Path, got {type(f)}"
+                raise ValueError(msg)
+            if "__" not in f.name:
+                paths.append(f)
+        ExampleData._files = {f.name: Path(f) for f in paths}
+        return ExampleData._files
 
     @staticmethod
     def _read_bed_from_string(contents: str) -> "PyRanges":
         with tempfile.NamedTemporaryFile("w", encoding="utf-8") as f:
             f.write(contents)
             f.flush()
-            return pr.read_bed(f.name)
+            return pr.read_bed(Path(f.name))
 
     @staticmethod
     def _read_gtf_from_string(contents: str) -> "PyRanges":
         with tempfile.NamedTemporaryFile("w", encoding="utf-8") as f:
             f.write(contents)
             f.flush()
-            return pr.read_gtf(f.name)
+            return pr.read_gtf(Path(f.name))
 
     @cached_property
     def chipseq(self) -> "pr.PyRanges":
@@ -182,7 +190,7 @@ chr1	6	7	b	0	-"""
         with tempfile.NamedTemporaryFile("w", encoding="utf-8") as f:
             f.write(contents)
             f.flush()
-            return pr.read_bed(f.name)
+            return pr.read_bed(Path(f.name))
 
     @property
     def aorta(self) -> "pr.PyRanges":
@@ -190,7 +198,7 @@ chr1	6	7	b	0	-"""
 
         From the epigenomics roadmap.
         """
-        return pr.read_bed(self.files["aorta.bed"])
+        return pr.read_bed(ExampleData.files["aorta.bed"])  # type: ignore[index, misc]
 
     @property
     def aorta2(self) -> "pr.PyRanges":
@@ -198,4 +206,4 @@ chr1	6	7	b	0	-"""
 
         From the epigenomics roadmap.
         """
-        return pr.read_bed(self.files["aorta2.bed"])
+        return pr.read_bed(ExampleData.files["aorta2.bed"])  # type: ignore[index, misc]

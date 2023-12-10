@@ -19,6 +19,7 @@ from pyranges.names import (
 )
 
 if TYPE_CHECKING:
+    import pandas as pd
     from pyranges import PyRanges
 
 
@@ -115,3 +116,16 @@ def get_by_columns_including_chromosome_and_strand(
 
     _by = chrom_and_strand_cols + ([by] if isinstance(by, str) else [*by])
     return [c for c in self.columns if c in _by]
+
+
+def strand_behavior_from_strand_and_validate(
+    df: "PyRanges",
+    strand: VALID_STRAND_TYPE,
+) -> Literal["same", "ignore"]:
+    return STRAND_BEHAVIOR_SAME if validate_and_convert_strand(df, strand) else STRAND_BEHAVIOR_IGNORE
+
+
+def mypy_ensure_pyranges(df: "pd.DataFrame") -> "PyRanges":
+    from pyranges import PyRanges
+
+    return PyRanges(df)

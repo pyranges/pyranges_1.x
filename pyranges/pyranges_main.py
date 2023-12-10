@@ -18,7 +18,6 @@ from pyranges.multithreaded import (
     _extend_grp,
     _tes,
     _tss,
-    pyrange_apply_single,
 )
 from pyranges.names import (
     CHROM_AND_STRAND_COLS,
@@ -52,14 +51,19 @@ from pyranges.names import (
     VALID_OVERLAP_TYPE,
     VALID_STRAND_BEHAVIOR_TYPE,
     VALID_STRAND_TYPE,
+    OVERLAP_ALL,
+    OVERLAP_FIRST,
 )
 from pyranges.pyranges_groupby import PyRangesGroupBy
 from pyranges.range_frame import RangeFrame
-from pyranges.strand_behavior_validators import (
+from pyranges.pyranges_helpers import (
     ensure_strand_behavior_options_valid,
     get_by_columns_including_chromosome_and_strand,
     group_keys_from_strand_behavior,
     validate_and_convert_strand,
+    strand_behavior_from_strand_and_validate,
+    mypy_ensure_pyranges,
+    group_keys_single,
 )
 from pyranges.tostring import tostring
 
@@ -177,7 +181,7 @@ class PyRanges(RangeFrame):
     pyranges.stats.StatisticsMethods : namespace for statistics
     """
 
-    def __new__(cls, *args, **kwargs) -> "pr.PyRanges":
+    def __new__(cls, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame":  # type: ignore[misc]
         """Create a new instance of a PyRanges object."""
         # __new__ is a special static method used for creating and
         # returning a new instance of a class. It is called before
@@ -387,14 +391,18 @@ class PyRanges(RangeFrame):
         PyRanges with 20 rows, 6 columns, and 1 index columns.
         Contains 15 chromosomes and 2 strands.
         """
-        self = self.sort_values(([STRAND_COL] if self.has_strand_column else []) + RANGE_COLS)
-        return self.reindex(
-            index=natsort.order_by_index(
-                self.index,
-                natsort.index_natsorted(
-                    self[CHROM_COL],
+        self = mypy_ensure_pyranges(self.sort_values(([STRAND_COL] if self.has_strand_column else []) + RANGE_COLS))
+        return mypy_ensure_pyranges(
+            self.reindex(
+                index=pd.Series(
+                    natsort.order_by_index(
+                        [int(i) for i in self.index],
+                        natsort.index_natsorted(
+                            self[CHROM_COL],
+                        ),
+                    ),
                 ),
-            ),
+            )
         )
 
     @cached_property
@@ -434,7 +442,7 @@ class PyRanges(RangeFrame):
 
         return f"Contains {num_chrom} chromosomes{strand_info}"
 
-    def __str__(self, max_col_width: int | None = None, max_total_width: int | None = None) -> str:
+    def __str__(self, **kwargs) -> str:
         r"""Return string representation.
 
         Examples
@@ -522,14 +530,13 @@ class PyRanges(RangeFrame):
         PyRanges with 1 rows, 10 columns, and 1 index columns. (4 columns not shown: "short_gene_name", "type", "Score", ...).
         Contains 1 chromosomes and 1 strands.
         """
-        formatted_df = tostring(self, max_col_width=max_col_width, max_total_width=max_total_width)
+
+        formatted_df = tostring(
+            self, max_col_width=kwargs.get("max_col_width"), max_total_width=kwargs.get("max_total_width")
+        )
         return f"{formatted_df}\n{self._chrom_and_strand_info()}."
 
-    def set_index(self, *args, **kwargs) -> "PyRanges | None":
-        """Set the index of the PyRanges."""
-        return PyRanges(super().set_index(*args, **kwargs))
-
-    def apply_single(
+    def apply_single(  # type: ignore[override]
         self,
         function: Callable,
         *,
@@ -549,10 +556,9 @@ class PyRanges(RangeFrame):
         kwargs : dict
             Arguments passed along to the function.
         """
-        _by = [] if by is None else ([by] if isinstance(by, str) else [*by])
-        return super().apply_single(function=function, by=_by, **kwargs)
+        return super().apply_single(function=function, by=by, **kwargs)
 
-    def apply_pair(
+    def apply_pair(  # type: ignore[override]
         self,
         other: "PyRanges",
         function: Callable,
@@ -591,8 +597,8 @@ class PyRanges(RangeFrame):
         res = PyRanges(super().apply_pair(other, function, by=grpby_ks, **kwargs))
 
         if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
-            other = other.drop(TEMP_STRAND_COL, axis="columns")
-            return res.drop(TEMP_STRAND_COL, axis="columns")
+            # other = other.drop(TEMP_STRAND_COL, axis="columns")
+            res = mypy_ensure_pyranges(res.drop(TEMP_STRAND_COL, axis="columns"))
 
         return res
 
@@ -659,9 +665,8 @@ class PyRanges(RangeFrame):
             msg = "by must be a string or list of strings"
             raise ValueError(msg)
 
-        result = pyrange_apply_single(
+        result = super().apply_single(
             _bounds,
-            self,
             by=self._by_to_list(by),
             agg=agg,
             strand=self.strand_values_valid,
@@ -711,8 +716,8 @@ class PyRanges(RangeFrame):
               0  |               1  +               1       10  t1                     0
               1  |               1  +              31       45  t1                     9
               2  |               1  +              52       90  t1                    23
-              3  |               2  -             101      130  t2                     0
-              4  |               2  -             201      218  t2                    17
+              3  |               2  -             101      130  t2                    17
+              4  |               2  -             201      218  t2                     0
         PyRanges with 5 rows, 6 columns, and 1 index columns.
         Contains 2 chromosomes and 2 strands.
         """
@@ -740,11 +745,11 @@ class PyRanges(RangeFrame):
         sorted_p.col[FRAME_COL] = sorted_p[TEMP_CUMSUM_COL] - sorted_p[TEMP_LENGTH_COL]
 
         # Appending the Frame of sorted_p by the index of p
-        sorted_p = sorted_p.sort_values(by=TEMP_INDEX_COL)
+        sorted_p = mypy_ensure_pyranges(sorted_p.sort_values(by=TEMP_INDEX_COL))
 
         gr.col.Frame = sorted_p.Frame
 
-        return gr.drop(TEMP_INDEX_COL, axis=1)
+        return mypy_ensure_pyranges(gr.drop(TEMP_INDEX_COL, axis=1))
 
     @property
     def chromosomes(self) -> list[str]:
@@ -826,72 +831,45 @@ class PyRanges(RangeFrame):
 
         Examples
         --------
-        >>> gr = pr.PyRanges({"Chromosome": [1, 1, 1, 1], "Start": [1, 2, 3, 9],
-        ...                    "End": [3, 3, 10, 12], "Gene": [1, 2, 3, 3]})
+        >>> gr = pr.PyRanges({"Chromosome": [1, 1, 2, 1, 1], "Start": [1, 2, 0, 3, 9],
+        ...                    "End": [3, 3, 4, 10, 12], "Gene": [1, 2, 6, 3, 3]})
         >>> gr
           index  |      Chromosome    Start      End     Gene
           int64  |           int64    int64    int64    int64
         -------  ---  ------------  -------  -------  -------
               0  |               1        1        3        1
               1  |               1        2        3        2
-              2  |               1        3       10        3
-              3  |               1        9       12        3
-        PyRanges with 4 rows, 4 columns, and 1 index columns.
-        Contains 1 chromosomes.
+              2  |               2        0        4        6
+              3  |               1        3       10        3
+              4  |               1        9       12        3
+        PyRanges with 5 rows, 4 columns, and 1 index columns.
+        Contains 2 chromosomes.
 
-        >>> gr.cluster()
-          index  |      Chromosome    Start      End     Gene    Cluster
-          int64  |           int64    int64    int64    int64      int64
-        -------  ---  ------------  -------  -------  -------  ---------
-              0  |               1        1        3        1          0
-              1  |               1        2        3        2          0
-              2  |               1        3       10        3          0
-              3  |               1        9       12        3          0
-        PyRanges with 4 rows, 5 columns, and 1 index columns.
-        Contains 1 chromosomes.
+        >>> gr.cluster(cluster_column="ClusterId").sort_by_position()
+          index  |      Chromosome    Start      End     Gene    ClusterId
+          int64  |           int64    int64    int64    int64        int64
+        -------  ---  ------------  -------  -------  -------  -----------
+              0  |               1        1        3        1            0
+              1  |               1        2        3        2            0
+              3  |               1        3       10        3            0
+              4  |               1        9       12        3            0
+              2  |               2        0        4        6            1
+        PyRanges with 5 rows, 5 columns, and 1 index columns.
+        Contains 2 chromosomes.
 
-        >>> gr.cluster(by=["Gene"], count_column="Count")
-          index  |      Chromosome    Start      End     Gene    Cluster
-          int64  |           int64    int64    int64    int64      int64
-        -------  ---  ------------  -------  -------  -------  ---------
-              0  |               1        1        3        1          0
-              1  |               1        2        3        2          1
-              2  |               1        3       10        3          2
-              3  |               1        9       12        3          2
-        PyRanges with 4 rows, 5 columns, and 1 index columns.
-        Contains 1 chromosomes.
-
-        Avoid clustering bookended intervals with slack=-1:
-
-        >>> gr.cluster(slack=-1)
-          index  |      Chromosome    Start      End     Gene    Cluster
-          int64  |           int64    int64    int64    int64      int64
-        -------  ---  ------------  -------  -------  -------  ---------
-              0  |               1        1        3        1          0
-              1  |               1        2        3        2          0
-              2  |               1        3       10        3          0
-              3  |               1        9       12        3          0
-        PyRanges with 4 rows, 5 columns, and 1 index columns.
-        Contains 1 chromosomes.
-
-        >>> gr2 = pr.example_data.ensembl_gtf.get_with_loc_columns(["Feature", "Source"])
-        >>> gr2.cluster(by=["Feature", "Source"])
-        index    |    Chromosome    Start    End      Strand      Feature     Source    Cluster
-        int64    |    category      int64    int64    category    category    object    int64
-        -------  ---  ------------  -------  -------  ----------  ----------  --------  ---------
-        0        |    1             11868    12227    +           exon        havana    0
-        1        |    1             12612    12721    +           exon        havana    0
-        2        |    1             13220    14409    +           exon        havana    0
-        3        |    1             11868    14409    +           gene        havana    1
-        ...      |    ...           ...      ...      ...         ...         ...       ...
-        7        |    1             133373   133723   -           exon        ensembl   3
-        8        |    1             110952   111357   -           exon        havana    4
-        9        |    1             112699   112804   -           exon        havana    4
-        10       |    1             120724   133723   -           transcript  ensembl   5
-        PyRanges with 11 rows, 7 columns, and 1 index columns.
-        Contains 1 chromosomes and 2 strands.
+        >>> gr.cluster(by=["Gene"], count_column="Counts").sort_by_position()
+          index  |      Chromosome    Start      End     Gene    Cluster    Counts
+          int64  |           int64    int64    int64    int64      int64     int64
+        -------  ---  ------------  -------  -------  -------  ---------  --------
+              0  |               1        1        3        1          0         1
+              1  |               1        2        3        2          1         1
+              2  |               1        3       10        3          2         2
+              3  |               1        9       12        3          2         2
+              4  |               2        0        4        6          3         1
+        PyRanges with 5 rows, 6 columns, and 1 index columns.
+        Contains 2 chromosomes.
         """
-        from pyranges.methods.cluster import _cluster, _cluster_by
+        from pyranges.methods.cluster import _cluster
 
         _self = self.copy()
         if strand == "auto":
@@ -902,19 +880,17 @@ class PyRanges(RangeFrame):
             _self.__Strand__ = _self.Strand
             _self = _self.remove_strand()
 
-        cluster_method = _cluster_by if by else _cluster
-        _by = [by] if isinstance(by, str) else (by or [])
-        df = pyrange_apply_single(
-            cluster_method,
-            _self,
+        _by = [by] if isinstance(by, str) else ([*by] if by is not None else [])
+        df = _self.apply_single(
+            _cluster,
             strand=strand,
             by=by,
             slack=slack,
-            count=count_column,
+            count_column=count_column,
             cluster_column=cluster_column,
         )
         gr = pr.PyRanges(df)
-        gr.col[cluster_column] = gr.groupby(self.location_cols + (_by or [])).ngroup()
+        gr.col[cluster_column] = gr.groupby(self.location_cols + _by + [cluster_column]).ngroup()
         return gr
 
     def copy(self, *args, **kwargs) -> "pr.PyRanges":
@@ -1117,20 +1093,21 @@ class PyRanges(RangeFrame):
 
     def extend(
         self,
-        ext: dict[str, int] | int,
+        ext: int | None = None,
+        ext_3: int | None = None,
+        ext_5: int | None = None,
         by: str | list[str] | None = None,
     ) -> "PyRanges":
         """Extend the intervals from the ends.
 
         Parameters
         ----------
-        ext : int or dict of ints with "3" and/or "5" as keys.
-            The number of nucleotides to extend the ends with.
-            If an int is provided, the same extension is applied to both
-            the start and end of intervals, while a dict input allows to control
-            differently the two ends. Note also that 5' and 3' extensions take
-            the strand into account, if the intervals are stranded.
-
+        ext: int or None
+            Extend intervals by this amount from both ends.
+        ext_3: int or None
+            Extend intervals by this amount from the 3' end.
+        ext_5: int or None
+            Extend intervals by this amount from the 5' end.
         by : str or list of str, default: None
             group intervals by these column name(s), so that the extension is applied
             only to the left-most and/or right-most interval.
@@ -1155,6 +1132,16 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
+
+          index  |    Chromosome      Start      End  Strand
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                3        7  +
+              1  |    chr1                8       10  +
+              2  |    chr1                4        7  -
+        PyRanges with 3 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
         >>> gr.extend(4)
           index  |    Chromosome      Start      End  Strand
           int64  |    object          int64    int64  object
@@ -1165,17 +1152,8 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> gr.extend({"3": 1})
-          index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
-              0  |    chr1                3        7  +
-              1  |    chr1                8       10  +
-              2  |    chr1                4        7  -
-        PyRanges with 3 rows, 4 columns, and 1 index columns.
-        Contains 1 chromosomes and 2 strands.
 
-        >>> gr.extend({"3": 1, "5": 2})
+        >>> gr.extend(ext_3=1, ext_5=2)
           index  |    Chromosome      Start      End  Strand
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
@@ -1190,13 +1168,22 @@ class PyRanges(RangeFrame):
         ...
         ValueError: Some intervals are negative or zero length after applying extend!
         """
-        if isinstance(ext, dict) and not self.strand_values_valid:
+        if (ext_3 or ext_5) and not self.strand_values_valid:
             msg = "PyRanges must be stranded to add 5/3-end specific extend."
             raise ValueError(msg)
 
-        func = _extend if by is None else _extend_grp
+        if ext is not None == (ext_3 is not None or ext_5 is not None):
+            msg = "Must use at least one and not both of ext and ext3 or ext5."
+            raise ValueError(msg)
+
         return PyRanges(
-            multithreaded.pyrange_apply_single(func, self, ext=ext, strand=self.strand_values_valid, by=by),
+            self.apply_single(
+                _extend,
+                ext=ext,
+                ext_3=ext_3,
+                ext_5=ext_5,
+                by=group_keys_single(self, strand=self.strand_values_valid, by=by),
+            ),
         )
 
     def five_end(self) -> "PyRanges":
@@ -1243,7 +1230,7 @@ class PyRanges(RangeFrame):
         if not (self.has_strand_column and self.strand_values_valid):
             msg = f"Need PyRanges with valid strands ({VALID_GENOMIC_STRAND_INFO}) to find 5'."
             raise AssertionError(msg)
-        return pr.PyRanges(pyrange_apply_single(_tss, self, strand=True, by=None))
+        return pr.PyRanges(self.apply_single(_tss, strand=True, by=None))
 
     @property
     def location_cols(self) -> list[str]:
@@ -1524,14 +1511,14 @@ class PyRanges(RangeFrame):
           int64  |    category        int64    int64  object       int64  category
         -------  ---  ------------  -------  -------  ---------  -------  ----------
               0  |    chr1                3        6  interval1        0  +
-              1  |    chr1                8        9  interval3        0  +
+              2  |    chr1                8        9  interval3        0  +
         PyRanges with 2 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 1 strands.
         """
         strand = validate_and_convert_strand(self, strand)
         from pyranges.methods.max_disjoint import _max_disjoint
 
-        dfs = pyrange_apply_single(_max_disjoint, self, strand=strand, slack=slack, by=by)
+        dfs = self.apply_single(_max_disjoint, strand=strand, slack=slack, by=by)
 
         return pr.PyRanges(dfs)
 
@@ -2074,13 +2061,13 @@ class PyRanges(RangeFrame):
           index  |      Chromosome  Strand      Start      End  transcript_id
           int64  |           int64  object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
-              0  |               1  +               1       11  t3
-              1  |               1  +              40       60  t3
-              2  |               1  +             140      152  t1
-              3  |               1  +             160      190  t1
-              4  |               1  -              70       80  t2
-              5  |               1  -              10       25  t2
-              6  |               2  +             300      400  t4
+              1  |               1  +               1       11  t3
+              0  |               1  +              40       60  t3
+              5  |               1  +             140      152  t1
+              6  |               1  +             160      190  t1
+              4  |               2  +             300      400  t4
+              3  |               1  -              70       80  t2
+              2  |               1  -              10       25  t2
         PyRanges with 7 rows, 5 columns, and 1 index columns.
         Contains 2 chromosomes and 2 strands.
         """
@@ -2095,10 +2082,9 @@ class PyRanges(RangeFrame):
                 ],
             )
 
-        return _mypy_ensure_pyranges(
-            pyrange_apply_single(
+        return mypy_ensure_pyranges(
+            self.apply_single(
                 _sort_by_5_prime_ascending_and_3_prime_descending,
-                self,
                 strand=True,
                 by=None,
             ),
@@ -2231,7 +2217,7 @@ class PyRanges(RangeFrame):
 
         sorted_p = self.sort_by_5_prime_ascending_and_3_prime_descending()
 
-        result = pyrange_apply_single(_spliced_subseq, sorted_p, strand=strand, by=by, start=start, end=end)
+        result = sorted_p.apply_single(_spliced_subseq, strand=strand, by=by, start=start, end=end)
 
         return pr.PyRanges(result)
 
@@ -2331,16 +2317,23 @@ class PyRanges(RangeFrame):
         PyRanges with 6 rows, 3 columns, and 1 index columns.
         Contains 1 chromosomes.
         """
-        if strand is STRAND_AUTO:
-            strand = self.strand_values_valid
-
         from pyranges.methods.split import _split
 
-        df = pyrange_apply_single(_split, self, strand=strand, by=by)
-        strand_behavior = STRAND_BEHAVIOR_SAME if validate_and_convert_strand(df, strand) else STRAND_BEHAVIOR_IGNORE
+        strand = validate_and_convert_strand(self, strand)
+        df = self.apply_single(
+            _split,
+            strand=strand,
+            by=group_keys_single(
+                self,
+                strand=strand,
+                by=by,
+            ),
+        )
         split = pr.PyRanges(df)
         if not between:
-            split = split.overlap( self, strand_behavior=strand_behavior)
+            split = split.overlap(
+                self, how=OVERLAP_FIRST, strand_behavior=STRAND_BEHAVIOR_SAME if strand else STRAND_BEHAVIOR_IGNORE
+            )
 
         return split
 
@@ -2609,7 +2602,7 @@ class PyRanges(RangeFrame):
 
         result = gr.apply_pair(other_clusters, strand_behavior=strand_behavior, function=_subtraction, by=_by)
 
-        return _mypy_ensure_pyranges(result.drop(TEMP_NUM_COL, axis=1))
+        return mypy_ensure_pyranges(result.drop(TEMP_NUM_COL, axis=1))
 
     def summary(
         self,
@@ -2789,7 +2782,8 @@ class PyRanges(RangeFrame):
             "tile_size": tile_size,
         }
 
-        return _mypy_ensure_pyranges(self.apply_single(_tiles, by=by, **kwargs))
+        res = self.apply_single(_tiles, by=by, **kwargs)
+        return mypy_ensure_pyranges(res)
 
     def three_end(self) -> "PyRanges":
         """Return the 3'-end.
@@ -2832,10 +2826,9 @@ class PyRanges(RangeFrame):
         if not (self.has_strand_column and self.strand_values_valid):
             msg = f"Need PyRanges with valid strands ({VALID_GENOMIC_STRAND_INFO}) to find 3'."
             raise AssertionError(msg)
-        return _mypy_ensure_pyranges(
-            pyrange_apply_single(
+        return mypy_ensure_pyranges(
+            self.apply_single(
                 function=_tes,
-                self=self,
                 strand=True,
                 by=None,
             ),
@@ -3329,7 +3322,7 @@ class PyRanges(RangeFrame):
         """
         if not self.has_strand_column:
             return self
-        return _mypy_ensure_pyranges(self.drop(STRAND_COL, axis=1))
+        return mypy_ensure_pyranges(self.drop(STRAND_COL, axis=1))
 
     def window(
         self,
@@ -3380,7 +3373,7 @@ class PyRanges(RangeFrame):
           int64  |           int64    int64    int64
         -------  ---  ------------  -------  -------
               0  |               1      895     1095
-              1  |               1     1095     1259
+              0  |               1     1095     1259
         PyRanges with 2 rows, 3 columns, and 1 index columns.
         Contains 1 chromosomes.
 
@@ -3407,14 +3400,14 @@ class PyRanges(RangeFrame):
         int64    |    category      int64    int64    category    category    object
         -------  ---  ------------  -------  -------  ----------  ----------  -----------
         0        |    1             11868    12868    +           gene        DDX11L1
-        1        |    1             12868    13868    +           gene        DDX11L1
-        2        |    1             13868    14409    +           gene        DDX11L1
-        3        |    1             11868    12868    +           transcript  DDX11L1
+        0        |    1             12868    13868    +           gene        DDX11L1
+        0        |    1             13868    14409    +           gene        DDX11L1
+        1        |    1             11868    12868    +           transcript  DDX11L1
         ...      |    ...           ...      ...      ...         ...         ...
-        24       |    1             132724   133723   -           transcript  AL627309.1
-        25       |    1             133373   133723   -           exon        AL627309.1
-        26       |    1             129054   129223   -           exon        AL627309.1
-        27       |    1             120873   120932   -           exon        AL627309.1
+        7        |    1             132724   133723   -           transcript  AL627309.1
+        8        |    1             133373   133723   -           exon        AL627309.1
+        9        |    1             129054   129223   -           exon        AL627309.1
+        10       |    1             120873   120932   -           exon        AL627309.1
         PyRanges with 28 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
         """
@@ -3427,7 +3420,7 @@ class PyRanges(RangeFrame):
             "window_size": window_size,
         }
 
-        df = pyrange_apply_single(_windows, self, by=by, strand=strand, **kwargs)
+        df = self.apply_single(_windows, by=by, strand=strand, **kwargs)
         return PyRanges(df)
 
     @property
@@ -3609,8 +3602,4 @@ class PyRanges(RangeFrame):
 
         cols_to_drop = list({start, end, start2, end2}.difference(RANGE_COLS) if drop_old_columns else {})
 
-        return _mypy_ensure_pyranges(self.drop(labels=cols_to_drop, axis="columns"))
-
-
-def _mypy_ensure_pyranges(df: pd.DataFrame) -> "pr.PyRanges":
-    return PyRanges(df)
+        return mypy_ensure_pyranges(self.drop(labels=cols_to_drop, axis="columns"))

@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Optional
 
 from pyranges.methods import concat
 from pyranges.names import GENOME_LOC_COLS_WITH_STRAND, VALID_OVERLAP_TYPE, VALID_STRAND_BEHAVIOR_TYPE
+from pyranges.pyranges_helpers import mypy_ensure_pyranges
 
 if TYPE_CHECKING:
     from pyranges.pyranges_main import PyRanges
@@ -144,4 +145,4 @@ def count_overlaps(
             return_indexes=True,
             name=name,
         )
-    return features.astype({k: int for k in grs})
+    return mypy_ensure_pyranges(features.astype({k: int for k in grs}))
