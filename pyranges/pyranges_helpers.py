@@ -121,7 +121,7 @@ def get_by_columns_including_chromosome_and_strand(
 def strand_behavior_from_strand_and_validate(
     df: "PyRanges",
     strand: VALID_STRAND_TYPE,
-) -> Literal["same", "ignore"]:
+) -> VALID_STRAND_BEHAVIOR_TYPE:
     return STRAND_BEHAVIOR_SAME if validate_and_convert_strand(df, strand) else STRAND_BEHAVIOR_IGNORE
 
 

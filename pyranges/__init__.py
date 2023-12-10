@@ -29,7 +29,7 @@ gf = genomicfeatures
 __version__ = importlib.metadata.version("pyranges")
 
 
-TOSTRING_CONSOLE_WIDTH = None
+TOSTRING_CONSOLE_WIDTH: int | None = None
 
 example_data = ExampleData()
 stats = statistics

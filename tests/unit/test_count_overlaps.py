@@ -33,6 +33,7 @@ chr1 20 30  + 0 2 0
 chr1 30 40  - 0 0 1""",
     )
     res = pr.count_overlaps(grs, features, strand_behavior="same")
+
     print(res)
 
     assert_df_equal(res, expected_result)

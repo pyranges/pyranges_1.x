@@ -120,13 +120,15 @@ def get_sequence(
     seqs = []
     use_strand = gr.strand_values_valid
     for key, df in gr.groupby(gr.location_cols_include_strand_only_if_valid):
+        _seqs = []
         chromosome, strand = key + (() if use_strand else (FORWARD_STRAND,))
         _fasta = pyfaidx_fasta[chromosome]
         forward_strand = strand == FORWARD_STRAND
         for start, end in zip(df[START_COL], df[END_COL], strict=True):
             seq = _fasta[start:end]
-            seqs.append(seq.seq if forward_strand else (-seq).seq)
+            _seqs.append(seq.seq if forward_strand else (-seq).seq)
 
+        seqs.extend(_seqs if forward_strand else _seqs[::-1])
     return pd.concat([pd.Series(s) for s in seqs]).reset_index(drop=True).squeeze()
 
 
@@ -185,15 +187,6 @@ def get_transcript_sequence(
     ...                   "Start": [0, 9, 18], "End": [4, 13, 21],
     ...                   "Strand":['+', '-', '-'],
     ...                   "transcript": ['t1', 't2', 't2']})
-    >>> gr
-      index  |    Chromosome      Start      End  Strand    transcript
-      int64  |    object          int64    int64  object    object
-    -------  ---  ------------  -------  -------  --------  ------------
-          0  |    chr1                0        4  +         t1
-          1  |    chr1                9       13  -         t2
-          2  |    chr1               18       21  -         t2
-    PyRanges with 3 rows, 5 columns, and 1 index columns.
-    Contains 1 chromosomes and 2 strands.
 
     >>> tmp_handle = open("temp.fasta", "w+")
     >>> _ = tmp_handle.write(">chr1\n")

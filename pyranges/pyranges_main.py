@@ -556,7 +556,7 @@ class PyRanges(RangeFrame):
         kwargs : dict
             Arguments passed along to the function.
         """
-        return super().apply_single(function=function, by=by, **kwargs)
+        return mypy_ensure_pyranges(super().apply_single(function=function, by=by, **kwargs))
 
     def apply_pair(  # type: ignore[override]
         self,
@@ -665,7 +665,7 @@ class PyRanges(RangeFrame):
             msg = "by must be a string or list of strings"
             raise ValueError(msg)
 
-        result = super().apply_single(
+        result = self.apply_single(
             _bounds,
             by=self._by_to_list(by),
             agg=agg,
@@ -2332,7 +2332,9 @@ class PyRanges(RangeFrame):
         split = pr.PyRanges(df)
         if not between:
             split = split.overlap(
-                self, how=OVERLAP_FIRST, strand_behavior=STRAND_BEHAVIOR_SAME if strand else STRAND_BEHAVIOR_IGNORE
+                self,
+                how=OVERLAP_FIRST,
+                strand_behavior=strand_behavior_from_strand_and_validate(self, strand),
             )
 
         return split

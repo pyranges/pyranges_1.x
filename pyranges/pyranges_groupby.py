@@ -1,14 +1,16 @@
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import pandas as pd
+import pandas.core.groupby  # type: ignore[name-defined]
 
 import pyranges as pr
 from pyranges.names import GENOME_LOC_COLS
 
 
 def return_pyranges_if_possible(
-    method: Callable[..., "pr.PyRanges"],
-) -> Callable[..., "pr.PyRanges | pd.DataFrame | pd.Series"]:
+    method: Callable,
+) -> Callable:
     """Return a PyRanges object if possible."""
 
     def wrapper(*args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":
@@ -23,7 +25,7 @@ def return_pyranges_if_possible(
     return wrapper
 
 
-class PyRangesGroupBy(pd.core.groupby.DataFrameGroupBy):
+class PyRangesGroupBy(pandas.core.groupby.DataFrameGroupBy):
     @return_pyranges_if_possible
     def agg(self, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":  # noqa: D102
         return super().agg(*args, **kwargs)
