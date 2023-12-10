@@ -1,14 +1,17 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from pyranges.names import (
+    CHROM_AND_STRAND_COLS,
     CHROM_COL,
     STRAND_AUTO,
     STRAND_BEHAVIOR_AUTO,
     STRAND_BEHAVIOR_IGNORE,
     STRAND_BEHAVIOR_OPPOSITE,
+    STRAND_BEHAVIOR_SAME,
     STRAND_COL,
     TEMP_STRAND_COL,
     VALID_BY_OPTIONS,
+    VALID_BY_TYPES,
     VALID_STRAND_BEHAVIOR_OPTIONS,
     VALID_STRAND_BEHAVIOR_TYPE,
     VALID_STRAND_OPTIONS,
@@ -53,6 +56,11 @@ def ensure_strand_behavior_options_valid(
         raise ValueError(msg)
 
 
+def strand_behavior_from_strand_bool(strand: bool) -> Literal["same", "ignore"]:
+    """Return strand behavior based on strand bool."""
+    return STRAND_BEHAVIOR_SAME if strand else STRAND_BEHAVIOR_IGNORE
+
+
 def group_keys_from_strand_behavior(
     self: "PyRanges",
     other: "PyRanges",
@@ -83,9 +91,27 @@ def ensure_valid_strand_option(self: "PyRanges", strand: VALID_STRAND_TYPE) -> N
 
 def group_keys_single(self: "PyRanges", strand: VALID_STRAND_TYPE, by: VALID_BY_OPTIONS = None) -> list[str]:
     """Return group keys for single PyRanges."""
-    self._ensure_valid_strand_option(strand)
+    ensure_valid_strand_option(self, strand)
     if strand == "auto":
         genome_keys = [CHROM_COL, STRAND_COL] if self.has_strand_column else [CHROM_COL]
     else:
         genome_keys = [CHROM_COL, STRAND_COL] if strand else [CHROM_COL]
     return genome_keys + self._by_to_list(by)
+
+
+def get_by_columns_including_chromosome_and_strand(
+    self,
+    by: VALID_BY_TYPES,
+    *,
+    strand: bool,
+) -> list[str]:
+    if strand and not self.has_strand_column:
+        msg = "PyRanges is missing Strand column."
+        raise AssertionError(msg)
+
+    chrom_and_strand_cols = CHROM_AND_STRAND_COLS if strand else [CHROM_COL]
+    if by is None:
+        return chrom_and_strand_cols
+
+    _by = chrom_and_strand_cols + ([by] if isinstance(by, str) else [*by])
+    return [c for c in self.columns if c in _by]

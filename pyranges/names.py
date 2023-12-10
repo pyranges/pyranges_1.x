@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from typing import Literal, get_args, Any
+from typing import Any, Literal, get_args
 
 # Define the Literal type
 VALID_OVERLAP_TYPE = Literal["first", "containment", "all"]
@@ -25,7 +25,7 @@ REVERSE_STRAND = "-"
 VALID_GENOMIC_STRAND_TYPE = Literal["+", "-"]
 VALID_GENOMIC_STRAND_INFO = [FORWARD_STRAND, REVERSE_STRAND]
 
-VALID_BY_OPTIONS = str | list[str] | None
+VALID_BY_OPTIONS = str | Iterable[str] | None
 
 STRAND_AUTO = "auto"
 VALID_STRAND_TYPE = Literal["auto"] | bool
@@ -53,6 +53,7 @@ VALID_JOIN_OPTIONS = [JOIN_INNER, JOIN_LEFT, JOIN_OUTER, JOIN_RIGHT]
 NEAREST_ANY_DIRECTION = "any"
 NEAREST_UPSTREAM = "upstream"
 NEAREST_DOWNSTREAM = "downstream"
+VALID_NEAREST_TYPE = Literal["any", "upstream", "downstream"]
 VALID_NEAREST_OPTIONS = [
     NEAREST_ANY_DIRECTION,
     NEAREST_UPSTREAM,
@@ -79,6 +80,8 @@ TEMP_END_SLACK_COL = "__temp_end_slack__"
 DEFAULT_CLUSTER_ID_COL = "Cluster"
 
 VALID_BY_TYPES = str | Iterable[str] | None
+
+PYRANGES_OR_RANGEFRAME_TYPE = "PyRanges | RangeFrame"
 
 
 PANDAS_COMPRESSION_TYPE = Literal["infer", "gzip", "bz2", "zip", "xz", "zstd"] | dict[str, Any] | None

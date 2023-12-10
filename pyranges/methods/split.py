@@ -9,12 +9,17 @@ if TYPE_CHECKING:
     from pyranges import PyRanges
 
 
-def _split(df: "PyRanges", strand: VALID_STRAND_TYPE = "auto") -> "PyRanges":
+def _split(
+    df: "PyRanges",
+    strand: VALID_STRAND_TYPE = "auto",
+    **_,
+) -> "PyRanges":
     dtype = df[START_COL].dtype
 
     starts = df[START_COL]
     ends = df[END_COL]
     points = [starts, ends]
+
     points = pd.concat(points).sort_values().drop_duplicates()
 
     _ends = points.shift(-1)

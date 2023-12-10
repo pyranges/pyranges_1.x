@@ -6,11 +6,13 @@ import pandas as pd
 from pandas.core.frame import DataFrame
 
 from pyranges.names import (
-    CHROM_COL,
     END_COL,
     START_COL,
     STRAND_COL,
+    VALID_BY_TYPES,
+    VALID_STRAND_TYPE,
 )
+from pyranges.strand_behavior_validators import group_keys_single
 
 if TYPE_CHECKING:
     from pyranges.pyranges_main import PyRanges
@@ -19,21 +21,24 @@ if TYPE_CHECKING:
 def pyrange_apply_single(
     function: Callable,
     self: "PyRanges",
+    by: VALID_BY_TYPES,
+    strand: VALID_STRAND_TYPE,
     **kwargs,
-) -> pd.DataFrame:
+) -> "PyRanges":
     """Apply a function to a PyRanges object."""
+    keys = group_keys_single(self=self, strand=strand, by=by)
     temp_index_col = "__index_column_for_apply__"
-    strand = kwargs["strand"]
+
+    kwargs |= {"strand": strand, "by": by}
 
     if strand and STRAND_COL not in self.columns:
         msg = "Can only do stranded operation when PyRange contains strand info"
         raise ValueError(msg)
 
-    keys = [CHROM_COL] if not self.strand_values_valid else [CHROM_COL, STRAND_COL] if strand else [CHROM_COL]
     range_index = np.arange(len(self))
     if isinstance(self.index, pd.RangeIndex):
         self = self.set_index(pd.Series(name=temp_index_col, data=range_index))
-        return self.groupby(keys, as_index=False, observed=True).apply(function, **kwargs).reset_index(drop=True)
+        return self.groupby(keys, observed=True).apply(function, **kwargs).reset_index(drop=True)
     if self.index.name is None and self.index.names == [None]:
         original_index = None
     else:

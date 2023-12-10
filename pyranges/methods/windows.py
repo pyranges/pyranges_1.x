@@ -3,14 +3,24 @@ from typing import TYPE_CHECKING
 import numpy as np
 from sorted_nearest import maketiles, makewindows
 
-from pyranges.names import END_COL, START_COL, TEMP_END_COL, TEMP_START_COL
+from pyranges.names import END_COL, PYRANGES_OR_RANGEFRAME_TYPE, START_COL, TEMP_END_COL, TEMP_START_COL
 
 if TYPE_CHECKING:
     from pyranges import RangeFrame
 
 
-def _windows(df: "RangeFrame", *, window_size: int, **_) -> "RangeFrame":
-    idxs, starts, ends = makewindows(df.index.values, df.Start.values, df.End.values, window_size)
+def _windows(
+    df: PYRANGES_OR_RANGEFRAME_TYPE,
+    *,
+    window_size: int,
+    **_,
+) -> "RangeFrame":
+    idxs, starts, ends = makewindows(
+        df.index.values,
+        df.Start.values,
+        df.End.values,
+        window_size,
+    )
 
     df = df.reindex(idxs)
     df.loc[:, START_COL] = starts
@@ -19,7 +29,12 @@ def _windows(df: "RangeFrame", *, window_size: int, **_) -> "RangeFrame":
     return df
 
 
-def _tiles(df: "RangeFrame", tile_size: int, overlap_column: str | None, **_) -> "RangeFrame":
+def _tiles(
+    df: PYRANGES_OR_RANGEFRAME_TYPE,
+    tile_size: int,
+    overlap_column: str | None,
+    **_,
+) -> PYRANGES_OR_RANGEFRAME_TYPE:
     if overlap_column is not None:
         df = df.copy()
         df.insert(df.shape[1], TEMP_START_COL, df.Start)

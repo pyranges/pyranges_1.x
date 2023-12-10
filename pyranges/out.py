@@ -1,14 +1,15 @@
 import csv
 import logging
+from collections.abc import Callable
 from pathlib import Path
-from typing import Literal, Any, Callable
+from typing import Literal
 
 import numpy as np
 import pandas as pd
 from natsort import natsorted  # type: ignore[import]
 from pandas.core.frame import DataFrame
 
-from pyranges.names import BIGWIG_SCORE_COL, CHROM_COL, END_COL, GENOME_LOC_COLS, START_COL, PANDAS_COMPRESSION_TYPE
+from pyranges.names import BIGWIG_SCORE_COL, CHROM_COL, END_COL, GENOME_LOC_COLS, PANDAS_COMPRESSION_TYPE, START_COL
 from pyranges.pyranges_main import PyRanges
 
 GTF_COLUMNS_TO_PYRANGES = {
@@ -164,7 +165,7 @@ def _to_bed(
 def _to_bigwig(
     self: PyRanges,
     path: None,
-    chromosome_sizes: PyRanges | dict,
+    chromosome_sizes: PyRanges | pd.DataFrame | dict,
     value_col: str | None = None,
     *,
     divide: bool = False,

@@ -1,11 +1,11 @@
 from collections.abc import Callable, Iterable
 from functools import cached_property
-from typing import Any, Literal, Self
+from typing import Any, Self
 
 import pandas as pd
 
 from pyranges.methods.overlap import _overlap
-from pyranges.names import RANGE_COLS, VALID_BY_TYPES
+from pyranges.names import RANGE_COLS, VALID_BY_TYPES, VALID_OVERLAP_TYPE
 from pyranges.tostring import tostring
 
 
@@ -95,8 +95,8 @@ class RangeFrame(pd.DataFrame):
     def overlap(
         self,
         other: "RangeFrame",
-        how: Literal["first", "containment", "all"] = "first",
-        by: str | list[str] | None = None,
+        how: VALID_OVERLAP_TYPE = "first",
+        by: VALID_BY_TYPES = None,
         **_,
     ) -> "RangeFrame":
         """Find intervals in self overlapping other..
@@ -179,7 +179,7 @@ class RangeFrame(pd.DataFrame):
     def apply_single(
         self,
         function: Callable[["RangeFrame"], "RangeFrame"],
-        by: str | list[str] | None = None,
+        by: VALID_BY_TYPES,
         **kwargs,
     ) -> "RangeFrame":
         """Call a function on a RangeFrame.
