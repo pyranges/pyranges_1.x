@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     from pyranges import PyRanges
 
     with contextlib.suppress(ImportError):
-        from pyrle import PyRles
+        from pyrle import PyRles  # type: ignore[import-not-found]
 
 
 def _to_rle(

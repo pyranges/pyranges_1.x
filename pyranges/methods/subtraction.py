@@ -10,6 +10,7 @@ if TYPE_CHECKING:
 
 
 def _subtraction(scdf: "RangeFrame", ocdf: "RangeFrame", **_) -> "RangeFrame":
+    original_class = scdf.__class__
     if ocdf.empty or scdf.empty:
         return scdf
 
@@ -33,14 +34,12 @@ def _subtraction(scdf: "RangeFrame", ocdf: "RangeFrame", **_) -> "RangeFrame":
     new_starts = pd.Series(new_starts, index=idx_self)
     new_ends = pd.Series(new_ends, index=idx_self)
 
-    scdf = scdf.reindex(missing_idx.union(idx_self)).sort_index()
+    _scdf = scdf.reindex(missing_idx.union(idx_self)).sort_index()
     new_starts = new_starts.sort_index()
     new_ends = new_ends.sort_index()
 
     if len(idx_self):
-        scdf.loc[scdf.index.isin(idx_self), "Start"] = new_starts.to_numpy()
-        scdf.loc[scdf.index.isin(idx_self), "End"] = new_ends.to_numpy()
+        _scdf.loc[_scdf.index.isin(idx_self), "Start"] = new_starts.to_numpy()
+        _scdf.loc[_scdf.index.isin(idx_self), "End"] = new_ends.to_numpy()
 
-    if not scdf.empty:
-        return scdf
-    return None
+    return original_class(_scdf)

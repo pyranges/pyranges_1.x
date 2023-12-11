@@ -11,7 +11,6 @@ if TYPE_CHECKING:
 
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
-LOGGER.Formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s %(message)s")
 LOGGER.setLevel(logging.INFO)
 
 
@@ -44,15 +43,15 @@ def _summary(
     for summary, s in lengths.items():
         summaries[summary] = s.describe()
 
-    summary = pd.concat(summaries.values(), axis=1)
-    summary.columns = list(summaries)
+    summary_lengths = pd.concat(summaries.values(), axis=1)
+    summary_lengths.columns = pd.Index(summaries)
 
     df = pd.DataFrame.from_dict(total_lengths)
-    df.index = ["sum"]
-    summary = pd.concat([summary, df])
+    df.index = pd.Index(["sum"])
+    summary_lengths = pd.concat([summary_lengths, df])
 
     if return_df:
-        return summary
-    str_repr = tabulate(summary, headers=summary.columns)
+        return summary_lengths
+    str_repr = tabulate(summary_lengths, headers=list(summary_lengths.columns))  # type: ignore[arg-type]
     print(str_repr)  # noqa: T201
     return None

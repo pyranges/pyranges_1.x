@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 
 def _bounds(scdf: "pr.PyRanges", **kwargs) -> "pr.PyRanges":
     if scdf.empty:
-        return None
+        return scdf
 
     col_order = list(scdf.columns)
 

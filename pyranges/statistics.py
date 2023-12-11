@@ -43,7 +43,6 @@ __all__ = [
 
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
-LOGGER.Formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 LOGGER.setLevel(logging.INFO)
 
 
@@ -791,8 +790,8 @@ def _mcc(tp: int, fp: int, tn: int, fn: int) -> float:
     return ((tp * tn) - (fp * fn)) / sqrt(x)
 
 
-GenomeType = tuple[dict[str, int], pd.DataFrame]
-LabelsType = tuple[list[str], list[int]]
+GenomeType = dict[str, int] | pd.DataFrame | None
+LabelsType = list[str] | list[int]
 
 
 def process_genome_data(grs: list[Any], genome: GenomeType, labels: LabelsType) -> tuple[pd.DataFrame, int, Iterable]:
@@ -818,7 +817,7 @@ def ensure_genome_dataframe(genome: GenomeType) -> pd.DataFrame:
     raise TypeError(msg)
 
 
-def find_chromosome_max_end_positions(grs: list["PyRanges"]) -> dict[str | int, int]:
+def find_chromosome_max_end_positions(grs: list["PyRanges"]) -> pd.DataFrame:
     """Find the largest end position in each chromosome.
 
     Examples
@@ -831,11 +830,11 @@ def find_chromosome_max_end_positions(grs: list["PyRanges"]) -> dict[str | int, 
     >>> pr.stats.find_chromosome_max_end_positions([f1, f2])
     {'chr1': 9}
     """
-    genome: dict[str | int, int] = defaultdict(int)
+    genome: dict[str, int] = defaultdict(int)
     for gr in grs:
         for chrom, chrom_df in gr.groupby(CHROM_COL):
             genome[chrom] = max(chrom_df[END_COL].max(), genome[chrom])
-    return dict(genome)
+    return create_genome_dataframe(dict(genome))
 
 
 def create_genome_dataframe(genome: dict[str, int]) -> pd.DataFrame:

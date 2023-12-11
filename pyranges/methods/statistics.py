@@ -7,9 +7,9 @@ if TYPE_CHECKING:
     from pyranges import RangeFrame
 
 
-def _relative_distance(scdf: "RangeFrame", ocdf: "RangeFrame", **_) -> pd.Series:
+def _relative_distance(scdf: "RangeFrame", ocdf: "RangeFrame", **_) -> "pd.Series[float]":
     if scdf.empty or ocdf.empty:
-        return np.array([])
+        return pd.Series([], dtype=np.double)
 
     midpoints_self = ((scdf.Start + scdf.End) / 2).astype(int).sort_values().to_numpy()
     midpoints_other = ((ocdf.Start + ocdf.End) / 2).astype(int).sort_values().to_numpy()
@@ -23,7 +23,7 @@ def _relative_distance(scdf: "RangeFrame", ocdf: "RangeFrame", **_) -> pd.Series
     right_idx[right_idx >= len(midpoints_other)] -= 1
 
     if len(right_idx) == 0 or len(left_idx) == 0:
-        return np.array([])
+        return pd.Series([], dtype=np.double)
 
     right = midpoints_other[right_idx]
 

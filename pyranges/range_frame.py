@@ -50,7 +50,8 @@ class RangeFrame(pd.DataFrame):
             raise ValueError(msg)
 
     def __str__(
-        self, **kwargs,
+        self,
+        **kwargs,
     ) -> str:  # , max_col_width: int | None = None, max_total_width: int | None = None) -> str:
         """Return string representation."""
         return tostring(self, max_col_width=kwargs.get("max_col_width"), max_total_width=kwargs.get("max_total_width"))
@@ -195,7 +196,7 @@ class RangeFrame(pd.DataFrame):
         function: Callable
             Function to call.
 
-        by: str or list of str, default None
+        by: str or list of str
             Group by these columns.
 
         kwargs: dict

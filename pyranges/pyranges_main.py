@@ -526,7 +526,9 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 1 strands.
         """
         formatted_df = tostring(
-            self, max_col_width=kwargs.get("max_col_width"), max_total_width=kwargs.get("max_total_width"),
+            self,
+            max_col_width=kwargs.get("max_col_width"),
+            max_total_width=kwargs.get("max_total_width"),
         )
         return f"{formatted_df}\n{self._chrom_and_strand_info()}."
 

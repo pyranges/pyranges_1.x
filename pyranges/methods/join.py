@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from ncls import NCLS  # type: ignore[import]
+from numpy.typing import NDArray
 
 from pyranges.names import VALID_JOIN_TYPE
 
@@ -8,9 +9,9 @@ from pyranges.names import VALID_JOIN_TYPE
 def _both_indexes(
     scdf: pd.DataFrame,
     ocdf: pd.DataFrame,
-) -> tuple[np.array, np.array]:
+) -> tuple[pd.Index, pd.Index]:
     if ocdf.empty:
-        return scdf.index, np.array([], dtype=np.int64)
+        return scdf.index, pd.Index(np.array([], dtype=np.int64))
 
     starts = scdf.Start.to_numpy()
     ends = scdf.End.to_numpy()
@@ -21,7 +22,7 @@ def _both_indexes(
     return it.all_overlaps_both(starts, ends, indexes)
 
 
-def _both_dfs(scdf: pd.DataFrame, ocdf: pd.DataFrame, join_type: VALID_JOIN_TYPE, **kwargs) -> pd.DataFrame:
+def _both_dfs(scdf: pd.DataFrame, ocdf: pd.DataFrame, join_type: VALID_JOIN_TYPE, suffix: str = "_b", **kwargs) -> pd.DataFrame:
     _self_indexes, _other_indexes = _both_indexes(scdf, ocdf)
     if join_type == "inner":
         scdf = scdf.reindex(_self_indexes)
@@ -40,16 +41,15 @@ def _both_dfs(scdf: pd.DataFrame, ocdf: pd.DataFrame, join_type: VALID_JOIN_TYPE
         scdf_matching.index = _other_indexes
         ocdf_matcing = ocdf.reindex(_other_indexes)
         ocdf_missing = ocdf.reindex(missing_indices_other)
-        ocdf_missing.index = -np.arange(1, len(ocdf_missing) + 1)
+        ocdf_missing.index = pd.Index(-np.arange(1, len(ocdf_missing) + 1))
         scdf_missing = scdf.reindex(missing_indices_self)
-        scdf_missing.index = -np.arange(len(ocdf_missing) + 1, len(ocdf_missing) + 1 + len(scdf_missing))
+        scdf_missing.index = pd.Index(-np.arange(len(ocdf_missing) + 1, len(ocdf_missing) + 1 + len(scdf_missing)))
         scdf = pd.concat([scdf_matching, scdf_missing])
         ocdf = pd.concat([ocdf_matcing, ocdf_missing])
-    suffixes = ("", kwargs["suffix"]) if kwargs["suffix"] else None
     return scdf.merge(
         ocdf,
         left_index=True,
         right_index=True,
-        suffixes=suffixes,
+        suffixes=("", suffix),
         how="inner" if join_type is None else join_type,
     )

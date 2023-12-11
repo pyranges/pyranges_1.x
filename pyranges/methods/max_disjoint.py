@@ -4,7 +4,7 @@ from sorted_nearest import max_disjoint  # type: ignore[import]
 
 def _max_disjoint(df: pd.DataFrame, **kwargs) -> pd.DataFrame:
     if df.empty:
-        return None
+        return df
 
     slack = kwargs.get("slack", 0)
 

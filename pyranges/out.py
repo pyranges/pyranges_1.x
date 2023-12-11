@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import pandas as pd
-from mypy_extensions import NamedArg
 from natsort import natsorted  # type: ignore[import]
 from pandas.core.frame import DataFrame
 
@@ -14,6 +13,8 @@ from pyranges.pyranges_main import PyRanges
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from mypy_extensions import NamedArg
 
 GTF_COLUMNS_TO_PYRANGES = {
     "seqname": "Chromosome",
@@ -234,7 +235,7 @@ def _pyranges_to_gtf_like(
     df: pd.DataFrame,
     out_format: Literal["gtf", "gff3"],
 ) -> pd.DataFrame:
-    attribute_formatter: Callable[[str, "pd.Series[str]", NamedArg(bool, '_final_column')], "pd.Series[str]"]
+    attribute_formatter: Callable[[str, "pd.Series[str]", NamedArg(bool, "_final_column")], "pd.Series[str]"]
     if out_format == "gtf":
         all_columns = _ordered_gtf_columns[:-1]
         rename_columns = PYRANGES_TO_GTF_COLUMNS

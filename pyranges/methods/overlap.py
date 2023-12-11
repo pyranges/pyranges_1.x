@@ -8,7 +8,7 @@ from pyranges.names import (
     OVERLAP_ALL,
     OVERLAP_CONTAINMENT,
     OVERLAP_FIRST,
-    VALID_OVERLAP_OPTIONS,
+    VALID_OVERLAP_OPTIONS, VALID_OVERLAP_TYPE,
 )
 
 if TYPE_CHECKING:
@@ -21,9 +21,9 @@ def _overlap_indices(
     ocdf: "RangeFrame",
     how: Literal["first", "containment", "all"] = "first",
     **_,
-) -> "pd.Series[np.int64]":
+) -> "pd.Series[int]":
     if scdf.empty or ocdf.empty:
-        return np.array([], dtype=np.int64)
+        return pd.Series([], dtype=np.int64)
 
     starts = scdf.Start.to_numpy()
     ends = scdf.End.to_numpy()
@@ -36,50 +36,57 @@ def _overlap_indices(
     elif how == OVERLAP_CONTAINMENT:
         _indices, _ = it.all_containments_both(starts, ends, indexes)
     elif how == OVERLAP_FIRST:
-        _indices, _2 = it.first_overlap_both(starts, ends, indexes)
+        _indices, _ = it.first_overlap_both(starts, ends, indexes)
     else:
         msg = f"{VALID_OVERLAP_OPTIONS} are the only valid to_numpy() for how."
         raise ValueError(msg)
     return _indices
 
 
+def _overlapping_indices(
+    scdf: "pr.RangeFrame",
+    ocdf: "pr.RangeFrame",
+    how: VALID_OVERLAP_TYPE = "all",
+) -> "pd.Series[int]":
+    indexes = _overlap_indices(scdf, ocdf, how)
+    return indexes
+
+
 def _overlap(
     scdf: "pr.RangeFrame",
     ocdf: "pr.RangeFrame",
-    how: VALID_OVERLAP_OPTIONS = "all",
+    how: VALID_OVERLAP_TYPE = OVERLAP_ALL,
     *,
     invert: bool = False,
-    return_indexes: bool = False,
 ) -> "pr.RangeFrame":
+    original_type = scdf.__class__
     if invert:
-        scdf = scdf.copy()
+        scdf = original_type(scdf.copy())
         scdf.insert(scdf.shape[1], "__ix__", np.arange(len(scdf)))
 
     indexes = _overlap_indices(scdf, ocdf, how)
-    if return_indexes:
-        return indexes
+
     result = scdf.reindex(indexes)
 
     if invert:
         found_idxs = getattr(result, "__ix__", [])
         _result = scdf[~pd.Series(scdf.__ix__).isin(found_idxs)]
-        return _result.drop("__ix__", axis=1)
-    return result
+        _result = _result.drop("__ix__", axis=1)
+    return original_type(result)
 
 
 def _count_overlaps(
     scdf: "RangeFrame",
     ocdf: "RangeFrame",
     name: str,
-    *,
-    return_indexes: bool,
     **_,
-) -> "pd.Series[int]":
-    idx = _overlap(scdf, ocdf, return_indexes=return_indexes)
-    vc = pd.Series(idx, dtype=np.int32).value_counts(sort=False)
-    sx = pd.DataFrame(np.zeros(len(scdf), dtype=np.int64), index=scdf.index)
+) -> "RangeFrame":
+    original_class = scdf.__class__
+    idx = _overlap_indices(scdf, ocdf)
+    vc: "pd.Series[int]" = pd.Series(idx, dtype=np.int32).value_counts(sort=False)
+    sx: "pd.Series[int]" = pd.Series(np.zeros(len(scdf), dtype=np.int64), index=scdf.index)
 
     sx.loc[vc.index, 0] = vc.to_numpy()
 
     scdf.insert(scdf.shape[1], name, sx)
-    return scdf
+    return original_class(scdf)

@@ -13,6 +13,7 @@ def _spliced_subseq(
     scdf: "pr.PyRanges",
     **kwargs,
 ) -> "pr.PyRanges":
+    original_class = scdf.__class__
     if scdf.empty:
         return scdf
 
@@ -42,8 +43,8 @@ def _spliced_subseq(
     g = scdf.groupby(by, dropna=False)
     scdf.insert(scdf.shape[1], TEMP_CUMSUM_COL, g[TEMP_LENGTH_COL].cumsum())
 
-    start = kwargs.get("start") if kwargs.get("start") else 0
-    end = kwargs.get("end") if kwargs.get("end") else scdf[TEMP_CUMSUM_COL].max()
+    start = kwargs.get("start", 0)
+    end = kwargs.get("end", scdf[TEMP_CUMSUM_COL].max())
 
     minstart_idx = g[TEMP_INDEX_COL].first()
 
@@ -96,7 +97,7 @@ def _spliced_subseq(
         adjust_end = end_adjustments > 0
         scdf.loc[adjust_end, END_COL] -= end_adjustments[adjust_end].astype(scdf[END_COL].dtype)
 
-    scdf = scdf.loc[orig_order]
-    scdf = scdf[(scdf[START_COL] < scdf[END_COL])]
+    _scdf = scdf.loc[orig_order]
+    _scdf = _scdf[(_scdf[START_COL] < _scdf[END_COL])]
 
-    return scdf.drop([TEMP_INDEX_COL, TEMP_LENGTH_COL, TEMP_CUMSUM_COL], axis=1)
+    return original_class(_scdf.drop([TEMP_INDEX_COL, TEMP_LENGTH_COL, TEMP_CUMSUM_COL], axis=1))

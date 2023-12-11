@@ -7,6 +7,8 @@ from pyranges.names import CHROM_COL, END_COL, START_COL
 
 __all__ = ["genome_bounds", "tile_genome", "GenomicFeaturesMethods"]
 
+from pyranges.pyranges_helpers import mypy_ensure_pyranges
+
 if TYPE_CHECKING:
     from pyranges import PyRanges
 
@@ -59,6 +61,7 @@ class GenomicFeaturesMethods:
         Contains 1 chromosomes and 2 strands.
         """
         gr = self.pr
+        original_class = gr.__class__
 
         if not gr.strand_values_valid:
             msg = (
@@ -67,12 +70,12 @@ class GenomicFeaturesMethods:
             )
             raise AssertionError(msg)
 
-        gr = gr[gr.Feature == "transcript"]
-        gr = gr.groupby(CHROM_COL).apply(_tss).reset_index(drop=True)
+        _gr = gr[gr.Feature == "transcript"]
+        _gr = _gr.groupby(CHROM_COL).apply(_tss).reset_index(drop=True)
 
-        gr.Feature = "tss"
+        _gr.Feature = "tss"
 
-        return gr
+        return original_class(_gr)
 
     def tes(self) -> "PyRanges":
         """Return the transcription end sites.
@@ -118,12 +121,12 @@ class GenomicFeaturesMethods:
             msg = "Cannot compute TSSes or TESes without strand info. Perhaps use extend() or subsequence() or spliced_subsequence() instead?"
             raise ValueError(msg)
 
-        gr = gr[gr.Feature == "transcript"]
-        gr = gr.groupby(CHROM_COL).apply(_tes).reset_index(drop=True)
+        _gr = gr[gr.Feature == "transcript"]
+        _gr = _gr.groupby(CHROM_COL).apply(_tes).reset_index(drop=True)
 
-        gr.Feature = "tes"
+        _gr.Feature = "tes"
 
-        return gr
+        return mypy_ensure_pyranges(_gr)
 
     def introns(
         self,
@@ -205,8 +208,8 @@ class GenomicFeaturesMethods:
         if gr.empty:
             return gr
 
-        inner_df = gr[gr[feature_column] == inner_feature]
-        outer_df = gr[gr[feature_column] == outer_feature]
+        inner_df = mypy_ensure_pyranges(gr.loc[gr[feature_column] == inner_feature])
+        outer_df = mypy_ensure_pyranges(gr.loc[gr[feature_column] == outer_feature])
 
         return outer_df.subtract_intervals(inner_df, by=by)
 

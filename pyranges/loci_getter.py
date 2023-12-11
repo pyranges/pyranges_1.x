@@ -31,7 +31,7 @@ class LociGetter:
     def _matching_rows(
         self,
         key: LociKeyType,
-    ) -> "PyRanges":
+    ) -> "pd.Series[bool]":
         if isinstance(key, tuple):
             if is_chrom_and_strand(key):
                 rows = chrom_and_strand(self.pr, key)
@@ -54,13 +54,13 @@ class LociGetter:
         self.pr.loc[rows] = value
 
 
-def _rows_matching_chrom_and_strand(gr: "PyRanges", chrom: str, strand: str) -> pd.Series:
+def _rows_matching_chrom_and_strand(gr: "PyRanges", chrom: str, strand: str) -> "pd.Series[bool]":
     is_chrom_row = gr[CHROM_COL].astype(type(chrom)) == chrom
     is_strand_row = gr[STRAND_COL].astype(type(strand)) == strand
     return is_chrom_row & is_strand_row
 
 
-def _rows_matching_range(gr: "PyRanges", _range: range) -> pd.Series:
+def _rows_matching_range(gr: "PyRanges", _range: range) -> "pd.Series[bool]":
     start_in_range = gr[START_COL] < (_range.stop if _range.stop is not None else np.inf)
     end_in_range = gr[END_COL] > (_range.start if _range.start is not None else -1)
     return start_in_range & end_in_range
@@ -93,13 +93,13 @@ def is_chrom_and_strand(key: tuple) -> bool:
     return is_2_tuple(key) and isinstance(key[1], str)
 
 
-def chrom_and_strand(pr: "PyRanges", key: tuple) -> "PyRanges":
+def chrom_and_strand(pr: "PyRanges", key: tuple) -> "pd.Series[bool]":
     """Get rows matching chromosome and strand."""
     chrom, strand = key
     return _rows_matching_chrom_and_strand(pr, chrom, strand)
 
 
-def chrom_or_strand_with_slice(pr: "PyRanges", key: tuple) -> "PyRanges":
+def chrom_or_strand_with_slice(pr: "PyRanges", key: tuple) -> "pd.Series[bool]":
     """Get rows matching chromosome or strand and slice."""
     chrom_or_strand, loc = key
     if chrom_or_strand in (col := pr[CHROM_COL].astype(type(chrom_or_strand))).to_numpy():
@@ -113,13 +113,13 @@ def chrom_or_strand_with_slice(pr: "PyRanges", key: tuple) -> "PyRanges":
     return rows
 
 
-def get_chrom_strand_and_range(pr: "PyRanges", key: tuple) -> pd.Series:
+def get_chrom_strand_and_range(pr: "PyRanges", key: tuple) -> "pd.Series":
     """Get rows matching chromosome, strand and range."""
     chrom, strand, _range = key
     return _rows_matching_chrom_and_strand_and_range(pr, chrom, strand, _range)
 
 
-def get_chrom_and_strand(pr: "PyRanges", key: tuple) -> pd.Series:
+def get_chrom_and_strand(pr: "PyRanges", key: str | int) -> "pd.Series[bool]":
     """Get rows matching chromosome or strand.
 
     We do not know whether the key is a chromosome or a strand, so we potentially have to check both.
@@ -127,7 +127,8 @@ def get_chrom_and_strand(pr: "PyRanges", key: tuple) -> pd.Series:
     key_is_chrom = str(key) in (pr[CHROM_COL].astype(str)).to_numpy()
     key_is_strand = pr.has_strand_column and str(key) in pr[STRAND_COL].astype(str).to_numpy()
     if key_is_chrom:
-        rows = pr[CHROM_COL] == str(key)
+        chrom_col: "pd.Series[str]" = pr[CHROM_COL]
+        rows = chrom_col == str(key)
     elif key_is_strand:
         rows = pr[STRAND_COL] == str(key)
     else:

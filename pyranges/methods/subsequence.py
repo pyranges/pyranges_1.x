@@ -26,8 +26,9 @@ def _subseq(
     strand: VALID_GENOMIC_STRAND_TYPE = FORWARD_STRAND,
     **kwargs,
 ) -> "PyRanges":
+    original_class = scdf.__class__
     if scdf.empty:
-        return None
+        return scdf
 
     scdf = scdf.copy()
     orig_order = scdf.index.copy()
@@ -84,11 +85,11 @@ def _subseq(
         j = j.rename(columns={TEMP_START_COL: TEMP_MIN_COL, TEMP_END_COL: TEMP_MAX_COL})
 
     # I'm maintaing the original row order
-    scdf = scdf.merge(j[[*by, TEMP_MIN_COL, TEMP_MAX_COL]], on=by).set_index(TEMP_INDEX_COL).loc[orig_order]
+    _scdf = scdf.merge(j[[*by, TEMP_MIN_COL, TEMP_MAX_COL]], on=by).set_index(TEMP_INDEX_COL).loc[orig_order]
 
     # instead of simply using starts and ends as computed above, we're dealing here with potential out of bounds:
-    r = scdf[~((scdf[START_COL] >= scdf[TEMP_MAX_COL]) | (scdf[END_COL] <= scdf[TEMP_MIN_COL]))].copy()
+    r = _scdf[~((_scdf[START_COL] >= _scdf[TEMP_MAX_COL]) | (_scdf[END_COL] <= _scdf[TEMP_MIN_COL]))].copy()
     r.loc[:, START_COL] = np.maximum(r.Start, r[TEMP_MIN_COL])
     r.loc[:, END_COL] = np.minimum(r.End, r[TEMP_MAX_COL])
 
-    return r.drop([TEMP_MIN_COL, TEMP_MAX_COL], axis=1)
+    return original_class(r.drop([TEMP_MIN_COL, TEMP_MAX_COL], axis=1))

@@ -8,13 +8,13 @@ def _number_overlapping(scdf: pd.DataFrame, ocdf: pd.DataFrame, **kwargs) -> pd.
     column_name = kwargs.get("overlap_col", True)
 
     if scdf.empty:
-        return None
+        return scdf
     if ocdf.empty:
         if keep_nonoverlapping:
             df = scdf.copy()
             df.insert(df.shape[1], column_name, 0)
             return df
-        return None
+        return ocdf
 
     oncls = NCLS(ocdf.Start.to_numpy(), ocdf.End.to_numpy(), ocdf.index.to_numpy())
 
@@ -47,7 +47,7 @@ def _coverage(scdf: pd.DataFrame, ocdf: pd.DataFrame, **kwargs) -> pd.DataFrame:
     fraction_col = kwargs["fraction_col"]
 
     if scdf.empty:
-        return None
+        return scdf
     if ocdf.empty:
         df = scdf.copy()
         df.insert(df.shape[1], fraction_col, 0.0)
