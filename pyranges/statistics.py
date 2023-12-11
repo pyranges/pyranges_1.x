@@ -15,6 +15,7 @@ from pandas import DataFrame, Series
 import pyranges as pr
 from pyranges.methods.statistics import _relative_distance
 from pyranges.names import (
+    CHROM_COL,
     END_COL,
     GENOME_LOC_COLS,
     STRAND_BEHAVIOR_AUTO,
@@ -22,9 +23,11 @@ from pyranges.names import (
     STRAND_BEHAVIOR_SAME,
     VALID_STRAND_BEHAVIOR_TYPE,
 )
-from pyranges.pyranges_helpers import ensure_strand_behavior_options_valid
+from pyranges.pyranges_helpers import ensure_strand_behavior_options_valid, strand_behavior_from_strand_and_validate
 
 if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
     from pyranges import PyRanges
 
 __all__ = [
@@ -169,9 +172,9 @@ def fisher_exact(tp: Series, fp: Series, fn: Series, tn: Series, pseudocount: in
 
 def mcc(
     grs: list["PyRanges"],
-    genome: "PyRanges | pd.DataFrame | dict[str, int] | None" = None,
-    labels: str | None = None,
     *,
+    labels: list[str],
+    genome: "PyRanges | pd.DataFrame | dict[str, int] | None" = None,
     strand: bool = False,
 ) -> DataFrame:
     """Compute Matthew's correlation coefficient for PyRanges overlaps.
@@ -216,12 +219,17 @@ def mcc(
     b  1.00000  1.00000  0.55168
     c  0.55168  0.55168  1.00000
     """
-    _genome, genome_length, _labels = process_genome_data(grs, genome, labels)
+    _genome, genome_length, _labels = process_genome_data(grs, labels=labels, genome=genome)
 
     # remove all non-loc columns before computation
     grs = [gr.merge_overlaps(strand=strand) for gr in grs]
 
-    strand_behavior = STRAND_BEHAVIOR_SAME if strand else STRAND_BEHAVIOR_IGNORE
+    strand_behavior_same = all(
+        strand_behavior_from_strand_and_validate(gr, strand) == STRAND_BEHAVIOR_SAME for gr in grs
+    )
+    strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = (
+        STRAND_BEHAVIOR_SAME if strand_behavior_same else STRAND_BEHAVIOR_IGNORE
+    )
 
     rowdicts = []
     for (lt, lf), (t, f) in zip(_labels, combinations_with_replacement(grs, r=2), strict=True):
@@ -394,7 +402,7 @@ def rowbased_pearson(x: ndarray | DataFrame, y: ndarray | DataFrame) -> ndarray:
     """
     # Thanks to https://github.com/dengemann
 
-    def ss(a: np.array, axis: int) -> np.array:
+    def ss(a: "NDArray[np.float64]", axis: int) -> "NDArray[np.float64]":
         return np.sum(a * a, axis=axis)
 
     x = np.asarray(x)
@@ -770,7 +778,7 @@ class StatisticsMethods:
         not_nan = ~np.isnan(result)
         result.loc[not_nan] = np.floor(result[not_nan] * 100) / 100
         vc = result.value_counts(dropna=False).to_frame().reset_index()
-        vc.columns = "reldist count".split()
+        vc.columns = pd.Index(["reldist", "count"])
         vc.insert(vc.shape[1], "total", len(result))
         vc.insert(vc.shape[1], "fraction", vc["count"] / len(result))
         vc = vc.sort_values("reldist", ascending=True)
@@ -788,10 +796,9 @@ LabelsType = tuple[list[str], list[int]]
 
 
 def process_genome_data(grs: list[Any], genome: GenomeType, labels: LabelsType) -> tuple[pd.DataFrame, int, Iterable]:
-    genome = initialize_genome(grs) if genome is None else ensure_genome_dataframe(genome)
+    _genome = find_chromosome_max_end_positions(grs) if genome is None else ensure_genome_dataframe(genome)
 
-    _genome = create_genome_dataframe(genome) if isinstance(genome, dict) else genome
-    genome_length = compute_genome_length(genome)
+    genome_length = compute_genome_length(_genome)
 
     _labels = (
         generate_labels(labels, grs) if labels is not None else combinations_with_replacement(np.arange(len(grs)), r=2)
@@ -803,23 +810,40 @@ def process_genome_data(grs: list[Any], genome: GenomeType, labels: LabelsType) 
 def ensure_genome_dataframe(genome: GenomeType) -> pd.DataFrame:
     if isinstance(genome, dict):
         return create_genome_dataframe(genome)
-    return genome
+
+    if isinstance(genome, pd.DataFrame):
+        return genome
+
+    msg = f"genome must be dict or DataFrame, was {type(genome)}"
+    raise TypeError(msg)
 
 
-def initialize_genome(grs: list["PyRanges"]) -> dict[str, int]:
-    genome = defaultdict(int)
+def find_chromosome_max_end_positions(grs: list["PyRanges"]) -> dict[str | int, int]:
+    """Find the largest end position in each chromosome.
+
+    Examples
+    --------
+    >>> f1, f2 = pr.example_data.f1, pr.example_data.f2  # both only have chr1
+    >>> f1["End"].max()
+    9
+    >>> f2["End"].max()
+    7
+    >>> pr.stats.find_chromosome_max_end_positions([f1, f2])
+    {'chr1': 9}
+    """
+    genome: dict[str | int, int] = defaultdict(int)
     for gr in grs:
-        for k, v in gr:
-            genome[k] = max(genome[k], v[END_COL].max())
-    return genome
+        for chrom, chrom_df in gr.groupby(CHROM_COL):
+            genome[chrom] = max(chrom_df[END_COL].max(), genome[chrom])
+    return dict(genome)
 
 
 def create_genome_dataframe(genome: dict[str, int]) -> pd.DataFrame:
     return pd.DataFrame({"Chromosome": list(genome.keys()), "Start": 0, "End": list(genome.values())})
 
 
-def compute_genome_length(genome: GenomeType) -> int:
-    return int(genome[END_COL].sum()) if not isinstance(genome, dict) else sum(genome.values())
+def compute_genome_length(genome: pd.DataFrame) -> int:
+    return int(genome[END_COL].sum())
 
 
 def generate_labels(labels: LabelsType, grs: list[Any]) -> Iterable:

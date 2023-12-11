@@ -27,7 +27,7 @@ dependencies = ["pandas", "ncls>=0.0.63", "tabulate", "sorted_nearest>=0.0.33", 
 pyranges_addons = ["pyrle", "bamread", "bwread", "fisher"]
 
 # [project.development-dependencies]
-# dev = ["ruff", "mypy", "pandas-stubs"]
+# dev = ["ruff", "mypy", "pandas-stubs", "numpy-stubs", "types-tabulate"]
 
 
 [tool.setuptools.packages.find]
@@ -56,6 +56,6 @@ line-length = 120
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
-    "E501", "ANN002", "ANN003", "ANN101", "ANN401", "PLR0913", "PLC0415",
+    "E501", "ANN002", "ANN003", "ANN001", "ANN101", "ANN102", "ANN401", "PLR0913", "PLC0415",
     "PD901", "D101", "D100", "D107", "CPY", "D105", "D104",
 ]

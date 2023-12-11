@@ -1,16 +1,16 @@
 from typing import TYPE_CHECKING
 
 import numpy as np
-from sorted_nearest import maketiles, makewindows
+from sorted_nearest import maketiles, makewindows  # type: ignore[import-untyped]
 
-from pyranges.names import END_COL, PYRANGES_OR_RANGEFRAME_TYPE, START_COL, TEMP_END_COL, TEMP_START_COL
+from pyranges.names import END_COL, START_COL, TEMP_END_COL, TEMP_START_COL
 
 if TYPE_CHECKING:
     from pyranges import RangeFrame
 
 
 def _windows(
-    df: PYRANGES_OR_RANGEFRAME_TYPE,
+    df: "RangeFrame",
     *,
     window_size: int,
     **_,
@@ -22,21 +22,22 @@ def _windows(
         window_size,
     )
 
-    df = df.reindex(idxs)
-    df.loc[:, START_COL] = starts
-    df.loc[:, END_COL] = ends
+    _df = df.reindex(idxs)
+    _df.loc[:, START_COL] = starts
+    _df.loc[:, END_COL] = ends
 
-    return df
+    return df.__class__(_df)
 
 
 def _tiles(
-    df: PYRANGES_OR_RANGEFRAME_TYPE,
+    df: "RangeFrame",
     tile_size: int,
     overlap_column: str | None,
     **_,
-) -> PYRANGES_OR_RANGEFRAME_TYPE:
+) -> "RangeFrame":
+    original_class = df.__class__
     if overlap_column is not None:
-        df = df.copy()
+        df = original_class(df.copy())
         df.insert(df.shape[1], TEMP_START_COL, df.Start)
         df.insert(df.shape[1], TEMP_END_COL, df.End)
 
@@ -47,13 +48,13 @@ def _tiles(
         tile_size,
     )
 
-    df = df.reindex(idxs)
-    df.loc[:, START_COL] = starts
-    df.loc[:, END_COL] = ends
+    _df = df.reindex(idxs)
+    _df.loc[:, START_COL] = starts
+    _df.loc[:, END_COL] = ends
 
     if overlap_column is not None:
-        overlap = np.minimum(df.End, df[TEMP_END_COL]) - np.maximum(df.Start, df[TEMP_START_COL])
-        df.insert(df.shape[1], overlap_column, overlap)
-        df = df.drop([TEMP_START_COL, TEMP_END_COL], axis=1)
+        overlap = np.minimum(_df.End, _df[TEMP_END_COL]) - np.maximum(_df.Start, _df[TEMP_START_COL])
+        _df.insert(_df.shape[1], overlap_column, overlap)
+        _df = _df.drop([TEMP_START_COL, TEMP_END_COL], axis=1)
 
-    return df
+    return original_class(_df)

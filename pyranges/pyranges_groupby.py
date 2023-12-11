@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from typing import TYPE_CHECKING
 
 import pandas as pd
 import pandas.core.groupby  # type: ignore[name-defined]
@@ -25,7 +24,7 @@ def return_pyranges_if_possible(
     return wrapper
 
 
-class PyRangesGroupBy(pandas.core.groupby.DataFrameGroupBy):
+class PyRangesGroupBy(pandas.core.groupby.DataFrameGroupBy):  # type: ignore[name-defined]
     @return_pyranges_if_possible
     def agg(self, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":  # noqa: D102
         return super().agg(*args, **kwargs)

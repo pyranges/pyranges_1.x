@@ -1,5 +1,3 @@
-from collections.abc import Callable
-from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import pandas as pd
@@ -8,14 +6,7 @@ from pandas.core.frame import DataFrame
 from pyranges.names import (
     END_COL,
     START_COL,
-    STRAND_COL,
-    VALID_BY_TYPES,
-    VALID_STRAND_TYPE,
 )
-from pyranges.pyranges_helpers import group_keys_single
-
-if TYPE_CHECKING:
-    from pyranges.pyranges_main import PyRanges
 
 
 def _lengths(df: DataFrame) -> pd.Series:
@@ -59,7 +50,7 @@ def _extend(
     ext: int | None = None,
     ext_3: int | None = None,
     ext_5: int | None = None,
-    **kwargs,
+    **_,
 ) -> DataFrame:
     df = df.copy()
     dtype = df.Start.dtype

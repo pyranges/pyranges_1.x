@@ -10,12 +10,10 @@ import pandas as pd
 from natsort import natsort, natsorted  # type: ignore[import]
 
 import pyranges as pr
-from pyranges import multithreaded
 from pyranges.loci_getter import LociGetter
 from pyranges.methods.merge import _merge
 from pyranges.multithreaded import (
     _extend,
-    _extend_grp,
     _tes,
     _tss,
 )
@@ -28,14 +26,12 @@ from pyranges.names import (
     GENOME_LOC_COLS_WITH_STRAND,
     NEAREST_DOWNSTREAM,
     NEAREST_UPSTREAM,
+    OVERLAP_FIRST,
     PANDAS_COMPRESSION_TYPE,
     RANGE_COLS,
     START_COL,
-    STRAND_AUTO,
     STRAND_BEHAVIOR_AUTO,
-    STRAND_BEHAVIOR_IGNORE,
     STRAND_BEHAVIOR_OPPOSITE,
-    STRAND_BEHAVIOR_SAME,
     STRAND_COL,
     TEMP_CUMSUM_COL,
     TEMP_END_SLACK_COL,
@@ -51,20 +47,19 @@ from pyranges.names import (
     VALID_OVERLAP_TYPE,
     VALID_STRAND_BEHAVIOR_TYPE,
     VALID_STRAND_TYPE,
-    OVERLAP_ALL,
-    OVERLAP_FIRST,
 )
 from pyranges.pyranges_groupby import PyRangesGroupBy
-from pyranges.range_frame import RangeFrame
 from pyranges.pyranges_helpers import (
     ensure_strand_behavior_options_valid,
     get_by_columns_including_chromosome_and_strand,
     group_keys_from_strand_behavior,
-    validate_and_convert_strand,
-    strand_behavior_from_strand_and_validate,
-    mypy_ensure_pyranges,
     group_keys_single,
+    mypy_ensure_pyranges,
+    strand_behavior_from_strand_and_validate,
+    strand_from_strand_behavior,
+    validate_and_convert_strand,
 )
+from pyranges.range_frame import RangeFrame
 from pyranges.tostring import tostring
 
 if TYPE_CHECKING:
@@ -402,7 +397,7 @@ class PyRanges(RangeFrame):
                         ),
                     ),
                 ),
-            )
+            ),
         )
 
     @cached_property
@@ -530,9 +525,8 @@ class PyRanges(RangeFrame):
         PyRanges with 1 rows, 10 columns, and 1 index columns. (4 columns not shown: "short_gene_name", "type", "Score", ...).
         Contains 1 chromosomes and 1 strands.
         """
-
         formatted_df = tostring(
-            self, max_col_width=kwargs.get("max_col_width"), max_total_width=kwargs.get("max_total_width")
+            self, max_col_width=kwargs.get("max_col_width"), max_total_width=kwargs.get("max_total_width"),
         )
         return f"{formatted_df}\n{self._chrom_and_strand_info()}."
 
@@ -597,7 +591,6 @@ class PyRanges(RangeFrame):
         res = PyRanges(super().apply_pair(other, function, by=grpby_ks, **kwargs))
 
         if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
-            # other = other.drop(TEMP_STRAND_COL, axis="columns")
             res = mypy_ensure_pyranges(res.drop(TEMP_STRAND_COL, axis="columns"))
 
         return res
@@ -1487,6 +1480,9 @@ class PyRanges(RangeFrame):
         slack : int, default 0
             Consider intervals within a distance of slack to be overlapping.
 
+        by: str or list of str, default: None
+            Find max disjoint intervals for these groups.
+
         Returns
         -------
         PyRanges
@@ -1780,6 +1776,9 @@ class PyRanges(RangeFrame):
         invert : bool, default False
             Whether to return the intervals without overlaps.
 
+        by : str or list of str, default None
+            Only report overlaps when equal values in these columns.
+
         Returns
         -------
         PyRanges
@@ -1848,9 +1847,10 @@ class PyRanges(RangeFrame):
             self.apply_pair(
                 other,
                 _overlap,
+                strand_behavior=strand_behavior,
+                by=by,
                 invert=invert,
                 how=how,
-                strand_behavior=strand_behavior,
             ),
         )
 
@@ -1937,7 +1937,7 @@ class PyRanges(RangeFrame):
         """
         from pyranges.methods.overlap import _overlap
 
-        strand = validate_and_convert_strand(self, strand_behavior)
+        strand = strand_from_strand_behavior(self, other, strand_behavior)
         self_clusters = self.merge_overlaps(strand=strand and self.has_strand_column)
         other_clusters = other.merge_overlaps(strand=strand and other.has_strand_column)
         dfs = self_clusters.apply_pair(other_clusters, _overlap, strand_behavior=strand_behavior, how=how)
@@ -2004,7 +2004,7 @@ class PyRanges(RangeFrame):
         if self.empty and other.empty:
             return pr.PyRanges()
 
-        strand = validate_and_convert_strand(self, strand_behavior)
+        strand = strand_from_strand_behavior(self, other, strand_behavior)
 
         if not strand:
             self = self.remove_strand()
@@ -2688,7 +2688,6 @@ class PyRanges(RangeFrame):
         self,
         tile_size: int,
         *,
-        by: VALID_BY_TYPES = None,
         overlap_column: str | None = None,
         strand: bool | None = None,
     ) -> "PyRanges":
@@ -2784,7 +2783,7 @@ class PyRanges(RangeFrame):
             "tile_size": tile_size,
         }
 
-        res = self.apply_single(_tiles, by=by, **kwargs)
+        res = self.apply_single(_tiles, by=None, **kwargs)
         return mypy_ensure_pyranges(res)
 
     def three_end(self) -> "PyRanges":
@@ -2900,9 +2899,9 @@ class PyRanges(RangeFrame):
         self: "pr.PyRanges",
         path: None = None,
         chromosome_sizes: pd.DataFrame | dict | None = None,
-        divide: bool = False,
         value_col: str | None = None,
         *,
+        divide: bool = False,
         rpm: bool = True,
         dryrun: bool = False,
         chain: bool = False,
@@ -3345,6 +3344,9 @@ class PyRanges(RangeFrame):
             Whether to do operations on chromosome/strand pairs or chromosomes. If None, will use
             chromosome/strand pairs if the PyRanges is stranded.
 
+        by: str or list of str, default None
+            Column(s) to group by.
+
         **kwargs
             Additional keyword arguments to pass as keyword arguments to `f`
 
@@ -3507,7 +3509,7 @@ class PyRanges(RangeFrame):
         ...
         ValueError: Duplicate keys not allowed when preserve_loc_order is True.
         """
-        keys = [key] if isinstance(key, str) else ([*key] or [])
+        keys = [key] if isinstance(key, str) else ([*key])
 
         def _reorder_according_to_b(a: list[str], b: list[str]) -> list[str]:
             for pos, val in zip(sorted([a.index(x) for x in b]), b, strict=True):

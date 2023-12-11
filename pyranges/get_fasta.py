@@ -183,10 +183,10 @@ def get_transcript_sequence(
     Examples
     --------
     >>> import pyranges as pr
-    >>> gr = pr.PyRanges({"Chromosome": ['chr1', 'chr1', 'chr1'],
-    ...                   "Start": [0, 9, 18], "End": [4, 13, 21],
-    ...                   "Strand":['+', '-', '-'],
-    ...                   "transcript": ['t1', 't2', 't2']})
+    >>> gr = pr.PyRanges({"Chromosome": ['chr1'] * 5,
+    ...                   "Start": [0, 9, 18, 9, 18], "End": [4, 13, 21, 13, 21],
+    ...                   "Strand":['+', '-', '-', '-', '-'],
+    ...                   "transcript": ['t1', 't2', 't2', 't4', 't5']})
 
     >>> tmp_handle = open("temp.fasta", "w+")
     >>> _ = tmp_handle.write(">chr1\n")
@@ -197,7 +197,9 @@ def get_transcript_sequence(
     >>> seq
       transcript Sequence
     0         t1     AAAC
-    1         t2  AAATCCC
+    1         t2  TCCCAAA
+    2         t4      AAA
+    3         t5     TCCC
 
     To write to a file in fasta format:
     >>> with open('outfile.fasta', 'w') as fw:
@@ -208,6 +210,7 @@ def get_transcript_sequence(
     """
     gr = gr.sort_by_5_prime_ascending_and_3_prime_descending() if gr.strand_values_valid else gr.sort_by_position()
 
-    gr.col["Sequence"] = get_sequence(gr, path=path, pyfaidx_fasta=pyfaidx_fasta)
+    seq = get_sequence(gr, path=path, pyfaidx_fasta=pyfaidx_fasta)
+    gr.col["Sequence"] = seq
 
     return gr.groupby(group_by, as_index=False).agg({"Sequence": "".join})

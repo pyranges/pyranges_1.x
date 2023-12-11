@@ -54,7 +54,7 @@ class ExampleData:
         for f in files("pyranges").joinpath("data").iterdir():
             if not isinstance(f, Path):
                 msg = f"Expected Path, got {type(f)}"
-                raise ValueError(msg)
+                raise TypeError(msg)
             if "__" not in f.name:
                 paths.append(f)
         ExampleData._files = {f.name: Path(f) for f in paths}

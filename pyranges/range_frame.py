@@ -1,6 +1,6 @@
 from collections.abc import Callable, Iterable
 from functools import cached_property
-from typing import Any, Self
+from typing import Any
 
 import pandas as pd
 
@@ -26,6 +26,8 @@ class ColUpdater:
             self.r.loc[:, key] = value
 
     def __setitem__(self, key: str, value: Any) -> None:
+        if isinstance(value, pd.Series):
+            value = value.to_numpy()
         if key not in self.r.columns:
             self.r.insert(self.r.shape[-1], key, value)
         else:
@@ -48,7 +50,7 @@ class RangeFrame(pd.DataFrame):
             raise ValueError(msg)
 
     def __str__(
-        self, **kwargs
+        self, **kwargs,
     ) -> str:  # , max_col_width: int | None = None, max_total_width: int | None = None) -> str:
         """Return string representation."""
         return tostring(self, max_col_width=kwargs.get("max_col_width"), max_total_width=kwargs.get("max_total_width"))
@@ -203,7 +205,7 @@ class RangeFrame(pd.DataFrame):
             return RangeFrame(function(self, **kwargs))
         by = self._by_to_list(by)
         return _mypy_ensure_rangeframe(
-            self.groupby(by).apply(function, by=by, **kwargs).reset_index(drop=True)  # type: ignore[arg-type]
+            self.groupby(by).apply(function, by=by, **kwargs).reset_index(drop=True),  # type: ignore[arg-type]
         )
 
     def apply_pair(

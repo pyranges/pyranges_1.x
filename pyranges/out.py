@@ -1,16 +1,19 @@
 import csv
 import logging
-from collections.abc import Callable
 from pathlib import Path
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import pandas as pd
+from mypy_extensions import NamedArg
 from natsort import natsorted  # type: ignore[import]
 from pandas.core.frame import DataFrame
 
 from pyranges.names import BIGWIG_SCORE_COL, CHROM_COL, END_COL, GENOME_LOC_COLS, PANDAS_COMPRESSION_TYPE, START_COL
 from pyranges.pyranges_main import PyRanges
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 GTF_COLUMNS_TO_PYRANGES = {
     "seqname": "Chromosome",
@@ -231,7 +234,7 @@ def _pyranges_to_gtf_like(
     df: pd.DataFrame,
     out_format: Literal["gtf", "gff3"],
 ) -> pd.DataFrame:
-    attribute_formatter: Callable[[str, pd.Series, bool], pd.Series]
+    attribute_formatter: Callable[[str, "pd.Series[str]", NamedArg(bool, '_final_column')], "pd.Series[str]"]
     if out_format == "gtf":
         all_columns = _ordered_gtf_columns[:-1]
         rename_columns = PYRANGES_TO_GTF_COLUMNS
@@ -258,7 +261,7 @@ def _pyranges_to_gtf_like(
         col = pd.Series(rest_df[colname])
         isnull = col.isna()
         col = col.astype(str).str.replace("nan", "")
-        new_val = attribute_formatter(colname, col, final_column=i == len(rest_df.columns))
+        new_val = attribute_formatter(colname, col, _final_column=i == len(rest_df.columns))  # type: ignore[call-arg]
         rest_df.loc[:, colname] = rest_df[colname].astype(str)
         rest_df.loc[~isnull, colname] = new_val
         rest_df.loc[isnull, colname] = ""
@@ -269,17 +272,23 @@ def _pyranges_to_gtf_like(
     return outdf
 
 
-def gtf_formatter(colname: str, col: pd.Series, final_column: bool = True):
+def gtf_formatter(colname: str, col: "pd.Series[str]", *, _final_column: bool = True) -> "pd.Series[str]":
+    """Format a column as a GTF attribute column."""
     attribute_template_string = f"{colname}={{col}}"
     return col.apply(lambda x: attribute_template_string.format(col=x))
 
 
-def gff3_formatter(colname: str, col: pd.Series, final_column: bool):
-    attribute_template_string = f"{colname}={{col}}" + ("" if final_column else ";")
+def gff3_formatter(colname: str, col: "pd.Series[str]", *, _final_column: bool) -> "pd.Series[str]":
+    """Format a column as a GFF3 attribute column."""
+    attribute_template_string = f"{colname}={{col}}" + ("" if _final_column else ";")
     return col.apply(lambda x: attribute_template_string.format(col=x))
 
 
-def merge_attributes(attributes: pd.DataFrame, out_format: Literal["gtf", "gff3"]) -> pd.Series:
+def merge_attributes(attributes: pd.DataFrame, out_format: Literal["gtf", "gff3"]) -> "pd.Series[str]":
+    """Merge attributes into a single column.
+
+    The final column in gtf/gff is not separated by tabs, but by other separators.
+    """
     if out_format == "gff":
         return attributes.apply(lambda r: " ".join([v for v in r if v]), axis=1)
     return attributes.apply(lambda r: "".join([v for v in r if v]), axis=1).str.replace(";$", "", regex=True)

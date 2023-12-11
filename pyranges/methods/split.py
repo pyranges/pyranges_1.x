@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 
 from pyranges.names import CHROM_COL, END_COL, RANGE_COLS, START_COL, STRAND_COL, VALID_STRAND_TYPE
-from pyranges.pyranges_helpers import validate_and_convert_strand, mypy_ensure_pyranges
+from pyranges.pyranges_helpers import mypy_ensure_pyranges, validate_and_convert_strand
 
 if TYPE_CHECKING:
     from pyranges import PyRanges

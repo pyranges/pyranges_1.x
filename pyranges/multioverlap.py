@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Optional
 
 from pyranges.methods import concat
-from pyranges.names import GENOME_LOC_COLS_WITH_STRAND, VALID_OVERLAP_TYPE, VALID_STRAND_BEHAVIOR_TYPE
+from pyranges.names import VALID_OVERLAP_TYPE, VALID_STRAND_BEHAVIOR_TYPE
 from pyranges.pyranges_helpers import mypy_ensure_pyranges
 
 if TYPE_CHECKING:

@@ -20,10 +20,11 @@ from pyranges.names import (
 
 if TYPE_CHECKING:
     import pandas as pd
+
     from pyranges import PyRanges
 
 
-def validate_and_convert_strand(self: "PyRanges", strand: VALID_STRAND_OPTIONS) -> bool:
+def validate_and_convert_strand(self: "PyRanges", strand: VALID_STRAND_TYPE) -> bool:
     """Validate and convert strand option."""
     if strand is None or strand == "auto":
         strand = self.strand_values_valid
@@ -39,8 +40,13 @@ def resolve_strand_argument_ensure_valid(
 ) -> bool:
     """Resolve strand argument and ensure it is valid."""
     if strand == STRAND_AUTO:
-        return self.strand_values_valid
-    return strand
+        _strand = self.strand_values_valid
+    elif isinstance(strand, bool):
+        _strand = strand
+    else:
+        msg = f"Only 'auto'/None, True, and False are valid values for strand. Was: {strand}."
+        raise ValueError(msg)
+    return _strand
 
 
 def ensure_strand_behavior_options_valid(
@@ -57,7 +63,7 @@ def ensure_strand_behavior_options_valid(
         raise ValueError(msg)
 
 
-def strand_behavior_from_strand_bool(strand: bool) -> Literal["same", "ignore"]:
+def strand_behavior_from_strand_bool(*, strand: bool) -> Literal["same", "ignore"]:
     """Return strand behavior based on strand bool."""
     return STRAND_BEHAVIOR_SAME if strand else STRAND_BEHAVIOR_IGNORE
 
@@ -106,6 +112,7 @@ def get_by_columns_including_chromosome_and_strand(
     *,
     strand: bool,
 ) -> list[str]:
+    """Return columns to group by including chromosome and strand."""
     if strand and not self.has_strand_column:
         msg = "PyRanges is missing Strand column."
         raise AssertionError(msg)
@@ -122,10 +129,49 @@ def strand_behavior_from_strand_and_validate(
     df: "PyRanges",
     strand: VALID_STRAND_TYPE,
 ) -> VALID_STRAND_BEHAVIOR_TYPE:
+    """Return strand behavior based on strand bool.
+
+    If strand is True, returns same strand behavior, otherwise ignore strand behavior.
+
+    Validates that the needed strand info is present.
+    """
     return STRAND_BEHAVIOR_SAME if validate_and_convert_strand(df, strand) else STRAND_BEHAVIOR_IGNORE
 
 
 def mypy_ensure_pyranges(df: "pd.DataFrame") -> "PyRanges":
+    """Ensure df is a PyRanges.
+
+    Helps mypy.
+    """
     from pyranges import PyRanges
 
     return PyRanges(df)
+
+
+def strand_from_strand_behavior(
+    self: "PyRanges",
+    other: "PyRanges",
+    strand_behavior: VALID_STRAND_BEHAVIOR_TYPE,
+) -> bool:
+    """Return strand based on strand behavior.
+
+    Validates that the needed strand info is present.
+    """
+    if strand_behavior == STRAND_BEHAVIOR_IGNORE:
+        strand = False
+    elif strand_behavior == STRAND_BEHAVIOR_AUTO:
+        strand = self.has_strand_column and other.has_strand_column
+    elif strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
+        if not (self.strand_values_valid and other.strand_values_valid):
+            msg = "Can only do opposite strand operations when both PyRanges contain valid strand info."
+            raise ValueError(msg)
+        strand = True
+    elif strand_behavior == STRAND_BEHAVIOR_SAME:
+        if not (self.has_strand_column and other.has_strand_column):
+            msg = "Cannot use Strand when strand column is missing."
+            raise ValueError(msg)
+        strand = True
+    else:
+        msg = f"Invalid strand behavior: {strand_behavior}"
+        raise ValueError(msg)
+    return strand
