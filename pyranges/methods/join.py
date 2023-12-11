@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 from ncls import NCLS  # type: ignore[import]
-from numpy.typing import NDArray
 
 from pyranges.names import VALID_JOIN_TYPE
 
@@ -22,7 +21,13 @@ def _both_indexes(
     return it.all_overlaps_both(starts, ends, indexes)
 
 
-def _both_dfs(scdf: pd.DataFrame, ocdf: pd.DataFrame, join_type: VALID_JOIN_TYPE, suffix: str = "_b", **kwargs) -> pd.DataFrame:
+def _both_dfs(
+    scdf: pd.DataFrame,
+    ocdf: pd.DataFrame,
+    join_type: VALID_JOIN_TYPE,
+    suffix: str = "_b",
+    **_,
+) -> pd.DataFrame:
     _self_indexes, _other_indexes = _both_indexes(scdf, ocdf)
     if join_type == "inner":
         scdf = scdf.reindex(_self_indexes)

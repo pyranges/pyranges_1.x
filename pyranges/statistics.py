@@ -828,7 +828,8 @@ def find_chromosome_max_end_positions(grs: list["PyRanges"]) -> pd.DataFrame:
     >>> f2["End"].max()
     7
     >>> pr.stats.find_chromosome_max_end_positions([f1, f2])
-    {'chr1': 9}
+      Chromosome  Start  End
+    0       chr1      0    9
     """
     genome: dict[str, int] = defaultdict(int)
     for gr in grs:

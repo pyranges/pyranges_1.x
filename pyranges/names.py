@@ -8,7 +8,7 @@ VALID_OVERLAP_TYPE = Literal["first", "containment", "all"]
 VALID_OVERLAP_OPTIONS = list(get_args(VALID_OVERLAP_TYPE))
 OVERLAP_FIRST, OVERLAP_CONTAINMENT, OVERLAP_ALL = VALID_OVERLAP_OPTIONS
 
-CHROM_COL = "Chromosome"
+CHROM_COL: Final = "Chromosome"
 START_COL = "Start"
 END_COL = "End"
 STRAND_COL = "Strand"
@@ -27,7 +27,7 @@ VALID_GENOMIC_STRAND_INFO = [FORWARD_STRAND, REVERSE_STRAND]
 
 VALID_BY_OPTIONS = str | Iterable[str] | None
 
-STRAND_AUTO = "auto"
+STRAND_AUTO: Final = "auto"
 VALID_STRAND_TYPE = Literal["auto"] | bool
 VALID_STRAND_OPTIONS = [STRAND_AUTO, True, False]
 
@@ -43,16 +43,16 @@ VALID_STRAND_BEHAVIOR_OPTIONS = [
     STRAND_BEHAVIOR_IGNORE,
 ]
 
-JOIN_OUTER = "outer"
-JOIN_INNER = "inner"
-JOIN_RIGHT = "right"
-JOIN_LEFT = "left"
+JOIN_OUTER: Final = "outer"
+JOIN_INNER: Final = "inner"
+JOIN_RIGHT: Final = "right"
+JOIN_LEFT: Final = "left"
 VALID_JOIN_TYPE = Literal["inner", "left", "outer", "right"]
 VALID_JOIN_OPTIONS = [JOIN_INNER, JOIN_LEFT, JOIN_OUTER, JOIN_RIGHT]
 
-NEAREST_ANY_DIRECTION = "any"
-NEAREST_UPSTREAM = "upstream"
-NEAREST_DOWNSTREAM = "downstream"
+NEAREST_ANY_DIRECTION: Final = "any"
+NEAREST_UPSTREAM: Final = "upstream"
+NEAREST_DOWNSTREAM: Final = "downstream"
 VALID_NEAREST_TYPE = Literal["any", "upstream", "downstream"]
 VALID_NEAREST_OPTIONS = [
     NEAREST_ANY_DIRECTION,

@@ -11,6 +11,8 @@ TOTAL_EXON_LENGTH_COL = "__temp_total_exon_len__"
 
 def _spliced_subseq(
     scdf: "pr.PyRanges",
+    start: int = 0,
+    end: int | None = None,
     **kwargs,
 ) -> "pr.PyRanges":
     original_class = scdf.__class__
@@ -43,8 +45,7 @@ def _spliced_subseq(
     g = scdf.groupby(by, dropna=False)
     scdf.insert(scdf.shape[1], TEMP_CUMSUM_COL, g[TEMP_LENGTH_COL].cumsum())
 
-    start = kwargs.get("start", 0)
-    end = kwargs.get("end", scdf[TEMP_CUMSUM_COL].max())
+    end = scdf[TEMP_CUMSUM_COL].max() if end is None else end
 
     minstart_idx = g[TEMP_INDEX_COL].first()
 

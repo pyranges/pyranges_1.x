@@ -1,5 +1,5 @@
 import pandas as pd
-from sorted_nearest import annotate_clusters, cluster_by  # type: ignore[import]
+from sorted_nearest import annotate_clusters  # type: ignore[import]
 
 from pyranges.names import END_COL, START_COL
 
