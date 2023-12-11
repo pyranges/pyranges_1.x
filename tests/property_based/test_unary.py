@@ -152,7 +152,7 @@ def test_cluster(gr, strand) -> None:
             zip(
                 result_df.Cluster.drop_duplicates(),
                 bedtools_df.Cluster.drop_duplicates(),
-            )
+            ),
         )
 
         # bedtools gives different cluster ids than pyranges

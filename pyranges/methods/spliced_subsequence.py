@@ -67,11 +67,12 @@ def _spliced_subseq(
         else:
             exp_len_per_transc = scdf.loc[:, by].merge(len_per_transc, on=by).set_index(TEMP_INDEX_COL).loc[scdf.index]
 
-        if start < 0:
-            start = exp_len_per_transc[TOTAL_EXON_LENGTH_COL] + start
+        starts = exp_len_per_transc[TOTAL_EXON_LENGTH_COL] + start if start < 0 else start
 
-        if end is not None and end < 0:
-            end = exp_len_per_transc[TOTAL_EXON_LENGTH_COL] + end
+        ends = exp_len_per_transc[TOTAL_EXON_LENGTH_COL] + end if end < 0 else end
+    else:
+        starts = start
+        ends = end
 
     cs_start = g[TEMP_CUMSUM_COL].shift(1, fill_value=0)
     cs_start.loc[minstart_idx] = 0
@@ -82,19 +83,19 @@ def _spliced_subseq(
     # here below, start is a scalar if originally provided > 0, or a Series if < 0
     #             end is a scalar if originally None or provided >0, or a Series if provided < 0
     if strand == REVERSE_STRAND:  # and use_strand:
-        start_adjustments = start - cs_start
+        start_adjustments = starts - cs_start
         adjust_start = start_adjustments > 0
         scdf.loc[adjust_start, END_COL] -= start_adjustments[adjust_start].astype(scdf[END_COL].dtype)
 
-        end_adjustments = cs_end - end
+        end_adjustments = cs_end - ends
         adjust_end = end_adjustments > 0
         scdf.loc[adjust_end, START_COL] += end_adjustments[adjust_end].astype(scdf[START_COL].dtype)
     else:
-        start_adjustments = start - cs_start
+        start_adjustments = starts - cs_start
         adjust_start = start_adjustments > 0
         scdf.loc[adjust_start, START_COL] += start_adjustments[adjust_start].astype(scdf[START_COL].dtype)
 
-        end_adjustments = cs_end - end
+        end_adjustments = cs_end - ends
         adjust_end = end_adjustments > 0
         scdf.loc[adjust_end, END_COL] -= end_adjustments[adjust_end].astype(scdf[END_COL].dtype)
 
