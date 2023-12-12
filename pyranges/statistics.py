@@ -590,6 +590,7 @@ def simes(
         columns = list(simes.columns)
         columns.append(columns[0])
         del columns[0]
+        _simes: "PyRanges | DataFrame"
         _simes = mypy_ensure_pyranges(simes[columns])
     else:
         _simes = sdf.groupby(by).Simes.min().reset_index()
