@@ -92,7 +92,7 @@ def get_sequence(
     1    ATTAC
     dtype: object
 
-    >>> gr.col.seq = seq
+    >>> gr["seq"] = seq
     >>> gr
       index  |    Chromosome      Start      End  Strand    seq
       int64  |    object          int64    int64  object    object
@@ -210,6 +210,6 @@ def get_transcript_sequence(
     gr = gr.sort_by_5_prime_ascending_and_3_prime_descending() if gr.strand_values_valid else gr.sort_by_position()
 
     seq = get_sequence(gr, path=path, pyfaidx_fasta=pyfaidx_fasta)
-    gr.col["Sequence"] = seq
+    gr["Sequence"] = seq.to_numpy()
 
     return gr.groupby(group_by, as_index=False).agg({"Sequence": "".join})

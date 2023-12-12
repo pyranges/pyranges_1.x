@@ -14,15 +14,13 @@ from pyranges.methods.concat import concat
 from pyranges.multioverlap import count_overlaps
 from pyranges.names import END_COL
 from pyranges.pyranges_main import PyRanges
-from pyranges.range_frame import RangeFrame
+from pyranges.range_frame.range_frame import RangeFrame  # noqa: F401
 from pyranges.readers import from_string, read_bam, read_bed, read_bigwig, read_gff3, read_gtf  # NOQA: F401
 
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.INFO)
 
-
-RangeFrame = RangeFrame  # noqa: PLW0127
 
 gf = genomicfeatures
 
@@ -116,13 +114,6 @@ def random(
     return PyRanges(random_df.reset_index(drop=True))
 
 
-"""Namespace for statistcal functions.
-
-See Also
---------
-pyranges.statistics : statistcal methods for genomics."""
-
-
 def version_info() -> None:
     """Print version info for pyranges and its dependencies.
 
@@ -148,6 +139,7 @@ def version_info() -> None:
     update_version_info(version_info, "bamread")
     update_version_info(version_info, "pybigwig")
     update_version_info(version_info, "hypothesis")
+    update_version_info(version_info, "pyfaidx")
 
     LOGGER.info(json.dumps(version_info, indent=4))
 

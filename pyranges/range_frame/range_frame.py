@@ -1,41 +1,40 @@
 from collections.abc import Callable, Iterable
 from functools import cached_property
-from typing import Any
 
 import pandas as pd
 
 from pyranges.methods.overlap import _overlap
 from pyranges.names import RANGE_COLS, VALID_BY_TYPES, VALID_OVERLAP_TYPE
+from pyranges.range_frame.range_frame_validator import InvalidRangesReason
 from pyranges.tostring import tostring
-
-
-class ColUpdater:
-    r: "RangeFrame"
-
-    def __init__(self, r: "RangeFrame") -> None:
-        self.__dict__["r"] = r
-
-    def __setattr__(
-        self,
-        key: str,
-        value: Any,
-    ) -> None:
-        if key not in self.r:
-            self.r.insert(self.r.shape[-1], key, value)
-        else:
-            self.r.loc[:, key] = value
-
-    def __setitem__(self, key: str, value: Any) -> None:
-        if isinstance(value, pd.Series):
-            value = value.to_numpy()
-        if key not in self.r.columns:
-            self.r.insert(self.r.shape[-1], key, value)
-        else:
-            self.r.loc[:, key] = value
 
 
 class RangeFrame(pd.DataFrame):
     """Class for range based operations."""
+
+    def __new__(cls, *args, **kwargs) -> "RangeFrame | pd.DataFrame":  # type: ignore[misc]
+        """Create a new instance of a PyRanges object."""
+        # __new__ is a special static method used for creating and
+        # returning a new instance of a class. It is called before
+        # __init__ and is typically used in scenarios requiring
+        # control over the creation of new instances
+
+        if not args:
+            return super().__new__(cls)
+        if not kwargs:
+            return super().__new__(cls)
+
+        df = pd.DataFrame(kwargs.get("data") or (args[0]))
+
+        missing_any_required_columns = not set(RANGE_COLS).issubset(df.columns)
+        if missing_any_required_columns:
+            return df
+
+        return super().__new__(cls)
+
+    @property
+    def _constructor(self) -> type:
+        return RangeFrame
 
     @cached_property
     def _required_columns(self) -> Iterable[str]:
@@ -59,46 +58,6 @@ class RangeFrame(pd.DataFrame):
     def __repr__(self, max_col_width: int | None = None, max_total_width: int | None = None) -> str:
         return self.__str__(max_col_width=max_col_width, max_total_width=max_total_width)
 
-    @property
-    def col(self) -> "ColUpdater":
-        """Add or update a column.
-
-        Returns
-        -------
-        ColUpdater
-
-        Examples
-        --------
-        >>> gr = RangeFrame({"Start": [0, 1], "End": [2, 3]})
-        >>> gr.col.Frame = ["Hi", "There"]
-        >>> gr
-          index  |      Start      End  Frame
-          int64  |      int64    int64  object
-        -------  ---  -------  -------  --------
-              0  |          0        2  Hi
-              1  |          1        3  There
-        DataFrame with 2 rows, 3 columns, and 1 index columns.
-
-        >>> gr.col.Frame = ["Next", "words"]
-        >>> gr
-          index  |      Start      End  Frame
-          int64  |      int64    int64  object
-        -------  ---  -------  -------  --------
-              0  |          0        2  Next
-              1  |          1        3  words
-        DataFrame with 2 rows, 3 columns, and 1 index columns.
-
-        >>> gr.col["Start"] = [5000, 1000]
-        >>> gr
-          index  |      Start      End  Frame
-          int64  |      int64    int64  object
-        -------  ---  -------  -------  --------
-              0  |       5000        2  Next
-              1  |       1000        3  words
-        DataFrame with 2 rows, 3 columns, and 1 index columns.
-        """
-        return ColUpdater(self)
-
     def overlap(
         self,
         other: "RangeFrame",
@@ -120,8 +79,8 @@ class RangeFrame(pd.DataFrame):
 
         Returns
         -------
-        PyRanges
-            PyRanges with overlapping ranges.
+        RangeFrame
+            RangeFrame with overlapping ranges.
 
         Examples
         --------
@@ -135,7 +94,7 @@ class RangeFrame(pd.DataFrame):
               1  |          1        3  b
               2  |          2        5  a
               3  |          2        4  d
-        DataFrame with 4 rows, 3 columns, and 1 index columns.
+        RangeFrame with 4 rows, 3 columns, and 1 index columns.
 
         >>> r2 = pr.RangeFrame({"Start": [0, 2], "End": [1, 20], "Id": list("ad")})
         >>> r2
@@ -144,7 +103,7 @@ class RangeFrame(pd.DataFrame):
         -------  ---  -------  -------  --------
               0  |          0        1  a
               1  |          2       20  d
-        DataFrame with 2 rows, 3 columns, and 1 index columns.
+        RangeFrame with 2 rows, 3 columns, and 1 index columns.
 
         >>> r.overlap(r2, how="first")
           index  |      Start      End  Id
@@ -154,7 +113,7 @@ class RangeFrame(pd.DataFrame):
               1  |          1        3  b
               2  |          2        5  a
               3  |          2        4  d
-        DataFrame with 4 rows, 3 columns, and 1 index columns.
+        RangeFrame with 4 rows, 3 columns, and 1 index columns.
 
         >>> r.overlap(r2, how="containment")
           index  |      Start      End  Id
@@ -162,7 +121,7 @@ class RangeFrame(pd.DataFrame):
         -------  ---  -------  -------  --------
               2  |          2        5  a
               3  |          2        4  d
-        DataFrame with 2 rows, 3 columns, and 1 index columns.
+        RangeFrame with 2 rows, 3 columns, and 1 index columns.
 
         >>> r.overlap(r2, how="all")
           index  |      Start      End  Id
@@ -172,14 +131,14 @@ class RangeFrame(pd.DataFrame):
               1  |          1        3  b
               2  |          2        5  a
               3  |          2        4  d
-        DataFrame with 4 rows, 3 columns, and 1 index columns.
+        RangeFrame with 4 rows, 3 columns, and 1 index columns.
 
         >>> r.overlap(r2, how="all", by="Id")
           index  |      Start      End  Id
           int64  |      int64    int64  object
         -------  ---  -------  -------  --------
               3  |          2        4  d
-        DataFrame with 1 rows, 3 columns, and 1 index columns.
+        RangeFrame with 1 rows, 3 columns, and 1 index columns.
         """
         return self.apply_pair(other, _overlap, how=how, by=by)
 
@@ -253,6 +212,11 @@ class RangeFrame(pd.DataFrame):
     @staticmethod
     def _by_to_list(by: str | Iterable[str] | None) -> list[str]:
         return [by] if isinstance(by, str) else ([*by] if by is not None else [])
+
+    def reasons_why_frame_is_invalid(self) -> list[InvalidRangesReason] | None:
+        __doc__ = InvalidRangesReason.is_invalid_ranges_reasons.__doc__  # noqa: A001, F841
+
+        return InvalidRangesReason.is_invalid_ranges_reasons(self)
 
 
 def _mypy_ensure_rangeframe(r: pd.DataFrame) -> "RangeFrame":

@@ -42,7 +42,7 @@ def empty(
     columns: Iterable[str] | None = None,
     dtype: Series | None = None,
     *,
-    with_strand: bool = False,
+    strand: bool = False,
 ) -> "PyRanges":
     """Create an empty PyRanges.
 
@@ -54,7 +54,7 @@ def empty(
     dtype: Series, default None
         Dtype for the columns.
 
-    with_strand: bool, default False
+    strand: bool, default False
         Whether to create a PyRanges with strand information.
     """
-    return pr.PyRanges(empty_df(with_strand=with_strand, columns=columns, dtype=dtype))
+    return pr.PyRanges(empty_df(with_strand=strand, columns=columns, dtype=dtype))

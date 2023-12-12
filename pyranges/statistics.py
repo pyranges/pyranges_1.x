@@ -75,7 +75,7 @@ def fdr(p_vals: Series) -> Series:
     PyRanges with 3 rows, 5 columns, and 1 index columns.
     Contains 3 chromosomes and 2 strands.
 
-    >>> gr.col.FDR = pr.stats.fdr(gr.PValue)
+    >>> gr["FDR"] = pr.stats.fdr(gr.PValue)
     >>> gr
       index  |    Chromosome        Start        End  Strand        PValue         FDR
       int64  |    object            int64      int64  object       float64     float64

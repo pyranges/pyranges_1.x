@@ -10,6 +10,7 @@ import pandas as pd
 from natsort import natsort, natsorted  # type: ignore[import]
 
 import pyranges as pr
+import pyranges.empty
 from pyranges.loci_getter import LociGetter
 from pyranges.methods.merge import _merge
 from pyranges.multithreaded import (
@@ -59,7 +60,7 @@ from pyranges.pyranges_helpers import (
     strand_from_strand_behavior,
     validate_and_convert_strand,
 )
-from pyranges.range_frame import RangeFrame
+from pyranges.range_frame.range_frame import RangeFrame
 from pyranges.tostring import tostring
 
 if TYPE_CHECKING:
@@ -193,13 +194,6 @@ class PyRanges(RangeFrame):
 
         missing_any_required_columns = not set(GENOME_LOC_COLS).issubset(df.columns)
         if missing_any_required_columns:
-            return df
-
-        any_missing_values = df[RANGE_COLS].isna().any().any() or df[CHROM_COL].isna().any()
-        if any_missing_values:
-            return df
-
-        if not np.all(df[START_COL] < df[END_COL]):
             return df
 
         return super().__new__(cls)
@@ -585,8 +579,8 @@ class PyRanges(RangeFrame):
         by = self._by_to_list(by)
 
         if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
-            self.col[TEMP_STRAND_COL] = self[STRAND_COL].replace({"+": "-", "-": "+"})
-            other.col[TEMP_STRAND_COL] = other[STRAND_COL]
+            self[TEMP_STRAND_COL] = self[STRAND_COL].replace({"+": "-", "-": "+"})
+            other[TEMP_STRAND_COL] = other[STRAND_COL]
 
         grpby_ks = group_keys_from_strand_behavior(self, other, strand_behavior, by=by)
 
@@ -722,7 +716,7 @@ class PyRanges(RangeFrame):
 
         gr = self.copy()
         # Column to save the initial index
-        gr.col[TEMP_INDEX_COL] = np.arange(len(self))
+        gr[TEMP_INDEX_COL] = np.arange(len(self))
 
         # Filtering for desired columns
         sorted_p = gr.get_with_loc_columns([TEMP_INDEX_COL, *self._by_to_list(by)])
@@ -731,18 +725,18 @@ class PyRanges(RangeFrame):
         sorted_p = sorted_p.sort_by_5_prime_ascending_and_3_prime_descending()
 
         # Creating a column saving the length for the intervals (for selenoprofiles and ensembl)
-        sorted_p.col[TEMP_LENGTH_COL] = sorted_p.lengths()
+        sorted_p[TEMP_LENGTH_COL] = sorted_p.lengths()
 
         # Creating a column saving the cumulative length for the intervals
-        sorted_p.col[TEMP_CUMSUM_COL] = sorted_p.groupby(by)[TEMP_LENGTH_COL].cumsum()
+        sorted_p[TEMP_CUMSUM_COL] = sorted_p.groupby(by)[TEMP_LENGTH_COL].cumsum()
 
         # Creating a frame column
-        sorted_p.col[FRAME_COL] = sorted_p[TEMP_CUMSUM_COL] - sorted_p[TEMP_LENGTH_COL]
+        sorted_p[FRAME_COL] = sorted_p[TEMP_CUMSUM_COL] - sorted_p[TEMP_LENGTH_COL]
 
         # Appending the Frame of sorted_p by the index of p
         sorted_p = mypy_ensure_pyranges(sorted_p.sort_values(by=TEMP_INDEX_COL))
 
-        gr.col.Frame = sorted_p.Frame
+        gr["Frame"] = sorted_p.Frame
 
         return mypy_ensure_pyranges(gr.drop(TEMP_INDEX_COL, axis=1))
 
@@ -885,7 +879,7 @@ class PyRanges(RangeFrame):
             cluster_column=cluster_column,
         )
         gr = pr.PyRanges(df)
-        gr.col[cluster_column] = gr.groupby(self.location_cols + _by + [cluster_column]).ngroup()
+        gr[cluster_column] = gr.groupby(self.location_cols + _by + [cluster_column]).ngroup()
         return gr
 
     def copy(self, *args, **kwargs) -> "pr.PyRanges":
@@ -1348,9 +1342,13 @@ class PyRanges(RangeFrame):
         # Note that since some start and end columns are nan, a regular DataFrame is returned.
 
         >>> f1.interval_join(f2, join_type="right")
-          Chromosome  Start  End       Name Chromosome_b  Start_b  End_b Name_b
-        0        NaN    NaN  NaN        NaN         chr1        1      2      a
-        1       chr1    5.0  7.0  interval2         chr1        6      7      b
+          index  |    Chromosome        Start        End  Name       Chromosome_b      Start_b    End_b  Name_b
+          int64  |    object          float64    float64  object     object              int64    int64  object
+        -------  ---  ------------  ---------  ---------  ---------  --------------  ---------  -------  --------
+              0  |    nan                 nan        nan  nan        chr1                    1        2  a
+              1  |    chr1                  5          7  interval2  chr1                    6        7  b
+        PyRanges with 2 rows, 8 columns, and 1 index columns.
+        Contains 1 chromosomes.
 
         With slack 1, bookended features are joined (see row 1):
 
@@ -1367,8 +1365,8 @@ class PyRanges(RangeFrame):
 
         _self = self.copy()
         if slack:
-            _self.col[TEMP_START_SLACK_COL] = _self.Start
-            _self.col[TEMP_END_SLACK_COL] = _self.End
+            _self[TEMP_START_SLACK_COL] = _self.Start
+            _self[TEMP_END_SLACK_COL] = _self.End
 
             _self = _self.extend(slack)
 
@@ -1383,8 +1381,8 @@ class PyRanges(RangeFrame):
             ),
         )
         if slack and len(gr) > 0:
-            gr.col[START_COL] = gr[TEMP_START_SLACK_COL]
-            gr.col[END_COL] = gr[TEMP_END_SLACK_COL]
+            gr[START_COL] = gr[TEMP_START_SLACK_COL]
+            gr[END_COL] = gr[TEMP_END_SLACK_COL]
             gr = pr.PyRanges(gr.drop([TEMP_START_SLACK_COL, TEMP_END_SLACK_COL], axis=1))
 
         return gr
@@ -1452,7 +1450,7 @@ class PyRanges(RangeFrame):
         2    1
         dtype: int64
 
-        >>> gr.col.Length = gr.lengths()
+        >>> gr["Length"] = gr.lengths()
         >>> gr
           index  |    Chromosome      Start      End  Name         Score  Strand        Length
           int64  |    category        int64    int64  object       int64  category       int64
@@ -3073,8 +3071,8 @@ class PyRanges(RangeFrame):
         1	.	exon	4	6	.	.	.
         1	.	exon	6	9	.	.	.
 
-        >>> gr.col.Gene = [1, 2, 3]
-        >>> gr.col.function = ["a b", "c", "def"]
+        >>> gr["Gene"] = [1, 2, 3]
+        >>> gr["function"] = ["a b", "c", "def"]
         >>> gr.to_gff3()
         '1\t.\tgene\t2\t4\t.\t.\t.\tGene=1;function=a b\n1\t.\texon\t4\t6\t.\t.\t.\tGene=2;function=c\n1\t.\texon\t6\t9\t.\t.\t.\tGene=3;function=def\n'
 
@@ -3083,8 +3081,8 @@ class PyRanges(RangeFrame):
         1	.	exon	4	6	.	.	.	Gene=2;function=c
         1	.	exon	6	9	.	.	.	Gene=3;function=def
 
-        >>> gr.col.phase = [0, 2, 1]
-        >>> gr.col.Feature = ['mRNA', 'CDS', 'CDS']
+        >>> gr["phase"] = [0, 2, 1]
+        >>> gr["Feature"] = ['mRNA', 'CDS', 'CDS']
         >>> gr
           index  |      Chromosome    Start      End  Feature       Gene  function      phase
           int64  |           int64    int64    int64  object       int64  object        int64
@@ -3160,7 +3158,7 @@ class PyRanges(RangeFrame):
         1	.	exon	4	6	.	.	.
         1	.	exon	6	9	.	.	.
 
-        >>> gr.col.Feature = ["GENE", "EXON", "EXON"]
+        >>> gr.Feature = ["GENE", "EXON", "EXON"]
         >>> gr.to_gtf()  # the raw string output
         '1\t.\tGENE\t2\t4\t.\t.\t.\t\n1\t.\tEXON\t4\t6\t.\t.\t.\t\n1\t.\tEXON\t6\t9\t.\t.\t.\t\n'
 
@@ -3603,8 +3601,8 @@ class PyRanges(RangeFrame):
             index=self.index,
         )
 
-        self.col[START_COL] = new_starts
-        self.col[END_COL] = new_ends
+        self[START_COL] = new_starts
+        self[END_COL] = new_ends
 
         cols_to_drop = list({start, end, start2, end2}.difference(RANGE_COLS) if drop_old_columns else {})
 
