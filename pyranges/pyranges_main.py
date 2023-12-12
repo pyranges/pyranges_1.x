@@ -47,7 +47,7 @@ from pyranges.names import (
     VALID_NEAREST_TYPE,
     VALID_OVERLAP_TYPE,
     VALID_STRAND_BEHAVIOR_TYPE,
-    VALID_STRAND_TYPE,
+    VALID_STRAND_TYPE, UnaryPyRangeOperation, UnaryRangeFrameOperation,
 )
 from pyranges.pyranges_groupby import PyRangesGroupBy
 from pyranges.pyranges_helpers import (
@@ -523,7 +523,7 @@ class PyRanges(RangeFrame):
 
     def apply_single(  # type: ignore[override]
         self,
-        function: Callable,
+        function: UnaryRangeFrameOperation,
         *,
         by: VALID_BY_TYPES = None,
         **kwargs,
@@ -544,7 +544,7 @@ class PyRanges(RangeFrame):
         return mypy_ensure_pyranges(super().apply_single(function=function, by=by, **kwargs))
 
     def apply_pair(  # type: ignore[override]
-        self,
+        self: "PyRanges",
         other: "PyRanges",
         function: Callable,
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
@@ -579,12 +579,12 @@ class PyRanges(RangeFrame):
 
         grpby_ks = group_keys_from_strand_behavior(self, other, strand_behavior, by=by)
 
-        res = PyRanges(super().apply_pair(other, function, by=grpby_ks, **kwargs))
+        res = mypy_ensure_pyranges(super().apply_pair(other, function, by=grpby_ks, **kwargs))
 
         if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
-            res = mypy_ensure_pyranges(res.drop(TEMP_STRAND_COL, axis="columns"))
+           res = res.drop_and_return(TEMP_STRAND_COL, axis="columns")
 
-        return mypy_ensure_pyranges(res)
+        return res
 
     def boundaries(
         self,
@@ -732,7 +732,7 @@ class PyRanges(RangeFrame):
 
         gr["Frame"] = sorted_p.Frame
 
-        return mypy_ensure_pyranges(gr.drop(TEMP_INDEX_COL, axis=1))
+        return gr.drop_and_return(TEMP_INDEX_COL, axis=1)
 
     @property
     def chromosomes(self) -> list[str]:
@@ -1369,9 +1369,9 @@ class PyRanges(RangeFrame):
         if slack and len(gr) > 0:
             gr[START_COL] = gr[TEMP_START_SLACK_COL]
             gr[END_COL] = gr[TEMP_END_SLACK_COL]
-            gr = gr.drop([TEMP_START_SLACK_COL, TEMP_END_SLACK_COL], axis=1)
+            gr = gr.drop_and_return([TEMP_START_SLACK_COL, TEMP_END_SLACK_COL], axis=1)
 
-        return mypy_ensure_pyranges(gr)
+        return gr
 
     @property
     def length(self) -> int:
@@ -2576,7 +2576,7 @@ class PyRanges(RangeFrame):
 
         result = gr.apply_pair(other_clusters, strand_behavior=strand_behavior, function=_subtraction, by=_by)
 
-        return mypy_ensure_pyranges(result.drop(TEMP_NUM_COL, axis=1))
+        return result.drop_and_return(TEMP_NUM_COL, axis=1)
 
     def summary(
         self,
@@ -3291,7 +3291,7 @@ class PyRanges(RangeFrame):
         """
         if not self.has_strand_column:
             return self
-        return mypy_ensure_pyranges(self.drop(STRAND_COL, axis=1))
+        return self.drop_and_return(STRAND_COL, axis=1)
 
     def window(
         self,
@@ -3574,4 +3574,4 @@ class PyRanges(RangeFrame):
 
         cols_to_drop = list({start, end, start2, end2}.difference(RANGE_COLS) if drop_old_columns else {})
 
-        return mypy_ensure_pyranges(self.drop(labels=cols_to_drop, axis="columns"))
+        return self.drop_and_return(labels=cols_to_drop, axis="columns")

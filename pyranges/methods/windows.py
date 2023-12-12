@@ -1,10 +1,10 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import pandas as pd
 from sorted_nearest import maketiles, makewindows  # type: ignore[import-untyped]
 
-from pyranges.names import END_COL, START_COL, TEMP_END_COL, TEMP_START_COL
+from pyranges.names import END_COL, START_COL, TEMP_END_COL, TEMP_START_COL, RangeFrameType
 from pyranges.range_frame.range_frame import _mypy_ensure_rangeframe
 
 if TYPE_CHECKING:
@@ -12,11 +12,11 @@ if TYPE_CHECKING:
 
 
 def _windows(
-    df: "RangeFrame",
+    df: RangeFrameType,
     *,
     window_size: int,
     **_,
-) -> pd.DataFrame:
+) -> RangeFrameType:
     idxs, starts, ends = makewindows(
         df.index.values,
         df.Start.values,
@@ -28,18 +28,17 @@ def _windows(
     _df.loc[:, START_COL] = starts
     _df.loc[:, END_COL] = ends
 
-    return _df
+    return cast(RangeFrameType, _df)
 
 
 def _tiles(
-    df: "RangeFrame",
+    df: RangeFrameType,
     tile_size: int,
     overlap_column: str | None,
     **_,
 ) -> pd.DataFrame:
-    original_class = df.__class__
     if overlap_column is not None:
-        df = _mypy_ensure_rangeframe(original_class(df.copy()))
+        df = df.copy()
         df.insert(df.shape[1], TEMP_START_COL, df.Start)
         df.insert(df.shape[1], TEMP_END_COL, df.End)
 
@@ -57,6 +56,6 @@ def _tiles(
     if overlap_column is not None:
         overlap = np.minimum(_df.End, _df[TEMP_END_COL]) - np.maximum(_df.Start, _df[TEMP_START_COL])
         _df.insert(_df.shape[1], overlap_column, overlap)
-        _df = _df.drop([TEMP_START_COL, TEMP_END_COL], axis=1)
+        _df = _df.drop_and_return([TEMP_START_COL, TEMP_END_COL], axis=1)
 
     return _df

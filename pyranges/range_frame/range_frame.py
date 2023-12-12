@@ -1,11 +1,13 @@
 import inspect
 from collections.abc import Callable, Iterable
 from functools import cached_property
-from typing import Concatenate
+from typing import Concatenate, overload, Literal, Any
 
 import pandas as pd
+from pandas._typing import IndexLabel, Axis, Level, IgnoreRaise
 
-from pyranges.names import RANGE_COLS, VALID_BY_TYPES, VALID_OVERLAP_TYPE
+from pyranges.names import RANGE_COLS, VALID_BY_TYPES, VALID_OVERLAP_TYPE, UnaryRangeFrameOperation, RangeFrameType, \
+    BinaryRangeFrameOperation
 from pyranges.range_frame.range_frame_validator import InvalidRangesReason
 from pyranges.tostring import tostring
 
@@ -147,7 +149,7 @@ class RangeFrame(pd.DataFrame):
 
     def apply_single(
         self,
-        function: Callable[["RangeFrame"], "RangeFrame"],
+        function: UnaryRangeFrameOperation,
         by: VALID_BY_TYPES,
         **kwargs,
     ) -> "RangeFrame":
@@ -176,7 +178,7 @@ class RangeFrame(pd.DataFrame):
     def apply_pair(
         self,
         other: "RangeFrame",
-        function: Callable[Concatenate["RangeFrame", "RangeFrame", ...], pd.DataFrame],
+        function: BinaryRangeFrameOperation,
         by: VALID_BY_TYPES = None,
         **kwargs,
     ) -> "RangeFrame":
@@ -239,6 +241,19 @@ class RangeFrame(pd.DataFrame):
         __doc__ = InvalidRangesReason.is_invalid_ranges_reasons.__doc__  # noqa: A001, F841
 
         return InvalidRangesReason.is_invalid_ranges_reasons(self)
+
+    def copy(self, *args, **kwargs) -> "RangeFrame":
+        return _mypy_ensure_rangeframe(super().copy(*args, **kwargs))
+
+    def drop(self, *args, **kwargs) -> "RangeFrame | None":
+        return self.__class__(super().drop(*args, **kwargs))
+
+    def drop_and_return[RangeFrameType](self: RangeFrameType, *args, **kwargs) -> RangeFrameType:
+        kwargs["inplace"] = False
+        return self.__class__(super().drop(*args, **kwargs))
+
+    def reindex(self, *args, **kwargs) -> "RangeFrame":
+        return self.__class__(super().reindex(*args, **kwargs))
 
 
 def _mypy_ensure_rangeframe(r: pd.DataFrame) -> "RangeFrame":

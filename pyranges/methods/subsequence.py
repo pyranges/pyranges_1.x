@@ -21,18 +21,19 @@ if TYPE_CHECKING:
 
 
 def _subseq(
-    scdf: "PyRanges",
+    df: "PyRanges",
+    *,
     start: int = 0,
     end: int | None = None,
     strand: VALID_GENOMIC_STRAND_TYPE = FORWARD_STRAND,
     **kwargs,
 ) -> pd.DataFrame:
-    if scdf.empty:
-        return scdf
+    if df.empty:
+        return df
 
-    scdf = scdf.copy()
-    orig_order = scdf.index.copy()
-    scdf.insert(0, TEMP_INDEX_COL, orig_order)
+    df = df.copy()
+    orig_order = df.index.copy()
+    df.insert(0, TEMP_INDEX_COL, orig_order)
 
     by_argument_given = kwargs.get("by")
     _by = kwargs.get("by", TEMP_INDEX_COL)
@@ -54,12 +55,12 @@ def _subseq(
 
     if by_argument_given:
         j = (
-            scdf.groupby(by, dropna=False)[[START_COL, END_COL, TEMP_INDEX_COL, *by]]
+            df.groupby(by, dropna=False)[[START_COL, END_COL, TEMP_INDEX_COL, *by]]
             .agg(agg_dict)
             .set_index(TEMP_INDEX_COL)
         )
     else:
-        j = scdf.groupby(by, dropna=False)[[START_COL, END_COL, TEMP_INDEX_COL]].agg(agg_dict).set_index(TEMP_INDEX_COL)
+        j = df.groupby(by, dropna=False)[[START_COL, END_COL, TEMP_INDEX_COL]].agg(agg_dict).set_index(TEMP_INDEX_COL)
         j.insert(0, TEMP_INDEX_COL, j.index)
         j.index.name = None
 
@@ -85,10 +86,10 @@ def _subseq(
         j = j.rename(columns={TEMP_START_COL: TEMP_MIN_COL, TEMP_END_COL: TEMP_MAX_COL})
 
     # I'm maintaing the original row order
-    _scdf = scdf.merge(j[[*by, TEMP_MIN_COL, TEMP_MAX_COL]], on=by).set_index(TEMP_INDEX_COL).loc[orig_order]
+    _df = df.merge(j[[*by, TEMP_MIN_COL, TEMP_MAX_COL]], on=by).set_index(TEMP_INDEX_COL).loc[orig_order]
 
     # instead of simply using starts and ends as computed above, we're dealing here with potential out of bounds:
-    r = _scdf[~((_scdf[START_COL] >= _scdf[TEMP_MAX_COL]) | (_scdf[END_COL] <= _scdf[TEMP_MIN_COL]))].copy()
+    r = _df[~((_df[START_COL] >= _df[TEMP_MAX_COL]) | (_df[END_COL] <= _df[TEMP_MIN_COL]))].copy()
     r.loc[:, START_COL] = np.maximum(r.Start, r[TEMP_MIN_COL])
     r.loc[:, END_COL] = np.minimum(r.End, r[TEMP_MAX_COL])
 

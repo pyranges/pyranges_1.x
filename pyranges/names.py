@@ -1,5 +1,26 @@
 from collections.abc import Iterable
-from typing import Any, Final, Literal, get_args
+from typing import Any, Final, Literal, get_args, Protocol, TYPE_CHECKING, TypeVar
+
+if TYPE_CHECKING:
+    import pandas as pd
+    from pyranges import PyRanges, RangeFrame
+
+RangeFrameType = TypeVar("RangeFrameType", "RangeFrame", "PyRanges")
+
+
+class UnaryRangeFrameOperation[T: "RangeFrame"](Protocol):
+    def __call__(self, df: T, **kwargs: Any) -> "pd.DataFrame":
+        ...
+
+
+class BinaryRangeFrameOperation(Protocol):
+    def __call__(self, df: "RangeFrame", df2: "RangeFrame", **kwargs: Any) -> "pd.DataFrame":
+        ...
+
+
+class UnaryPyRangeOperation[T: "PyRanges"](Protocol):
+    def __call__(self, df: T, **kwargs: Any) -> "pd.DataFrame":
+        ...
 
 # Define the Literal type
 VALID_OVERLAP_TYPE = Literal["first", "containment", "all"]

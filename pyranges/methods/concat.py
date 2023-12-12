@@ -1,17 +1,15 @@
 """Module for PyRanges concat method."""
-
+import typing
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from pyranges.pyranges_helpers import mypy_ensure_pyranges
-
 if TYPE_CHECKING:
-    from pyranges import PyRanges
+    from pyranges import RangeFrame
 
 
-def concat(grs: Iterable["PyRanges"], *args, **kwargs) -> "PyRanges":
+def concat(grs: Iterable["RangeFrame"], *args, **kwargs) -> "RangeFrame":
     """Concatenate PyRanges.
 
     Parameters
@@ -58,4 +56,4 @@ def concat(grs: Iterable["PyRanges"], *args, **kwargs) -> "PyRanges":
     PyRanges with 5 rows, 6 columns, and 1 index columns.
     Contains 1 chromosomes and 2 strands (including non-genomic strands: nan).
     """
-    return mypy_ensure_pyranges(pd.concat(grs, *args, **kwargs))
+    return typing.cast("RangeFrame", list(grs)[0].__class__(pd.concat([pd.DataFrame(gr) for gr in grs], *args, **kwargs)))
