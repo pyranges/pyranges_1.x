@@ -4,8 +4,7 @@ from collections.abc import Iterable
 import pandas as pd
 from pandas import Series
 
-import pyranges as pr
-from pyranges import names
+from pyranges import mypy_ensure_pyranges, names
 
 if typing.TYPE_CHECKING:
     from pyranges.pyranges_main import PyRanges
@@ -57,4 +56,4 @@ def empty(
     strand: bool, default False
         Whether to create a PyRanges with strand information.
     """
-    return pr.PyRanges(empty_df(with_strand=strand, columns=columns, dtype=dtype))
+    return mypy_ensure_pyranges(empty_df(with_strand=strand, columns=columns, dtype=dtype))

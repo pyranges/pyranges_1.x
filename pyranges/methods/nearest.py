@@ -8,16 +8,17 @@ from sorted_nearest import (  # type: ignore[import]
     nearest_previous_nonoverlapping,
 )
 
+import pyranges.empty
 from pyranges import PyRanges
 from pyranges.methods.sort import sort_one_by_one
 from pyranges.names import END_COL, START_COL
 
 if TYPE_CHECKING:
-    from numpy.typing import ArrayLike
+    from numpy.typing import ArrayLike, NDArray
     from pandas import DataFrame
 
 
-def _insert_distance(ocdf: pd.DataFrame, dist: pd.Series | int, suffix: str) -> pd.DataFrame:
+def _insert_distance(ocdf: pd.DataFrame, dist: "NDArray | int", suffix: str) -> pd.DataFrame:
     if "Distance" not in ocdf:
         distance_column_name = "Distance"
     elif "Distance" + suffix not in ocdf:
@@ -73,7 +74,7 @@ def _next_nonoverlapping(
     left_ends: pd.Series,
     right_starts: pd.Series,
     right_indexes: "ArrayLike",
-) -> tuple[pd.Series, pd.Series]:
+) -> tuple["NDArray", "NDArray"]:
     left_ends = left_ends.sort_values()
     right_starts = right_starts.sort_values()
     r_idx, dist = nearest_next_nonoverlapping(left_ends.to_numpy() - 1, right_starts.to_numpy(), right_indexes)
@@ -83,7 +84,7 @@ def _next_nonoverlapping(
     return r_idx, dist
 
 
-def _previous_nonoverlapping(left_starts: pd.Series, right_ends: pd.Series) -> tuple[pd.Series, pd.Series]:
+def _previous_nonoverlapping(left_starts: pd.Series, right_ends: pd.Series) -> tuple["NDArray", "NDArray"]:
     left_starts = left_starts.sort_values()
     right_ends = right_ends.sort_values()
     r_idx, dist = nearest_previous_nonoverlapping(
@@ -98,7 +99,7 @@ def _previous_nonoverlapping(left_starts: pd.Series, right_ends: pd.Series) -> t
     return r_idx, dist
 
 
-def _nearest(scdf: "DataFrame", ocdf: "DataFrame", **kwargs) -> "PyRanges":
+def _nearest(scdf: "DataFrame", ocdf: "DataFrame", **kwargs) -> pd.DataFrame:
     if scdf.empty or ocdf.empty:
         return PyRanges()
 
@@ -119,7 +120,9 @@ def _nearest(scdf: "DataFrame", ocdf: "DataFrame", **kwargs) -> "PyRanges":
         nearest_df, df_to_find_nearest_in = _overlapping_for_nearest(scdf, ocdf, suffix)
     else:
         df_to_find_nearest_in = scdf
+        nearest_df = pyranges.empty.empty()
 
+    df = pyranges.empty.empty_df()
     if not df_to_find_nearest_in.empty:
         df_to_find_nearest_in = sort_one_by_one(df_to_find_nearest_in, "Start", "End")
         ocdf = sort_one_by_one(ocdf, "Start", "End")
@@ -142,8 +145,8 @@ def _nearest(scdf: "DataFrame", ocdf: "DataFrame", **kwargs) -> "PyRanges":
 
         ocdf = _insert_distance(ocdf, dist, suffix)
 
-        r_idx = pd.Series(r_idx, index=ocdf.index)
-        df_to_find_nearest_in = df_to_find_nearest_in.drop(r_idx.loc[r_idx == -1].index)
+        _r_idx = pd.Series(r_idx, index=ocdf.index)
+        df_to_find_nearest_in = df_to_find_nearest_in.drop(_r_idx[_r_idx == -1].index)
 
         df = df_to_find_nearest_in.join(ocdf, rsuffix=suffix)
 

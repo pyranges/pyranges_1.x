@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 import numpy as np
+import pandas as pd
 
 from pyranges.names import (
     END_COL,
@@ -25,8 +26,7 @@ def _subseq(
     end: int | None = None,
     strand: VALID_GENOMIC_STRAND_TYPE = FORWARD_STRAND,
     **kwargs,
-) -> "PyRanges":
-    original_class = scdf.__class__
+) -> pd.DataFrame:
     if scdf.empty:
         return scdf
 
@@ -92,4 +92,4 @@ def _subseq(
     r.loc[:, START_COL] = np.maximum(r.Start, r[TEMP_MIN_COL])
     r.loc[:, END_COL] = np.minimum(r.End, r[TEMP_MAX_COL])
 
-    return original_class(r.drop([TEMP_MIN_COL, TEMP_MAX_COL], axis=1))
+    return r.drop([TEMP_MIN_COL, TEMP_MAX_COL], axis=1)

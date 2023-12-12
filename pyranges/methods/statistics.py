@@ -35,4 +35,4 @@ def _relative_distance(scdf: "RangeFrame", ocdf: "RangeFrame", **_) -> "pd.Serie
 
     result[np.isnan(result)] = 0
 
-    return result[~np.isinf(result)]
+    return pd.Series(result[~np.isinf(result)])

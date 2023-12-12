@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-import pyranges as pr
+from pyranges.pyranges_helpers import mypy_ensure_pyranges
 
 if TYPE_CHECKING:
     from pyranges import PyRanges
@@ -31,6 +31,7 @@ def concat(grs: Iterable["PyRanges"], *args, **kwargs) -> "PyRanges":
 
     Examples
     --------
+    >>> import pyranges as pr
     >>> gr1 = pr.example_data.f2
     >>> gr2 = pr.example_data.f1
     >>> pr.concat([gr1, gr2])
@@ -57,4 +58,4 @@ def concat(grs: Iterable["PyRanges"], *args, **kwargs) -> "PyRanges":
     PyRanges with 5 rows, 6 columns, and 1 index columns.
     Contains 1 chromosomes and 2 strands (including non-genomic strands: nan).
     """
-    return pr.PyRanges(pd.concat(grs, *args, **kwargs))
+    return mypy_ensure_pyranges(pd.concat(grs, *args, **kwargs))

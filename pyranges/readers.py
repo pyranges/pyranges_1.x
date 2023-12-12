@@ -1,11 +1,15 @@
 import logging
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from natsort import natsorted  # type: ignore[import]
 
-from pyranges.pyranges_main import PyRanges
+from pyranges.pyranges_helpers import mypy_ensure_pyranges
+
+if TYPE_CHECKING:
+    from pyranges.pyranges_main import PyRanges
 
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
@@ -46,7 +50,7 @@ def from_string(s: str) -> "PyRanges":
 
     df = pd.read_csv(StringIO(s), sep=r"\s+", index_col=None)
 
-    return PyRanges(df)
+    return mypy_ensure_pyranges(df)
 
 
 def read_bed(f: Path, /, nrows: int | None = None) -> "PyRanges":
@@ -118,7 +122,7 @@ def read_bed(f: Path, /, nrows: int | None = None) -> "PyRanges":
 
     df.columns = pd.Index(columns[: df.shape[1]])
 
-    return PyRanges(df)
+    return mypy_ensure_pyranges(df)
 
 
 def read_bam(
@@ -202,14 +206,9 @@ def read_bam(
         sys.exit(1)
 
     if sparse:
-        df = bamread.read_bam(path, mapq, required_flag, filter_flag)
-    else:
-        try:
-            df = bamread.read_bam_full(path, mapq, required_flag, filter_flag)
-        except AttributeError:
-            LOGGER.exception("bamread version 0.0.6 or higher is required to read bam non-sparsely.")
-
-    return PyRanges(df)
+        return mypy_ensure_pyranges(bamread.read_bam(path, mapq, required_flag, filter_flag))
+    df = bamread.read_bam_full(path, mapq, required_flag, filter_flag)
+    return mypy_ensure_pyranges(df)
 
 
 def _fetch_gene_transcript_exon_id(attribute: pd.Series, annotation: str | None = None) -> pd.DataFrame:
@@ -393,7 +392,7 @@ def read_gtf_full(
     df = pd.concat(dfs, sort=False)
     df.loc[:, "Start"] = df.Start - 1
 
-    return PyRanges(df)
+    return mypy_ensure_pyranges(df)
 
 
 def parse_kv_fields(line: str) -> list[list[str]]:
@@ -403,6 +402,7 @@ def parse_kv_fields(line: str) -> list[list[str]]:
 
 def to_rows(anno: pd.Series, *, ignore_bad: bool = False) -> pd.DataFrame:
     """Parse GTF attribute column into a dataframe of attribute columns."""
+    entry = ""
     try:
         row = anno.head(1)
         for entry in row:
@@ -412,6 +412,7 @@ def to_rows(anno: pd.Series, *, ignore_bad: bool = False) -> pd.DataFrame:
         raise AttributeError(msg) from AttributeError
 
     rowdicts = []
+    line = ""
     try:
         for line in anno:
             rowdicts.append(dict(parse_kv_fields(line)))  # noqa: PERF401
@@ -437,6 +438,7 @@ def to_rows_keep_duplicates(anno: pd.Series, *, ignore_bad: bool = False) -> pd.
     [{'gene': 'DDX11L1,sonic', 'unique': 'hi'}]
     """
     rowdicts = []
+    line = ""
     try:
         for line in anno:
             rowdict = {}
@@ -509,7 +511,7 @@ def read_gtf_restricted(f: str | Path, skiprows: int | None, nrows: int | None =
 
     df.loc[:, "Start"] = df.Start - 1
 
-    return PyRanges(df)
+    return mypy_ensure_pyranges(df)
 
 
 def to_rows_gff3(anno: pd.Series) -> pd.DataFrame:
@@ -587,7 +589,7 @@ def read_gff3(
 
     df.loc[:, "Start"] = df.Start - 1
 
-    return PyRanges(df)
+    return mypy_ensure_pyranges(df)
 
 
 def read_bigwig(f: str | Path) -> "PyRanges":
@@ -658,4 +660,4 @@ def read_bigwig(f: str | Path) -> "PyRanges":
             },
         )
 
-    return PyRanges(pd.concat(dfs))
+    return mypy_ensure_pyranges(pd.concat(dfs))

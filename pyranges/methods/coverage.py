@@ -34,7 +34,7 @@ def _number_overlapping(scdf: pd.DataFrame, ocdf: pd.DataFrame, **kwargs) -> pd.
     missing = pd.DataFrame(data={"Index": _missing_indexes, "Count": 0}, index=_missing_indexes)
     counts_per_read = pd.concat([counts_per_read, missing])
 
-    counts_per_read = counts_per_read.set_index("Index").sort_index()
+    counts_per_read = counts_per_read.set_index("Index").sort_index().squeeze()
 
     df.insert(df.shape[1], column_name, counts_per_read)
 

@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING
+import typing
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 from pandas.core.frame import DataFrame
@@ -10,6 +11,12 @@ __all__ = ["genome_bounds", "tile_genome", "GenomicFeaturesMethods"]
 from pyranges.pyranges_helpers import mypy_ensure_pyranges
 
 if TYPE_CHECKING:
+    try:
+        import pyfaidx  # type: ignore[import]
+
+        FastaIdx = pyfaidx.Fasta
+    except ImportError:
+        FastaIdx = Any
     from pyranges import PyRanges
 
 
@@ -61,7 +68,6 @@ class GenomicFeaturesMethods:
         Contains 1 chromosomes and 2 strands.
         """
         gr = self.pr
-        original_class = gr.__class__
 
         if not gr.strand_values_valid:
             msg = (
@@ -70,12 +76,12 @@ class GenomicFeaturesMethods:
             )
             raise AssertionError(msg)
 
-        _gr = gr[gr.Feature == "transcript"]
-        _gr = _gr.groupby(CHROM_COL).apply(_tss).reset_index(drop=True)
+        gr = mypy_ensure_pyranges(gr.loc[gr.Feature == "transcript"])
+        gr = gr.groupby(CHROM_COL).apply(_tss).reset_index(drop=True)
 
-        _gr.Feature = "tss"
+        gr.Feature = "tss"
 
-        return original_class(_gr)
+        return gr
 
     def tes(self) -> "PyRanges":
         """Return the transcription end sites.
@@ -264,7 +270,7 @@ def _outside_bounds(df: DataFrame, **kwargs) -> DataFrame:
 
 def genome_bounds(
     gr: "PyRanges",
-    chromsizes: dict[str, int],
+    chromsizes: "dict[str | int, int] | PyRanges",
     *,
     clip: bool = False,
     only_right: bool = False,
@@ -341,18 +347,11 @@ def genome_bounds(
     """
     if isinstance(chromsizes, pd.DataFrame):
         chromsizes = dict(*zip(chromsizes[CHROM_COL], chromsizes[END_COL], strict=True))
-
     elif isinstance(chromsizes, dict):
         pass
-
-    else:
-        try:
-            import pyfaidx  # type: ignore[import]
-
-            if isinstance(chromsizes, pyfaidx.Fasta):
-                chromsizes = {k: len(chromsizes[k]) for k in chromsizes}
-        except ImportError:
-            pass
+    else:  # A hack because pyfaidx might not be installed, but we want type checking anyway
+        pyfaidx_chromsizes = typing.cast(dict[str | int, list], chromsizes)
+        chromsizes = {k: len(pyfaidx_chromsizes[k]) for k in pyfaidx_chromsizes}
 
     if missing_keys := set(gr[CHROM_COL]).difference(set(chromsizes.keys())):
         msg = f"""Not all chromosomes were in the chromsize dict. This might mean that their types differed.
@@ -383,7 +382,7 @@ def _last_tile(df: DataFrame, sizes: dict[str, int]) -> DataFrame:
 
 
 def tile_genome(
-    chromsizes: "PyRanges",
+    chromsizes: "PyRanges | pd.DataFrame | dict[str | int, int]",
     tile_size: int,
     *,
     tile_last: bool = False,
@@ -449,7 +448,7 @@ def tile_genome(
     else:
         chromsize_dict = dict(zip(chromsizes[CHROM_COL], chromsizes[END_COL], strict=True))
 
-    gr = chromsizes.tile(tile_size)
+    gr = mypy_ensure_pyranges(chromsizes).tile(tile_size)
 
     if not tile_last:
         gr = gr.groupby(CHROM_COL).apply(_last_tile, sizes=chromsize_dict).reset_index(drop=True)

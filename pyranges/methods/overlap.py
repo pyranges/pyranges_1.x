@@ -11,6 +11,7 @@ from pyranges.names import (
     VALID_OVERLAP_OPTIONS,
     VALID_OVERLAP_TYPE,
 )
+from pyranges.range_frame.range_frame import _mypy_ensure_rangeframe
 
 if TYPE_CHECKING:
     import pyranges as pr
@@ -58,10 +59,9 @@ def _overlap(
     how: VALID_OVERLAP_TYPE = OVERLAP_ALL,
     *,
     invert: bool = False,
-) -> "pr.RangeFrame":
-    original_type = scdf.__class__
+) -> pd.DataFrame:
     if invert:
-        scdf = original_type(scdf.copy())
+        scdf = _mypy_ensure_rangeframe(scdf.copy())
         scdf.insert(scdf.shape[1], "__ix__", np.arange(len(scdf)))
 
     indexes = _overlap_indices(scdf, ocdf, how)
@@ -72,7 +72,7 @@ def _overlap(
         found_idxs = getattr(_result, "__ix__", [])
         _result = scdf[~pd.Series(scdf.__ix__).isin(found_idxs)]
         _result = _result.drop("__ix__", axis=1)
-    return original_type(_result)
+    return _result
 
 
 def _count_overlaps(
@@ -80,8 +80,7 @@ def _count_overlaps(
     ocdf: "RangeFrame",
     name: str,
     **_,
-) -> "RangeFrame":
-    original_class = scdf.__class__
+) -> pd.DataFrame:
     idx = _overlapping_indices(scdf, ocdf)
     vc: "pd.Series[int]" = idx.value_counts(sort=False)
     sx = pd.DataFrame(np.zeros(len(scdf), dtype=np.int64), index=scdf.index)
@@ -89,4 +88,4 @@ def _count_overlaps(
     sx.loc[vc.index, 0] = vc.to_numpy()
 
     scdf.insert(scdf.shape[1], name, sx.squeeze())
-    return original_class(scdf)
+    return scdf

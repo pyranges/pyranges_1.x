@@ -1,7 +1,7 @@
 import csv
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import Literal, Protocol
 
 import numpy as np
 import pandas as pd
@@ -10,11 +10,6 @@ from pandas.core.frame import DataFrame
 
 from pyranges.names import BIGWIG_SCORE_COL, CHROM_COL, END_COL, GENOME_LOC_COLS, PANDAS_COMPRESSION_TYPE, START_COL
 from pyranges.pyranges_main import PyRanges
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from mypy_extensions import NamedArg
 
 GTF_COLUMNS_TO_PYRANGES = {
     "seqname": "Chromosome",
@@ -80,11 +75,11 @@ def _fill_missing(df: DataFrame, all_columns: list[str]) -> DataFrame:
 
 
 def _bed(df: DataFrame, *, keep: bool) -> DataFrame:
-    all_columns = "Chromosome Start End Name Score Strand".split()
+    bed_columns = ["Chromosome", "Start", "End", "Name", "Score", "Strand"]
 
-    outdf = _fill_missing(df, all_columns)
+    outdf = _fill_missing(df, bed_columns)
 
-    noncanonical = list(set(df.columns) - set(all_columns))
+    noncanonical = list(set(df.columns) - set(bed_columns))
     noncanonical = [c for c in df.columns if c in noncanonical]
 
     if keep:
@@ -231,11 +226,17 @@ def _to_bigwig(
     return None
 
 
+class AttributeFormatter(Protocol):
+    def __call__(self, colname: str, col: "pd.Series[str]", *, _final_column: bool) -> "pd.Series[str]":
+        """Stub to properly annotate forced named args (..., *, ...)."""
+        ...
+
+
 def _pyranges_to_gtf_like(
     df: pd.DataFrame,
     out_format: Literal["gtf", "gff3"],
 ) -> pd.DataFrame:
-    attribute_formatter: Callable[[str, "pd.Series[str]", NamedArg(bool, "_final_column")], "pd.Series[str]"]
+    attribute_formatter: AttributeFormatter
     if out_format == "gtf":
         all_columns = _ordered_gtf_columns[:-1]
         rename_columns = PYRANGES_TO_GTF_COLUMNS

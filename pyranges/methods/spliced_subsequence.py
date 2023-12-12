@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING
 
+import pandas as pd
+
 from pyranges.names import END_COL, REVERSE_STRAND, START_COL, TEMP_CUMSUM_COL, TEMP_INDEX_COL, TEMP_LENGTH_COL
 
 if TYPE_CHECKING:
@@ -14,8 +16,7 @@ def _spliced_subseq(
     start: int = 0,
     end: int | None = None,
     **kwargs,
-) -> "pr.PyRanges":
-    original_class = scdf.__class__
+) -> pd.DataFrame:
     if scdf.empty:
         return scdf
 
@@ -102,4 +103,4 @@ def _spliced_subseq(
     _scdf = scdf.loc[orig_order]
     _scdf = _scdf[(_scdf[START_COL] < _scdf[END_COL])]
 
-    return original_class(_scdf.drop([TEMP_INDEX_COL, TEMP_LENGTH_COL, TEMP_CUMSUM_COL], axis=1))
+    return _scdf.drop([TEMP_INDEX_COL, TEMP_LENGTH_COL, TEMP_CUMSUM_COL], axis=1)

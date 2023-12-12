@@ -5,8 +5,9 @@ import numpy as np
 import pandas as pd
 
 if typing.TYPE_CHECKING:
-    from pyranges import PyRanges  # noqa: TCH004
+    from pyranges import PyRanges
 from pyranges.names import CHROM_COL, END_COL, START_COL, STRAND_COL
+from pyranges.pyranges_helpers import mypy_ensure_pyranges
 
 # Three types of accessors:
 # 1. Columns or columns, rows
@@ -24,9 +25,7 @@ class LociGetter:
         self,
         key: LociKeyType,
     ) -> "PyRanges":
-        from pyranges import PyRanges  # local import to avoid circular import
-
-        return PyRanges(self.pr.loc[self._matching_rows(key)])
+        return mypy_ensure_pyranges(self.pr.loc[self._matching_rows(key)])
 
     def _matching_rows(
         self,
@@ -106,7 +105,7 @@ def chrom_or_strand_with_slice(pr: "PyRanges", key: tuple) -> "pd.Series[bool]":
         gr = pr[col == chrom_or_strand]
         rows = _rows_matching_range(gr, loc)
     elif pr.strand_values_valid and chrom_or_strand in (col := pr[STRAND_COL].astype(type(chrom_or_strand))).to_numpy():
-        rows = _rows_matching_range(PyRanges(pr[col == chrom_or_strand]), loc)
+        rows = _rows_matching_range(pr.loc[col == chrom_or_strand], loc)
     else:
         msg = f"Chromosome or strand {chrom_or_strand} not found in PyRanges."
         raise KeyError(msg)

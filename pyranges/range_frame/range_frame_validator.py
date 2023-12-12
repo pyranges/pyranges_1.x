@@ -16,6 +16,7 @@ class InvalidRangesReason:
     @property
     @abc.abstractmethod
     def invalid_part(self) -> "pd.DataFrame":
+        """Return the invalid part of the range."""
         return self._invalid_part
 
     @invalid_part.setter
@@ -25,14 +26,15 @@ class InvalidRangesReason:
     @property
     @abc.abstractmethod
     def reason(self) -> str:
-        pass
+        """Return the reason why the range is invalid."""
 
     @staticmethod
     @abc.abstractmethod
     def check_and_possibly_return_invalid_part(df: "pd.DataFrame") -> "InvalidRangesReason | None":
-        pass
+        """Check if a rangeframe is invalid and return the rows that are invalid."""
 
     def to_dict(self) -> dict[str, "str | pd.DataFrame"]:
+        """Return a dict representation."""
         return {"reason": self.reason, "invalid_part": self.invalid_part}
 
     @staticmethod
@@ -101,7 +103,7 @@ class StartsOrEndsMissingValues(InvalidRangesReason):
     reason: str = "Some starts or ends are nan."
 
     @staticmethod
-    def check_and_possibly_return_invalid_part(df: "pd.DataFrame") -> "InvalidRangesReason | None":
+    def check_and_possibly_return_invalid_part(df: "pd.DataFrame") -> "InvalidRangesReason | None":  # noqa: D102
         any_missing_values = df[RANGE_COLS].isna()
         if any_missing_values.any().any():
             return StartsOrEndsMissingValues(df.loc[any_missing_values.any(axis=1)])
@@ -114,7 +116,7 @@ class EmptyOrNegativeIntervals(InvalidRangesReason):
     reason: str = "Some intervals are empty or negative length (end <= start)."
 
     @staticmethod
-    def check_and_possibly_return_invalid_part(df: "pd.DataFrame") -> "InvalidRangesReason | None":
+    def check_and_possibly_return_invalid_part(df: "pd.DataFrame") -> "InvalidRangesReason | None":  # noqa: D102
         if np.any(empty_or_negative_filter := (df[START_COL] >= df[END_COL])):
             return EmptyOrNegativeIntervals(df.loc[empty_or_negative_filter])
         return None
@@ -126,7 +128,7 @@ class StartOrEndsNegative(InvalidRangesReason):
     reason: str = "Some starts or ends are < 0."
 
     @staticmethod
-    def check_and_possibly_return_invalid_part(df: "pd.DataFrame") -> "InvalidRangesReason | None":
+    def check_and_possibly_return_invalid_part(df: "pd.DataFrame") -> "InvalidRangesReason | None":  # noqa: D102
         if np.any(negative_filter := (df[RANGE_COLS] < 0)):
             return StartOrEndsNegative(df.loc[negative_filter.any(axis="columns")])
         return None

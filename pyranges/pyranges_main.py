@@ -206,13 +206,6 @@ class PyRanges(RangeFrame):
     def _constructor(self) -> type:
         return pr.PyRanges
 
-    def to_pyranges(self) -> "pr.PyRanges":
-        """Return self.
-
-        Helpful because it helps mypy understand we return a PyRanges, not just a DataFrame.
-        """
-        return PyRanges(self)
-
     @property
     def features(self) -> "GenomicFeaturesMethods":
         """Namespace for genomic-features methods."""
@@ -381,16 +374,18 @@ class PyRanges(RangeFrame):
         Contains 15 chromosomes and 2 strands.
         """
         self = mypy_ensure_pyranges(self.sort_values(([STRAND_COL] if self.has_strand_column else []) + RANGE_COLS))
+        sorted_indexlike = np.array(
+            natsort.order_by_index(
+                [int(i) for i in self.index],
+                natsort.index_natsorted(
+                    self[CHROM_COL],
+                ),
+            ),
+        )
+        index = pd.Series(sorted_indexlike)
         return mypy_ensure_pyranges(
             self.reindex(
-                index=pd.Series(
-                    natsort.order_by_index(
-                        [int(i) for i in self.index],
-                        natsort.index_natsorted(
-                            self[CHROM_COL],
-                        ),
-                    ),
-                ),
+                index=index,
             ),
         )
 
@@ -589,7 +584,7 @@ class PyRanges(RangeFrame):
         if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
             res = mypy_ensure_pyranges(res.drop(TEMP_STRAND_COL, axis="columns"))
 
-        return res
+        return mypy_ensure_pyranges(res)
 
     def boundaries(
         self,
@@ -654,13 +649,12 @@ class PyRanges(RangeFrame):
             msg = "by must be a string or list of strings"
             raise ValueError(msg)
 
-        result = self.apply_single(
+        return self.apply_single(
             _bounds,
             by=self._by_to_list(by),
             agg=agg,
             strand=self.strand_values_valid,
         )
-        return pr.PyRanges(result)
 
     def calculate_frame(self, by: str | list[str]) -> "PyRanges":
         """Calculate the frame of each genomic interval, assuming all are coding sequences (CDS), and add it as column inplace.
@@ -870,7 +864,7 @@ class PyRanges(RangeFrame):
             _self = _self.remove_strand()
 
         _by = [by] if isinstance(by, str) else ([*by] if by is not None else [])
-        df = _self.apply_single(
+        gr = _self.apply_single(
             _cluster,
             strand=strand,
             by=by,
@@ -878,13 +872,12 @@ class PyRanges(RangeFrame):
             count_column=count_column,
             cluster_column=cluster_column,
         )
-        gr = pr.PyRanges(df)
         gr[cluster_column] = gr.groupby(self.location_cols + _by + [cluster_column]).ngroup()
         return gr
 
     def copy(self, *args, **kwargs) -> "pr.PyRanges":
         """Return a copy of the PyRanges."""
-        return pr.PyRanges(super().copy(*args, **kwargs))
+        return mypy_ensure_pyranges(super().copy(*args, **kwargs))
 
     def count_overlaps(
         self,
@@ -963,7 +956,7 @@ class PyRanges(RangeFrame):
         """
         from pyranges.methods.coverage import _number_overlapping
 
-        counts = self.apply_pair(
+        return self.apply_pair(
             other,
             _number_overlapping,
             strand_behavior=strand_behavior,
@@ -971,8 +964,6 @@ class PyRanges(RangeFrame):
             keep_nonoverlapping=keep_nonoverlapping,
             overlap_col=overlap_col,
         )
-
-        return pr.PyRanges(counts)
 
     def coverage(
         self,
@@ -1068,16 +1059,14 @@ class PyRanges(RangeFrame):
 
         from pyranges.methods.coverage import _coverage
 
-        return pr.PyRanges(
-            counts.apply_pair(
-                other,
-                _coverage,
-                strand_behavior=strand_behavior,
-                by=by,
-                fraction_col=fraction_col,
-                keep_nonoverlapping=keep_nonoverlapping,
-                overlap_col=overlap_col,
-            ),
+        return counts.apply_pair(
+            other,
+            _coverage,
+            strand_behavior=strand_behavior,
+            by=by,
+            fraction_col=fraction_col,
+            keep_nonoverlapping=keep_nonoverlapping,
+            overlap_col=overlap_col,
         )
 
     def extend(
@@ -1165,14 +1154,12 @@ class PyRanges(RangeFrame):
             msg = "Must use at least one and not both of ext and ext3 or ext5."
             raise ValueError(msg)
 
-        return PyRanges(
-            self.apply_single(
-                _extend,
-                ext=ext,
-                ext_3=ext_3,
-                ext_5=ext_5,
-                by=group_keys_single(self, strand=self.strand_values_valid, by=by),
-            ),
+        return self.apply_single(
+            _extend,
+            ext=ext,
+            ext_3=ext_3,
+            ext_5=ext_5,
+            by=group_keys_single(self, strand=self.strand_values_valid, by=by),
         )
 
     def five_end(self) -> "PyRanges":
@@ -1219,7 +1206,7 @@ class PyRanges(RangeFrame):
         if not (self.has_strand_column and self.strand_values_valid):
             msg = f"Need PyRanges with valid strands ({VALID_GENOMIC_STRAND_INFO}) to find 5'."
             raise AssertionError(msg)
-        return pr.PyRanges(self.apply_single(_tss, strand=True, by=None))
+        return self.apply_single(_tss, strand=True, by=None)
 
     @property
     def location_cols(self) -> list[str]:
@@ -1241,10 +1228,6 @@ class PyRanges(RangeFrame):
         Does not check whether the strand column contains valid values.
         """
         return STRAND_COL in self.columns
-
-    def head(self, *args, **kwargs) -> "PyRanges":
-        """Return the first n rows of the PyRanges."""
-        return PyRanges(super().head(*args, **kwargs))
 
     def interval_join(
         self,
@@ -1341,7 +1324,8 @@ class PyRanges(RangeFrame):
 
         # Note that since some start and end columns are nan, a regular DataFrame is returned.
 
-        >>> f1.interval_join(f2, join_type="right")
+        >>> bad = f1.interval_join(f2, join_type="right")
+        >>> bad
           index  |    Chromosome        Start        End  Name       Chromosome_b      Start_b    End_b  Name_b
           int64  |    object          float64    float64  object     object              int64    int64  object
         -------  ---  ------------  ---------  ---------  ---------  --------------  ---------  -------  --------
@@ -1349,6 +1333,10 @@ class PyRanges(RangeFrame):
               1  |    chr1                  5          7  interval2  chr1                    6        7  b
         PyRanges with 2 rows, 8 columns, and 1 index columns.
         Contains 1 chromosomes.
+        >>> f2.interval_join(bad)  # bad.interval_join(f2) would not work either.
+        Traceback (most recent call last):
+        ...
+        ValueError: Cannot perform function on invalid ranges (function was _both_dfs).
 
         With slack 1, bookended features are joined (see row 1):
 
@@ -1370,22 +1358,20 @@ class PyRanges(RangeFrame):
 
             _self = _self.extend(slack)
 
-        gr = PyRanges(
-            _self.apply_pair(
-                other,
-                _both_dfs,
-                strand_behavior=strand_behavior,
-                join_type=join_type,
-                report_overlap=report_overlap,
-                suffix=suffix,
-            ),
+        gr: pd.DataFrame | PyRanges = _self.apply_pair(
+            other,
+            _both_dfs,
+            strand_behavior=strand_behavior,
+            join_type=join_type,
+            report_overlap=report_overlap,
+            suffix=suffix,
         )
         if slack and len(gr) > 0:
             gr[START_COL] = gr[TEMP_START_SLACK_COL]
             gr[END_COL] = gr[TEMP_END_SLACK_COL]
-            gr = pr.PyRanges(gr.drop([TEMP_START_SLACK_COL, TEMP_END_SLACK_COL], axis=1))
+            gr = gr.drop([TEMP_START_SLACK_COL, TEMP_END_SLACK_COL], axis=1)
 
-        return gr
+        return mypy_ensure_pyranges(gr)
 
     @property
     def length(self) -> int:
@@ -1514,9 +1500,7 @@ class PyRanges(RangeFrame):
         strand = validate_and_convert_strand(self, strand)
         from pyranges.methods.max_disjoint import _max_disjoint
 
-        dfs = self.apply_single(_max_disjoint, strand=strand, slack=slack, by=by)
-
-        return pr.PyRanges(dfs)
+        return self.apply_single(_max_disjoint, strand=strand, slack=slack, by=by)
 
     def merge_overlaps(
         self,
@@ -1602,9 +1586,7 @@ class PyRanges(RangeFrame):
         """
         strand = validate_and_convert_strand(self, strand)
         _by = get_by_columns_including_chromosome_and_strand(self=self, by=by, strand=strand)
-        df = self.apply_single(_merge, by=_by, strand=strand, count_col=count_col, slack=slack)
-
-        return pr.PyRanges(df)
+        return self.apply_single(_merge, by=_by, strand=strand, count_col=count_col, slack=slack)
 
     @property
     def _chromosome_and_strand_columns(self) -> list[str]:
@@ -1700,7 +1682,7 @@ class PyRanges(RangeFrame):
             msg = "If doing upstream or downstream nearest, other pyranges must be stranded"
             raise AssertionError(msg)
 
-        df = self.apply_pair(
+        return self.apply_pair(
             other,
             _nearest,
             strand_behavior=strand_behavior,
@@ -1708,7 +1690,6 @@ class PyRanges(RangeFrame):
             overlap=overlap,
             suffix=suffix,
         )
-        return pr.PyRanges(df)
 
     def organize_genomic_location_columns(self) -> "PyRanges":
         """Move genomic location columns to the left, in chrom, start, end (optionally strand) order.
@@ -1843,20 +1824,14 @@ class PyRanges(RangeFrame):
         """
         from pyranges.methods.overlap import _overlap
 
-        return PyRanges(
-            self.apply_pair(
-                other,
-                _overlap,
-                strand_behavior=strand_behavior,
-                by=by,
-                invert=invert,
-                how=how,
-            ),
+        return self.apply_pair(
+            other,
+            _overlap,
+            strand_behavior=strand_behavior,
+            by=by,
+            invert=invert,
+            how=how,
         )
-
-    def sample(self, *args, **kwargs) -> "PyRanges":
-        """Pick random intervals."""
-        return PyRanges(super().sample(*args, **kwargs))
 
     def set_intersect(
         self,
@@ -1940,9 +1915,7 @@ class PyRanges(RangeFrame):
         strand = strand_from_strand_behavior(self, other, strand_behavior)
         self_clusters = self.merge_overlaps(strand=strand and self.has_strand_column)
         other_clusters = other.merge_overlaps(strand=strand and other.has_strand_column)
-        dfs = self_clusters.apply_pair(other_clusters, _overlap, strand_behavior=strand_behavior, how=how)
-
-        return pr.PyRanges(dfs)
+        return self_clusters.apply_pair(other_clusters, _overlap, strand_behavior=strand_behavior, how=how)
 
     def set_union(self, other: "PyRanges", strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto") -> "PyRanges":
         """Return set-theoretical union.
@@ -2002,7 +1975,7 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes.
         """
         if self.empty and other.empty:
-            return pr.PyRanges()
+            return mypy_ensure_pyranges(self.copy())
 
         strand = strand_from_strand_behavior(self, other, strand_behavior)
 
@@ -2219,7 +2192,7 @@ class PyRanges(RangeFrame):
 
         result = sorted_p.apply_single(_spliced_subseq, strand=strand, by=by, start=start, end=end)
 
-        return pr.PyRanges(result)
+        return mypy_ensure_pyranges(result)
 
     def split(
         self,
@@ -2329,15 +2302,14 @@ class PyRanges(RangeFrame):
                 by=by,
             ),
         )
-        split = pr.PyRanges(df)
         if not between:
-            split = split.overlap(
+            df = df.overlap(
                 self,
                 how=OVERLAP_FIRST,
                 strand_behavior=strand_behavior_from_strand_and_validate(self, strand),
             )
 
-        return split
+        return df
 
     @property
     def strand_values_valid(self) -> bool:
@@ -2527,7 +2499,7 @@ class PyRanges(RangeFrame):
 
         result = self.apply_single(_subseq, strand=strand, by=by, start=start, end=end)
 
-        return pr.PyRanges(result)
+        return mypy_ensure_pyranges(result)
 
     def subtract_intervals(
         self,
@@ -2679,10 +2651,6 @@ class PyRanges(RangeFrame):
         from pyranges.methods.summary import _summary
 
         return _summary(self, return_df=return_df)
-
-    def tail(self, *args, **kwargs) -> "PyRanges":
-        """Return last n rows."""
-        return PyRanges(super().tail(*args, **kwargs))
 
     def tile(
         self,
@@ -3425,7 +3393,7 @@ class PyRanges(RangeFrame):
         }
 
         df = self.apply_single(_windows, by=by, strand=strand, **kwargs)
-        return PyRanges(df)
+        return mypy_ensure_pyranges(df)
 
     @property
     def _loc_columns(self) -> list[str]:
@@ -3454,7 +3422,7 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 1 strands.
         """
         cols = GENOME_LOC_COLS_WITH_STRAND if self.has_strand_column else GENOME_LOC_COLS
-        return PyRanges(super().__getitem__(cols))
+        return mypy_ensure_pyranges(super().__getitem__(cols))
 
     def get_with_loc_columns(
         self,
@@ -3529,7 +3497,7 @@ class PyRanges(RangeFrame):
         else:
             cols_to_include_genome_loc_correct_order = self._loc_columns + keys
 
-        return PyRanges(super().__getitem__(cols_to_include_genome_loc_correct_order))
+        return mypy_ensure_pyranges(super().__getitem__(cols_to_include_genome_loc_correct_order))
 
     def intersect_interval_columns(
         self,

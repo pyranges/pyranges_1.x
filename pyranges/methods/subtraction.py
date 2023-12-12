@@ -9,8 +9,7 @@ if TYPE_CHECKING:
     from pyranges import RangeFrame
 
 
-def _subtraction(scdf: "RangeFrame", ocdf: "RangeFrame", **_) -> "RangeFrame":
-    original_class = scdf.__class__
+def _subtraction(scdf: "RangeFrame", ocdf: "RangeFrame", **_) -> pd.DataFrame:
     if ocdf.empty or scdf.empty:
         return scdf
 
@@ -42,4 +41,4 @@ def _subtraction(scdf: "RangeFrame", ocdf: "RangeFrame", **_) -> "RangeFrame":
         _scdf.loc[_scdf.index.isin(idx_self), "Start"] = new_starts.to_numpy()
         _scdf.loc[_scdf.index.isin(idx_self), "End"] = new_ends.to_numpy()
 
-    return original_class(_scdf)
+    return _scdf

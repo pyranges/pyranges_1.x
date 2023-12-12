@@ -13,7 +13,8 @@ from pyranges.get_fasta import get_sequence, get_transcript_sequence
 from pyranges.methods.concat import concat
 from pyranges.multioverlap import count_overlaps
 from pyranges.names import END_COL
-from pyranges.pyranges_main import PyRanges
+from pyranges.pyranges_helpers import mypy_ensure_pyranges
+from pyranges.pyranges_main import PyRanges  # noqa: F401
 from pyranges.range_frame.range_frame import RangeFrame  # noqa: F401
 from pyranges.readers import from_string, read_bam, read_bed, read_bigwig, read_gff3, read_gtf  # NOQA: F401
 
@@ -111,7 +112,7 @@ def random(
         s = rng.choice("+ -".split(), size=n)
         random_df.insert(3, "Strand", s)
 
-    return PyRanges(random_df.reset_index(drop=True))
+    return mypy_ensure_pyranges(random_df.reset_index(drop=True))
 
 
 def version_info() -> None:

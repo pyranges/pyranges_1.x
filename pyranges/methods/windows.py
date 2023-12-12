@@ -1,9 +1,11 @@
 from typing import TYPE_CHECKING
 
 import numpy as np
+import pandas as pd
 from sorted_nearest import maketiles, makewindows  # type: ignore[import-untyped]
 
 from pyranges.names import END_COL, START_COL, TEMP_END_COL, TEMP_START_COL
+from pyranges.range_frame.range_frame import _mypy_ensure_rangeframe
 
 if TYPE_CHECKING:
     from pyranges import RangeFrame
@@ -14,7 +16,7 @@ def _windows(
     *,
     window_size: int,
     **_,
-) -> "RangeFrame":
+) -> pd.DataFrame:
     idxs, starts, ends = makewindows(
         df.index.values,
         df.Start.values,
@@ -26,7 +28,7 @@ def _windows(
     _df.loc[:, START_COL] = starts
     _df.loc[:, END_COL] = ends
 
-    return df.__class__(_df)
+    return _df
 
 
 def _tiles(
@@ -34,10 +36,10 @@ def _tiles(
     tile_size: int,
     overlap_column: str | None,
     **_,
-) -> "RangeFrame":
+) -> pd.DataFrame:
     original_class = df.__class__
     if overlap_column is not None:
-        df = original_class(df.copy())
+        df = _mypy_ensure_rangeframe(original_class(df.copy()))
         df.insert(df.shape[1], TEMP_START_COL, df.Start)
         df.insert(df.shape[1], TEMP_END_COL, df.End)
 
@@ -57,4 +59,4 @@ def _tiles(
         _df.insert(_df.shape[1], overlap_column, overlap)
         _df = _df.drop([TEMP_START_COL, TEMP_END_COL], axis=1)
 
-    return original_class(_df)
+    return _df

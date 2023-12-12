@@ -145,7 +145,10 @@ def mypy_ensure_pyranges(df: "pd.DataFrame") -> "PyRanges":
     """
     from pyranges import PyRanges
 
-    return PyRanges(df)
+    if not isinstance(ret := PyRanges(df), PyRanges):
+        msg = "Not a PyRanges"
+        raise TypeError(msg)
+    return ret
 
 
 def strand_from_strand_behavior(

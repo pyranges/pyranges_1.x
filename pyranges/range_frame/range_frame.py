@@ -1,10 +1,10 @@
 import inspect
 from collections.abc import Callable, Iterable
 from functools import cached_property
+from typing import Concatenate
 
 import pandas as pd
 
-from pyranges.methods.overlap import _overlap
 from pyranges.names import RANGE_COLS, VALID_BY_TYPES, VALID_OVERLAP_TYPE
 from pyranges.range_frame.range_frame_validator import InvalidRangesReason
 from pyranges.tostring import tostring
@@ -141,6 +141,8 @@ class RangeFrame(pd.DataFrame):
               3  |          2        4  d
         RangeFrame with 1 rows, 3 columns, and 1 index columns.
         """
+        from pyranges.methods.overlap import _overlap
+
         return self.apply_pair(other, _overlap, how=how, by=by)
 
     def apply_single(
@@ -165,7 +167,7 @@ class RangeFrame(pd.DataFrame):
         assert_valid_ranges(function, self)
 
         if not by:
-            return RangeFrame(function(self, **kwargs))
+            return _mypy_ensure_rangeframe(function(self, **kwargs))
         by = self._by_to_list(by)
         return _mypy_ensure_rangeframe(
             self.groupby(by).apply(function, by=by, **kwargs).reset_index(drop=True),  # type: ignore[arg-type]
@@ -174,7 +176,7 @@ class RangeFrame(pd.DataFrame):
     def apply_pair(
         self,
         other: "RangeFrame",
-        function: Callable[["RangeFrame", "RangeFrame"], "RangeFrame"],
+        function: Callable[Concatenate["RangeFrame", "RangeFrame", ...], pd.DataFrame],
         by: VALID_BY_TYPES = None,
         **kwargs,
     ) -> "RangeFrame":
@@ -193,10 +195,26 @@ class RangeFrame(pd.DataFrame):
 
         kwargs: dict
             Passed to function.
+
+        Examples
+        --------
+        >>> import pyranges as pr
+        >>> r = pr.RangeFrame({"Start": [1, 1, 4, 2], "End": [3, 3, 5, 4], "Id": list("abad")})
+        >>> bad, ok = r, r.copy()
+        >>> bad.loc[0, "Start"] = -1  # make r invalid
+        >>> bad.apply_pair(ok, lambda x, y: x)
+        Traceback (most recent call last):
+        ...
+        ValueError: Cannot perform function on invalid ranges (function was bad.apply_pair(ok, lambda x, y: x)).
+        >>> from pyranges.methods.overlap import _overlap
+        >>> ok.apply_pair(bad, _overlap)
+        Traceback (most recent call last):
+        ...
+        ValueError: Cannot perform function on invalid ranges (function was _overlap).
         """
         assert_valid_ranges(function, self, other)
         if by is None:
-            return RangeFrame(function(self, other, **kwargs))
+            return _mypy_ensure_rangeframe(function(self, other, **kwargs))
 
         by = self._by_to_list(by)
         results = []
@@ -207,7 +225,7 @@ class RangeFrame(pd.DataFrame):
             odf = others.get(key, empty)
             results.append(function(_mypy_ensure_rangeframe(_df), _mypy_ensure_rangeframe(odf), **kwargs))
 
-        return RangeFrame(pd.concat(results))
+        return _mypy_ensure_rangeframe(pd.concat(results))
 
     def sort_by_position(self) -> "RangeFrame":
         """Sort by Start and End columns."""
@@ -217,14 +235,18 @@ class RangeFrame(pd.DataFrame):
     def _by_to_list(by: str | Iterable[str] | None) -> list[str]:
         return [by] if isinstance(by, str) else ([*by] if by is not None else [])
 
-    def reasons_why_frame_is_invalid(self) -> list[InvalidRangesReason] | None:
+    def reasons_why_frame_is_invalid(self) -> list[InvalidRangesReason] | None:  # noqa: D102
         __doc__ = InvalidRangesReason.is_invalid_ranges_reasons.__doc__  # noqa: A001, F841
 
         return InvalidRangesReason.is_invalid_ranges_reasons(self)
 
 
 def _mypy_ensure_rangeframe(r: pd.DataFrame) -> "RangeFrame":
-    return RangeFrame(r)
+    result = RangeFrame(r)
+    if not isinstance(result, RangeFrame):
+        msg = f"Expected RangeFrame, got {type(result)}"
+        raise TypeError(msg)
+    return result
 
 
 def assert_valid_ranges(function: Callable, *args: "RangeFrame") -> None:

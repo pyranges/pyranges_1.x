@@ -23,7 +23,11 @@ from pyranges.names import (
     STRAND_BEHAVIOR_SAME,
     VALID_STRAND_BEHAVIOR_TYPE,
 )
-from pyranges.pyranges_helpers import ensure_strand_behavior_options_valid, strand_behavior_from_strand_and_validate
+from pyranges.pyranges_helpers import (
+    ensure_strand_behavior_options_valid,
+    mypy_ensure_pyranges,
+    strand_behavior_from_strand_and_validate,
+)
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -487,7 +491,7 @@ def simes(
     pcol: str,
     *,
     keep_position: bool = False,
-) -> "pr.PyRanges":
+) -> "pr.PyRanges | DataFrame":
     """Apply Simes method for giving dependent events a p-value.
 
     Parameters
@@ -586,11 +590,11 @@ def simes(
         columns = list(simes.columns)
         columns.append(columns[0])
         del columns[0]
-        simes = pr.PyRanges(simes[columns])
+        _simes = mypy_ensure_pyranges(simes[columns])
     else:
-        simes = sdf.groupby(by).Simes.min().reset_index()
+        _simes = sdf.groupby(by).Simes.min().reset_index()
 
-    return simes
+    return _simes
 
 
 def chromsizes_as_int(chromsizes: "PyRanges | DataFrame | dict[Any, int]") -> int:

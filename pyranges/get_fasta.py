@@ -124,11 +124,11 @@ def get_sequence(
         _fasta = pyfaidx_fasta[chromosome]
         forward_strand = strand == FORWARD_STRAND
         for start, end in zip(df[START_COL], df[END_COL], strict=True):
-            seq = _fasta[start:end]
-            _seqs.append(seq.seq if forward_strand else (-seq).seq)
+            if (seq := _fasta[start:end]) is not None:
+                _seqs.append(seq.seq if forward_strand else (-seq).seq)
 
         seqs.extend(_seqs if forward_strand else _seqs[::-1])
-    return pd.concat([pd.Series(s) for s in seqs]).reset_index(drop=True).squeeze()
+    return pd.Series(pd.concat([pd.Series(s) for s in seqs]).reset_index(drop=True))
 
 
 def get_transcript_sequence(
