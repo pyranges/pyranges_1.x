@@ -1,3 +1,4 @@
+import inspect
 from collections.abc import Callable, Iterable
 from functools import cached_property
 
@@ -161,6 +162,8 @@ class RangeFrame(pd.DataFrame):
         kwargs: dict
             Passed to function.
         """
+        assert_valid_ranges(function, self)
+
         if not by:
             return RangeFrame(function(self, **kwargs))
         by = self._by_to_list(by)
@@ -191,6 +194,7 @@ class RangeFrame(pd.DataFrame):
         kwargs: dict
             Passed to function.
         """
+        assert_valid_ranges(function, self, other)
         if by is None:
             return RangeFrame(function(self, other, **kwargs))
 
@@ -221,3 +225,12 @@ class RangeFrame(pd.DataFrame):
 
 def _mypy_ensure_rangeframe(r: pd.DataFrame) -> "RangeFrame":
     return RangeFrame(r)
+
+
+def assert_valid_ranges(function: Callable, *args: "RangeFrame") -> None:
+    """Raise ValueError because function is called on invalid ranges."""
+    if any(r.reasons_why_frame_is_invalid() for r in args):
+        is_not_lambda = function.__name__ != "<lambda>"
+        function_repr = function.__name__ if is_not_lambda else inspect.getsource(function).strip()
+        msg = f"Cannot perform function on invalid ranges (function was {function_repr})."
+        raise ValueError(msg)
