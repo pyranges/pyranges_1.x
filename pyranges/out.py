@@ -8,6 +8,7 @@ import pandas as pd
 from natsort import natsorted  # type: ignore[import]
 from pandas.core.frame import DataFrame
 
+from pyranges import mypy_ensure_pyranges
 from pyranges.names import BIGWIG_SCORE_COL, CHROM_COL, END_COL, GENOME_LOC_COLS, PANDAS_COMPRESSION_TYPE, START_COL
 from pyranges.pyranges_main import PyRanges
 
@@ -182,7 +183,8 @@ def _to_bigwig(
         sys.exit(1)
 
     if not divide:
-        df = self.to_rle(rpm=rpm, strand=False, value_col=value_col).to_ranges()
+        rles = self.to_rle(rpm=rpm, strand=False, value_col=value_col)
+        df = rles.to_ranges()
     else:
         df = self.to_rle(rpm=rpm, strand=False, value_col=value_col)
         divide_by = self.to_rle(rpm=rpm, strand=False)
@@ -195,17 +197,12 @@ def _to_bigwig(
 
         df = c.defragment().to_ranges()
 
-    gr = PyRanges(df)
+    gr = mypy_ensure_pyranges(df)
     unique_chromosomes = gr.chromosomes
-    print(unique_chromosomes)
 
     subset = [*GENOME_LOC_COLS, BIGWIG_SCORE_COL]
 
-    gr = gr[subset].remove_strand()
-    print(gr)
-
-    gr = gr.sort_by_position()
-    print(gr)
+    gr = gr.remove_strand().sort_by_position().get_with_loc_columns(subset)
 
     if dryrun:
         return gr
@@ -223,10 +220,6 @@ def _to_bigwig(
     starts = df[START_COL].tolist()
     ends = df[END_COL].tolist()
     values = df.Score.tolist()
-    print(chromosomes)
-    print(starts)
-    print(ends)
-    print(values)
 
     bw.addEntries(chromosomes, starts, ends=ends, values=values)
 

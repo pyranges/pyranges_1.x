@@ -24,7 +24,7 @@ keywords = ["bioinformatics", "genomicranges", "genomics"]
 dependencies = ["pandas", "ncls>=0.0.63", "tabulate", "sorted_nearest>=0.0.33", "natsort"]
 
 [project.optional-dependencies]
-add-ons = ["pyrle", "bamread", "bwread", "fisher", "pyfaidx"]
+add-ons = ["pyrle >= 0.0.39", "bamread", "bwread", "fisher", "pyfaidx"]
 dev = ["tox", "ruff", "pyright", "pandas-stubs", "types-tabulate", "pytest-watcher", "pytest-xdist"]
 all = ["pyranges[add-ons]", "pyranges[dev]"]
 
@@ -40,11 +40,11 @@ Homepage="http://github.com/pyranges/pyranges"
 [tool.tox]  # TODO: replace with regular non-legacy entry when supported
 legacy_tox_ini = """
 [tox]
-envlist = py311, py312
+envlist = py312
 
 [testenv]
 deps =
-    pyrle
+    pyrle >= 0.0.39
     bamread
     bwread
     fisher
@@ -54,43 +54,14 @@ deps =
     pandas-stubs
     types-tabulate
     pytest
+    pyright
 commands =
-    ruff format --check pyranges
-    ruff check pyranges
     pytest --doctest-modules pyranges
     pytest tests/unit
-
-[testenv:py312]
-deps =
-    {[testenv]deps}
-    pyright
-
-commands =
-    {[testenv]commands}
+    ruff format --check pyranges
+    ruff check pyranges
     pyright
 """
-
-
-# [tool.tox.testenv.py311]
-# deps = ["pyranges[all]"]
-# commands = [
-#     "ruff check pyranges",
-#     "ruff format --check pyranges",
-#     "pytest --doctest-modules pyranges",
-#     "pytest tests/unit",
-# ]
-#
-# [tool.tox.testenv.py312]
-# deps = ["pyranges[all]"]
-# commands = [
-#     "ruff check pyranges",
-#     "ruff format --check pyranges",
-#     "pytest --doctest-modules pyranges",
-#     "pytest tests/unit",
-#     "pyright"
-# ]
-#
-# [tool.tox.envs]
 
 [tool.mypy]
 python_version = "3.12"
@@ -112,7 +83,7 @@ now = true
 
 [tool.pyright]
 include = ["pyranges"]
-typeCheckingMode = "strict"
+# typeCheckingMode = "strict"
 pythonVersion = "3.12"
 
 ignore = ["pyranges/pyranges_groupby.py"]

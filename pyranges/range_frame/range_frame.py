@@ -155,7 +155,7 @@ class RangeFrame(pd.DataFrame):
         self,
         function: UnaryRangeFrameOperation,
         by: VALID_BY_TYPES,
-        **kwargs,
+        **kwargs: Any,
     ) -> "RangeFrame":
         """Call a function on a RangeFrame.
 

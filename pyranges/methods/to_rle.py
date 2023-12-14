@@ -24,6 +24,7 @@ def _to_rle(
         msg = "Using the coverage method requires that pyrle is installed."
         raise ImportError(msg) from e
 
+    ranges = ranges.remove_strand() if not strand else ranges
     _kwargs = {
         "strand": strand,
         "value_col": value_col,
@@ -31,7 +32,7 @@ def _to_rle(
     }  # already sparse
     kwargs.update(_kwargs)
 
-    result = {k: coverage(v, **kwargs) for k, v in ranges.groupby(ranges.location_cols)}
+    result = {(k[0] if not strand else k): coverage(v, **kwargs) for k, v in ranges.groupby(ranges.location_cols)}
 
     if rpm:
         multiplier = 1e6 / len(ranges)

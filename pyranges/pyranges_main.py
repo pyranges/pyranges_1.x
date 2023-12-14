@@ -2920,52 +2920,56 @@ class PyRanges(RangeFrame):
 
         Examples
         --------
-        # >>> d =  {'Chromosome': ['chr1', 'chr1', 'chr1'], 'Start': [1, 4, 6],
-        # ...       'End': [7, 8, 10], 'Strand': ['+', '-', '-'],
-        # ...       'Value': [10, 20, 30]}
-        # >>> gr = pr.PyRanges(d)
-        # >>> gr
-        # Chromosome      Start      End  Strand      Value
-        # object          int64    int64  object      int64
-        # ------------  -------  -------  --------  -------
-        # chr1                1        7  +              10
-        # chr1                4        8  -              20
-        # chr1                6       10  -              30
-        # PyRanges with 3 rows and 5 columns.
-        # Contains 1 chromosomes and 2 strands.
+        >>> d =  {'Chromosome': ['chr1', 'chr1', 'chr1'], 'Start': [1, 4, 6],
+        ...       'End': [7, 8, 10], 'Strand': ['+', '-', '-'],
+        ...       'Value': [10, 20, 30]}
+        >>> gr = pr.PyRanges(d)
+        >>> gr
+          index  |    Chromosome      Start      End  Strand      Value
+          int64  |    object          int64    int64  object      int64
+        -------  ---  ------------  -------  -------  --------  -------
+              0  |    chr1                1        7  +              10
+              1  |    chr1                4        8  -              20
+              2  |    chr1                6       10  -              30
+        PyRanges with 3 rows, 5 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
 
-        # >>> gr.to_bigwig(dryrun=True, rpm=False)
+        >>> gr.to_bigwig(dryrun=True, rpm=False)
+          index  |    Chromosome      Start      End      Score
+          int64  |    category        int64    int64    float64
+        -------  ---  ------------  -------  -------  ---------
+              1  |    chr1                1        4          1
+              2  |    chr1                4        6          2
+              3  |    chr1                6        7          3
+              4  |    chr1                7        8          2
+              5  |    chr1                8       10          1
+        PyRanges with 5 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes.
 
+        >>> gr.to_bigwig(dryrun=True, rpm=False, value_col="Value")
+          index  |    Chromosome      Start      End      Score
+          int64  |    category        int64    int64    float64
+        -------  ---  ------------  -------  -------  ---------
+              1  |    chr1                1        4         10
+              2  |    chr1                4        6         30
+              3  |    chr1                6        7         60
+              4  |    chr1                7        8         50
+              5  |    chr1                8       10         30
+        PyRanges with 5 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes.
 
-
-        # >>> gr.to_bigwig(dryrun=True, rpm=False, value_col="Value")
-        # +--------------+-----------+-----------+-------------+
-        # | Chromosome   |     Start |       End |       Score |
-        # | (category)   |   (int64) |   (int64) |   (float64) |
-        # |--------------+-----------+-----------+-------------|
-        # | chr1         |         1 |         4 |          10 |
-        # | chr1         |         4 |         6 |          30 |
-        # | chr1         |         6 |         7 |          60 |
-        # | chr1         |         7 |         8 |          50 |
-        # | chr1         |         8 |        10 |          30 |
-        # +--------------+-----------+-----------+-------------+
-        # Unstranded PyRanges object has 5 rows and 4 columns from 1 chromosomes.
-        # For printing, the PyRanges was sorted on Chromosome.
-
-        # >>> gr.to_bigwig(dryrun=True, rpm=False, value_col="Value", divide=True)
-        # +--------------+-----------+-----------+-------------+
-        # | Chromosome   |     Start |       End |       Score |
-        # | (category)   |   (int64) |   (int64) |   (float64) |
-        # |--------------+-----------+-----------+-------------|
-        # | chr1         |         0 |         1 |   nan       |
-        # | chr1         |         1 |         4 |     3.32193 |
-        # | chr1         |         4 |         6 |     3.90689 |
-        # | chr1         |         6 |         7 |     4.32193 |
-        # | chr1         |         7 |         8 |     4.64386 |
-        # | chr1         |         8 |        10 |     4.90689 |
-        # +--------------+-----------+-----------+-------------+
-        # Unstranded PyRanges object has 6 rows and 4 columns from 1 chromosomes.
-        # For printing, the PyRanges was sorted on Chromosome.
+        >>> gr.to_bigwig(dryrun=True, rpm=False, value_col="Value", divide=True)
+          index  |    Chromosome      Start      End      Score
+          int64  |    category        int64    int64    float64
+        -------  ---  ------------  -------  -------  ---------
+              0  |    chr1                0        1  nan
+              1  |    chr1                1        4    3.32193
+              2  |    chr1                4        6    3.90689
+              3  |    chr1                6        7    4.32193
+              4  |    chr1                7        8    4.64386
+              5  |    chr1                8       10    4.90689
+        PyRanges with 6 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes.
         """
         from pyranges.out import _to_bigwig
 
@@ -3250,10 +3254,13 @@ class PyRanges(RangeFrame):
 
         from pyranges.methods.to_rle import _to_rle
 
+        strand = validate_and_convert_strand(self, strand)
+        df = self.remove_strand() if not strand else self
+
         return _to_rle(
-            self,
+            df,
             value_col,
-            strand=validate_and_convert_strand(self, strand),
+            strand=strand,
             rpm=rpm,
         )
 
