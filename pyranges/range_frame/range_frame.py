@@ -1,13 +1,17 @@
 import inspect
 from collections.abc import Callable, Iterable
 from functools import cached_property
-from typing import Concatenate, overload, Literal, Any
+from typing import Any
 
 import pandas as pd
-from pandas._typing import IndexLabel, Axis, Level, IgnoreRaise
 
-from pyranges.names import RANGE_COLS, VALID_BY_TYPES, VALID_OVERLAP_TYPE, UnaryRangeFrameOperation, RangeFrameType, \
-    BinaryRangeFrameOperation
+from pyranges.names import (
+    RANGE_COLS,
+    VALID_BY_TYPES,
+    VALID_OVERLAP_TYPE,
+    BinaryRangeFrameOperation,
+    UnaryRangeFrameOperation,
+)
 from pyranges.range_frame.range_frame_validator import InvalidRangesReason
 from pyranges.tostring import tostring
 
@@ -53,7 +57,7 @@ class RangeFrame(pd.DataFrame):
 
     def __str__(
         self,
-        **kwargs,
+        **kwargs: int | None,
     ) -> str:  # , max_col_width: int | None = None, max_total_width: int | None = None) -> str:
         """Return string representation."""
         return tostring(self, max_col_width=kwargs.get("max_col_width"), max_total_width=kwargs.get("max_total_width"))
@@ -245,10 +249,10 @@ class RangeFrame(pd.DataFrame):
     def copy(self, *args, **kwargs) -> "RangeFrame":
         return _mypy_ensure_rangeframe(super().copy(*args, **kwargs))
 
-    def drop(self, *args, **kwargs) -> "RangeFrame | None":
+    def drop(self, *args, **kwargs) -> "RangeFrame | None":  # type: ignore[override]
         return self.__class__(super().drop(*args, **kwargs))
 
-    def drop_and_return[RangeFrameType](self: RangeFrameType, *args, **kwargs) -> RangeFrameType:
+    def drop_and_return[RangeFrameType](self: RangeFrameType, *args: Any, **kwargs: Any) -> RangeFrameType:  # noqa: PYI019
         kwargs["inplace"] = False
         return self.__class__(super().drop(*args, **kwargs))
 

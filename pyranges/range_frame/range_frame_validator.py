@@ -1,5 +1,4 @@
 import abc
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -13,15 +12,13 @@ if TYPE_CHECKING:
 class InvalidRangesReason:
     """Describe why a range is invalid."""
 
+    def __init__(self, invalid_part: "pd.DataFrame") -> None:
+        self._invalid_part = invalid_part
+
     @property
-    @abc.abstractmethod
     def invalid_part(self) -> "pd.DataFrame":
         """Return the invalid part of the range."""
         return self._invalid_part
-
-    @invalid_part.setter
-    def invalid_part(self, df: "pd.DataFrame") -> None:
-        self._invalid_part = df
 
     @property
     @abc.abstractmethod
@@ -97,10 +94,10 @@ class InvalidRangesReason:
         return invalid_ranges_reasons or None
 
 
-@dataclass
 class StartsOrEndsMissingValues(InvalidRangesReason):
-    invalid_part: "pd.DataFrame"
-    reason: str = "Some starts or ends are nan."
+    @property
+    def reason(self) -> str:
+        return "Some starts or ends are nan."
 
     @staticmethod
     def check_and_possibly_return_invalid_part(df: "pd.DataFrame") -> "InvalidRangesReason | None":  # noqa: D102
@@ -110,10 +107,11 @@ class StartsOrEndsMissingValues(InvalidRangesReason):
         return None
 
 
-@dataclass
 class EmptyOrNegativeIntervals(InvalidRangesReason):
-    invalid_part: "pd.DataFrame"
-    reason: str = "Some intervals are empty or negative length (end <= start)."
+
+    @property
+    def reason(self) -> str:
+        return "Some intervals are empty or negative length (end <= start)."
 
     @staticmethod
     def check_and_possibly_return_invalid_part(df: "pd.DataFrame") -> "InvalidRangesReason | None":  # noqa: D102
@@ -122,10 +120,11 @@ class EmptyOrNegativeIntervals(InvalidRangesReason):
         return None
 
 
-@dataclass
 class StartOrEndsNegative(InvalidRangesReason):
-    invalid_part: "pd.DataFrame"
-    reason: str = "Some starts or ends are < 0."
+
+    @property
+    def reason(self) -> str:
+        return "Some starts or ends are < 0."
 
     @staticmethod
     def check_and_possibly_return_invalid_part(df: "pd.DataFrame") -> "InvalidRangesReason | None":  # noqa: D102

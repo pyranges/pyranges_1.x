@@ -24,10 +24,8 @@ keywords = ["bioinformatics", "genomicranges", "genomics"]
 dependencies = ["pandas", "ncls>=0.0.63", "tabulate", "sorted_nearest>=0.0.33", "natsort"]
 
 [project.optional-dependencies]
-pyranges_addons = ["pyrle", "bamread", "bwread", "fisher"]
-
-# [project.development-dependencies]
-# dev = ["ruff", "mypy", "pandas-stubs", "numpy-stubs", "types-tabulate"]
+pyranges_addons = ["pyrle", "bamread", "bwread", "fisher", "pyfaidx"]
+dev = ["ruff", "pyright", "pandas-stubs", "numpy-stubs", "types-tabulate"]
 
 
 [tool.setuptools.packages.find]
@@ -62,3 +60,17 @@ ignore = [
 
 [tool.pytest-watcher]
 now = true
+
+[tool.pyright]
+include = ["pyranges"]
+typeCheckingMode = "strict"
+pythonVersion = "3.12"
+
+ignore = ["pyranges/pyranges_groupby.py"]
+
+# specific rules to disable
+reportUnknownParameterType = false
+reportUnknownMemberType = false
+reportUnknownArgumentType = false
+reportUnknownVariableType = false
+

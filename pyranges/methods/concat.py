@@ -1,5 +1,4 @@
 """Module for PyRanges concat method."""
-import typing
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
@@ -64,7 +63,6 @@ def concat[T: "RangeFrame"](grs: Iterable[T], *args, **kwargs) -> T:
 
     >>> pd.testing.assert_frame_equal(pr.concat([r]), r)  # would throw if they were not equal
     """
-
     input_class = assert_all_classes_are_the_same_and_retrieve_it(grs)
 
     concatenated = input_class(pd.concat([pd.DataFrame(gr) for gr in grs]), *args, **kwargs)
@@ -72,18 +70,16 @@ def concat[T: "RangeFrame"](grs: Iterable[T], *args, **kwargs) -> T:
     from pyranges import RangeFrame
 
     if isinstance(concatenated, RangeFrame):
-        return concatenated
-    else:
-        msg = "Concatenation should result in a RangeFrame."
-        raise TypeError(msg)
+        return input_class(concatenated)
+    msg = "Concatenation should result in a RangeFrame."
+    raise TypeError(msg)
 
 
-def assert_all_classes_are_the_same_and_retrieve_it(grs):
-
+def assert_all_classes_are_the_same_and_retrieve_it[T: "RangeFrame"](grs: Iterable[T]) -> type:
+    """Ensure that all Ranges are of the same type and return the type."""
     all_classes = {gr.__class__ for gr in grs}
-    if not len(all_classes) == 1:
+    if len(all_classes) != 1:
         classnames = [c.__name__ for c in sorted(all_classes, key=lambda x: x.__name__)]
         msg = f"Can only concatenate RangeFrames of the same type. Got: {', '.join(classnames)}"
         raise ValueError(msg)
-    input_class = all_classes.pop()
-    return input_class
+    return all_classes.pop()

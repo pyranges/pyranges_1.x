@@ -1,25 +1,33 @@
 from collections.abc import Iterable
-from typing import Any, Final, Literal, get_args, Protocol, TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Any, Final, Literal, Protocol, TypeVar, get_args
 
 if TYPE_CHECKING:
     import pandas as pd
+
     from pyranges import PyRanges, RangeFrame
 
 RangeFrameType = TypeVar("RangeFrameType", "RangeFrame", "PyRanges")
 
 
 class UnaryRangeFrameOperation[T: "RangeFrame"](Protocol):
+    """A protocol for unary operations on RangeFrames."""
+
     def __call__(self, df: T, **kwargs: Any) -> "pd.DataFrame":
+        """Perform the operation on the RangeFrame.
+
+        Examples: cluster, merge, split, etc.
+        """
         ...
 
 
 class BinaryRangeFrameOperation[T: "RangeFrame"](Protocol):
+    """A protocol for binary operations on RangeFrames."""
+
     def __call__(self, df: T, df2: T, **kwargs: Any) -> "pd.DataFrame":
-        ...
+        """Perform the operation on the pair of RangeFrames.
 
-
-class UnaryPyRangeOperation[T: "PyRanges"](Protocol):
-    def __call__(self, df: T, **kwargs: Any) -> "pd.DataFrame":
+        Examples: overlap, nearest, join, etc.
+        """
         ...
 
 # Define the Literal type

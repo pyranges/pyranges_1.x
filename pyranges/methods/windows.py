@@ -1,14 +1,10 @@
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 import numpy as np
 import pandas as pd
 from sorted_nearest import maketiles, makewindows  # type: ignore[import-untyped]
 
 from pyranges.names import END_COL, START_COL, TEMP_END_COL, TEMP_START_COL, RangeFrameType
-from pyranges.range_frame.range_frame import _mypy_ensure_rangeframe
-
-if TYPE_CHECKING:
-    from pyranges import RangeFrame
 
 
 def _windows(
@@ -33,6 +29,7 @@ def _windows(
 
 def _tiles(
     df: RangeFrameType,
+    *,
     tile_size: int,
     overlap_column: str | None,
     **_,

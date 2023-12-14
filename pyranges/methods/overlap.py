@@ -9,7 +9,7 @@ from pyranges.names import (
     OVERLAP_CONTAINMENT,
     OVERLAP_FIRST,
     VALID_OVERLAP_OPTIONS,
-    VALID_OVERLAP_TYPE, RangeFrameType,
+    VALID_OVERLAP_TYPE,
 )
 from pyranges.range_frame.range_frame import _mypy_ensure_rangeframe
 
@@ -59,7 +59,7 @@ def _overlap(
     *,
     how: VALID_OVERLAP_TYPE = OVERLAP_ALL,
     invert: bool = False,
-    **kwargs,
+    **_,
 ) -> pd.DataFrame:
     if invert:
         df = _mypy_ensure_rangeframe(df.copy())
@@ -72,7 +72,7 @@ def _overlap(
     if invert:
         found_idxs = getattr(_result, "__ix__", [])
         _result = df[~pd.Series(df.__ix__).isin(found_idxs)]
-        _result = _result.drop("__ix__", axis=1)
+        _result = _result.drop("__ix__", axis=1, inplace=False)
     return _result
 
 

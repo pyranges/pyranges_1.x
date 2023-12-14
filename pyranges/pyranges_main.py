@@ -47,7 +47,9 @@ from pyranges.names import (
     VALID_NEAREST_TYPE,
     VALID_OVERLAP_TYPE,
     VALID_STRAND_BEHAVIOR_TYPE,
-    VALID_STRAND_TYPE, UnaryPyRangeOperation, UnaryRangeFrameOperation, BinaryRangeFrameOperation,
+    VALID_STRAND_TYPE,
+    BinaryRangeFrameOperation,
+    UnaryRangeFrameOperation,
 )
 from pyranges.pyranges_groupby import PyRangesGroupBy
 from pyranges.pyranges_helpers import (
