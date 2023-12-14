@@ -1,27 +1,12 @@
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import pandas as pd
 import pandas.core.groupby  # type: ignore[name-defined]
 
-import pyranges as pr
-from pyranges.names import GENOME_LOC_COLS
+from pyranges.pyranges_helpers import return_pyranges_if_possible
 
-
-def return_pyranges_if_possible(
-    method: Callable,
-) -> Callable:
-    """Return a PyRanges object if possible."""
-
-    def wrapper(*args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":
-        # Call the original groupby method
-        result = method(*args, **kwargs)
-
-        # Check if the result should be a MySpecialDataFrame
-        if isinstance(result, pd.DataFrame) and set(GENOME_LOC_COLS).issubset(result.columns):
-            return pr.PyRanges(result)
-        return result
-
-    return wrapper
+if TYPE_CHECKING:
+    import pyranges as pr
 
 
 class PyRangesGroupBy(pandas.core.groupby.DataFrameGroupBy):

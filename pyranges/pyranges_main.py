@@ -584,7 +584,7 @@ class PyRanges(RangeFrame):
         res = mypy_ensure_pyranges(super().apply_pair(other, function, by=grpby_ks, **kwargs))
 
         if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
-           res = res.drop_and_return(TEMP_STRAND_COL, axis="columns")
+            res = res.drop_and_return(TEMP_STRAND_COL, axis="columns")
 
         return res
 

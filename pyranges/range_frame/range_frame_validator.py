@@ -108,7 +108,6 @@ class StartsOrEndsMissingValues(InvalidRangesReason):
 
 
 class EmptyOrNegativeIntervals(InvalidRangesReason):
-
     @property
     def reason(self) -> str:
         return "Some intervals are empty or negative length (end <= start)."
@@ -121,7 +120,6 @@ class EmptyOrNegativeIntervals(InvalidRangesReason):
 
 
 class StartOrEndsNegative(InvalidRangesReason):
-
     @property
     def reason(self) -> str:
         return "Some starts or ends are < 0."

@@ -61,10 +61,7 @@ def _spliced_subseq(
         # had to add bits to keep the order of rows right, or merge would destroy it
         if by_argument_given:
             exp_len_per_transc = (
-                df.loc[:, [*by, TEMP_INDEX_COL]]
-                .merge(len_per_transc, on=by)
-                .set_index(TEMP_INDEX_COL)
-                .loc[df.index]
+                df.loc[:, [*by, TEMP_INDEX_COL]].merge(len_per_transc, on=by).set_index(TEMP_INDEX_COL).loc[df.index]
             )
         else:
             exp_len_per_transc = df.loc[:, by].merge(len_per_transc, on=by).set_index(TEMP_INDEX_COL).loc[df.index]

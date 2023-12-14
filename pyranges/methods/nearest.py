@@ -38,7 +38,7 @@ def _insert_distance(df2: pd.DataFrame, dist: "NDArray | int", suffix: str) -> p
     return df2
 
 
-def _overlapping_for_nearest(df: pd.DataFrame, df2: pd.DataFrame, suffix: str ) -> tuple[pd.DataFrame, pd.DataFrame]:
+def _overlapping_for_nearest(df: pd.DataFrame, df2: pd.DataFrame, suffix: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     nearest_df = pd.DataFrame(columns="Chromosome Start End Strand".split())
 
     it = NCLS(df2.Start.to_numpy(), df2.End.to_numpy(), df2.index.to_numpy())

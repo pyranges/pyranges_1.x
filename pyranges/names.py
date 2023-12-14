@@ -30,6 +30,7 @@ class BinaryRangeFrameOperation[T: "RangeFrame"](Protocol):
         """
         ...
 
+
 # Define the Literal type
 VALID_OVERLAP_TYPE = Literal["first", "containment", "all"]
 

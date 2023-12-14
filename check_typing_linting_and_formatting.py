@@ -28,7 +28,6 @@ def main() -> int:
     commands = {
         "ruff format": ["ruff", "format", "--check", "--diff", "pyranges"],
         "ruff check": ["ruff", "check", "pyranges"],
-        "mypy": ["mypy", "pyranges"],
         "pyright": ["pyright", "pyranges"],
         "pytest": ["pytest", "--doctest-modules", "pyranges/", "tests/unit/"],
     }
