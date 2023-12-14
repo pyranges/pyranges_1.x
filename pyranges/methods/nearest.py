@@ -18,54 +18,54 @@ if TYPE_CHECKING:
     from pandas import DataFrame
 
 
-def _insert_distance(ocdf: pd.DataFrame, dist: "NDArray | int", suffix: str) -> pd.DataFrame:
-    if "Distance" not in ocdf:
+def _insert_distance(df2: pd.DataFrame, dist: "NDArray | int", suffix: str) -> pd.DataFrame:
+    if "Distance" not in df2:
         distance_column_name = "Distance"
-    elif "Distance" + suffix not in ocdf:
+    elif "Distance" + suffix not in df2:
         distance_column_name = "Distance" + suffix
     else:
         i = 1
-        while "Distance" + str(i) in ocdf:
+        while "Distance" + str(i) in df2:
             i += 1
         distance_column_name = "Distance" + str(i)
 
-    ocdf.insert(
-        ocdf.shape[1],
+    df2.insert(
+        df2.shape[1],
         distance_column_name,
-        pd.Series(dist, index=ocdf.index).fillna(-1).astype(int),
+        pd.Series(dist, index=df2.index).fillna(-1).astype(int),
     )
 
-    return ocdf
+    return df2
 
 
-def _overlapping_for_nearest(scdf: pd.DataFrame, ocdf: pd.DataFrame, suffix: str) -> tuple[pd.DataFrame, pd.DataFrame]:
+def _overlapping_for_nearest(df: pd.DataFrame, df2: pd.DataFrame, suffix: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     nearest_df = pd.DataFrame(columns="Chromosome Start End Strand".split())
 
-    it = NCLS(ocdf.Start.to_numpy(), ocdf.End.to_numpy(), ocdf.index.to_numpy())
+    it = NCLS(df2.Start.to_numpy(), df2.End.to_numpy(), df2.index.to_numpy())
 
     idx_self, idx_other = it.first_overlap_both(
-        scdf[START_COL].to_numpy(),
-        scdf[END_COL].to_numpy(),
-        scdf.index.to_numpy(),
+        df[START_COL].to_numpy(),
+        df[END_COL].to_numpy(),
+        df.index.to_numpy(),
     )
-    scdf2, ocdf2 = scdf.reindex(idx_self), ocdf.reindex(idx_other)
+    df2, df22 = df.reindex(idx_self), df2.reindex(idx_other)
 
-    if not ocdf2.empty:
-        idxs = scdf2.index
-        original_idx = scdf.index.copy(deep=True)
+    if not df22.empty:
+        idxs = df2.index
+        original_idx = df.index.copy(deep=True)
         missing_idxs = ~original_idx.isin(idxs)
-        missing_overlap = scdf.index[missing_idxs]
+        missing_overlap = df.index[missing_idxs]
 
-        df_to_find_nearest_in = scdf.reindex(missing_overlap)
+        df_to_find_nearest_in = df.reindex(missing_overlap)
 
-        odf = ocdf.reindex(ocdf2.index)
+        odf = df2.reindex(df22.index)
         odf.index = idxs
-        sdf = scdf.reindex(idxs)
+        sdf = df.reindex(idxs)
 
         nearest_df = sdf.join(odf, rsuffix=suffix)
         nearest_df = _insert_distance(nearest_df, 0, suffix)
     else:
-        df_to_find_nearest_in = scdf
+        df_to_find_nearest_in = df
 
     return nearest_df, df_to_find_nearest_in
 
@@ -99,8 +99,8 @@ def _previous_nonoverlapping(left_starts: pd.Series, right_ends: pd.Series) -> t
     return r_idx, dist
 
 
-def _nearest(scdf: "DataFrame", ocdf: "DataFrame", **kwargs) -> pd.DataFrame:
-    if scdf.empty or ocdf.empty:
+def _nearest(df: "DataFrame", df2: "DataFrame", **kwargs) -> pd.DataFrame:
+    if df.empty or df2.empty:
         return PyRanges()
 
     overlap = kwargs["overlap"]
@@ -108,47 +108,47 @@ def _nearest(scdf: "DataFrame", ocdf: "DataFrame", **kwargs) -> pd.DataFrame:
     suffix = kwargs["suffix"]
 
     if how == "upstream":
-        strand = scdf.Strand.iloc[0]
+        strand = df.Strand.iloc[0]
         how = {"+": "previous", "-": "next"}[strand]
     elif how == "downstream":
-        strand = scdf.Strand.iloc[0]
+        strand = df.Strand.iloc[0]
         how = {"+": "next", "-": "previous"}[strand]
 
-    ocdf = ocdf.reset_index(drop=True)
+    df2 = df2.reset_index(drop=True)
 
     if overlap:
-        nearest_df, df_to_find_nearest_in = _overlapping_for_nearest(scdf, ocdf, suffix)
+        nearest_df, df_to_find_nearest_in = _overlapping_for_nearest(df, df2, suffix)
     else:
-        df_to_find_nearest_in = scdf
+        df_to_find_nearest_in = df
         nearest_df = pyranges.empty.empty()
 
     df = pyranges.empty.empty_df()
     if not df_to_find_nearest_in.empty:
         df_to_find_nearest_in = sort_one_by_one(df_to_find_nearest_in, "Start", "End")
-        ocdf = sort_one_by_one(ocdf, "Start", "End")
+        df2 = sort_one_by_one(df2, "Start", "End")
         df_to_find_nearest_in.index = pd.Index(range(len(df_to_find_nearest_in)))
 
         if how == "next":
-            r_idx, dist = _next_nonoverlapping(df_to_find_nearest_in.End, ocdf.Start, ocdf.index.to_numpy())
+            r_idx, dist = _next_nonoverlapping(df_to_find_nearest_in.End, df2.Start, df2.index.to_numpy())
         elif how == "previous":
-            r_idx, dist = _previous_nonoverlapping(df_to_find_nearest_in.Start, ocdf.End)
+            r_idx, dist = _previous_nonoverlapping(df_to_find_nearest_in.Start, df2.End)
         else:
-            previous_r_idx, previous_dist = _previous_nonoverlapping(df_to_find_nearest_in.Start, ocdf.End)
+            previous_r_idx, previous_dist = _previous_nonoverlapping(df_to_find_nearest_in.Start, df2.End)
 
-            next_r_idx, next_dist = _next_nonoverlapping(df_to_find_nearest_in.End, ocdf.Start, ocdf.index.to_numpy())
+            next_r_idx, next_dist = _next_nonoverlapping(df_to_find_nearest_in.End, df2.Start, df2.index.to_numpy())
 
             r_idx, dist = nearest_nonoverlapping(previous_r_idx, previous_dist, next_r_idx, next_dist)
 
-        ocdf = ocdf.reindex(r_idx)
+        df2 = df2.reindex(r_idx)
 
-        ocdf.index = df_to_find_nearest_in.index
+        df2.index = df_to_find_nearest_in.index
 
-        ocdf = _insert_distance(ocdf, dist, suffix)
+        df2 = _insert_distance(df2, dist, suffix)
 
-        _r_idx = pd.Series(r_idx, index=ocdf.index)
+        _r_idx = pd.Series(r_idx, index=df2.index)
         df_to_find_nearest_in = df_to_find_nearest_in.drop(_r_idx[_r_idx == -1].index)
 
-        df = df_to_find_nearest_in.join(ocdf, rsuffix=suffix)
+        df = df_to_find_nearest_in.join(df2, rsuffix=suffix)
 
     if overlap and "df" in locals() and not df.empty and not nearest_df.empty:
         df = pd.concat([nearest_df, df], sort=False)

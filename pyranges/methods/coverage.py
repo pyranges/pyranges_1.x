@@ -3,24 +3,24 @@ import pandas as pd
 from ncls import NCLS  # type: ignore[import]
 
 
-def _number_overlapping(scdf: pd.DataFrame, ocdf: pd.DataFrame, **kwargs) -> pd.DataFrame:
+def _number_overlapping(df: pd.DataFrame, df2: pd.DataFrame, **kwargs) -> pd.DataFrame:
     keep_nonoverlapping = kwargs.get("keep_nonoverlapping", True)
     column_name = kwargs.get("overlap_col", True)
 
-    if scdf.empty:
-        return scdf
-    if ocdf.empty:
+    if df.empty:
+        return df
+    if df2.empty:
         if keep_nonoverlapping:
-            df = scdf.copy()
+            df = df.copy()
             df.insert(df.shape[1], column_name, 0)
             return df
-        return ocdf
+        return df2
 
-    oncls = NCLS(ocdf.Start.to_numpy(), ocdf.End.to_numpy(), ocdf.index.to_numpy())
+    oncls = NCLS(df2.Start.to_numpy(), df2.End.to_numpy(), df2.index.to_numpy())
 
-    starts = scdf.Start.to_numpy()
-    ends = scdf.End.to_numpy()
-    indexes = scdf.index.to_numpy()
+    starts = df.Start.to_numpy()
+    ends = df.End.to_numpy()
+    indexes = df.index.to_numpy()
 
     _self_indexes, _other_indexes = oncls.all_overlaps_both(starts, ends, indexes)
 
@@ -28,9 +28,9 @@ def _number_overlapping(scdf: pd.DataFrame, ocdf: pd.DataFrame, **kwargs) -> pd.
     counts_per_read = s.value_counts()[s.unique()].reset_index()
     counts_per_read.columns = ["Index", "Count"]
 
-    df = scdf.copy()
+    df = df.copy()
 
-    _missing_indexes = np.setdiff1d(scdf.index, _self_indexes)
+    _missing_indexes = np.setdiff1d(df.index, _self_indexes)
     missing = pd.DataFrame(data={"Index": _missing_indexes, "Count": 0}, index=_missing_indexes)
     counts_per_read = pd.concat([counts_per_read, missing])
 
@@ -43,21 +43,21 @@ def _number_overlapping(scdf: pd.DataFrame, ocdf: pd.DataFrame, **kwargs) -> pd.
     return df[df[column_name] != 0]
 
 
-def _coverage(scdf: pd.DataFrame, ocdf: pd.DataFrame, **kwargs) -> pd.DataFrame:
+def _coverage(df: pd.DataFrame, df2: pd.DataFrame, **kwargs) -> pd.DataFrame:
     fraction_col = kwargs["fraction_col"]
 
-    if scdf.empty:
-        return scdf
-    if ocdf.empty:
-        df = scdf.copy()
+    if df.empty:
+        return df
+    if df2.empty:
+        df = df.copy()
         df.insert(df.shape[1], fraction_col, 0.0)
         return df
 
-    oncls = NCLS(ocdf.Start.to_numpy(), ocdf.End.to_numpy(), ocdf.index.to_numpy())
+    oncls = NCLS(df2.Start.to_numpy(), df2.End.to_numpy(), df2.index.to_numpy())
 
-    starts = scdf.Start.to_numpy()
-    ends = scdf.End.to_numpy()
-    indexes = scdf.index.to_numpy()
+    starts = df.Start.to_numpy()
+    ends = df.End.to_numpy()
+    indexes = df.index.to_numpy()
 
     _lengths = oncls.coverage(starts, ends, indexes)
     _lengths = _lengths / (ends - starts)
@@ -65,8 +65,8 @@ def _coverage(scdf: pd.DataFrame, ocdf: pd.DataFrame, **kwargs) -> pd.DataFrame:
     _fractions = _fractions.astype("float64")
     _fractions = np.nan_to_num(_fractions)
 
-    scdf = scdf.copy()
+    df = df.copy()
 
-    scdf.insert(scdf.shape[1], fraction_col, _fractions)
+    df.insert(df.shape[1], fraction_col, _fractions)
 
-    return scdf
+    return df

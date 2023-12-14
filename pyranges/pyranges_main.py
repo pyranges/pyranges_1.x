@@ -47,7 +47,7 @@ from pyranges.names import (
     VALID_NEAREST_TYPE,
     VALID_OVERLAP_TYPE,
     VALID_STRAND_BEHAVIOR_TYPE,
-    VALID_STRAND_TYPE, UnaryPyRangeOperation, UnaryRangeFrameOperation,
+    VALID_STRAND_TYPE, UnaryPyRangeOperation, UnaryRangeFrameOperation, BinaryRangeFrameOperation,
 )
 from pyranges.pyranges_groupby import PyRangesGroupBy
 from pyranges.pyranges_helpers import (
@@ -546,7 +546,7 @@ class PyRanges(RangeFrame):
     def apply_pair(  # type: ignore[override]
         self: "PyRanges",
         other: "PyRanges",
-        function: Callable,
+        function: BinaryRangeFrameOperation,
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
         by: VALID_BY_TYPES = None,
         **kwargs,

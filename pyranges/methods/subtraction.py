@@ -9,20 +9,20 @@ if TYPE_CHECKING:
     from pyranges import RangeFrame
 
 
-def _subtraction(scdf: "RangeFrame", ocdf: "RangeFrame", **_) -> pd.DataFrame:
-    if ocdf.empty or scdf.empty:
-        return scdf
+def _subtraction(df: "RangeFrame", df2: "RangeFrame", **_) -> pd.DataFrame:
+    if df2.empty or df.empty:
+        return df
 
-    o = NCLS(ocdf.Start.to_numpy(), ocdf.End.to_numpy(), ocdf.index.to_numpy())
+    o = NCLS(df2.Start.to_numpy(), df2.End.to_numpy(), df2.index.to_numpy())
 
     idx_self, new_starts, new_ends = o.set_difference_helper(
-        scdf.Start.values,
-        scdf.End.values,
-        scdf.index.values,
-        scdf[TEMP_NUM_COL].to_numpy(),
+        df.Start.values,
+        df.End.values,
+        df.index.values,
+        df[TEMP_NUM_COL].to_numpy(),
     )
 
-    missing_idx = pd.Index(scdf.index).difference(idx_self)
+    missing_idx = pd.Index(df.index).difference(idx_self)
 
     idx_to_drop = new_starts != -1
 
@@ -33,12 +33,12 @@ def _subtraction(scdf: "RangeFrame", ocdf: "RangeFrame", **_) -> pd.DataFrame:
     new_starts = pd.Series(new_starts, index=idx_self)
     new_ends = pd.Series(new_ends, index=idx_self)
 
-    _scdf = scdf.reindex(missing_idx.union(idx_self)).sort_index()
+    _df = df.reindex(missing_idx.union(idx_self)).sort_index()
     new_starts = new_starts.sort_index()
     new_ends = new_ends.sort_index()
 
     if len(idx_self):
-        _scdf.loc[_scdf.index.isin(idx_self), "Start"] = new_starts.to_numpy()
-        _scdf.loc[_scdf.index.isin(idx_self), "End"] = new_ends.to_numpy()
+        _df.loc[_df.index.isin(idx_self), "Start"] = new_starts.to_numpy()
+        _df.loc[_df.index.isin(idx_self), "End"] = new_ends.to_numpy()
 
-    return _scdf
+    return _df

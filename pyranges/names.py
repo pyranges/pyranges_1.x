@@ -13,8 +13,8 @@ class UnaryRangeFrameOperation[T: "RangeFrame"](Protocol):
         ...
 
 
-class BinaryRangeFrameOperation(Protocol):
-    def __call__(self, df: "RangeFrame", df2: "RangeFrame", **kwargs: Any) -> "pd.DataFrame":
+class BinaryRangeFrameOperation[T: "RangeFrame"](Protocol):
+    def __call__(self, df: T, df2: T, **kwargs: Any) -> "pd.DataFrame":
         ...
 
 

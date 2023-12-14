@@ -130,7 +130,8 @@ def count_overlaps(
     PyRanges with 4 rows, 6 columns, and 1 index columns.
     Contains 1 chromosomes.
     """
-    features = concat.concat(list(grs.values())).split(between=True) if features is None else features.copy()
+    concated = concat.concat(grs.values())
+    features = concated.split(between=True) if features is None else features.copy()
 
     from pyranges.methods.overlap import _count_overlaps
 
