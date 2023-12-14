@@ -9,7 +9,7 @@ from natsort import natsorted  # type: ignore[import]
 from pandas.core.frame import DataFrame
 
 from pyranges import mypy_ensure_pyranges
-from pyranges.names import BIGWIG_SCORE_COL, CHROM_COL, END_COL, GENOME_LOC_COLS, PANDAS_COMPRESSION_TYPE, START_COL
+from pyranges.names import BIGWIG_SCORE_COL, CHROM_COL, END_COL, PANDAS_COMPRESSION_TYPE, START_COL
 from pyranges.pyranges_main import PyRanges
 
 GTF_COLUMNS_TO_PYRANGES = {
