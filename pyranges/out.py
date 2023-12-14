@@ -200,9 +200,9 @@ def _to_bigwig(
     gr = mypy_ensure_pyranges(df)
     unique_chromosomes = gr.chromosomes
 
-    subset = [*GENOME_LOC_COLS, BIGWIG_SCORE_COL]
-
-    gr = gr.remove_strand().sort_by_position().get_with_loc_columns(subset)
+    gr = gr.remove_strand()
+    gr = gr.sort_by_position()
+    gr = gr.get_with_loc_columns(BIGWIG_SCORE_COL)
 
     if dryrun:
         return gr
