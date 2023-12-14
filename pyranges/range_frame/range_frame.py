@@ -246,17 +246,17 @@ class RangeFrame(pd.DataFrame):
 
         return InvalidRangesReason.is_invalid_ranges_reasons(self)
 
-    def copy(self, *args, **kwargs) -> "RangeFrame":
+    def copy(self, *args, **kwargs) -> "RangeFrame":  # noqa: D102
         return _mypy_ensure_rangeframe(super().copy(*args, **kwargs))
 
-    def drop(self, *args, **kwargs) -> "RangeFrame | None":  # type: ignore[override]
+    def drop(self, *args, **kwargs) -> "RangeFrame | None":  # type: ignore[override]  # noqa: D102
         return self.__class__(super().drop(*args, **kwargs))
 
-    def drop_and_return[RangeFrameType](self: RangeFrameType, *args: Any, **kwargs: Any) -> RangeFrameType:  # noqa: PYI019
+    def drop_and_return[RangeFrameType](self: RangeFrameType, *args: Any, **kwargs: Any) -> RangeFrameType:  # noqa: PYI019, D102
         kwargs["inplace"] = False
         return self.__class__(super().drop(*args, **kwargs))
 
-    def reindex(self, *args, **kwargs) -> "RangeFrame":
+    def reindex(self, *args, **kwargs) -> "RangeFrame":  # noqa: D102
         return self.__class__(super().reindex(*args, **kwargs))
 
 

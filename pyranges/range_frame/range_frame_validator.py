@@ -96,7 +96,7 @@ class InvalidRangesReason:
 
 class StartsOrEndsMissingValues(InvalidRangesReason):
     @property
-    def reason(self) -> str:
+    def reason(self) -> str:  # noqa: D102
         return "Some starts or ends are nan."
 
     @staticmethod
@@ -109,7 +109,7 @@ class StartsOrEndsMissingValues(InvalidRangesReason):
 
 class EmptyOrNegativeIntervals(InvalidRangesReason):
     @property
-    def reason(self) -> str:
+    def reason(self) -> str:  # noqa: D102
         return "Some intervals are empty or negative length (end <= start)."
 
     @staticmethod
@@ -121,7 +121,7 @@ class EmptyOrNegativeIntervals(InvalidRangesReason):
 
 class StartOrEndsNegative(InvalidRangesReason):
     @property
-    def reason(self) -> str:
+    def reason(self) -> str:  # noqa: D102
         return "Some starts or ends are < 0."
 
     @staticmethod

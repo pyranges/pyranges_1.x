@@ -12,9 +12,11 @@ LOGGER.setLevel(logging.INFO)
 
 
 parser = argparse.ArgumentParser(description="This script runs various checks and tests.")
-parser.add_argument("-v", "--verbose", action="store_true", help="Show output from programs run")
+parser.add_argument("-v", "--verbose", action="store_true", help="Show output from programs run.")
+parser.add_argument("-l", "--list", action="store_true", help="List all checks and tests and exits.")
 args = parser.parse_args()
 verbose: bool = args.verbose
+show_checks: bool = args.list
 
 
 def run_command(command, *, show_output: bool) -> int:
@@ -31,6 +33,11 @@ def main() -> int:
         "pyright": ["pyright", "pyranges"],
         "pytest": ["pytest", "--doctest-modules", "pyranges/", "tests/unit/"],
     }
+    if show_checks:
+        LOGGER.info("Available checks and tests:")
+        for task, command in commands.items():
+            LOGGER.info("    %s: %s", task, shlex.join(command))
+        sys.exit(0)
 
     failed_tasks = []
 

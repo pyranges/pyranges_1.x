@@ -182,32 +182,36 @@ def _to_bigwig(
         sys.exit(1)
 
     if not divide:
-        gr = self.to_rle(rpm=rpm, strand=False, value_col=value_col).to_ranges()
+        df = self.to_rle(rpm=rpm, strand=False, value_col=value_col).to_ranges()
     else:
-        gr = self.to_rle(rpm=rpm, strand=False, value_col=value_col)
+        df = self.to_rle(rpm=rpm, strand=False, value_col=value_col)
         divide_by = self.to_rle(rpm=rpm, strand=False)
-        c = gr / divide_by
+        c = df / divide_by
         new_pyrles = {}
         for k, v in c.items():
             v.values = np.log2(v.values)
             v.defragment()
             new_pyrles[k] = v
 
-        gr = c.defragment().to_ranges()
+        df = c.defragment().to_ranges()
 
+    gr = PyRanges(df)
     unique_chromosomes = gr.chromosomes
+    print(unique_chromosomes)
 
     subset = [*GENOME_LOC_COLS, BIGWIG_SCORE_COL]
 
     gr = gr[subset].remove_strand()
+    print(gr)
 
-    gr = gr.sort()
+    gr = gr.sort_by_position()
+    print(gr)
 
     if dryrun:
         return gr
 
     if not isinstance(chromosome_sizes, dict):
-        size_df = chromosome_sizes.df
+        size_df = chromosome_sizes
         chromosome_sizes = dict(zip(size_df[CHROM_COL], size_df[END_COL], strict=True))
 
     header = [(c, int(chromosome_sizes[c])) for c in unique_chromosomes]
@@ -215,13 +219,16 @@ def _to_bigwig(
     bw = pyBigWig.open(path, "w")
     bw.addHeader(header)
 
-    for _, df in gr.groupby(CHROM_COL):
-        chromosomes = df[CHROM_COL].tolist()
-        starts = df[START_COL].tolist()
-        ends = df[END_COL].tolist()
-        values = df.Score.tolist()
+    chromosomes = df[CHROM_COL].tolist()
+    starts = df[START_COL].tolist()
+    ends = df[END_COL].tolist()
+    values = df.Score.tolist()
+    print(chromosomes)
+    print(starts)
+    print(ends)
+    print(values)
 
-        bw.addEntries(chromosomes, starts, ends=ends, values=values)
+    bw.addEntries(chromosomes, starts, ends=ends, values=values)
 
     return None
 
