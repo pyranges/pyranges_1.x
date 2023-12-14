@@ -38,7 +38,7 @@ def _insert_distance(df2: pd.DataFrame, dist: "NDArray | int", suffix: str) -> p
     return df2
 
 
-def _overlapping_for_nearest(df: pd.DataFrame, df2: pd.DataFrame, suffix: str) -> tuple[pd.DataFrame, pd.DataFrame]:
+def _overlapping_for_nearest(df: pd.DataFrame, df2: pd.DataFrame, suffix: str, ) -> tuple[pd.DataFrame, pd.DataFrame]:
     nearest_df = pd.DataFrame(columns="Chromosome Start End Strand".split())
 
     it = NCLS(df2.Start.to_numpy(), df2.End.to_numpy(), df2.index.to_numpy())
@@ -48,17 +48,17 @@ def _overlapping_for_nearest(df: pd.DataFrame, df2: pd.DataFrame, suffix: str) -
         df[END_COL].to_numpy(),
         df.index.to_numpy(),
     )
-    df2, df22 = df.reindex(idx_self), df2.reindex(idx_other)
+    self, other = df.reindex(idx_self), df2.reindex(idx_other)
 
-    if not df22.empty:
-        idxs = df2.index
+    if not other.empty:
+        idxs = self.index
         original_idx = df.index.copy(deep=True)
         missing_idxs = ~original_idx.isin(idxs)
         missing_overlap = df.index[missing_idxs]
 
         df_to_find_nearest_in = df.reindex(missing_overlap)
 
-        odf = df2.reindex(df22.index)
+        odf = df2.reindex(other.index)
         odf.index = idxs
         sdf = df.reindex(idxs)
 
