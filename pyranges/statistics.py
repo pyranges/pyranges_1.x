@@ -225,7 +225,7 @@ def mcc(
     _genome, genome_length, _labels = process_genome_data(grs, labels=labels, genome=genome)
 
     # remove all non-loc columns before computation
-    grs = [gr.merge_overlaps(strand=strand) for gr in grs]
+    grs = [gr.merge_overlaps(use_strand=strand) for gr in grs]
 
     strand_behavior_same = all(
         strand_behavior_from_strand_and_validate(gr, strand) == STRAND_BEHAVIOR_SAME for gr in grs
@@ -265,7 +265,7 @@ def mcc(
 
         else:  # noqa: RET507
             j = t.interval_join(f, strand_behavior=strand_behavior)
-            tp_gr = j.intersect_interval_columns(start2="Start_b", end2="End_b").merge_overlaps(strand=strand)
+            tp_gr = j.intersect_interval_columns(start2="Start_b", end2="End_b").merge_overlaps(use_strand=strand)
             if strand:
                 for _strand in "+ -".split():
                     tp = tp_gr[_strand].length
@@ -667,8 +667,8 @@ class StatisticsMethods:
             and other.strand_values_valid
             and strand_behavior in {STRAND_BEHAVIOR_AUTO, True}
         )
-        reference_length = self.pr.merge_overlaps(strand=strand).length
-        query_length = other.merge_overlaps(strand=strand).length
+        reference_length = self.pr.merge_overlaps(use_strand=strand).length
+        query_length = other.merge_overlaps(use_strand=strand).length
 
         intersection_sum = self.pr.set_intersect(other, strand_behavior=strand_behavior).lengths().sum()
         return _chromsizes * intersection_sum / (reference_length * query_length)
@@ -718,7 +718,7 @@ class StatisticsMethods:
 
         union_sum = 0
         for gr in [self.pr, other]:
-            union_sum += gr.merge_overlaps(strand=strand).lengths().sum()
+            union_sum += gr.merge_overlaps(use_strand=strand).lengths().sum()
 
         denominator = union_sum - intersection_sum
         if denominator == 0:
