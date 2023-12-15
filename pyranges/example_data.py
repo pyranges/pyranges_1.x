@@ -19,7 +19,6 @@ Contains 1 chromosomes and 2 strands.
 """
 import tempfile
 import typing
-from functools import cached_property
 from importlib.resources import files
 from pathlib import Path
 from typing import ClassVar
@@ -74,7 +73,7 @@ class ExampleData:
             f.flush()
             return pr.read_gtf(Path(f.name))
 
-    @cached_property
+    @property
     def chipseq(self) -> "pr.PyRanges":
         """Example ChIP-seq data.
 
@@ -120,7 +119,7 @@ chr19	43528773	43528798	U0	0	+
 chr10	73781101	73781126	U0	0	+"""
         return self._read_bed_from_string(contents)
 
-    @cached_property
+    @property
     def chromsizes(self) -> "pr.PyRanges":
         """Example chromsizes file.
 
@@ -153,7 +152,7 @@ chr21	0	48129895
 chrM	0	16571"""
         return self._read_bed_from_string(contents)
 
-    @cached_property
+    @property
     def ensembl_gtf(self) -> "pr.PyRanges":
         """Example gtf file from Ensembl."""
         contents = """#!genome-build GRCh38.p10

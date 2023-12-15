@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 RangeFrameType = TypeVar("RangeFrameType", "RangeFrame", "PyRanges")
 
 
-class UnaryRangeFrameOperation[T: "RangeFrame"](Protocol):
+class UnaryOperation[T: "RangeFrame"](Protocol):
     """A protocol for unary operations on RangeFrames."""
 
     def __call__(self, df: T, **kwargs: Any) -> "pd.DataFrame":
@@ -20,7 +20,7 @@ class UnaryRangeFrameOperation[T: "RangeFrame"](Protocol):
         ...
 
 
-class BinaryRangeFrameOperation[T: "RangeFrame"](Protocol):
+class BinaryOperation[T: "RangeFrame"](Protocol):
     """A protocol for binary operations on RangeFrames."""
 
     def __call__(self, df: T, df2: T, **kwargs: Any) -> "pd.DataFrame":
@@ -112,3 +112,11 @@ DEFAULT_CLUSTER_ID_COL = "Cluster"
 VALID_BY_TYPES = str | Iterable[str] | None
 
 PANDAS_COMPRESSION_TYPE = Literal["infer", "gzip", "bz2", "zip", "xz", "zstd"] | dict[str, Any] | None
+
+SKIP_IF_DF_EMPTY_TYPE = Literal["left", "right", "any", "both", False]
+SKIP_IF_EMPTY_LEFT: Final = "left"
+SKIP_IF_EMPTY_RIGHT: Final = "right"
+SKIP_IF_EMPTY_ANY: Final = "any"
+SKIP_IF_EMPTY_BOTH: Final = "both"
+SKIP_IF_DF_EMPTY_OPTIONS = [False, SKIP_IF_EMPTY_ANY, SKIP_IF_EMPTY_BOTH, SKIP_IF_EMPTY_LEFT, SKIP_IF_EMPTY_RIGHT]
+SKIP_IF_DF_EMPTY_DEFAULT = "any"

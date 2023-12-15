@@ -30,6 +30,7 @@ from pyranges.names import (
     OVERLAP_FIRST,
     PANDAS_COMPRESSION_TYPE,
     RANGE_COLS,
+    SKIP_IF_EMPTY_LEFT,
     START_COL,
     STRAND_BEHAVIOR_AUTO,
     STRAND_BEHAVIOR_OPPOSITE,
@@ -48,8 +49,8 @@ from pyranges.names import (
     VALID_OVERLAP_TYPE,
     VALID_STRAND_BEHAVIOR_TYPE,
     VALID_STRAND_TYPE,
-    BinaryRangeFrameOperation,
-    UnaryRangeFrameOperation,
+    BinaryOperation,
+    UnaryOperation,
 )
 from pyranges.pyranges_groupby import PyRangesGroupBy
 from pyranges.pyranges_helpers import (
@@ -525,7 +526,7 @@ class PyRanges(RangeFrame):
 
     def apply_single(  # type: ignore[override]
         self,
-        function: UnaryRangeFrameOperation,
+        function: UnaryOperation,
         *,
         by: VALID_BY_TYPES = None,
         **kwargs,
@@ -548,7 +549,7 @@ class PyRanges(RangeFrame):
     def apply_pair(  # type: ignore[override]
         self: "PyRanges",
         other: "PyRanges",
-        function: BinaryRangeFrameOperation,
+        function: BinaryOperation,
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
         by: VALID_BY_TYPES = None,
         **kwargs,
@@ -1832,6 +1833,7 @@ class PyRanges(RangeFrame):
             strand_behavior=strand_behavior,
             by=by,
             invert=invert,
+            skip_if_empty=False if invert else SKIP_IF_EMPTY_LEFT,
             how=how,
         )
 

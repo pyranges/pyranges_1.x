@@ -7,13 +7,30 @@ import pandas as pd
 
 from pyranges.names import (
     RANGE_COLS,
+    SKIP_IF_DF_EMPTY_DEFAULT,
+    SKIP_IF_DF_EMPTY_TYPE,
+    SKIP_IF_EMPTY_ANY,
+    SKIP_IF_EMPTY_BOTH,
+    SKIP_IF_EMPTY_LEFT,
+    SKIP_IF_EMPTY_RIGHT,
     VALID_BY_TYPES,
     VALID_OVERLAP_TYPE,
-    BinaryRangeFrameOperation,
-    UnaryRangeFrameOperation,
+    BinaryOperation,
+    UnaryOperation,
 )
 from pyranges.range_frame.range_frame_validator import InvalidRangesReason
 from pyranges.tostring import tostring
+
+
+def should_skip_operation(df: pd.DataFrame, *, df2: pd.DataFrame, skip_if_empty: SKIP_IF_DF_EMPTY_TYPE) -> bool:
+    """Whether to skip operation because one or more dfs are empty."""
+    if df.empty and df2.empty:
+        return skip_if_empty in {SKIP_IF_EMPTY_BOTH, SKIP_IF_EMPTY_ANY, SKIP_IF_EMPTY_LEFT, SKIP_IF_EMPTY_RIGHT}
+    if df.empty:
+        return skip_if_empty in {SKIP_IF_EMPTY_LEFT, SKIP_IF_EMPTY_ANY}
+    if df2.empty:
+        return skip_if_empty in {SKIP_IF_EMPTY_RIGHT, SKIP_IF_EMPTY_ANY}
+    return False
 
 
 class RangeFrame(pd.DataFrame):
@@ -153,7 +170,7 @@ class RangeFrame(pd.DataFrame):
 
     def apply_single(
         self,
-        function: UnaryRangeFrameOperation,
+        function: UnaryOperation,
         by: VALID_BY_TYPES,
         **kwargs: Any,
     ) -> "RangeFrame":
@@ -182,8 +199,9 @@ class RangeFrame(pd.DataFrame):
     def apply_pair(
         self,
         other: "RangeFrame",
-        function: BinaryRangeFrameOperation,
+        function: BinaryOperation,
         by: VALID_BY_TYPES = None,
+        skip_if_empty: SKIP_IF_DF_EMPTY_TYPE = SKIP_IF_DF_EMPTY_DEFAULT,
         **kwargs,
     ) -> "RangeFrame":
         """Call a function on two RangeFrames.
@@ -201,6 +219,9 @@ class RangeFrame(pd.DataFrame):
 
         kwargs: dict
             Passed to function.
+
+        skip_if_empty:
+            Whether to skip the operations if one of the dataframes is empty for a particular group.
 
         Examples
         --------
@@ -229,6 +250,9 @@ class RangeFrame(pd.DataFrame):
 
         for key, _df in self.groupby(by):
             odf = others.get(key, empty)
+
+            if should_skip_operation(_df, df2=odf, skip_if_empty=skip_if_empty):
+                continue
             results.append(function(_mypy_ensure_rangeframe(_df), _mypy_ensure_rangeframe(odf), **kwargs))
 
         return _mypy_ensure_rangeframe(pd.concat(results))

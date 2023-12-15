@@ -143,6 +143,7 @@ def count_overlaps(
             strand_behavior=strand_behavior,
             how=how,
             return_indexes=True,
+            skip_if_empty=False,
             name=name,
         )
     return mypy_ensure_pyranges(features.astype({k: int for k in grs}))

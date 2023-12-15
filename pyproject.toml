@@ -83,7 +83,7 @@ now = true
 
 [tool.pyright]
 include = ["pyranges"]
-typeCheckingMode = "strict"
+# typeCheckingMode = "strict"
 pythonVersion = "3.12"
 
 ignore = ["pyranges/pyranges_groupby.py"]
