@@ -7,19 +7,19 @@ from pyranges.names import (
     CHROM_AND_STRAND_COLS,
     CHROM_COL,
     GENOME_LOC_COLS,
-    STRAND_AUTO,
     STRAND_BEHAVIOR_AUTO,
     STRAND_BEHAVIOR_IGNORE,
     STRAND_BEHAVIOR_OPPOSITE,
     STRAND_BEHAVIOR_SAME,
     STRAND_COL,
     TEMP_STRAND_COL,
+    USE_STRAND_AUTO,
     VALID_BY_OPTIONS,
     VALID_BY_TYPES,
     VALID_STRAND_BEHAVIOR_OPTIONS,
     VALID_STRAND_BEHAVIOR_TYPE,
-    VALID_STRAND_OPTIONS,
-    VALID_STRAND_TYPE,
+    VALID_USE_STRAND_OPTIONS,
+    VALID_USE_STRAND_TYPE,
 )
 
 if TYPE_CHECKING:
@@ -45,22 +45,22 @@ def return_pyranges_if_possible(
     return wrapper
 
 
-def validate_and_convert_strand(self: "PyRanges", strand: VALID_STRAND_TYPE) -> bool:
+def validate_and_convert_strand(self: "PyRanges", use_strand: VALID_USE_STRAND_TYPE) -> bool:
     """Validate and convert strand option."""
-    if strand is None or strand == "auto":
-        strand = self.strand_values_valid
-    elif not isinstance(strand, bool):
-        msg = f"Only 'auto'/None, True, and False are valid values for strand. Was: {strand}."
+    if use_strand is None or use_strand == "auto":
+        use_strand = self.strand_values_valid
+    elif not isinstance(use_strand, bool):
+        msg = f"Only 'auto'/None, True, and False are valid values for strand. Was: {use_strand}."
         raise ValueError(msg)
-    return strand
+    return use_strand
 
 
 def resolve_strand_argument_ensure_valid(
     self: "PyRanges",
-    strand: VALID_STRAND_TYPE,
+    strand: VALID_USE_STRAND_TYPE,
 ) -> bool:
     """Resolve strand argument and ensure it is valid."""
-    if strand == STRAND_AUTO:
+    if strand == USE_STRAND_AUTO:
         _strand = self.strand_values_valid
     elif isinstance(strand, bool):
         _strand = strand
@@ -107,9 +107,9 @@ def group_keys_from_strand_behavior(
     return genome_cols + ([] if by is None else ([by] if isinstance(by, str) else [*by]))
 
 
-def ensure_valid_strand_option(self: "PyRanges", strand: VALID_STRAND_TYPE) -> None:
+def ensure_valid_strand_option(self: "PyRanges", strand: VALID_USE_STRAND_TYPE) -> None:
     """Ensure strand option is valid."""
-    if strand not in VALID_STRAND_OPTIONS:
+    if strand not in VALID_USE_STRAND_OPTIONS:
         msg = f"Invalid strand option: {strand}"
         raise ValueError(msg)
     if strand and not self.has_strand_column:
@@ -117,13 +117,13 @@ def ensure_valid_strand_option(self: "PyRanges", strand: VALID_STRAND_TYPE) -> N
         raise ValueError(msg)
 
 
-def group_keys_single(self: "PyRanges", strand: VALID_STRAND_TYPE, by: VALID_BY_OPTIONS = None) -> list[str]:
+def group_keys_single(self: "PyRanges", use_strand: VALID_USE_STRAND_TYPE, by: VALID_BY_OPTIONS = None) -> list[str]:
     """Return group keys for single PyRanges."""
-    ensure_valid_strand_option(self, strand)
-    if strand == "auto":
+    ensure_valid_strand_option(self, use_strand)
+    if use_strand == "auto":
         genome_keys = [CHROM_COL, STRAND_COL] if self.has_strand_column else [CHROM_COL]
     else:
-        genome_keys = [CHROM_COL, STRAND_COL] if strand else [CHROM_COL]
+        genome_keys = [CHROM_COL, STRAND_COL] if use_strand else [CHROM_COL]
     return genome_keys + self._by_to_list(by)
 
 
@@ -131,14 +131,14 @@ def get_by_columns_including_chromosome_and_strand(
     self,
     by: VALID_BY_TYPES,
     *,
-    strand: bool,
+    use_strand: bool,
 ) -> list[str]:
     """Return columns to group by including chromosome and strand."""
-    if strand and not self.has_strand_column:
+    if use_strand and not self.has_strand_column:
         msg = "PyRanges is missing Strand column."
         raise AssertionError(msg)
 
-    chrom_and_strand_cols = CHROM_AND_STRAND_COLS if strand else [CHROM_COL]
+    chrom_and_strand_cols = CHROM_AND_STRAND_COLS if use_strand else [CHROM_COL]
     if by is None:
         return chrom_and_strand_cols
 
@@ -148,7 +148,7 @@ def get_by_columns_including_chromosome_and_strand(
 
 def strand_behavior_from_strand_and_validate(
     df: "PyRanges",
-    strand: VALID_STRAND_TYPE,
+    strand: VALID_USE_STRAND_TYPE,
 ) -> VALID_STRAND_BEHAVIOR_TYPE:
     """Return strand behavior based on strand bool.
 

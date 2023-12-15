@@ -25,7 +25,7 @@ def _summary(
     total_lengths["pyrange"] = [self.length]
 
     if self.strand_values_valid:
-        c = self.merge_overlaps(strand=True)
+        c = self.merge_overlaps(use_strand=True)
         lengths["coverage_forward"] = c.loci["+"].lengths()
         lengths["coverage_reverse"] = c.loci["-"].lengths()
         total_lengths["coverage_forward"] = [c.loci["+"].length]
@@ -33,7 +33,7 @@ def _summary(
     else:
         c = self
 
-    c = c.merge_overlaps(strand=False)
+    c = c.merge_overlaps(use_strand=False)
     lengths["coverage_unstranded"] = c.lengths()
     total_lengths["coverage_unstranded"] = [c.length]
 

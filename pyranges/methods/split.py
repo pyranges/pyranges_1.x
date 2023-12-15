@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from pyranges.names import CHROM_COL, END_COL, RANGE_COLS, START_COL, STRAND_COL, VALID_STRAND_TYPE
+from pyranges.names import CHROM_COL, END_COL, RANGE_COLS, START_COL, STRAND_COL, VALID_USE_STRAND_TYPE
 from pyranges.pyranges_helpers import mypy_ensure_pyranges, validate_and_convert_strand
 
 if TYPE_CHECKING:
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 def _split(
     df: "PyRanges",
-    strand: VALID_STRAND_TYPE = "auto",
+    strand: VALID_USE_STRAND_TYPE = "auto",
     **_,
 ) -> "PyRanges":
     dtype = df[START_COL].dtype

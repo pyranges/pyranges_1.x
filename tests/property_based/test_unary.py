@@ -80,7 +80,7 @@ def test_merge(gr, strand) -> None:
             )
 
     print("bedtools_df\n", bedtools_df)
-    result = gr.merge_overlaps(strand=strand, count=True)
+    result = gr.merge_overlaps(use_strand=strand)
     print("result\n", result.df)
 
     if not bedtools_df.empty:
@@ -136,7 +136,7 @@ def test_cluster(gr, strand) -> None:
     print("bedtools_df\n", bedtools_df)
 
     print("gr\n", gr)
-    result = gr.cluster(strand=strand)
+    result = gr.cluster(use_strand=strand)
     print("result\n", result[["Cluster"]])
     print("result\n", result.df)
 
@@ -172,7 +172,7 @@ def test_cluster(gr, strand) -> None:
 )
 @given(gr=dfs_min_with_id())  # pylint: disable=no-value-for-parameter
 def test_cluster_by(gr, strand) -> None:
-    result = gr.cluster(by="ID", strand=strand).df
+    result = gr.cluster(use_strand=strand, by="ID").df
     print(result)
     df = gr.df
 
@@ -183,7 +183,7 @@ def test_cluster_by(gr, strand) -> None:
     for _, gdf in natsorted(df.groupby(groupby)):
         grs.append(pr.PyRanges(gdf))
 
-    clusters = [gr.cluster(strand=strand) for gr in grs]
+    clusters = [gr.cluster(use_strand=strand) for gr in grs]
     i = 1
     new_clusters = []
     for c in clusters:
