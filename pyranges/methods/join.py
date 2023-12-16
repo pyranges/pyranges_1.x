@@ -29,32 +29,42 @@ def _both_dfs(
     **_,
 ) -> pd.DataFrame:
     _self_indexes, _other_indexes = _both_indexes(df, df2)
+    expected_columns = [*df.head(0).join(df2.head(0), how="inner", rsuffix=suffix).columns]
+    df2 = pd.DataFrame(df2)
+    df2.columns = expected_columns[df.shape[1] :]
+    _df = df.reindex(_self_indexes)
+    _df.index = pd.Index(np.arange(len(_df)))
+    _df2 = pd.DataFrame(df2).reindex(_other_indexes)
+    _df2.index = pd.Index(np.arange(len(_df2)))
+    j = _df.join(_df2, how="inner")
     if join_type == "inner":
-        df = df.reindex(_self_indexes)
-        df2 = df2.reindex(_other_indexes)
-        df2.index = _self_indexes
-    elif join_type == "left":
-        df2 = df2.reindex(_other_indexes)
-        df2.index = _self_indexes
-    elif join_type == "right":
-        df = df.reindex(_self_indexes)
-        df.index = _other_indexes
-    elif join_type == "outer":
-        missing_indices_self = df.index.difference(_self_indexes)
-        missing_indices_other = df2.index.difference(_other_indexes)
-        df_matching = df.reindex(_self_indexes)
-        df_matching.index = _other_indexes
-        df2_matcing = df2.reindex(_other_indexes)
-        df2_missing = df2.reindex(missing_indices_other)
-        df2_missing.index = pd.Index(-np.arange(1, len(df2_missing) + 1))
-        df_missing = df.reindex(missing_indices_self)
-        df_missing.index = pd.Index(-np.arange(len(df2_missing) + 1, len(df2_missing) + 1 + len(df_missing)))
-        df = pd.concat([df_matching, df_missing])
-        df2 = pd.concat([df2_matcing, df2_missing])
-    return df.merge(
-        df2,
-        left_index=True,
-        right_index=True,
-        suffixes=("", suffix),
-        how="inner" if join_type is None else join_type,
-    )
+        j.index = _self_indexes
+        return j
+
+    if join_type == "left":
+        missing_rows = _missing_rows_left(_self_indexes, df, j)
+        return pd.concat([j, missing_rows])
+
+    if join_type == "right":
+        missing_rows = _missing_rows_right(_other_indexes, df2, j)
+        return pd.concat([j, missing_rows])
+
+    if join_type == "outer":
+        missing_rows_l = _missing_rows_left(_self_indexes, df, j)
+        missing_rows_r = _missing_rows_right(_other_indexes, df2, j)
+        return pd.concat([j, missing_rows_l, missing_rows_r])
+
+    msg = f"Invalid join type: {join_type}"
+    raise ValueError(msg)
+
+
+def _missing_rows_left(_self_indexes, df, j) -> pd.DataFrame:
+    missing_indices_left = df.index.difference(_self_indexes)
+    j.index = _self_indexes
+    return df.reindex(missing_indices_left)
+
+
+def _missing_rows_right(_other_indexes, df2, j) -> pd.DataFrame:
+    missing_indices_right = df2.index.difference(_other_indexes)
+    j.index = _other_indexes
+    return df2.reindex(missing_indices_right)

@@ -1341,13 +1341,34 @@ class PyRanges(RangeFrame):
 
         # Note that since some start and end columns are nan, a regular DataFrame is returned.
 
+        >>> f1.interval_join(f2, join_type="left")
+          index  |    Chromosome      Start      End  Name       Chromosome_b      Start_b      End_b  Name_b
+          int64  |    object          int64    int64  object     object            float64    float64  object
+        -------  ---  ------------  -------  -------  ---------  --------------  ---------  ---------  --------
+              2  |    chr1                5        7  interval2  chr1                    6          7  b
+              0  |    chr1                3        6  interval1  nan                   nan        nan  nan
+              1  |    chr1                8        9  interval3  nan                   nan        nan  nan
+        PyRanges with 3 rows, 8 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        >>> f1.interval_join(f2, join_type="outer")
+          index  |    Chromosome        Start        End  Name       Chromosome_b      Start_b      End_b  Name_b
+          int64  |    object          float64    float64  object     object            float64    float64  object
+        -------  ---  ------------  ---------  ---------  ---------  --------------  ---------  ---------  --------
+              1  |    chr1                  5          7  interval2  chr1                    6          7  b
+              0  |    chr1                  3          6  interval1  nan                   nan        nan  nan
+              1  |    chr1                  8          9  interval3  nan                   nan        nan  nan
+              0  |    nan                 nan        nan  nan        chr1                    1          2  a
+        PyRanges with 4 rows, 8 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
         >>> bad = f1.interval_join(f2, join_type="right")
         >>> bad
           index  |    Chromosome        Start        End  Name       Chromosome_b      Start_b    End_b  Name_b
           int64  |    object          float64    float64  object     object              int64    int64  object
         -------  ---  ------------  ---------  ---------  ---------  --------------  ---------  -------  --------
-              0  |    nan                 nan        nan  nan        chr1                    1        2  a
               1  |    chr1                  5          7  interval2  chr1                    6        7  b
+              0  |    nan                 nan        nan  nan        chr1                    1        2  a
         PyRanges with 2 rows, 8 columns, and 1 index columns.
         Contains 1 chromosomes.
         >>> f2.interval_join(bad)  # bad.interval_join(f2) would not work either.
@@ -3543,35 +3564,27 @@ class PyRanges(RangeFrame):
         >>> gr1, gr2 = pr.example_data.aorta.head(3).remove_nonloc_columns(), pr.example_data.aorta2.head(3).remove_nonloc_columns()
         >>> j = gr1.interval_join(gr2)
         >>> j
-        index    |    Chromosome    Start    End      Strand      Chromosome_b    Start_b    End_b    Strand_b
-        int64    |    category      int64    int64    category    category        int64      int64    category
+          index  |    Chromosome      Start      End  Strand      Chromosome_b      Start_b    End_b  Strand_b
+          int64  |    category        int64    int64  category    category            int64    int64  category
         -------  ---  ------------  -------  -------  ----------  --------------  ---------  -------  ----------
-        1        |    chr1          9939     10138    +           chr1            10073      10272    +
-        0        |    chr1          9916     10115    -           chr1            9988       10187    -
-        0        |    chr1          9916     10115    -           chr1            10079      10278    -
-        0        |    chr1          9916     10115    -           chr1            9988       10187    -
-        ...      |    ...           ...      ...      ...         ...             ...        ...      ...
-        2        |    chr1          9951     10150    -           chr1            9988       10187    -
-        2        |    chr1          9951     10150    -           chr1            10079      10278    -
-        2        |    chr1          9951     10150    -           chr1            9988       10187    -
-        2        |    chr1          9951     10150    -           chr1            10079      10278    -
-        PyRanges with 9 rows, 8 columns, and 1 index columns.
+              1  |    chr1             9939    10138  +           chr1                10073    10272  +
+              0  |    chr1             9916    10115  -           chr1                 9988    10187  -
+              0  |    chr1             9916    10115  -           chr1                10079    10278  -
+              2  |    chr1             9951    10150  -           chr1                 9988    10187  -
+              2  |    chr1             9951    10150  -           chr1                10079    10278  -
+        PyRanges with 5 rows, 8 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
         >>> j.intersect_interval_columns(start="Start", end="End", start2="Start_b", end2="End_b")
-        index    |    Chromosome    Start    End      Strand      Chromosome_b    Strand_b
-        int64    |    category      int64    int64    category    category        category
+          index  |    Chromosome      Start      End  Strand      Chromosome_b    Strand_b
+          int64  |    category        int64    int64  category    category        category
         -------  ---  ------------  -------  -------  ----------  --------------  ----------
-        1        |    chr1          10073    10138    +           chr1            +
-        0        |    chr1          9988     10115    -           chr1            -
-        0        |    chr1          10079    10115    -           chr1            -
-        0        |    chr1          9988     10115    -           chr1            -
-        ...      |    ...           ...      ...      ...         ...             ...
-        2        |    chr1          9988     10150    -           chr1            -
-        2        |    chr1          10079    10150    -           chr1            -
-        2        |    chr1          9988     10150    -           chr1            -
-        2        |    chr1          10079    10150    -           chr1            -
-        PyRanges with 9 rows, 6 columns, and 1 index columns.
+              1  |    chr1            10073    10138  +           chr1            +
+              0  |    chr1             9988    10115  -           chr1            -
+              0  |    chr1            10079    10115  -           chr1            -
+              2  |    chr1             9988    10150  -           chr1            -
+              2  |    chr1            10079    10150  -           chr1            -
+        PyRanges with 5 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
         """
         new_starts = pd.Series(
