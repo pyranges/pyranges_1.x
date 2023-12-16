@@ -40,7 +40,7 @@ def concat[T: "RangeFrame"](grs: Iterable[T], *args, **kwargs) -> T:
           0  |    chr1                3        6  interval1        0  +
           1  |    chr1                5        7  interval2        0  -
           2  |    chr1                8        9  interval3        0  +
-    PyRanges with 5 rows, 6 columns, and 1 index columns.
+    PyRanges with 5 rows, 6 columns, and 1 index columns (with 2 index duplicates).
     Contains 1 chromosomes and 2 strands.
 
     >>> pr.concat([gr1, gr2.remove_strand()])
@@ -52,7 +52,7 @@ def concat[T: "RangeFrame"](grs: Iterable[T], *args, **kwargs) -> T:
           0  |    chr1                3        6  interval1        0  nan
           1  |    chr1                5        7  interval2        0  nan
           2  |    chr1                8        9  interval3        0  nan
-    PyRanges with 5 rows, 6 columns, and 1 index columns.
+    PyRanges with 5 rows, 6 columns, and 1 index columns (with 2 index duplicates).
     Contains 1 chromosomes and 2 strands (including non-genomic strands: nan).
 
     >>> r = pr.RangeFrame(gr1)
