@@ -6,30 +6,6 @@ if TYPE_CHECKING:
 
     from pyranges import PyRanges, RangeFrame
 
-RangeFrameType = TypeVar("RangeFrameType", "RangeFrame", "PyRanges")
-
-
-class UnaryOperation[T: "RangeFrame"](Protocol):
-    """A protocol for unary operations on RangeFrames."""
-
-    def __call__(self, df: T, **kwargs: Any) -> "pd.DataFrame":
-        """Perform the operation on the RangeFrame.
-
-        Examples: cluster, merge, split, etc.
-        """
-        ...
-
-
-class BinaryOperation[T: "RangeFrame"](Protocol):
-    """A protocol for binary operations on RangeFrames."""
-
-    def __call__(self, df: T, df2: T, **kwargs: Any) -> "pd.DataFrame":
-        """Perform the operation on the pair of RangeFrames.
-
-        Examples: overlap, nearest, join, etc.
-        """
-        ...
-
 
 # Define the Literal type
 VALID_OVERLAP_TYPE = Literal["first", "containment", "all"]
@@ -122,3 +98,44 @@ SKIP_IF_EMPTY_ANY: Final = "any"
 SKIP_IF_EMPTY_BOTH: Final = "both"
 SKIP_IF_DF_EMPTY_OPTIONS = [False, SKIP_IF_EMPTY_ANY, SKIP_IF_EMPTY_BOTH, SKIP_IF_EMPTY_LEFT, SKIP_IF_EMPTY_RIGHT]
 SKIP_IF_DF_EMPTY_DEFAULT = "any"
+
+
+class UnaryOperation[T: "RangeFrame"](Protocol):
+    """A protocol for unary operations on RangeFrames."""
+
+    def __call__(self, df: T, **kwargs: Any) -> "pd.DataFrame":
+        """Perform the operation on the RangeFrame.
+
+        Examples: cluster, merge, split, etc.
+        """
+        ...
+
+
+class BinaryOperation[T: "RangeFrame"](Protocol):
+    """A protocol for binary operations on RangeFrames."""
+
+    def __call__(self, df: T, df2: T, **kwargs: Any) -> "pd.DataFrame":
+        """Perform the operation on the pair of RangeFrames.
+
+        Examples: overlap, nearest, join, etc.
+        """
+        ...
+
+
+class BinaryGenomicOperation(BinaryOperation["PyRanges"]):
+    """A protocol for binary genomic operations on PyRanges."""
+
+    def __call__(
+        self,
+        df: "PyRanges",
+        *,
+        df2: "PyRanges",
+        strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
+        by: VALID_BY_TYPES = None,
+        **kwargs: Any,
+    ) -> "pd.DataFrame":
+        """Perform the operation on the pair of "PyRanges".
+
+        Examples: overlap, nearest, join, etc.
+        """
+        ...

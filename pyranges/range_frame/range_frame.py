@@ -300,7 +300,7 @@ class RangeFrame(pd.DataFrame):
     def drop(self, *args, **kwargs) -> "RangeFrame | None":  # type: ignore[override]  # noqa: D102
         return self.__class__(super().drop(*args, **kwargs))
 
-    def drop_and_return[RangeFrameType](self: RangeFrameType, *args: Any, **kwargs: Any) -> RangeFrameType:  # noqa: PYI019, D102
+    def drop_and_return[T: "RangeFrame"](self: T, *args: Any, **kwargs: Any) -> T:  # noqa: PYI019, D102
         kwargs["inplace"] = False
         return self.__class__(super().drop(*args, **kwargs))
 
