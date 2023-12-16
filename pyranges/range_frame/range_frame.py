@@ -78,7 +78,9 @@ class RangeFrame(pd.DataFrame):
     ) -> str:  # , max_col_width: int | None = None, max_total_width: int | None = None) -> str:
         """Return string representation."""
         str_repr = tostring(
-            self, max_col_width=kwargs.get("max_col_width"), max_total_width=kwargs.get("max_total_width")
+            self,
+            max_col_width=kwargs.get("max_col_width"),
+            max_total_width=kwargs.get("max_total_width"),
         )
         if reasons := InvalidRangesReason.formatted_reasons_list(self):
             return f"{str_repr}\nInvalid ranges:\n{reasons}"
