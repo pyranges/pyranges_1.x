@@ -30,7 +30,8 @@ author = "Endre Bakken Stovner"
 
 
 extensions = [
-    "sphinxcontrib.napoleon",
+    "sphinx.ext.napoleon",
+    #"sphinxcontrib.napoleon",
     "autoapi.extension",
     # "sphinx.ext.autodoc",
     # "autoapi.extension",
