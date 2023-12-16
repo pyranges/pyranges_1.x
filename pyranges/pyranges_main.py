@@ -532,6 +532,8 @@ class PyRanges(RangeFrame):
         function: UnaryOperation,
         by: VALID_BY_TYPES,
         use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
+        *,
+        preserve_index: bool = False,
         **kwargs: Any,
     ) -> "pr.PyRanges":
         """Apply function to each group of overlapping intervals, by chromosome and optionally strand.
@@ -548,12 +550,24 @@ class PyRanges(RangeFrame):
         by : str or list of str or None
             Columns - in addition to chromosome and strand - to group by.
 
+        preserve_index: bool
+            Keep the old index. Only valid if the function preserves the index columns.
+
         kwargs : dict
             Arguments passed along to the function.
         """
-        validate_and_convert_strand(self, use_strand=use_strand)
+        strand = validate_and_convert_strand(self, use_strand=use_strand)
 
-        return mypy_ensure_pyranges(super().apply_single(function=function, by=by, **kwargs))
+        by = get_by_columns_including_chromosome_and_strand(self, by=by, use_strand=strand)
+        return mypy_ensure_pyranges(
+            super().apply_single(
+                function=function,
+                by=by,
+                preserve_index=preserve_index,
+                use_strand=use_strand,
+                **kwargs,
+            ),
+        )
 
     def apply_pair(  # type: ignore[override]
         self: "PyRanges",
@@ -848,15 +862,15 @@ class PyRanges(RangeFrame):
         PyRanges with 5 rows, 5 columns, and 1 index columns.
         Contains 2 chromosomes.
 
-        >>> gr.cluster(by=["Gene"],count_column="Counts").sort_by_position()
+        >>> gr.cluster(by=["Gene"], count_column="Counts")
           index  |      Chromosome    Start      End     Gene    Cluster    Counts
           int64  |           int64    int64    int64    int64      int64     int64
         -------  ---  ------------  -------  -------  -------  ---------  --------
               0  |               1        1        3        1          0         1
               1  |               1        2        3        2          1         1
-              2  |               1        3       10        3          2         2
-              3  |               1        9       12        3          2         2
-              4  |               2        0        4        6          3         1
+              3  |               1        3       10        3          2         2
+              4  |               1        9       12        3          2         2
+              2  |               2        0        4        6          3         1
         PyRanges with 5 rows, 6 columns, and 1 index columns.
         Contains 2 chromosomes.
         """
@@ -873,6 +887,7 @@ class PyRanges(RangeFrame):
             slack=slack,
             count_column=count_column,
             cluster_column=cluster_column,
+            preserve_index=True,
         )
         gr[cluster_column] = gr.groupby(self.location_cols + _by + [cluster_column]).ngroup()
         return gr
@@ -1502,7 +1517,7 @@ class PyRanges(RangeFrame):
         strand = validate_and_convert_strand(self, strand)
         from pyranges.methods.max_disjoint import _max_disjoint
 
-        return self.apply_single(_max_disjoint, by=by, use_strand=strand, slack=slack)
+        return self.apply_single(_max_disjoint, by=by, use_strand=strand, preserve_index=True, slack=slack)
 
     def merge_overlaps(
         self,
@@ -2041,9 +2056,9 @@ class PyRanges(RangeFrame):
               0  |               1  +              40       60  t3
               5  |               1  +             140      152  t1
               6  |               1  +             160      190  t1
-              4  |               2  +             300      400  t4
               3  |               1  -              70       80  t2
               2  |               1  -              10       25  t2
+              4  |               2  +             300      400  t4
         PyRanges with 7 rows, 5 columns, and 1 index columns.
         Contains 2 chromosomes and 2 strands.
         """
@@ -2058,8 +2073,11 @@ class PyRanges(RangeFrame):
                 ],
             )
 
-        return mypy_ensure_pyranges(
-            self.apply_single(_sort_by_5_prime_ascending_and_3_prime_descending, by=None, use_strand=True),
+        return self.apply_single(
+            _sort_by_5_prime_ascending_and_3_prime_descending,
+            by=None,
+            preserve_index=True,
+            use_strand=True,
         )
 
     def spliced_subsequence(
@@ -2195,7 +2213,7 @@ class PyRanges(RangeFrame):
 
     def split(
         self,
-        strand: VALID_USE_STRAND_TYPE = "auto",
+        use_strand: VALID_USE_STRAND_TYPE = "auto",
         by: VALID_BY_TYPES = None,
         *,
         between: bool = False,
@@ -2204,7 +2222,7 @@ class PyRanges(RangeFrame):
 
         Parameters
         ----------
-        strand : bool], default None, i.e. auto
+        use_strand : bool, default "auto", i.e. auto
             Whether to ignore strand information if PyRanges is stranded.
 
         between : bool, default False
@@ -2264,7 +2282,7 @@ class PyRanges(RangeFrame):
         PyRanges with 6 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> gr.split(strand=False)
+        >>> gr.split(use_strand=False)
           index  |    Chromosome      Start      End
           int64  |    object          int64    int64
         -------  ---  ------------  -------  -------
@@ -2276,7 +2294,7 @@ class PyRanges(RangeFrame):
         PyRanges with 5 rows, 3 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        >>> gr.split(strand=False, between=True)
+        >>> gr.split(use_strand=False, between=True)
           index  |    Chromosome      Start      End
           int64  |    object          int64    int64
         -------  ---  ------------  -------  -------
@@ -2291,15 +2309,12 @@ class PyRanges(RangeFrame):
         """
         from pyranges.methods.split import _split
 
-        strand = validate_and_convert_strand(self, strand)
+        strand = validate_and_convert_strand(self, use_strand=use_strand)
         df = self.apply_single(
             _split,
-            by=group_keys_single(
-                self,
-                use_strand=strand,
-                by=by,
-            ),
-            strand=strand,
+            by=by,
+            preserve_index=False,
+            use_strand=strand,
         )
         if not between:
             df = df.overlap(
@@ -2493,8 +2508,6 @@ class PyRanges(RangeFrame):
         Contains 2 chromosomes and 2 strands.
         """
         from pyranges.methods.subsequence import _subseq
-
-        use_strand = use_strand if use_strand is not None else self.strand_values_valid
 
         result = self.apply_single(_subseq, by=by, use_strand=use_strand, start=start, end=end)
 
@@ -2750,7 +2763,7 @@ class PyRanges(RangeFrame):
             "tile_size": tile_size,
         }
 
-        res = self.apply_single(_tiles, by=None, **kwargs)
+        res = self.apply_single(_tiles, by=None, preserve_index=True, **kwargs)
         return mypy_ensure_pyranges(res)
 
     def three_end(self) -> "PyRanges":
@@ -3394,7 +3407,7 @@ class PyRanges(RangeFrame):
             "window_size": window_size,
         }
 
-        df = self.apply_single(_windows, by=by, use_strand=use_strand, **kwargs)
+        df = self.apply_single(_windows, by=by, use_strand=use_strand, preserve_index=True, **kwargs)
         return mypy_ensure_pyranges(df)
 
     @property
