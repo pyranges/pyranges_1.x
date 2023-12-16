@@ -67,6 +67,7 @@ from pyranges.pyranges_helpers import (
     validate_and_convert_strand,
 )
 from pyranges.range_frame.range_frame import RangeFrame
+from pyranges.range_frame.range_frame_validator import InvalidRangesReason
 from pyranges.tostring import tostring
 
 if TYPE_CHECKING:
@@ -486,9 +487,8 @@ class PyRanges(RangeFrame):
         0        |    3             0        10       .
         1        |    2             100      125      ^
         2        |    1             250      251      /
-        PyRanges with 9 rows, 4 columns, and 1 index columns.
+        PyRanges with 9 rows, 4 columns, and 1 index columns (with 6 index duplicates).
         Contains 3 chromosomes and 6 strands (including non-genomic strands: ., /, X, ...).
-
         >>> gr = PyRanges({"Chromosome": [1], "Start": [1], "End": [2], "Strand": ["+"], "Name": ["Sonic The Hedgehog"], "gene_id": ["ENSG00000188976"], "short_gene_name": ["SHH"], "type": ["transcript"]})
 
         # The index is shown separated from the columns with |
@@ -520,12 +520,15 @@ class PyRanges(RangeFrame):
         PyRanges with 1 rows, 10 columns, and 1 index columns. (4 columns not shown: "short_gene_name", "type", "Score", ...).
         Contains 1 chromosomes and 1 strands.
         """
-        formatted_df = tostring(
+        str_repr = tostring(
             self,
             max_col_width=kwargs.get("max_col_width"),
             max_total_width=kwargs.get("max_total_width"),
         )
-        return f"{formatted_df}\n{self._chrom_and_strand_info()}."
+        str_repr = f"{str_repr}\n{self._chrom_and_strand_info()}."
+        if reasons := InvalidRangesReason.formatted_reasons_list(self):
+            str_repr = f"{str_repr}\nInvalid ranges:\n{reasons}"
+        return str_repr
 
     def apply_single(
         self,
@@ -1359,8 +1362,10 @@ class PyRanges(RangeFrame):
               0  |    chr1                  3          6  interval1  nan                   nan        nan  nan
               1  |    chr1                  8          9  interval3  nan                   nan        nan  nan
               0  |    nan                 nan        nan  nan        chr1                    1          2  a
-        PyRanges with 4 rows, 8 columns, and 1 index columns.
+        PyRanges with 4 rows, 8 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes.
+        Invalid ranges:
+          * 1 starts or ends are nan. See indexes: 0
 
         >>> bad = f1.interval_join(f2, join_type="right")
         >>> bad
@@ -1371,6 +1376,8 @@ class PyRanges(RangeFrame):
               0  |    nan                 nan        nan  nan        chr1                    1        2  a
         PyRanges with 2 rows, 8 columns, and 1 index columns.
         Contains 1 chromosomes.
+        Invalid ranges:
+          * 1 starts or ends are nan. See indexes: 0
         >>> f2.interval_join(bad)  # bad.interval_join(f2) would not work either.
         Traceback (most recent call last):
         ...
@@ -1701,7 +1708,7 @@ class PyRanges(RangeFrame):
               1  |    chr1                5        7  -                   6        7  -                    0
               0  |    chr1                3        6  +                   6        7  -                    1
               1  |    chr1                8        9  +                   6        7  -                    2
-        PyRanges with 3 rows, 8 columns, and 1 index columns.
+        PyRanges with 3 rows, 8 columns, and 1 index columns (with 1 index duplicates).
         Contains 1 chromosomes and 2 strands.
 
         >>> f1.nearest(f2, how="upstream")
@@ -1711,7 +1718,7 @@ class PyRanges(RangeFrame):
               1  |    chr1                5        7  -                   6        7  -                    0
               0  |    chr1                3        6  +                   1        2  +                    2
               1  |    chr1                8        9  +                   6        7  -                    2
-        PyRanges with 3 rows, 8 columns, and 1 index columns.
+        PyRanges with 3 rows, 8 columns, and 1 index columns (with 1 index duplicates).
         Contains 1 chromosomes and 2 strands.
         """
         from pyranges.methods.nearest import _nearest
@@ -2754,7 +2761,7 @@ class PyRanges(RangeFrame):
         9        |    1             129000   129200   -           exon        AL627309.1
         9        |    1             129200   129400   -           exon        AL627309.1
         10       |    1             120800   121000   -           exon        AL627309.1
-        PyRanges with 116 rows, 6 columns, and 1 index columns.
+        PyRanges with 116 rows, 6 columns, and 1 index columns (with 105 index duplicates).
         Contains 1 chromosomes and 2 strands.
 
         >>> gr.tile(100, overlap_column="TileOverlap")
@@ -2770,7 +2777,7 @@ class PyRanges(RangeFrame):
         9        |    1             129200   129300   -           exon        AL627309.1   23
         10       |    1             120800   120900   -           exon        AL627309.1   27
         10       |    1             120900   121000   -           exon        AL627309.1   32
-        PyRanges with 223 rows, 7 columns, and 1 index columns.
+        PyRanges with 223 rows, 7 columns, and 1 index columns (with 212 index duplicates).
         Contains 1 chromosomes and 2 strands.
         """
         from pyranges.methods.windows import _tiles
@@ -3382,7 +3389,7 @@ class PyRanges(RangeFrame):
         -------  ---  ------------  -------  -------
               0  |               1      895     1095
               0  |               1     1095     1259
-        PyRanges with 2 rows, 3 columns, and 1 index columns.
+        PyRanges with 2 rows, 3 columns, and 1 index columns (with 1 index duplicates).
         Contains 1 chromosomes.
 
         >>> gr2 = pr.example_data.ensembl_gtf.get_with_loc_columns(["Feature", "gene_name"])
@@ -3416,7 +3423,7 @@ class PyRanges(RangeFrame):
         8        |    1             133373   133723   -           exon        AL627309.1
         9        |    1             129054   129223   -           exon        AL627309.1
         10       |    1             120873   120932   -           exon        AL627309.1
-        PyRanges with 28 rows, 6 columns, and 1 index columns.
+        PyRanges with 28 rows, 6 columns, and 1 index columns (with 17 index duplicates).
         Contains 1 chromosomes and 2 strands.
         """
         from pyranges.methods.windows import _windows
@@ -3572,7 +3579,7 @@ class PyRanges(RangeFrame):
               0  |    chr1             9916    10115  -           chr1                10079    10278  -
               2  |    chr1             9951    10150  -           chr1                 9988    10187  -
               2  |    chr1             9951    10150  -           chr1                10079    10278  -
-        PyRanges with 5 rows, 8 columns, and 1 index columns.
+        PyRanges with 5 rows, 8 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes and 2 strands.
 
         >>> j.intersect_interval_columns(start="Start", end="End", start2="Start_b", end2="End_b")
@@ -3584,7 +3591,7 @@ class PyRanges(RangeFrame):
               0  |    chr1            10079    10115  -           chr1            -
               2  |    chr1             9988    10150  -           chr1            -
               2  |    chr1            10079    10150  -           chr1            -
-        PyRanges with 5 rows, 6 columns, and 1 index columns.
+        PyRanges with 5 rows, 6 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes and 2 strands.
         """
         new_starts = pd.Series(

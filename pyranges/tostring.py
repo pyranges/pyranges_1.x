@@ -39,6 +39,8 @@ def tostring(
 ) -> str:
     """Return string representation."""
     number_index_levels = self.index.nlevels
+    number_duplicated_indices = self.index.duplicated().sum()
+    has_duplicated_index = number_duplicated_indices > 0
     _self = self.reset_index()
 
     truncation_marker = ["..."]
@@ -75,9 +77,12 @@ def tostring(
         truncated_headers += truncation_marker
         truncated_dtypes += truncation_marker
     headers_with_dtype = [f"{h}\n{d}" for h, d in zip(truncated_headers, truncated_dtypes, strict=True)]
+    contains_duplicates_string = (
+        f" (with {number_duplicated_indices} index duplicates)." if has_duplicated_index else "."
+    )
     class_and_shape_info = (
         f"{_self.__class__.__name__} with {_self.shape[0]} rows, "
-        f"{_self.shape[1] - number_index_levels} columns, and {number_index_levels} index columns."
+        f"{_self.shape[1] - number_index_levels} columns, and {number_index_levels} index columns{contains_duplicates_string}"
     )
     truncated_df = pd.DataFrame.from_records(truncated_data, columns=truncated_headers)
     headers_with_dtype.insert(number_index_levels, "|\n|")

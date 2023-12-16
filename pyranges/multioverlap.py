@@ -116,7 +116,7 @@ def count_overlaps(
           0  |    chr1               10       20
           0  |    chr1               20       30
           0  |    chr1               30       40
-    PyRanges with 4 rows, 3 columns, and 1 index columns.
+    PyRanges with 4 rows, 3 columns, and 1 index columns (with 3 index duplicates).
     Contains 1 chromosomes.
 
     >>> pr.count_overlaps(grs, gr)
@@ -127,7 +127,7 @@ def count_overlaps(
           0  |    chr1               10       20        5        5        4
           0  |    chr1               20       30        5        5        4
           0  |    chr1               30       40        5        5        4
-    PyRanges with 4 rows, 6 columns, and 1 index columns.
+    PyRanges with 4 rows, 6 columns, and 1 index columns (with 3 index duplicates).
     Contains 1 chromosomes.
     """
     concated = concat.concat(grs.values())

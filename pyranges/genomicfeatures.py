@@ -207,7 +207,7 @@ class GenomicFeaturesMethods:
               0  |               1       45      100  +         gene       A
               4  |               1        0       20  +         gene       B
               4  |               1       30       50  +         gene       B
-        PyRanges with 5 rows, 6 columns, and 1 index columns.
+        PyRanges with 5 rows, 6 columns, and 1 index columns (with 3 index duplicates).
         Contains 1 chromosomes and 1 strands.
         """
         gr = self.pr
