@@ -42,10 +42,10 @@ def tostring(
     _self = self.reset_index()
 
     truncation_marker = ["..."]
-    if len(_self) >= MAX_ROWS_TO_SHOW:
+    if len(_self) > MAX_ROWS_TO_SHOW:
         head = [list(v) for _, v in _self.head(HALF_OF_MAX_ROWS_TO_SHOW).iterrows()]
         tail = [list(v) for _, v in _self.tail(HALF_OF_MAX_ROWS_TO_SHOW).iterrows()]
-        data = [*head, truncation_marker * _self.shape[1], *(tail if len(_self) > MAX_ROWS_TO_SHOW else head + tail)]
+        data = [*head, truncation_marker * _self.shape[1], *tail]
     else:
         data = [list(v) for _, v in _self.iterrows()]
 
