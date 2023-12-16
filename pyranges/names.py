@@ -1,11 +1,10 @@
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, Any, Final, Literal, Protocol, TypeVar, get_args
+from typing import TYPE_CHECKING, Any, Final, Literal, Protocol, get_args
 
 if TYPE_CHECKING:
     import pandas as pd
 
-    from pyranges import PyRanges, RangeFrame
-
+    from pyranges import RangeFrame, PyRanges
 
 # Define the Literal type
 VALID_OVERLAP_TYPE = Literal["first", "containment", "all"]
@@ -114,7 +113,7 @@ class UnaryOperation[T: "RangeFrame"](Protocol):
 class BinaryOperation[T: "RangeFrame"](Protocol):
     """A protocol for binary operations on RangeFrames."""
 
-    def __call__(self, df: T, df2: T, **kwargs: Any) -> "pd.DataFrame":
+    def __call__(self, df: T, *, df2: T, **kwargs: Any) -> "pd.DataFrame":
         """Perform the operation on the pair of RangeFrames.
 
         Examples: overlap, nearest, join, etc.

@@ -265,7 +265,7 @@ class RangeFrame(pd.DataFrame):
         """
         assert_valid_ranges(function, self, other)
         if by is None:
-            return _mypy_ensure_rangeframe(function(self, other, **kwargs))
+            return _mypy_ensure_rangeframe(function(self, df2=other, **kwargs))
 
         by = self._by_to_list(by)
         results = []
@@ -277,7 +277,7 @@ class RangeFrame(pd.DataFrame):
 
             if should_skip_operation(_df, df2=odf, skip_if_empty=skip_if_empty):
                 continue
-            results.append(function(_mypy_ensure_rangeframe(_df), _mypy_ensure_rangeframe(odf), **kwargs))
+            results.append(function(_mypy_ensure_rangeframe(_df), df2=_mypy_ensure_rangeframe(odf), **kwargs))
 
         return _mypy_ensure_rangeframe(pd.concat(results))
 
