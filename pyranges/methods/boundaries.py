@@ -22,5 +22,5 @@ def _bounds[T: ("pr.PyRanges", "pd.DataFrame")](df: T, **kwargs) -> pd.DataFrame
     if STRAND_COL in df.columns:
         agg_dict[STRAND_COL] = "first"
 
-    res = df.groupby(by).agg(agg_dict).reset_index()
+    res = df.groupby(by, as_index=False).agg(agg_dict)
     return res.reindex(columns=[c for c in col_order if c in res.columns])

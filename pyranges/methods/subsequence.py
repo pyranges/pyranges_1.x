@@ -4,10 +4,12 @@ import numpy as np
 import pandas as pd
 
 from pyranges.names import (
+    CHROM_COL,
     END_COL,
     FORWARD_STRAND,
     REVERSE_STRAND,
     START_COL,
+    STRAND_COL,
     TEMP_END_COL,
     TEMP_INDEX_COL,
     TEMP_MAX_COL,
@@ -23,10 +25,11 @@ if TYPE_CHECKING:
 def _subseq(
     df: "PyRanges",
     *,
+    by: list[str],
     start: int = 0,
     end: int | None = None,
     strand: VALID_GENOMIC_STRAND_TYPE = FORWARD_STRAND,
-    **kwargs,
+    **_,
 ) -> pd.DataFrame:
     if df.empty:
         return df
@@ -35,16 +38,16 @@ def _subseq(
     orig_order = df.index.copy()
     df.insert(0, TEMP_INDEX_COL, orig_order)
 
-    by_argument_given = kwargs.get("by")
-    _by = kwargs.get("by", TEMP_INDEX_COL)
-    by = [_by] if isinstance(_by, str) else (_by or [])
+    by = [col for col in by if col not in [CHROM_COL, STRAND_COL]]
+    by_argument_given = bool(by)
+    by = by or [TEMP_INDEX_COL]
 
     # at this point, strand is False if:
     #   1. subsequence was called with strand=False or
     #   2. it was called with strand=None and self is not stranded
     # or it can be '+' or '-' if:
     #   1. it was input as True to subsequence and passed  to pyrange_apply_single as True,
-    #      which updates it to '-' or '+' before calling _subseq, or
+    #     which updates it to '-' or '+' before calling _subseq, or
     #   2. it was called with strand=None and self is stranded
     strand = FORWARD_STRAND if strand != REVERSE_STRAND else strand
     # now, unstranded or strand==None cases are treated like all intervals are on the + strand

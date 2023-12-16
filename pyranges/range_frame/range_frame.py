@@ -172,6 +172,8 @@ class RangeFrame(pd.DataFrame):
         self,
         function: UnaryOperation,
         by: VALID_BY_TYPES,
+        *,
+        preserve_index: bool = False,
         **kwargs: Any,
     ) -> "RangeFrame":
         """Call a function on a RangeFrame.
@@ -184,6 +186,9 @@ class RangeFrame(pd.DataFrame):
         by: str or list of str
             Group by these columns.
 
+        preserve_index: bool
+            Preserve the original index. Only valid if the function returns the index cols.
+
         kwargs: dict
             Passed to function.
         """
@@ -192,9 +197,21 @@ class RangeFrame(pd.DataFrame):
         if not by:
             return _mypy_ensure_rangeframe(function(self, **kwargs))
         by = self._by_to_list(by)
-        return _mypy_ensure_rangeframe(
-            self.groupby(by).apply(function, by=by, **kwargs).reset_index(drop=True),  # type: ignore[arg-type]
-        )
+
+        if not preserve_index:
+            return _mypy_ensure_rangeframe(self.groupby(by).apply(function, by=by, **kwargs).reset_index(drop=True))
+
+        preserve_index_col = "__old_index__"
+
+        self[preserve_index_col] = self.index
+        result = self.groupby(by).apply(function, by=by, **kwargs).reset_index(drop=True)
+        result = result.set_index(preserve_index_col)
+        if isinstance(self.index, pd.MultiIndex):
+            result.index.names = self.index.names
+        else:
+            result.index.name = self.index.name
+        self = self.drop(preserve_index_col, axis="columns")
+        return _mypy_ensure_rangeframe(result)
 
     def apply_pair(
         self,
