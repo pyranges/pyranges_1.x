@@ -265,7 +265,7 @@ class RangeFrame(pd.DataFrame):
         """
         assert_valid_ranges(function, self, other)
         if by is None:
-            return _mypy_ensure_rangeframe(function(self, other, **kwargs))
+            return _mypy_ensure_rangeframe(function(self, df2=other, **kwargs))
 
         by = self._by_to_list(by)
         results = []
@@ -277,7 +277,7 @@ class RangeFrame(pd.DataFrame):
 
             if should_skip_operation(_df, df2=odf, skip_if_empty=skip_if_empty):
                 continue
-            results.append(function(_mypy_ensure_rangeframe(_df), _mypy_ensure_rangeframe(odf), **kwargs))
+            results.append(function(_mypy_ensure_rangeframe(_df), df2=_mypy_ensure_rangeframe(odf), **kwargs))
 
         return _mypy_ensure_rangeframe(pd.concat(results))
 
@@ -300,7 +300,7 @@ class RangeFrame(pd.DataFrame):
     def drop(self, *args, **kwargs) -> "RangeFrame | None":  # type: ignore[override]  # noqa: D102
         return self.__class__(super().drop(*args, **kwargs))
 
-    def drop_and_return[RangeFrameType](self: RangeFrameType, *args: Any, **kwargs: Any) -> RangeFrameType:  # noqa: PYI019, D102
+    def drop_and_return[T: "RangeFrame"](self: T, *args: Any, **kwargs: Any) -> T:  # noqa: PYI019, D102
         kwargs["inplace"] = False
         return self.__class__(super().drop(*args, **kwargs))
 
