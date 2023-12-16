@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Final, Literal, Protocol, get_args
 if TYPE_CHECKING:
     import pandas as pd
 
-    from pyranges import RangeFrame, PyRanges
+    from pyranges import PyRanges, RangeFrame
 
 # Define the Literal type
 VALID_OVERLAP_TYPE = Literal["first", "containment", "all"]
