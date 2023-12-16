@@ -23,9 +23,9 @@ def test_join_issue_8():
     m = pr.PyRanges(md)
 
     j = m.interval_join(g)
+    expected_result = pr.PyRanges({'Chromosome': ['chr1', 'chr1'], 'Start': [795, 795], 'End': [895, 895], 'Strand': ['-', '-'],
+     'Chromosome_b': ['chr1', 'chr1'], 'Start_b': [731, 821], 'End_b': [831, 921], 'Strand_b': ['-', '-']}, index=[3, 3])
 
-    print(j)
-    expected_result = pd.DataFrame({'Chromosome': [nan, nan, 'chr1', 'chr1'], 'Start': [nan, nan, 795.0, 795.0], 'End': [nan, nan, 895.0, 895.0], 'Strand': [nan, nan, '-', '-'], 'Chromosome_b': ['chr1', 'chr1', 'chr1', 'chr1'], 'Start_b': [157, 584, 731, 821], 'End_b': [257, 684, 831, 921], 'Strand_b': ['-', '-', '-', '-']})
     assert j.equals(expected_result)
 
 
@@ -37,7 +37,6 @@ def test_join_issue_8_right():
     m = pr.PyRanges(md)
 
     j = m.interval_join(g, join_type="right")
-    print(j)
 
-    expected_result = pd.DataFrame({'Chromosome': [nan, nan, 'chr1', 'chr1'], 'Start': [nan, nan, 795.0, 795.0], 'End': [nan, nan, 895.0, 895.0], 'Strand': [nan, nan, '-', '-'], 'Chromosome_b': ['chr1', 'chr1', 'chr1', 'chr1'], 'Start_b': [157, 584, 731, 821], 'End_b': [257, 684, 831, 921], 'Strand_b': ['-', '-', '-', '-']})
+    expected_result = pr.PyRanges({'Chromosome': ['chr1', 'chr1', nan, nan], 'Start': [795.0, 795.0, nan, nan], 'End': [895.0, 895.0, nan, nan], 'Strand': ['-', '-', nan, nan], 'Chromosome_b': ['chr1', 'chr1', 'chr1', 'chr1'], 'Start_b': [731, 821, 157, 584], 'End_b': [831, 921, 257, 684], 'Strand_b': ['-', '-', '-', '-']}, index=[2, 3, 0, 1])
     assert j.equals(expected_result)
