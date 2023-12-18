@@ -6,10 +6,6 @@ if TYPE_CHECKING:
 
     from pyranges import PyRanges, RangeFrame
 
-<<<<<<< HEAD
-
-=======
->>>>>>> b24545ecb3ea7ce77c2d0513400598c6ce9ac7b1
 # Define the Literal type
 VALID_OVERLAP_TYPE = Literal["first", "containment", "all"]
 
