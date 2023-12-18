@@ -1,15 +1,26 @@
 from typing import TYPE_CHECKING
 
-import pandas as pd
 import pandas.core.groupby  # type: ignore[name-defined]
 
-from pyranges.pyranges_helpers import return_pyranges_if_possible
+from pyranges.names import return_pyranges_if_possible
 
 if TYPE_CHECKING:
+    import pandas as pd
+
     import pyranges as pr
 
 
-class PyRangesGroupBy(pandas.core.groupby.DataFrameGroupBy):
+class PyRangesDataFrameGroupBy(pandas.core.groupby.DataFrameGroupBy):
+    @return_pyranges_if_possible
+    def __getattr__(self, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":
+        result = super().__getattr__(*args, **kwargs)
+        return PyRangesDataFrameGroupBy(result.obj, result.grouper, axis=result.axis)
+
+    @return_pyranges_if_possible
+    def __getitem__(self, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":
+        result = super().__getitem__(*args, **kwargs)
+        return PyRangesDataFrameGroupBy(result.obj, result.grouper, axis=result.axis)
+
     @return_pyranges_if_possible
     def agg(self, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":  # noqa: D102
         return super().agg(*args, **kwargs)

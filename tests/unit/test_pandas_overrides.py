@@ -187,3 +187,50 @@ def test_groupby_transform(gr) -> None:
 
     g = gr.groupby("Gene")
     assert isinstance(g.transform("first"), pr.PyRanges)
+
+
+def test_groupby_getitem_frame(gr) -> None:
+    g = gr.groupby("Chromosome")
+    result = g[["Start", "Gene"]]
+    assert isinstance(result, pr.pyranges_groupby.PyRangesDataFrameGroupBy)
+
+    assert isinstance(result.agg("first"), pr.PyRanges)
+
+
+def test_groupby_getitem_frame_as_index_false(gr) -> None:
+    g = gr.groupby("Chromosome", as_index=False)
+    result = g[["Start", "Gene"]]
+    assert isinstance(result, pr.pyranges_groupby.PyRangesDataFrameGroupBy)
+
+    assert isinstance(result.agg("first"), pr.PyRanges)
+
+
+def test_groupby_getitem_series(gr) -> None:
+    g = gr.groupby("Chromosome")
+    result = g["Start"]
+    assert isinstance(result, pr.pyranges_groupby.PyRangesDataFrameGroupBy)
+
+    assert isinstance(result.agg("first"), pd.Series)
+
+
+def test_groupby_getitem_series_as_index_false(gr) -> None:
+    g = gr.groupby("Chromosome", as_index=False)
+    result = g["Start"]
+    assert isinstance(result, pr.pyranges_groupby.PyRangesDataFrameGroupBy)
+
+    assert isinstance(result.agg("first"), pd.Series)
+
+def test_groupby_getattr_series(gr) -> None:
+    g = gr.groupby("Chromosome")
+    result = g["Start"]
+    assert isinstance(result, pr.pyranges_groupby.PyRangesDataFrameGroupBy)
+
+    assert isinstance(result.agg("first"), pd.Series)
+
+
+def test_groupby_getattr_series_as_index_false(gr) -> None:
+    g = gr.groupby("Chromosome", as_index=False)
+    result = g.Start
+    assert isinstance(result, pr.pyranges_groupby.PyRangesDataFrameGroupBy)
+
+    assert isinstance(result.agg("first"), pd.Series)
