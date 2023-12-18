@@ -1,10 +1,12 @@
-from typing import cast
+from typing import TYPE_CHECKING
 
 import numpy as np
-import pandas as pd
 from sorted_nearest import maketiles, makewindows  # type: ignore[import-untyped]
 
-from pyranges.names import END_COL, START_COL, TEMP_END_COL, TEMP_START_COL, RangeFrameType
+from pyranges.names import END_COL, START_COL, TEMP_END_COL, TEMP_START_COL
+
+if TYPE_CHECKING:
+    from pyranges import RangeFrame
 
 
 def _windows(

@@ -1,12 +1,15 @@
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, Any, Final, Literal, Protocol, TypeVar, get_args
+from typing import TYPE_CHECKING, Any, Final, Literal, Protocol, get_args
 
 if TYPE_CHECKING:
     import pandas as pd
 
     from pyranges import PyRanges, RangeFrame
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> b24545ecb3ea7ce77c2d0513400598c6ce9ac7b1
 # Define the Literal type
 VALID_OVERLAP_TYPE = Literal["first", "containment", "all"]
 
@@ -114,27 +117,8 @@ class UnaryOperation[T: "RangeFrame"](Protocol):
 class BinaryOperation[T: "RangeFrame"](Protocol):
     """A protocol for binary operations on RangeFrames."""
 
-    def __call__(self, df: T, df2: T, **kwargs: Any) -> "pd.DataFrame":
+    def __call__(self, df: T, *, df2: T, **kwargs: Any) -> "pd.DataFrame":
         """Perform the operation on the pair of RangeFrames.
-
-        Examples: overlap, nearest, join, etc.
-        """
-        ...
-
-
-class BinaryGenomicOperation(BinaryOperation["PyRanges"]):
-    """A protocol for binary genomic operations on PyRanges."""
-
-    def __call__(
-        self,
-        df: "PyRanges",
-        *,
-        df2: "PyRanges",
-        strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
-        by: VALID_BY_TYPES = None,
-        **kwargs: Any,
-    ) -> "pd.DataFrame":
-        """Perform the operation on the pair of "PyRanges".
 
         Examples: overlap, nearest, join, etc.
         """
