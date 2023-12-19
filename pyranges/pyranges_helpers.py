@@ -1,12 +1,8 @@
-from collections.abc import Callable
 from typing import TYPE_CHECKING, Literal
-
-import pandas as pd
 
 from pyranges.names import (
     CHROM_AND_STRAND_COLS,
     CHROM_COL,
-    GENOME_LOC_COLS,
     STRAND_BEHAVIOR_AUTO,
     STRAND_BEHAVIOR_IGNORE,
     STRAND_BEHAVIOR_OPPOSITE,
@@ -23,26 +19,9 @@ from pyranges.names import (
 )
 
 if TYPE_CHECKING:
+    import pandas as pd
+
     from pyranges import PyRanges
-
-
-def return_pyranges_if_possible(
-    method: Callable,
-) -> Callable:
-    """Return a PyRanges object if possible."""
-
-    def wrapper(*args, **kwargs) -> "PyRanges | pd.DataFrame | pd.Series":
-        # Call the original groupby method
-        result = method(*args, **kwargs)
-
-        # Check if the result should be a MySpecialDataFrame
-        if isinstance(result, pd.DataFrame) and set(GENOME_LOC_COLS).issubset(result.columns):
-            import pyranges as pr
-
-            return pr.PyRanges(result)
-        return result
-
-    return wrapper
 
 
 def validate_and_convert_strand(self: "PyRanges", use_strand: VALID_USE_STRAND_TYPE) -> bool:

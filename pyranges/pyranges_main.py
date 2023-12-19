@@ -55,7 +55,7 @@ from pyranges.names import (
     BinaryOperation,
     UnaryOperation,
 )
-from pyranges.pyranges_groupby import PyRangesGroupBy
+from pyranges.pyranges_groupby import PyRangesDataFrameGroupBy
 from pyranges.pyranges_helpers import (
     ensure_strand_behavior_options_valid,
     get_by_columns_including_chromosome_and_strand,
@@ -198,16 +198,16 @@ class PyRanges(RangeFrame):
             return df
 
         df = pd.DataFrame(kwargs.get("data") or args[0])
-
-        missing_any_required_columns = not set(GENOME_LOC_COLS).issubset(df.columns)
+        missing_any_required_columns = not set(GENOME_LOC_COLS).issubset({*df.columns})
         if missing_any_required_columns:
             return df
 
         return super().__new__(cls)
 
-    def groupby(self, *args, **kwargs) -> "PyRangesGroupBy":
+    def groupby(self, *args, **kwargs) -> "PyRangesDataFrameGroupBy":
         """Group PyRanges by chromosome and strand."""
-        return PyRangesGroupBy(self, *args, **kwargs)
+        grouped = super().groupby(*args, **kwargs)
+        return PyRangesDataFrameGroupBy(grouped)
 
     @property
     def _constructor(self) -> type:

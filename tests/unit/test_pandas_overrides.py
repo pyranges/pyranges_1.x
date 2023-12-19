@@ -1,9 +1,11 @@
 """Test that overriden pandas methods work and return PyRanges objects."""
 
 import pandas as pd
+import pandas.core.groupby
 import pytest
 
 import pyranges as pr
+from pyranges.pyranges_groupby import PyRangesDataFrameGroupBy
 
 
 def test_getitem() -> None:
@@ -187,3 +189,57 @@ def test_groupby_transform(gr) -> None:
 
     g = gr.groupby("Gene")
     assert isinstance(g.transform("first"), pr.PyRanges)
+
+
+def test_groupby_getitem_frame(gr) -> None:
+    g = gr.groupby("Chromosome")
+    result = g[["Start", "Gene"]]
+    assert isinstance(result, pr.pyranges_groupby.PyRangesDataFrameGroupBy)
+
+    # The Chromosome is now the index, so it is not a PyRanges object
+    assert isinstance(result.agg("first"), pd.DataFrame)
+
+
+def test_groupby_getitem_frame_as_index_false(gr) -> None:
+    g = gr.groupby("Chromosome", as_index=False)
+    result = g[["Start", "Gene"]]
+    assert type(result) is PyRangesDataFrameGroupBy, type(result)
+
+    agg = result.agg("first")
+
+    assert agg.columns.tolist() == ["Chromosome", "Start", "Gene"]
+    assert type(agg) is pd.DataFrame, type(agg)
+
+
+def test_groupby_getitem_series(gr) -> None:
+    g = gr.groupby("Chromosome")
+    result = g["Start"]
+    assert isinstance(result, pr.pyranges_groupby.PyRangesDataFrameGroupBy)
+
+    assert isinstance(result.agg("first"), pd.Series)
+
+
+def test_groupby_getitem_series_as_index_false(gr) -> None:
+    g = gr.groupby("Chromosome", as_index=False)
+    result = g.Start
+    assert isinstance(result, pandas.core.groupby.SeriesGroupBy), type(result)
+
+    agg = result.agg("first")
+    assert isinstance(agg, pd.DataFrame), agg
+
+def test_groupby_getattr_series(gr) -> None:
+    g = gr.groupby("Chromosome")
+    result = g["Start"]
+    assert isinstance(result, pr.pyranges_groupby.PyRangesDataFrameGroupBy)
+
+    assert isinstance(result.agg("first"), pd.Series)
+
+
+def test_groupby_getattr_series_as_index_false(gr) -> None:
+    g = gr.groupby("Chromosome", as_index=False)
+    result = g.Start
+    assert isinstance(result, pd.core.groupby.SeriesGroupBy), type(result)
+
+    res = result.agg("first")
+    # DataFrame because as_index=False
+    assert isinstance(res, pd.DataFrame)

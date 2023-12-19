@@ -1,15 +1,31 @@
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING, Any, Final, Literal, Protocol, get_args
 
-if TYPE_CHECKING:
-    import pandas as pd
+import pandas as pd
 
+if TYPE_CHECKING:
     from pyranges import PyRanges, RangeFrame
 
-<<<<<<< HEAD
 
-=======
->>>>>>> b24545ecb3ea7ce77c2d0513400598c6ce9ac7b1
+def return_pyranges_if_possible(
+    method: Callable,
+) -> Callable:
+    """Return a PyRanges object if possible."""
+
+    def wrapper(*args, **kwargs) -> "PyRanges | pd.DataFrame | pd.Series":
+        # Call the original groupby method
+        result = method(*args, **kwargs)
+
+        if isinstance(result, pd.DataFrame) and set(GENOME_LOC_COLS).issubset(result.columns):
+            import pyranges as pr
+
+            return pr.PyRanges(result)
+
+        return result
+
+    return wrapper
+
+
 # Define the Literal type
 VALID_OVERLAP_TYPE = Literal["first", "containment", "all"]
 

@@ -32,6 +32,27 @@ def console_width(max_total_width: int | None = None) -> int:
     return shutil.get_terminal_size().columns
 
 
+def _find_aliases_for_columns(df: "pr.RangeFrame") -> dict[str, str]:
+    import random
+
+    overlapping_cols = _get_indices_with_same_name_as_columns(df)
+    return {c: "".join(random.sample(str(c.__hash__()), len(c))) for c in overlapping_cols}
+
+
+def _get_indices_with_same_name_as_columns(df: "pr.RangeFrame") -> list[str]:
+    if not df.index.name and not any(df.index.names):
+        return []
+
+    columns = {*df.columns}
+    if df.index.name and df.index.name in columns:
+        return [df.index.name]
+
+    if cols_in_both := columns.intersection(df.index.names):
+        return [*cols_in_both]
+
+    return []
+
+
 def tostring(
     self: "pr.RangeFrame",
     max_col_width: int | None = None,
@@ -41,7 +62,17 @@ def tostring(
     number_index_levels = self.index.nlevels
     number_duplicated_indices = self.index.duplicated().sum()
     has_duplicated_index = number_duplicated_indices > 0
-    _self = self.reset_index()
+
+    _self = (
+        pd.concat([self.head(HALF_OF_MAX_ROWS_TO_SHOW), self.tail(HALF_OF_MAX_ROWS_TO_SHOW + 1)])
+        if len(self) > MAX_ROWS_TO_SHOW
+        else pd.DataFrame(self.copy())
+    )
+
+    replacement_names = _find_aliases_for_columns(self)
+    inverted_replacement_names = {v: k for k, v in replacement_names.items()}
+    _self.columns = [replacement_names.get(c, c) for c in _self.columns]
+    _self = pd.DataFrame(_self).reset_index()
 
     truncation_marker = ["..."]
     if len(_self) > MAX_ROWS_TO_SHOW:
@@ -61,8 +92,9 @@ def tostring(
     columns_not_shown = ""
     truncated_data = adjusted_data.truncated_data
     truncated_headers = adjusted_data.truncated_headers
+    truncated_headers = [inverted_replacement_names.get(c, c) for c in truncated_headers]
     truncated_dtypes = adjusted_data.truncated_dtypes
-    if len(adjusted_data.truncated_headers) != len(_self.columns):
+    if len(truncated_headers) != len(_self.columns):
         num_not_shown = len(_self.columns) - len(truncated_headers)
         not_shown = [
             f'"{e}"'
@@ -81,7 +113,7 @@ def tostring(
         f" (with {number_duplicated_indices} index duplicates)." if has_duplicated_index else "."
     )
     class_and_shape_info = (
-        f"{_self.__class__.__name__} with {_self.shape[0]} rows, "
+        f"{self.__class__.__name__} with {self.shape[0]} rows, "
         f"{_self.shape[1] - number_index_levels} columns, and {number_index_levels} index columns{contains_duplicates_string}"
     )
     truncated_df = pd.DataFrame.from_records(truncated_data, columns=truncated_headers)

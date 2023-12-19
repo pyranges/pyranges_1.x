@@ -21,7 +21,7 @@ def _cluster(
     cdf.insert(df.shape[1], cluster_column, ids)
 
     if count_column:
-        _count = cdf.groupby(cluster_column).Cluster.count()
+        _count = cdf.groupby(cluster_column)["Cluster"].count()
         _count.name = count_column
         cdf = cdf.merge(_count, on=cluster_column)
 

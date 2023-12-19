@@ -196,7 +196,6 @@ def _to_bigwig(
             new_pyrles[k] = v
 
         df = c.defragment().to_ranges()
-
     gr = mypy_ensure_pyranges(df)
     unique_chromosomes = gr.chromosomes
 
