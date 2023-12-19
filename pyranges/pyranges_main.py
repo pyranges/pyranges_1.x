@@ -206,7 +206,6 @@ class PyRanges(RangeFrame):
 
     def groupby(self, *args, **kwargs) -> "PyRangesDataFrameGroupBy":
         """Group PyRanges by chromosome and strand."""
-
         grouped = super().groupby(*args, **kwargs)
         return PyRangesDataFrameGroupBy(grouped)
 
