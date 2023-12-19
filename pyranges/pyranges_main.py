@@ -206,9 +206,9 @@ class PyRanges(RangeFrame):
 
     def groupby(self, *args, **kwargs) -> "PyRangesDataFrameGroupBy":
         """Group PyRanges by chromosome and strand."""
-        if isinstance(self, pd.DataFrame):
-            res = PyRangesDataFrameGroupBy(self, *args, **kwargs)
-        return res
+
+        grouped = super().groupby(*args, **kwargs)
+        return PyRangesDataFrameGroupBy(grouped)
 
     @property
     def _constructor(self) -> type:

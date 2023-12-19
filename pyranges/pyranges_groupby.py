@@ -11,15 +11,27 @@ if TYPE_CHECKING:
 
 
 class PyRangesDataFrameGroupBy(pandas.core.groupby.DataFrameGroupBy):
-    @return_pyranges_if_possible
-    def __getattr__(self, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":
-        result = super().__getattr__(*args, **kwargs)
-        return PyRangesDataFrameGroupBy(result.obj, result.grouper, axis=result.axis)
 
-    @return_pyranges_if_possible
-    def __getitem__(self, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":
-        result = super().__getitem__(*args, **kwargs)
-        return PyRangesDataFrameGroupBy(result.obj, result.grouper, axis=result.axis)
+    def __init__(self, pandas_groupby):
+        self._pandas_groupby = pandas_groupby
+
+    def __getattr__(self, item):
+        # Handle attribute access, e.g., g.some_method()
+        if item in (pd_grpby := self.__dict__["_pandas_groupby"]).__dict__:
+            attr = getattr(pd_grpby, item)
+            if callable(attr):
+                def wrapper(*args, **kwargs):
+                    result = attr(*args, **kwargs)
+                    return return_pyranges_if_possible(result)
+
+                return wrapper
+            else:
+                return attr
+
+    def __getitem__(self, key):
+        # Handle item access, e.g., g['column_name']
+        result = self._pandas_groupby[key]
+        return return_pyranges_if_possible(result)
 
     @return_pyranges_if_possible
     def agg(self, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":  # noqa: D102
