@@ -55,6 +55,7 @@ deps =
     types-tabulate
     pytest
     pyright
+    joblib
 commands =
     pytest --doctest-modules pyranges
     pytest tests/unit
