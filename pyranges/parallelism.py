@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 import pandas as pd
 from pandas.core.frame import DataFrame
@@ -6,6 +8,39 @@ from pyranges.names import (
     END_COL,
     START_COL,
 )
+
+
+def split_df_into_chunks_without_splitting_groups(
+    df: DataFrame,
+    *,
+    by: list[str],
+    nb_splits: int,
+) -> list[DataFrame]:
+    """Split a DataFrame into chunks without splitting groups.
+
+    Args:
+    ----
+        df: DataFrame to split.
+        by: Column(s) to group by.
+        nb_splits: Number of splits.
+
+    Returns:
+    -------
+        List of DataFrames.
+    """
+    # Calculate the target size for each chunk
+    target_chunk_size = math.ceil(df.shape[0] / nb_splits)
+
+    # Assign a group ID and calculate cumsum of rows per group
+    df = df.sort_values(by)
+    groupby = df.groupby(by)
+
+    chunk_ids = groupby.size().cumsum().floordiv(target_chunk_size)
+    group_sizes = groupby.size()
+    df = df.assign(__chunk_id__=np.repeat(a=chunk_ids.to_numpy(), repeats=group_sizes.to_numpy()))
+
+    # Split the DataFrame using groupby
+    return [group.drop("__chunk_id__", axis="columns") for _, group in df.groupby("__chunk_id__")]
 
 
 def _lengths(df: DataFrame) -> pd.Series:

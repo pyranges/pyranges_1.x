@@ -44,7 +44,7 @@ autoapi_dirs = ["../pyranges/"]
 autoapi_ignore = [
     "*methods/*.py",
     "*out.py",
-    "*.multithreaded.py",
+    "*.parallelism.py",
     "*subset.py",
     "*tostring*.py",
 ]

@@ -14,11 +14,6 @@ import pyranges as pr
 import pyranges.empty
 from pyranges.loci_getter import LociGetter
 from pyranges.methods.merge import _merge
-from pyranges.multithreaded import (
-    _extend,
-    _tes,
-    _tss,
-)
 from pyranges.names import (
     CHROM_AND_STRAND_COLS,
     CHROM_COL,
@@ -54,6 +49,11 @@ from pyranges.names import (
     VALID_USE_STRAND_TYPE,
     BinaryOperation,
     UnaryOperation,
+)
+from pyranges.parallelism import (
+    _extend,
+    _tes,
+    _tss,
 )
 from pyranges.pyranges_groupby import PyRangesDataFrameGroupBy
 from pyranges.pyranges_helpers import (
@@ -205,7 +205,10 @@ class PyRanges(RangeFrame):
         return super().__new__(cls)
 
     def groupby(self, *args, **kwargs) -> "PyRangesDataFrameGroupBy":
-        """Group PyRanges by chromosome and strand."""
+        """Groupby PyRanges."""
+        index_of_observed_in_args_list = 7
+        if "observed" not in kwargs or len(args) < index_of_observed_in_args_list:
+            kwargs["observed"] = True
         grouped = super().groupby(*args, **kwargs)
         return PyRangesDataFrameGroupBy(grouped)
 
