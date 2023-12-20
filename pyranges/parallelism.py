@@ -1,4 +1,5 @@
 import math
+from typing import Generator
 
 import numpy as np
 import pandas as pd
@@ -8,6 +9,17 @@ from pyranges.names import (
     END_COL,
     START_COL,
 )
+
+
+def run_in_parallel(function, dfs: list[DataFrame], nb_cpu: int, *args, **kwargs) -> Generator:
+    """Run a function in parallel on a list of DataFrames."""
+    # TODO(endbak): Things to consider:  # noqa: FIX002
+    #   https://github.com/endrebak/pyranges1_alpha/issues/21
+    #   The index will be different here than in the original DataFrame if the function resets the index
+    #   Perhaps we should not concat so the function can return anything?
+    from joblib import Parallel, delayed
+
+    return Parallel(n_jobs=nb_cpu)(delayed(function)(df, *args, **kwargs) for df in dfs)  # type: ignore[return-type]
 
 
 def split_df_into_chunks_without_splitting_groups(
