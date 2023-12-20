@@ -1,3 +1,6 @@
+import pytest
+import pandas.testing
+
 import pyranges as pr
 
 
@@ -9,6 +12,7 @@ def test_split_chunks():
     assert len(frame1) + len(frame2) == len(df)
 
 
+@pytest.mark.slow
 def test_split_chunks_many():
     gr = pr.PyRanges(
         {
@@ -23,4 +27,19 @@ def test_split_chunks_many():
         new_ids = {*r["GeneId"].drop_duplicates()}
         assert new_ids.isdisjoint(seen_ids), i
         seen_ids.update(new_ids)
+
+
+@pytest.mark.slow
+def test_run_in_parallel():
+    df = pr.example_data.ensembl_gtf.get_with_loc_columns(["gene_id"])
+    dfs = [gdf for _, gdf in df.groupby("gene_id")]
+    res = pr.parallelism.run_in_parallel(
+        function=lambda x: x.merge_overlaps(by="gene_id", count_col="Counts"),
+        dfs=dfs,
+        nb_cpu=2,
+    ).reset_index(drop=True)
+    expected_result = df.merge_overlaps(by="gene_id", count_col="Counts")
+    print(res)
+    print(expected_result)
+    pandas.testing.assert_frame_equal(res, expected_result)
 
