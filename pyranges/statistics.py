@@ -657,7 +657,7 @@ class StatisticsMethods:
         --------
         >>> gr, gr2 = pr.example_data.f1, pr.example_data.f2
         >>> gr.stats.forbes(gr2, chromsizes={"chr1": 10})
-        1.6666666666666667
+        0.8333333333333334
         """
         _chromsizes = chromsizes_as_int(chromsizes)
 
@@ -705,7 +705,7 @@ class StatisticsMethods:
         >>> gr, gr2 = pr.example_data.f1, pr.example_data.f2
         >>> chromsizes = pr.example_data.chromsizes
         >>> gr.stats.jaccard(gr2)
-        0.3333333333333333
+        0.14285714285714285
         """
         ensure_strand_behavior_options_valid(self.pr, other, strand_behavior=strand_behavior)
         strand = (

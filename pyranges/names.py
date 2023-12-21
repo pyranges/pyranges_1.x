@@ -27,11 +27,11 @@ def return_pyranges_if_possible(
 
 
 # Define the Literal type
-VALID_OVERLAP_TYPE = Literal["first", "containment", "all"]
+VALID_OVERLAP_TYPE = Literal["first", "containment", "all", "last"]
 
 # Extract the options from the Literal type
 VALID_OVERLAP_OPTIONS = list(get_args(VALID_OVERLAP_TYPE))
-OVERLAP_FIRST, OVERLAP_CONTAINMENT, OVERLAP_ALL = VALID_OVERLAP_OPTIONS
+OVERLAP_FIRST, OVERLAP_CONTAINMENT, OVERLAP_ALL, OVERLAP_LAST = VALID_OVERLAP_OPTIONS
 
 CHROM_COL: Final = "Chromosome"
 START_COL = "Start"
