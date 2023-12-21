@@ -5,9 +5,12 @@ import pandas as pd
 from ncls import NCLS  # type: ignore[import]
 
 from pyranges.names import (
+    END_COL,
     OVERLAP_ALL,
     OVERLAP_CONTAINMENT,
     OVERLAP_FIRST,
+    OVERLAP_LAST,
+    START_COL,
     VALID_OVERLAP_OPTIONS,
     VALID_OVERLAP_TYPE,
 )
@@ -89,4 +92,49 @@ def _count_overlaps(
     sx.loc[vc.index, 0] = vc.to_numpy()
 
     df.insert(df.shape[1], name, sx.squeeze())
+    return df
+
+
+def _intersect(
+    df: "RangeFrame",
+    df2: "RangeFrame",
+    *,
+    how: VALID_OVERLAP_TYPE = OVERLAP_ALL,
+    **_,
+) -> pd.DataFrame:
+    df = df.copy()
+    starts = df.Start.to_numpy()
+    ends = df.End.to_numpy()
+    indexes = df.index.to_numpy()
+
+    in_dtype = df2.Start.dtype
+
+    oncls = NCLS(df2.Start.to_numpy(), df2.End.to_numpy(), df2.index.to_numpy())
+
+    if how == OVERLAP_ALL:
+        _self_indexes, _other_indexes = oncls.all_overlaps_both(starts, ends, indexes)
+    elif how == OVERLAP_CONTAINMENT:
+        _self_indexes, _other_indexes = oncls.all_containments_both(starts, ends, indexes)
+    elif how == OVERLAP_FIRST:
+        _self_indexes, _other_indexes = oncls.first_overlap_both(starts, ends, indexes)
+    elif how == OVERLAP_LAST:
+        _self_indexes, _other_indexes = oncls.last_overlap_both(starts, ends, indexes)
+
+    df, df2 = df.reindex(_self_indexes), df2.reindex(_other_indexes)
+
+    new_starts = pd.Series(
+        np.where(df.Start.to_numpy() > df2.Start.to_numpy(), df.Start, df2.Start),
+        index=df.index,
+        dtype=in_dtype,
+    )
+
+    new_ends = pd.Series(
+        np.where(df.End.to_numpy() < df2.End.to_numpy(), df.End, df2.End),
+        index=df.index,
+        dtype=in_dtype,
+    )
+
+    df.loc[:, START_COL] = new_starts
+    df.loc[:, END_COL] = new_ends
+
     return df

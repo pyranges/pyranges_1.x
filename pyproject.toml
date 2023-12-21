@@ -25,7 +25,7 @@ dependencies = ["pandas", "ncls>=0.0.63", "tabulate", "sorted_nearest>=0.0.33", 
 
 [project.optional-dependencies]
 add-ons = ["pyrle >= 0.0.39", "bamread", "bwread", "fisher", "pyfaidx"]
-dev = ["tox", "ruff", "pyright", "pandas-stubs", "types-tabulate", "pytest-watcher", "pytest-xdist"]
+dev = ["tox", "ruff", "pyright", "pandas-stubs", "types-tabulate", "pytest-watcher", "pytest-xdist", "hypothesis>=6.92.1"]
 all = ["pyranges[add-ons]", "pyranges[dev]"]
 
 [tool.setuptools.packages.find]
@@ -95,3 +95,8 @@ reportUnknownMemberType = false
 reportUnknownArgumentType = false
 reportUnknownVariableType = false
 
+[tool.pytest.ini_options]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "bedtools: marks tests that require bedtools",
+]

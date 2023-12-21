@@ -1959,12 +1959,12 @@ class PyRanges(RangeFrame):
         PyRanges with 1 rows, 3 columns, and 1 index columns.
         Contains 1 chromosomes.
         """
-        from pyranges.methods.overlap import _overlap
+        from pyranges.methods.overlap import _intersect
 
         strand = strand_from_strand_behavior(self, other, strand_behavior)
         self_clusters = self.merge_overlaps(use_strand=strand and self.has_strand_column)
         other_clusters = other.merge_overlaps(use_strand=strand and other.has_strand_column)
-        return self_clusters.apply_pair(other_clusters, _overlap, strand_behavior=strand_behavior, how=how)
+        return self_clusters.apply_pair(other_clusters, _intersect, strand_behavior=strand_behavior, how=how)
 
     def set_union(self, other: "PyRanges", strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto") -> "PyRanges":
         """Return set-theoretical union.

@@ -31,7 +31,7 @@ author = "Endre Bakken Stovner"
 
 extensions = [
     "sphinx.ext.napoleon",
-    #"sphinxcontrib.napoleon",
+    # "sphinxcontrib.napoleon",
     "autoapi.extension",
     # "sphinx.ext.autodoc",
     # "autoapi.extension",
