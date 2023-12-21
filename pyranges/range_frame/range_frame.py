@@ -280,7 +280,7 @@ class RangeFrame(pd.DataFrame):
             results.append(function(_mypy_ensure_rangeframe(_df), df2=_mypy_ensure_rangeframe(odf), **kwargs))
 
         if not results:
-            return RangeFrame(columns=self.columns)
+            return _mypy_ensure_rangeframe(RangeFrame(columns=self.columns))
         return _mypy_ensure_rangeframe(pd.concat(results))
 
     def sort_by_position(self) -> "RangeFrame":

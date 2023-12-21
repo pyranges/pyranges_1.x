@@ -1946,7 +1946,7 @@ class PyRanges(RangeFrame):
           index  |    Chromosome      Start      End
           int64  |    object          int64    int64
         -------  ---  ------------  -------  -------
-              0  |    chr1                1        3
+              0  |    chr1                2        3
               1  |    chr1                4        9
         PyRanges with 2 rows, 3 columns, and 1 index columns.
         Contains 1 chromosomes.

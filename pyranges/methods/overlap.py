@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 def _overlap_indices(
     df: "RangeFrame",
     df2: "RangeFrame",
-    how: Literal["first", "containment", "all"] = "first",
+    how: VALID_OVERLAP_TYPE = "first",
     **_,
 ) -> "pd.Series[int]":
     if df.empty or df2.empty:
@@ -42,8 +42,10 @@ def _overlap_indices(
         _indices, _ = it.all_containments_both(starts, ends, indexes)
     elif how == OVERLAP_FIRST:
         _indices, _ = it.first_overlap_both(starts, ends, indexes)
+    elif how == OVERLAP_LAST:
+        _indices, _ = it.last_overlap_both(starts, ends, indexes)
     else:
-        msg = f"{VALID_OVERLAP_OPTIONS} are the only valid to_numpy() for how."
+        msg = f"{VALID_OVERLAP_OPTIONS} are the only valid values for how."
         raise ValueError(msg)
     return pd.Series(_indices)
 
@@ -60,7 +62,7 @@ def _overlap(
     df: "RangeFrame",
     df2: "RangeFrame",
     *,
-    how: VALID_OVERLAP_TYPE = OVERLAP_ALL,
+    how: VALID_OVERLAP_TYPE = "all",
     invert: bool = False,
     **_,
 ) -> pd.DataFrame:
@@ -99,7 +101,7 @@ def _intersect(
     df: "RangeFrame",
     df2: "RangeFrame",
     *,
-    how: VALID_OVERLAP_TYPE = OVERLAP_ALL,
+    how: VALID_OVERLAP_TYPE = "all",
     **_,
 ) -> pd.DataFrame:
     df = df.copy()
@@ -119,6 +121,9 @@ def _intersect(
         _self_indexes, _other_indexes = oncls.first_overlap_both(starts, ends, indexes)
     elif how == OVERLAP_LAST:
         _self_indexes, _other_indexes = oncls.last_overlap_both(starts, ends, indexes)
+    else:
+        msg = "Invalid overlap type. Valid types are: first, containment, all, last."
+        raise ValueError(msg)
 
     df, df2 = df.reindex(_self_indexes), df2.reindex(_other_indexes)
 
