@@ -1964,7 +1964,14 @@ class PyRanges(RangeFrame):
         strand = strand_from_strand_behavior(self, other, strand_behavior)
         self_clusters = self.merge_overlaps(use_strand=strand and self.has_strand_column)
         other_clusters = other.merge_overlaps(use_strand=strand and other.has_strand_column)
-        return self_clusters.apply_pair(other_clusters, _intersect, strand_behavior=strand_behavior, how=how,).reset_index(drop=True)
+        return mypy_ensure_pyranges(
+            self_clusters.apply_pair(
+                other_clusters,
+                _intersect,
+                strand_behavior=strand_behavior,
+                how=how,
+            ).reset_index(drop=True),
+        )
 
     def set_union(self, other: "PyRanges", strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto") -> "PyRanges":
         """Return set-theoretical union.
@@ -3544,6 +3551,111 @@ class PyRanges(RangeFrame):
             cols_to_include_genome_loc_correct_order = self._loc_columns + keys
 
         return mypy_ensure_pyranges(super().__getitem__(cols_to_include_genome_loc_correct_order))
+
+    def intersect(  # type: ignore[override]
+        self,
+        other: "PyRanges",
+        how: VALID_OVERLAP_TYPE = "first",
+        by: VALID_BY_TYPES = None,
+        *,
+        strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
+        **_,
+    ) -> "PyRanges":
+        """Return overlapping subintervals.
+
+        Returns the segments of the intervals in self which overlap with those in other.
+
+        Parameters
+        ----------
+        other : PyRanges
+            PyRanges to find overlaps with.
+
+        strand_behavior : {"auto", "same", "opposite", False}, default None, i.e. auto
+            Whether to compare PyRanges on the same strand, the opposite or ignore strand
+            information. The default, None, means use "same" if both PyRanges are strande,
+            otherwise ignore the strand information.
+
+        how : {"first", "containment", False, None}, default "first"
+            What intervals to report. By default, reports every interval in self with overlap once.
+            "containment" reports all intervals where the overlapping is contained within it.
+
+        invert : bool, default False
+            Whether to return the intervals without overlaps.
+
+        by : str or list of str, default None
+            Only report overlaps when equal values in these columns.
+
+        Returns
+        -------
+        PyRanges
+
+            A PyRanges with overlapping intervals.
+
+        See Also
+        --------
+        PyRanges.intersect : report overlapping subintervals
+        PyRanges.set_intersect : set-intersect PyRanges
+
+        Examples
+        --------
+        >>> gr = pr.PyRanges({"Chromosome": ["chr1"] * 3, "Start": [1, 4, 10],
+        ...                   "End": [3, 9, 11], "ID": ["a", "b", "c"]})
+        >>> gr
+          index  |    Chromosome      Start      End  ID
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                1        3  a
+              1  |    chr1                4        9  b
+              2  |    chr1               10       11  c
+        PyRanges with 3 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        >>> gr2 = pr.PyRanges({"Chromosome": ["chr1"] * 3, "Start": [2, 2, 9], "End": [3, 9, 10]})
+        >>> gr2
+          index  |    Chromosome      Start      End
+          int64  |    object          int64    int64
+        -------  ---  ------------  -------  -------
+              0  |    chr1                2        3
+              1  |    chr1                2        9
+              2  |    chr1                9       10
+        PyRanges with 3 rows, 3 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        >>> gr.intersect(gr2)
+          index  |    Chromosome      Start      End  ID
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                2        3  a
+              1  |    chr1                4        9  b
+        PyRanges with 2 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        >>> gr.intersect(gr2, how="first")
+          index  |    Chromosome      Start      End  ID
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                2        3  a
+              1  |    chr1                4        9  b
+        PyRanges with 2 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        >>> gr.intersect(gr2, how="containment")
+          index  |    Chromosome      Start      End  ID
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              1  |    chr1                4        9  b
+        PyRanges with 1 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes.
+        """
+        from pyranges.methods.overlap import _intersect
+
+        return self.apply_pair(
+            other,
+            _intersect,
+            strand_behavior=strand_behavior,
+            by=by,
+            how=how,
+        )
 
     def intersect_interval_columns(
         self,
