@@ -986,7 +986,7 @@ class PyRanges(RangeFrame):
             by=by,
             keep_nonoverlapping=keep_nonoverlapping,
             overlap_col=overlap_col,
-            skip_if_empty=not keep_nonoverlapping
+            skip_if_empty=not keep_nonoverlapping,
         )
 
     def coverage(
@@ -1091,7 +1091,7 @@ class PyRanges(RangeFrame):
             fraction_col=fraction_col,
             keep_nonoverlapping=keep_nonoverlapping,
             overlap_col=overlap_col,
-            skip_if_empty=not keep_nonoverlapping
+            skip_if_empty=not keep_nonoverlapping,
         )
 
     def extend(
@@ -2040,10 +2040,6 @@ class PyRanges(RangeFrame):
         if not strand:
             self = self.remove_strand()
             other = other.remove_strand()
-
-        if strand_behavior == "opposite" and len(other):
-            other = other.copy()
-            other.Strand = other.Strand.replace({"+": "-", "-": "+"})
 
         gr = pr.concat([self, other])
 

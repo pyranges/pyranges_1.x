@@ -76,7 +76,7 @@ def run_bedtools(command, gr, gr2, strand_behavior, nearest_overlap=False, neare
 def assert_equal(result, bedtools_df):
     if result.empty and bedtools_df.empty:
         return
-    result = result.sort_by_position().reset_index(drop=True)
+    result = PyRanges(result).sort_by_position().reset_index(drop=True)
     bedtools_df = PyRanges(bedtools_df).sort_by_position().reset_index(drop=True)
     pd.testing.assert_frame_equal(result, bedtools_df, check_exact=False, atol=1e-5)
 
@@ -139,8 +139,11 @@ def test_coverage(gr, gr2, strand_behavior) -> None:
     assert_equal(result, bedtools_df)
 
 
+STRAND_BEHAVIOR_NO_OPPOSITE = ["ignore", "same"]
+
+
 @pytest.mark.bedtools
-@pytest.mark.parametrize("strand_behavior", ["ignore", "same"])
+@pytest.mark.parametrize("strand_behavior", STRAND_BEHAVIOR_NO_OPPOSITE)
 @settings(
     max_examples=max_examples,
     print_blob=True,
@@ -158,6 +161,25 @@ def test_set_intersect(gr, gr2, strand_behavior) -> None:
         return
 
     pd.testing.assert_frame_equal(result, bedtools_df)
+
+
+@pytest.mark.bedtools()
+@pytest.mark.parametrize("strand_behavior", STRAND_BEHAVIOR_NO_OPPOSITE)
+@settings(
+    max_examples=max_examples,
+    deadline=deadline,
+    print_blob=True,
+)
+@given(gr=nonempty_pyranges(), gr2=nonempty_pyranges())
+def test_set_union(gr, gr2, strand_behavior) -> None:
+    set_union_command = "cat {f1} {f2} | bedtools sort | bedtools merge {strand} -c 4,5,6 -o first -i -"  # set_union_command = "bedtools merge {strand} -c 4,5,6 -o first -i {f1}"
+    bedtools_result = run_bedtools(set_union_command, gr, gr2, strand_behavior)
+
+    bedtools_df = read_bedtools_result_set_op(bedtools_result, strand_behavior)
+
+    result = gr.set_union(gr2, strand_behavior=strand_behavior)
+
+    assert_equal(bedtools_df, result)
 
 
 def read_bedtools_result_set_op(bedtools_result, strand_behavior):
