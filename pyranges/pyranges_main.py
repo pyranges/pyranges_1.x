@@ -1955,7 +1955,7 @@ class PyRanges(RangeFrame):
           index  |    Chromosome      Start      End
           int64  |    object          int64    int64
         -------  ---  ------------  -------  -------
-              1  |    chr1                4        9
+              0  |    chr1                4        9
         PyRanges with 1 rows, 3 columns, and 1 index columns.
         Contains 1 chromosomes.
         """
@@ -1964,7 +1964,7 @@ class PyRanges(RangeFrame):
         strand = strand_from_strand_behavior(self, other, strand_behavior)
         self_clusters = self.merge_overlaps(use_strand=strand and self.has_strand_column)
         other_clusters = other.merge_overlaps(use_strand=strand and other.has_strand_column)
-        return self_clusters.apply_pair(other_clusters, _intersect, strand_behavior=strand_behavior, how=how)
+        return self_clusters.apply_pair(other_clusters, _intersect, strand_behavior=strand_behavior, how=how,).reset_index(drop=True)
 
     def set_union(self, other: "PyRanges", strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto") -> "PyRanges":
         """Return set-theoretical union.

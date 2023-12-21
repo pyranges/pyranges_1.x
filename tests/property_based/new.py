@@ -1,5 +1,6 @@
 import subprocess
 import tempfile
+from io import StringIO
 
 import hypothesis.strategies as st
 import numpy as np
@@ -10,7 +11,6 @@ from hypothesis.extra.pandas import column, data_frames, indexes
 
 from pyranges import PyRanges
 from pyranges.names import VALID_GENOMIC_STRAND_INFO
-from tests.property_based.test_binary import read_bedtools_result_set_op
 
 max_examples = 15
 slow_max_examples = 5
@@ -23,16 +23,6 @@ strands = st.sampled_from(VALID_GENOMIC_STRAND_INFO)
 
 chromosomes = st.sampled_from([f"chr{e!s}" for e in list(range(1, 23)) + "X Y M".split()])
 
-
-# dfs_zero_length_allowed = data_frames(
-#     index=indexes(dtype=np.int64, min_size=0, unique=True, elements=starts),
-#     columns=[
-#         column("Chromosome", chromosomes),
-#         column("Start", elements=starts),
-#         column("End", elements=lengths),
-#         column("Strand", strands),
-#     ],
-# )
 
 dfs_zero_length_not_allowed = data_frames(
     index=indexes(dtype=np.int64, min_size=1, unique=True, elements=starts),
@@ -84,13 +74,12 @@ def run_bedtools(command, gr, gr2, strand_behavior, nearest_overlap=False, neare
 
 
 @pytest.mark.bedtools()
-@pytest.mark.parametrize("strand_behavior", ["same", "ignore"])
+@pytest.mark.parametrize("strand_behavior", ["ignore", "same"])
 @settings(
     max_examples=max_examples,
     print_blob=True,
 )
 @given(gr=nonempty_pyranges(), gr2=nonempty_pyranges())  # pylint: disable=no-value-for-parameter
-@reproduce_failure("6.92.1", b"AXicY2RABYxghA4AAHUABA==")
 def test_set_intersect(gr, gr2, strand_behavior) -> None:
     print(max_examples)
     print(strand_behavior)
@@ -103,4 +92,26 @@ def test_set_intersect(gr, gr2, strand_behavior) -> None:
 
     print("result:\n", result)
     print("bedtools_df\n", bedtools_df)
+    if result.empty and bedtools_df.empty:
+        return
+
     pd.testing.assert_frame_equal(result, bedtools_df)
+
+
+def read_bedtools_result_set_op(bedtools_result, strand_behavior):
+    if strand_behavior == "same":
+        usecols = [0, 1, 2, 5]
+        names = "Chromosome Start End Strand".split()
+    elif strand_behavior == "ignore":
+        usecols = [0, 1, 2]
+        names = "Chromosome Start End".split()
+    else:
+        raise ValueError("Invalid strand behavior: " + strand_behavior)
+
+    return pd.read_csv(
+        StringIO(bedtools_result),
+        header=None,
+        usecols=usecols,
+        names=names,
+        sep="\t",
+    )
