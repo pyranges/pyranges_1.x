@@ -73,7 +73,73 @@ def run_bedtools(command, gr, gr2, strand_behavior, nearest_overlap=False, neare
         return subprocess.check_output(cmd, shell=True, executable="/bin/bash").decode()  # nosec  # nosec
 
 
+def assert_equal(result, bedtools_df):
+    if result.empty and bedtools_df.empty:
+        return
+    result = result.sort_by_position().reset_index(drop=True)
+    bedtools_df = PyRanges(bedtools_df).sort_by_position().reset_index(drop=True)
+    pd.testing.assert_frame_equal(result, bedtools_df, check_exact=False, atol=1e-5)
+
+
+strand_behavior = ["ignore", "same", "opposite"]
+
+
+@pytest.mark.bedtools
+@pytest.mark.parametrize("strand_behavior", strand_behavior)
+@settings(
+    max_examples=max_examples,
+    print_blob=True,
+)
+@given(gr=nonempty_pyranges(), gr2=nonempty_pyranges())  # pylint: disable=no-value-for-parameter
+def test_overlap(gr, gr2, strand_behavior) -> None:
+    overlap_command = "bedtools intersect -u {strand} -a {f1} -b {f2}"
+
+    bedtools_result = run_bedtools(overlap_command, gr, gr2, strand_behavior)
+
+    bedtools_df = pd.read_csv(
+        StringIO(bedtools_result),
+        header=None,
+        names="Chromosome Start End Name Score Strand".split(),
+        sep="\t",
+    )
+
+    result = gr.overlap(gr2, strand_behavior=strand_behavior)
+
+    result = result.reset_index(drop=True)
+    if result.empty and bedtools_df.empty:
+        return
+    pd.testing.assert_frame_equal(result, bedtools_df)
+
+
 @pytest.mark.bedtools()
+@pytest.mark.parametrize("strand_behavior", strand_behavior)
+@settings(
+    max_examples=max_examples,
+    print_blob=True,
+)
+@given(gr=nonempty_pyranges(), gr2=nonempty_pyranges())  # pylint: disable=no-value-for-parameter
+def test_coverage(gr, gr2, strand_behavior) -> None:
+    coverage_command = "bedtools coverage {strand} -a {f1} -b {f2}"
+
+    bedtools_result = run_bedtools(coverage_command, gr, gr2, strand_behavior)
+
+    bedtools_df = PyRanges(
+        pd.read_csv(
+            StringIO(bedtools_result),
+            header=None,
+            usecols=[0, 1, 2, 3, 4, 5, 6, 9],
+            names="Chromosome Start End Name Score Strand NumberOverlaps FractionOverlaps".split(),
+            dtype={"FractionOverlap": np.float_},
+            sep="\t",
+        )
+    )
+
+    result = gr.coverage(gr2, strand_behavior=strand_behavior)
+
+    assert_equal(result, bedtools_df)
+
+
+@pytest.mark.bedtools
 @pytest.mark.parametrize("strand_behavior", ["ignore", "same"])
 @settings(
     max_examples=max_examples,
@@ -81,8 +147,6 @@ def run_bedtools(command, gr, gr2, strand_behavior, nearest_overlap=False, neare
 )
 @given(gr=nonempty_pyranges(), gr2=nonempty_pyranges())  # pylint: disable=no-value-for-parameter
 def test_set_intersect(gr, gr2, strand_behavior) -> None:
-    print(max_examples)
-    print(strand_behavior)
     set_intersect_command = "bedtools intersect {strand} -a <(sort -k1,1 -k2,2n {f1} | bedtools merge {strand} -c 4,5,6 -o first -i -) -b <(sort -k1,1 -k2,2n {f2} | bedtools merge {strand} -c 4,5,6 -o first -i -)"
     bedtools_result = run_bedtools(set_intersect_command, gr, gr2, strand_behavior)
 
@@ -90,8 +154,6 @@ def test_set_intersect(gr, gr2, strand_behavior) -> None:
 
     result = gr.set_intersect(gr2, strand_behavior=strand_behavior)
 
-    print("result:\n", result)
-    print("bedtools_df\n", bedtools_df)
     if result.empty and bedtools_df.empty:
         return
 
