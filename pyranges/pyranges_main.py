@@ -2622,7 +2622,13 @@ class PyRanges(RangeFrame):
 
         gr = self.count_overlaps(other_clusters, strand_behavior=strand_behavior, overlap_col=TEMP_NUM_COL, by=_by)
 
-        result = gr.apply_pair(other_clusters, strand_behavior=strand_behavior, function=_subtraction, by=_by)
+        result = gr.apply_pair(
+            other_clusters,
+            strand_behavior=strand_behavior,
+            function=_subtraction,
+            by=_by,
+            skip_if_empty=False,
+        )
 
         return result.drop_and_return(TEMP_NUM_COL, axis=1)
 
