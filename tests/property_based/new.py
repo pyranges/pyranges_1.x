@@ -52,6 +52,19 @@ def run_bedtools(command, gr, gr2, strand_behavior, nearest_overlap=False, neare
     bedtools_how = {"upstream": "-id", "downstream": "-iu", None: ""}[nearest_how] + " -D a"
     ties = "-t " + ties if ties else ""
 
+    # file1_proc_sub = f"""<(echo -e '{gr.to_csv(sep="\t", header=False, index=False)}')"""
+    # file2_proc_sub = f"""<(echo -e '{gr2.to_csv(sep="\t", header=False, index=False)}')"""
+
+    # cmd = command.format(
+    #     f1=file1_proc_sub,
+    #     f2=file2_proc_sub,
+    #     strand=bedtools_strand_behavior,
+    #     overlap=bedtools_overlap,
+    #     bedtools_how=bedtools_how,
+    #     ties=ties,
+    # )
+    # return subprocess.check_output(cmd, shell=True, executable="/bin/bash").decode()  # nosec  # nosec
+
     with tempfile.TemporaryDirectory() as temp_dir:
         f1 = f"{temp_dir}/f1.bed"
         f2 = f"{temp_dir}/f2.bed"
@@ -108,7 +121,7 @@ def test_overlap(gr, gr2, strand_behavior) -> None:
     result = result.reset_index(drop=True)
     if result.empty and bedtools_df.empty:
         return
-    pd.testing.assert_frame_equal(result, bedtools_df)
+    assert_equal(result, bedtools_df)
 
 
 @pytest.mark.bedtools()
@@ -160,7 +173,7 @@ def test_set_intersect(gr, gr2, strand_behavior) -> None:
     if result.empty and bedtools_df.empty:
         return
 
-    pd.testing.assert_frame_equal(result, bedtools_df)
+    assert_equal(result, bedtools_df)
 
 
 @pytest.mark.bedtools()
@@ -180,6 +193,65 @@ def test_set_union(gr, gr2, strand_behavior) -> None:
     result = gr.set_union(gr2, strand_behavior=strand_behavior)
 
     assert_equal(bedtools_df, result)
+
+
+# @pytest.mark.bedtools
+# @pytest.mark.parametrize(("nearest_how", "overlap", "strand_behavior"), product(nearest_hows, overlaps, strand_behavior))
+# @settings(
+#     max_examples=max_examples,
+#     deadline=deadline,
+#     print_blob=True,
+# )
+# @given(gr=nonempty_pyranges(), gr2=nonempty_pyranges())  # pylint: disable=no-value-for-parameter
+# def test_nearest(gr, gr2, nearest_how, overlap, strand_behavior) -> None:
+#     nearest_command = "bedtools closest {bedtools_how} {strand} {overlap} -t first -d -a <(sort -k1,1 -k2,2n {f1}) -b <(sort -k1,1 -k2,2n {f2})"
+#
+#     bedtools_result = run_bedtools(nearest_command, gr, gr2, strand_behavior, overlap, nearest_how)
+#
+#     bedtools_df = pd.read_csv(
+#         StringIO(bedtools_result),
+#         header=None,
+#         names="Chromosome Start End Strand Chromosome2 Distance".split(),
+#         usecols=[0, 1, 2, 5, 6, 12],
+#         sep="\t",
+#     )
+#
+#     bedtools_df.Distance = bedtools_df.Distance.abs()
+#
+#     bedtools_df = bedtools_df[bedtools_df.Chromosome2 != "."]
+#     bedtools_df = bedtools_df.drop("Chromosome2", axis=1)
+#
+#     result = gr.nearest(gr2, strand_behavior=strand_behavior, overlap=overlap, how=nearest_how)
+#
+#     print("bedtools " * 5)
+#     print(bedtools_df)
+#     print("result " * 5)
+#     print(result)
+#
+#     compare_results_nearest(bedtools_df, result)
+
+@pytest.mark.bedtools
+@pytest.mark.parametrize("strand_behavior",strand_behavior)
+@settings(
+    max_examples=max_examples,
+    print_blob=True,
+)
+@given(gr=nonempty_pyranges(), gr2=nonempty_pyranges())  # pylint: disable=no-value-for-parameter
+def test_subtraction(gr, gr2, strand_behavior) -> None:
+    subtract_command = "bedtools subtract {strand} -a {f1} -b {f2}"
+
+    bedtools_result = run_bedtools(subtract_command, gr, gr2, strand_behavior)
+
+    bedtools_df = pd.read_csv(
+        StringIO(bedtools_result),
+        header=None,
+        names="Chromosome Start End Name Score Strand".split(),
+        sep="\t",
+    )
+
+    result = gr.subtract_intervals(gr2, strand_behavior=strand_behavior)
+
+    assert_equal(result, bedtools_df)
 
 
 def read_bedtools_result_set_op(bedtools_result, strand_behavior):
