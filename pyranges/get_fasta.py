@@ -116,7 +116,6 @@ def get_sequence(
             raise ValueError(msg)
         pyfaidx_fasta = pyfaidx.Fasta(path, read_ahead=int(1e5))
 
-    seqs = []
     use_strand = gr.strand_values_valid
     iterables = (
         zip(gr[CHROM_COL], gr[START_COL], gr[END_COL], [FORWARD_STRAND])
@@ -128,7 +127,6 @@ def get_sequence(
         _fasta = pyfaidx_fasta[chromosome]
         forward_strand = strand == FORWARD_STRAND
         if (seq := _fasta[start:end]) is not None:
-            print(((chromosome, start, end, strand), seq, forward_strand))
             seqs.append(seq.seq if forward_strand else (-seq).seq)
     return pd.Series(data=seqs, index=gr.index, name="Sequence")
 
