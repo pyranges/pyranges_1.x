@@ -66,6 +66,7 @@ class GenomicFeaturesMethods:
               1  |               1   133722   133723  -           ensembl   tss
         PyRanges with 2 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
+
         """
         gr = self.pr
 
@@ -120,6 +121,7 @@ class GenomicFeaturesMethods:
               1  |               1   120724   120725  -           ensembl   tes
         PyRanges with 2 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
+
         """
         gr = self.pr
 
@@ -209,6 +211,7 @@ class GenomicFeaturesMethods:
               4  |               1       30       50  +         gene       B
         PyRanges with 5 rows, 6 columns, and 1 index columns (with 3 index duplicates).
         Contains 1 chromosomes and 1 strands.
+
         """
         gr = self.pr
         if gr.empty:
@@ -344,6 +347,7 @@ def genome_bounds(
     ValueError: Not all chromosomes were in the chromsize dict. This might mean that their types differed.
     Missing keys: {3}.
     Chromosome col had type: int64 while keys were of type: int
+
     """
     if isinstance(chromsizes, pd.DataFrame):
         chromsizes = dict(*zip(chromsizes[CHROM_COL], chromsizes[END_COL], strict=True))
@@ -439,6 +443,7 @@ def tile_genome(
     3113     |    chrY          59000000  59373566
     PyRanges with 3114 rows, 3 columns, and 1 index columns.
     Contains 25 chromosomes.
+
     """
     if isinstance(chromsizes, dict):
         chromsize_dict = chromsizes

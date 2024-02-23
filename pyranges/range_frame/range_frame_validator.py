@@ -126,6 +126,7 @@ class InvalidRangesReason:
           * 1 starts or ends are < 0. See indexes: 3
           * 1 starts or ends are nan. See indexes: 3
         <BLANKLINE>
+
         """
         invalid_ranges_reasons: list["InvalidRangesReason"] = [
             invalid_ranges_reason

@@ -89,6 +89,7 @@ def fdr(p_vals: Series) -> Series:
           2  |    chr13          24537618   24537718  -         0.00750612  0.00750612
     PyRanges with 3 rows, 6 columns, and 1 index columns.
     Contains 3 chromosomes and 2 strands.
+
     """
     from scipy.stats import rankdata  # type: ignore[import]
 
@@ -152,6 +153,7 @@ def fisher_exact(tp: Series, fp: Series, fn: Series, tn: Series, pseudocount: in
        odds_ratio         P     PLeft    PRight
     0    0.165517  0.080269  0.044555  0.994525
     1    0.000000  0.000067  0.000034  1.000000
+
     """
     try:
         from fisher import pvalue_npy  # type: ignore[import]
@@ -221,6 +223,7 @@ def mcc(
     a  1.00000  1.00000  0.55168
     b  1.00000  1.00000  0.55168
     c  0.55168  0.55168  1.00000
+
     """
     _genome, genome_length, _labels = process_genome_data(grs, labels=labels, genome=genome)
 
@@ -361,6 +364,7 @@ def rowbased_spearman(x: ndarray, y: ndarray) -> ndarray:
 
     >>> pr.stats.rowbased_spearman(x, y)
     array([-0.5,  0.5, -1. ])
+
     """
     x = np.asarray(x)
     y = np.asarray(y)
@@ -402,6 +406,7 @@ def rowbased_pearson(x: ndarray | DataFrame, y: ndarray | DataFrame) -> ndarray:
 
     >>> pr.stats.rowbased_pearson(x, y)
     array([-0.09078413,  0.65465367, -1.        ])
+
     """
     # Thanks to https://github.com/dengemann
 
@@ -448,6 +453,7 @@ def rowbased_rankdata(data: ndarray) -> DataFrame:
     0  2.0  4.0  3.0  1.0
     1  1.0  2.0  3.0  4.0
     2  2.5  4.0  1.0  2.5
+
     """
     dc = np.asarray(data).copy()
     sorter = np.apply_along_axis(np.argsort, 1, data)
@@ -550,6 +556,7 @@ def simes(
           1  |               1       10       40     0.0001  +         P53
     PyRanges with 2 rows, 6 columns, and 1 index columns.
     Contains 2 chromosomes and 2 strands.
+
     """
     if isinstance(by, str):
         by = [by]
@@ -658,6 +665,7 @@ class StatisticsMethods:
         >>> gr, gr2 = pr.example_data.f1, pr.example_data.f2
         >>> gr.stats.forbes(gr2, chromsizes={"chr1": 10})
         0.8333333333333334
+
         """
         _chromsizes = chromsizes_as_int(chromsizes)
 
@@ -706,6 +714,7 @@ class StatisticsMethods:
         >>> chromsizes = pr.example_data.chromsizes
         >>> gr.stats.jaccard(gr2)
         0.14285714285714285
+
         """
         ensure_strand_behavior_options_valid(self.pr, other, strand_behavior=strand_behavior)
         strand = (
@@ -776,6 +785,7 @@ class StatisticsMethods:
         10     0.41      2     18  0.111111
         11     0.42      1     18  0.055556
         12     0.43      2     18  0.111111
+
         """
         result = pd.Series(_relative_distance(self.pr, other))
 
@@ -835,6 +845,7 @@ def find_chromosome_max_end_positions(grs: list["PyRanges"]) -> pd.DataFrame:
     >>> pr.stats.find_chromosome_max_end_positions([f1, f2])
       Chromosome  Start  End
     0       chr1      0    9
+
     """
     genome: dict[str, int] = defaultdict(int)
     for gr in grs:

@@ -62,6 +62,7 @@ def concat[T: "RangeFrame"](grs: Iterable[T], *args, **kwargs) -> T:
     ValueError: Can only concatenate RangeFrames of the same type. Got: PyRanges, RangeFrame
 
     >>> pd.testing.assert_frame_equal(pr.concat([r]), r)  # would throw if they were not equal
+
     """
     input_class = assert_all_classes_are_the_same_and_retrieve_it(grs)
 

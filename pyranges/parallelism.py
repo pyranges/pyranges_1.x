@@ -39,6 +39,7 @@ def split_df_into_chunks_without_splitting_groups(
     Returns:
     -------
         List of DataFrames.
+
     """
     # Calculate the target size for each chunk
     target_chunk_size = math.ceil(df.shape[0] / nb_splits)

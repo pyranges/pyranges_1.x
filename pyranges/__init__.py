@@ -84,6 +84,7 @@ def random(
     999      |    chr21         38433522   38433622   -
     PyRanges with 1000 rows, 4 columns, and 1 index columns.
     Contains 24 chromosomes and 2 strands.
+
     """
     rng = np.random.default_rng(seed=seed)
 

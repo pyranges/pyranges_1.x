@@ -230,8 +230,9 @@ def test_set_union(gr, gr2, strand_behavior) -> None:
 #
 #     compare_results_nearest(bedtools_df, result)
 
+
 @pytest.mark.bedtools
-@pytest.mark.parametrize("strand_behavior",strand_behavior)
+@pytest.mark.parametrize("strand_behavior", strand_behavior)
 @settings(
     max_examples=max_examples,
     print_blob=True,
