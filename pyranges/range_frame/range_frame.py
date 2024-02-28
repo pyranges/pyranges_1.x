@@ -17,7 +17,7 @@ from pyranges.names import (
     VALID_BY_TYPES,
     VALID_OVERLAP_TYPE,
     BinaryOperation,
-    UnaryOperation,
+    UnaryOperation, PRESERVE_INDEX_COLUMN,
 )
 from pyranges.range_frame.range_frame_validator import InvalidRangesReason
 from pyranges.tostring import tostring
@@ -208,27 +208,26 @@ class RangeFrame(pd.DataFrame):
             return _mypy_ensure_rangeframe(function(self, **kwargs))
         by = self._by_to_list(by)
 
+        f = _with_group_keys_to_kwargs(by)(function)
         if not preserve_index:
-            return _mypy_ensure_rangeframe(self.groupby(by).apply(function, by=by, **kwargs).reset_index(drop=True))
+            return _mypy_ensure_rangeframe(self.groupby(by).apply(f, by=by, **kwargs).reset_index(drop=True))
 
-        preserve_index_col = "__old_index__"
-
-        self[preserve_index_col] = self.index
+        self[PRESERVE_INDEX_COLUMN] = self.index
         result = (
             self.groupby(by)
             .apply(
-                _with_group_keys_to_kwargs(by)(function),
+                f,
                 by=by,
                 **kwargs,
             )
             .reset_index(drop=True)
         )
-        result = result.set_index(preserve_index_col)
+        result = result.set_index(PRESERVE_INDEX_COLUMN)
         if isinstance(self.index, pd.MultiIndex):
             result.index.names = self.index.names
         else:
             result.index.name = self.index.name
-        self = self.drop(preserve_index_col, axis="columns")
+        self.drop(PRESERVE_INDEX_COLUMN, axis="columns", inplace=True)
         return _mypy_ensure_rangeframe(result)
 
     def apply_pair(

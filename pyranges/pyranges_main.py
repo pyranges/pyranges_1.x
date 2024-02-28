@@ -2219,7 +2219,7 @@ class PyRanges(RangeFrame):
               0  |               1  +               1       11  t1
               1  |               1  +              40       45  t1
               2  |               2  -              70       80  t2
-              3  |               2  -              10       15  t2
+              3  |               2  -              20       25  t2
               4  |               3  +             140      152  t3
         PyRanges with 5 rows, 5 columns, and 1 index columns.
         Contains 3 chromosomes and 2 strands.
@@ -2230,7 +2230,7 @@ class PyRanges(RangeFrame):
           int64  |           int64  object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
               0  |               1  +              40       60  t1
-              1  |               2  -              75       80  t2
+              1  |               2  -              70       75  t2
               2  |               2  -              10       25  t2
               3  |               3  +             140      152  t3
         PyRanges with 4 rows, 5 columns, and 1 index columns.
@@ -2252,8 +2252,8 @@ class PyRanges(RangeFrame):
         -------  ---  ------------  --------  -------  -------  ---------------
               0  |               1  +               4       11  t1
               1  |               1  +              40       57  t1
-              2  |               2  -              73       80  t2
-              3  |               2  -              10       22  t2
+              2  |               2  -              70       77  t2
+              3  |               2  -              13       25  t2
               4  |               3  +             143      149  t3
         PyRanges with 5 rows, 5 columns, and 1 index columns.
         Contains 3 chromosomes and 2 strands.

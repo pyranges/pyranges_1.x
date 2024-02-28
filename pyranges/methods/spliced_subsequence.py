@@ -34,7 +34,7 @@ def _spliced_subseq(
 
     by_argument_given = kwargs.get("by")
     _by = kwargs.get("by", TEMP_INDEX_COL)
-    by = [_by] if isinstance(_by, str) else (_by or [])
+    by = [_by] if isinstance(_by, str) else (_by or df.index)
 
     strand = kwargs.get(BY_ENTRY_IN_KWARGS, {}).get("Strand")
 
