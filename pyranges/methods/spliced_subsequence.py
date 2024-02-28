@@ -2,7 +2,15 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from pyranges.names import END_COL, REVERSE_STRAND, START_COL, TEMP_CUMSUM_COL, TEMP_INDEX_COL, TEMP_LENGTH_COL
+from pyranges.names import (
+    BY_ENTRY_IN_KWARGS,
+    END_COL,
+    REVERSE_STRAND,
+    START_COL,
+    TEMP_CUMSUM_COL,
+    TEMP_INDEX_COL,
+    TEMP_LENGTH_COL,
+)
 
 if TYPE_CHECKING:
     import pyranges as pr
@@ -28,7 +36,7 @@ def _spliced_subseq(
     _by = kwargs.get("by", TEMP_INDEX_COL)
     by = [_by] if isinstance(_by, str) else (_by or [])
 
-    strand = kwargs.get("strand")
+    strand = kwargs.get(BY_ENTRY_IN_KWARGS, {}).get("Strand")
 
     # at this point, strand is False if 1. spliced_subsequence was called with strand=False or
     #                                   2. it was called with strand=None and self is not stranded
