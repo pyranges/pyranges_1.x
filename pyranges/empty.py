@@ -28,6 +28,7 @@ def empty_df(
 
     with_strand: bool, default False
         Whether to create a PyRanges with strand information.
+
     """
     empty = pd.DataFrame(
         columns=list(columns)
@@ -55,5 +56,6 @@ def empty(
 
     strand: bool, default False
         Whether to create a PyRanges with strand information.
+
     """
     return mypy_ensure_pyranges(empty_df(with_strand=strand, columns=columns, dtype=dtype))

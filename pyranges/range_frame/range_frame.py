@@ -170,6 +170,7 @@ class RangeFrame(pd.DataFrame):
         -------  ---  -------  -------  --------
               3  |          2        4  d
         RangeFrame with 1 rows, 3 columns, and 1 index columns.
+
         """
         from pyranges.methods.overlap import _overlap
 
@@ -198,6 +199,7 @@ class RangeFrame(pd.DataFrame):
 
         kwargs: dict
             Passed to function.
+
         """
         assert_valid_ranges(function, self)
 
@@ -262,6 +264,7 @@ class RangeFrame(pd.DataFrame):
         Traceback (most recent call last):
         ...
         ValueError: Cannot perform function on invalid ranges (function was _overlap).
+
         """
         assert_valid_ranges(function, self, other)
         if by is None:

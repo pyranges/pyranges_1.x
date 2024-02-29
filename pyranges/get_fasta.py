@@ -101,6 +101,7 @@ def get_sequence(
           1  |    chr1                0        5  -         ATTAC
     PyRanges with 2 rows, 5 columns, and 1 index columns.
     Contains 1 chromosomes and 2 strands.
+
     """
     try:
         import pyfaidx  # type: ignore[import]
@@ -206,6 +207,7 @@ def get_transcript_sequence(
     ...     for row in seq.itertuples():
     ...         s = '\\n'.join([ row.Sequence[i:i+nchars] for i in range(0, len(row.Sequence), nchars)])
     ...         _bytes_written = fw.write(f'>{row.transcript}\\n{s}\\n')
+
     """
     gr = (
         gr.sort_by_5_prime_ascending_and_3_prime_descending()

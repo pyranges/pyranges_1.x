@@ -166,6 +166,7 @@ class PyRanges(RangeFrame):
       Strand  Start  End  TP  FP  TN  FN
     0      +      1    2   0  12  10   2
     1      -      4   27   1  11   9   3
+
     """
 
     """Namespace for genomic-features methods.
@@ -342,6 +343,7 @@ class PyRanges(RangeFrame):
         Traceback (most recent call last):
         ...
         TypeError: The loci accessor does not accept a list. If you meant to retrieve columns, use gr.get_with_loc_columns instead.
+
         """
         return self._loci
 
@@ -382,6 +384,7 @@ class PyRanges(RangeFrame):
         5        |    chr21         40099618   40099643   U0        0        +
         PyRanges with 20 rows, 6 columns, and 1 index columns.
         Contains 15 chromosomes and 2 strands.
+
         """
         self = mypy_ensure_pyranges(self.sort_values(([STRAND_COL] if self.has_strand_column else []) + RANGE_COLS))
         sorted_indexlike = np.array(
@@ -522,6 +525,7 @@ class PyRanges(RangeFrame):
               0  |               1        1        2  +         Sonic T...  ENSG000...  ...
         PyRanges with 1 rows, 10 columns, and 1 index columns. (4 columns not shown: "short_gene_name", "type", "Score", ...).
         Contains 1 chromosomes and 1 strands.
+
         """
         str_repr = tostring(
             self,
@@ -561,6 +565,7 @@ class PyRanges(RangeFrame):
 
         kwargs : dict
             Arguments passed along to the function.
+
         """
         strand = validate_and_convert_strand(self, use_strand=use_strand)
 
@@ -601,6 +606,7 @@ class PyRanges(RangeFrame):
 
         kwargs : dict
             Other arguments passed along to the function.
+
         """
         ensure_strand_behavior_options_valid(self, other, strand_behavior)
         by = self._by_to_list(by)
@@ -674,6 +680,7 @@ class PyRanges(RangeFrame):
               1  |               1      110      130  tr2              c               20
         PyRanges with 2 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes.
+
         """
         from pyranges.methods.boundaries import _bounds
 
@@ -730,6 +737,7 @@ class PyRanges(RangeFrame):
               4  |               2  -             201      218  t2                     0
         PyRanges with 5 rows, 6 columns, and 1 index columns.
         Contains 2 chromosomes and 2 strands.
+
         """
         if not by:
             msg = "by must be a string or list of strings"
@@ -779,6 +787,7 @@ class PyRanges(RangeFrame):
         Traceback (most recent call last):
         ...
         ValueError: PyRanges has no strand column.
+
         """
         self._assert_strand_values_valid()
         return natsorted({*zip(self["Chromosome"], self["Strand"], strict=True)})
@@ -879,6 +888,7 @@ class PyRanges(RangeFrame):
               2  |               2        0        4        6          3         1
         PyRanges with 5 rows, 6 columns, and 1 index columns.
         Contains 2 chromosomes.
+
         """
         from pyranges.methods.cluster import _cluster
 
@@ -976,6 +986,7 @@ class PyRanges(RangeFrame):
               1  |    chr1                5        7  -                 1
         PyRanges with 3 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
+
         """
         from pyranges.methods.coverage import _number_overlapping
 
@@ -1070,6 +1081,7 @@ class PyRanges(RangeFrame):
               2  |               1        5        7        1        0.5
         PyRanges with 3 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes.
+
         """
         counts = self.count_overlaps(
             other,
@@ -1170,6 +1182,7 @@ class PyRanges(RangeFrame):
         Traceback (most recent call last):
         ...
         ValueError: Some intervals are negative or zero length after applying extend!
+
         """
         if (ext_3 or ext_5) and not self.strand_values_valid:
             msg = "PyRanges must be stranded to add 5/3-end specific extend."
@@ -1227,6 +1240,7 @@ class PyRanges(RangeFrame):
               1  |    chr1                6        7  -
         PyRanges with 2 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
+
         """
         if not (self.has_strand_column and self.strand_values_valid):
             msg = f"Need PyRanges with valid strands ({VALID_GENOMIC_STRAND_INFO}) to find 5'."
@@ -1398,6 +1412,7 @@ class PyRanges(RangeFrame):
               2  |    chr1                5        7  interval2  chr1                    6        7  b
         PyRanges with 2 rows, 8 columns, and 1 index columns.
         Contains 1 chromosomes.
+
         """
         from pyranges.methods.join import _both_dfs
 
@@ -1451,6 +1466,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.merge_overlaps(use_strand=False).length
         5
+
         """
         lengths = self.lengths()
         length = lengths.sum()
@@ -1496,6 +1512,7 @@ class PyRanges(RangeFrame):
               2  |    chr1                8        9  interval3        0  +                  1
         PyRanges with 3 rows, 7 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
+
         """
         return self.End - self.Start
 
@@ -1546,6 +1563,7 @@ class PyRanges(RangeFrame):
               2  |    chr1                8        9  interval3        0  +
         PyRanges with 2 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 1 strands.
+
         """
         strand = validate_and_convert_strand(self, strand)
         from pyranges.methods.max_disjoint import _max_disjoint
@@ -1633,6 +1651,7 @@ class PyRanges(RangeFrame):
               3  |               1   120724   133723  -         AL627309.1         4
         PyRanges with 4 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
+
         """
         use_strand = validate_and_convert_strand(self, use_strand)
         _by = get_by_columns_including_chromosome_and_strand(self=self, by=by, use_strand=use_strand)
@@ -1725,6 +1744,7 @@ class PyRanges(RangeFrame):
               1  |    chr1                8        9  +                   6        7  -                    2
         PyRanges with 3 rows, 8 columns, and 1 index columns (with 1 index duplicates).
         Contains 1 chromosomes and 2 strands.
+
         """
         from pyranges.methods.nearest import _nearest
 
@@ -1773,6 +1793,7 @@ class PyRanges(RangeFrame):
               2  |    chr1                5        7  -               3
         PyRanges with 3 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
+
         """
         return self.get_with_loc_columns([c for c in self.columns if c not in self._loc_columns])
 
@@ -1871,6 +1892,7 @@ class PyRanges(RangeFrame):
               0  |               1        2        3  +
         PyRanges with 1 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 1 strands.
+
         """
         from pyranges.methods.overlap import _overlap
 
@@ -1960,6 +1982,7 @@ class PyRanges(RangeFrame):
               0  |    chr1                4        9
         PyRanges with 1 rows, 3 columns, and 1 index columns.
         Contains 1 chromosomes.
+
         """
         from pyranges.methods.overlap import _intersect
 
@@ -2031,6 +2054,7 @@ class PyRanges(RangeFrame):
               0  |    chr1                1       11
         PyRanges with 1 rows, 3 columns, and 1 index columns.
         Contains 1 chromosomes.
+
         """
         if self.empty and other.empty:
             return mypy_ensure_pyranges(self.copy())
@@ -2097,6 +2121,7 @@ class PyRanges(RangeFrame):
               4  |               2  +             300      400  t4
         PyRanges with 7 rows, 5 columns, and 1 index columns.
         Contains 2 chromosomes and 2 strands.
+
         """
 
         def _sort_by_5_prime_ascending_and_3_prime_descending(df: "pr.PyRanges", **_) -> pd.DataFrame:
@@ -2232,6 +2257,7 @@ class PyRanges(RangeFrame):
               4  |               3  +             143      149  t3
         PyRanges with 5 rows, 5 columns, and 1 index columns.
         Contains 3 chromosomes and 2 strands.
+
         """
         from pyranges.methods.spliced_subsequence import _spliced_subseq
 
@@ -2342,6 +2368,7 @@ class PyRanges(RangeFrame):
               5  |    chr1               11       12
         PyRanges with 6 rows, 3 columns, and 1 index columns.
         Contains 1 chromosomes.
+
         """
         from pyranges.methods.split import _split
 
@@ -2391,6 +2418,7 @@ class PyRanges(RangeFrame):
 
         >>> "Strand" in gr.columns
         True
+
         """
         if STRAND_COL not in self.columns and len(self) > 0:
             return False
@@ -2424,6 +2452,7 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands (including non-genomic strands: .).
         >>> gr.strands
         ['+', '.']
+
         """
         return natsorted(self[STRAND_COL])
 
@@ -2542,6 +2571,7 @@ class PyRanges(RangeFrame):
               1  |               2  -              32       45  t2
         PyRanges with 2 rows, 5 columns, and 1 index columns.
         Contains 2 chromosomes and 2 strands.
+
         """
         from pyranges.methods.subsequence import _subseq
 
@@ -2611,6 +2641,7 @@ class PyRanges(RangeFrame):
               2  |    chr1               10       11  c
         PyRanges with 2 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes.
+
         """
         from pyranges.methods.subtraction import _subtraction
 
@@ -2701,6 +2732,7 @@ class PyRanges(RangeFrame):
         75%     1865.000000            2541.0       6702.000000          5155.500000
         max    12999.000000            2541.0      12999.000000         12999.000000
         sum    20826.000000            2541.0      13509.000000         16050.000000
+
         """
         from pyranges.methods.summary import _summary
 
@@ -2793,6 +2825,7 @@ class PyRanges(RangeFrame):
         10       |    1             120900   121000   -           exon        AL627309.1   32
         PyRanges with 223 rows, 7 columns, and 1 index columns (with 212 index duplicates).
         Contains 1 chromosomes and 2 strands.
+
         """
         from pyranges.methods.windows import _tiles
 
@@ -2845,6 +2878,7 @@ class PyRanges(RangeFrame):
               1  |    chr1                6        7  -
         PyRanges with 2 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
+
         """
         if not (self.has_strand_column and self.strand_values_valid):
             msg = f"Need PyRanges with valid strands ({VALID_GENOMIC_STRAND_INFO}) to find 3'."
@@ -2908,6 +2942,7 @@ class PyRanges(RangeFrame):
 
         >>> open("test.bed").readlines()
         ['chr1\t1\t5\t.\t.\t+\t1\n', 'chr1\t6\t8\t.\t.\t-\t2\n']
+
         """
         from pyranges.out import _to_bed
 
@@ -3018,6 +3053,7 @@ class PyRanges(RangeFrame):
               5  |    chr1                8       10    4.90689
         PyRanges with 6 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes.
+
         """
         from pyranges.out import _to_bigwig
 
@@ -3122,6 +3158,7 @@ class PyRanges(RangeFrame):
         1	.	mRNA	2	4	.	.	0	Gene=1;function=a b
         1	.	CDS	4	6	.	.	2	Gene=2;function=c
         1	.	CDS	6	9	.	.	1	Gene=3;function=def
+
         """
         from pyranges.out import _to_gff_like
 
@@ -3189,6 +3226,7 @@ class PyRanges(RangeFrame):
             1	.	GENE	2	4	.	.	.
             1	.	EXON	4	6	.	.	.
             1	.	EXON	6	9	.	.	.
+
         """
         from pyranges.out import _to_gff_like
 
@@ -3296,6 +3334,7 @@ class PyRanges(RangeFrame):
         # +--------+-----+-------------------+
         # Rle of length 7 containing 2 elements (avg. length 3.5)
         # Rledict object with 2 chromosomes/strand pairs.
+
         """
         if strand is None:
             strand = self.strand_values_valid
@@ -3345,6 +3384,7 @@ class PyRanges(RangeFrame):
               1  |    chr1                6        8
         PyRanges with 2 rows, 3 columns, and 1 index columns.
         Contains 1 chromosomes.
+
         """
         if not self.has_strand_column:
             return self
@@ -3439,6 +3479,7 @@ class PyRanges(RangeFrame):
         10       |    1             120873   120932   -           exon        AL627309.1
         PyRanges with 28 rows, 6 columns, and 1 index columns (with 17 index duplicates).
         Contains 1 chromosomes and 2 strands.
+
         """
         from pyranges.methods.windows import _windows
 
@@ -3477,6 +3518,7 @@ class PyRanges(RangeFrame):
               0  |               1      895     1259  +
         PyRanges with 1 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 1 strands.
+
         """
         cols = GENOME_LOC_COLS_WITH_STRAND if self.has_strand_column else GENOME_LOC_COLS
         return mypy_ensure_pyranges(super().__getitem__(cols))
@@ -3533,6 +3575,7 @@ class PyRanges(RangeFrame):
         Traceback (most recent call last):
         ...
         ValueError: Duplicate keys not allowed when preserve_loc_order is True.
+
         """
         keys = [key] if isinstance(key, str) else ([*key])
 
@@ -3650,6 +3693,7 @@ class PyRanges(RangeFrame):
               1  |    chr1                4        9  b
         PyRanges with 1 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes.
+
         """
         from pyranges.methods.overlap import _intersect
 
@@ -3712,6 +3756,7 @@ class PyRanges(RangeFrame):
               2  |    chr1            10079    10150  -           chr1            -
         PyRanges with 5 rows, 6 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes and 2 strands.
+
         """
         new_starts = pd.Series(
             np.where(self[start] > self[start2].to_numpy(), self[start], self[start2]),

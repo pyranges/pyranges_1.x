@@ -15,4 +15,3 @@ def test_tostring_index_and_column_share_name():
     gr = gr.set_index("Chromosome", drop=False)
     with contextlib.redirect_stdout(open(os.devnull, "w+")):
         print(gr)
-

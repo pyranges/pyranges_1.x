@@ -11,12 +11,7 @@ def set_max_console_width() -> None:
 
 
 def pytest_addoption(parser):
-    parser.addoption(
-        "--derandomize",
-        action="store_true",
-        default=False,
-        help="Derandomize Hypothesis tests"
-    )
+    parser.addoption("--derandomize", action="store_true", default=False, help="Derandomize Hypothesis tests")
 
 
 def pytest_configure(config):
