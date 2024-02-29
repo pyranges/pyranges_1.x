@@ -15,10 +15,7 @@ def test_split_chunks():
 @pytest.mark.slow
 def test_split_chunks_many():
     gr = pr.PyRanges(
-        {
-            "Chromosome": ["chr1"] * 1000, "Start": range(1000), "End": range(1, 1001),
-            "GeneId": [*range(100)] * 10
-        }
+        {"Chromosome": ["chr1"] * 1000, "Start": range(1000), "End": range(1, 1001), "GeneId": [*range(100)] * 10}
     )
     res = pr.parallelism.split_df_into_chunks_without_splitting_groups(gr, by=["GeneId"], nb_splits=37)
     assert sum(len(r) for r in res) == len(gr)
@@ -42,4 +39,3 @@ def test_run_in_parallel():
     print(res)
     print(expected_result)
     pandas.testing.assert_frame_equal(res, expected_result)
-

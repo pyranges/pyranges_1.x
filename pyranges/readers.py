@@ -45,6 +45,7 @@ def from_string(s: str) -> "PyRanges":
           4  |    chr14         103456471  103456571  -
     PyRanges with 5 rows, 4 columns, and 1 index columns.
     Contains 4 chromosomes and 2 strands.
+
     """
     from io import StringIO
 
@@ -90,6 +91,7 @@ def read_bed(f: Path, /, nrows: int | None = None) -> "PyRanges":
           4  |    chr1             9978    10177  H3K27me3        7  -
     PyRanges with 5 rows, 6 columns, and 1 index columns.
     Contains 1 chromosomes and 2 strands.
+
     """
     columns = (
         "Chromosome Start End Name Score Strand ThickStart ThickEnd ItemRGB BlockCount BlockSizes BlockStarts".split()
@@ -179,6 +181,7 @@ def read_bam(
     99       |    chr1          19373470  19373495  +           0
     PyRanges with 100 rows, 5 columns, and 1 index columns.
     Contains 1 chromosomes and 2 strands.
+
     """
     path = Path(f)
     try:
@@ -313,6 +316,7 @@ def read_gtf(
           1  |               1  havana    transcript    11868    14409  .         +           .         ENSG00000223972  ...
     PyRanges with 2 rows, 20 columns, and 1 index columns. (11 columns not shown: "gene_version", "gene_name", "gene_source", ...).
     Contains 1 chromosomes and 1 strands.
+
     """
     path = Path(f)
     _skiprows = find_first_data_line_index(path)
@@ -362,6 +366,7 @@ def read_gtf_full(
 
     ignore_bad : bool, default False
         Whether to ignore bad lines or raise an error.
+
     """
     dtypes = {"Chromosome": "category", "Feature": "category", "Strand": "category"}
 
@@ -436,6 +441,7 @@ def to_rows_keep_duplicates(anno: pd.Series, *, ignore_bad: bool = False) -> pd.
     >>> result = to_rows_keep_duplicates(anno)
     >>> result.to_dict(orient="records")
     [{'gene': 'DDX11L1,sonic', 'unique': 'hi'}]
+
     """
     rowdicts = []
     line = ""
@@ -554,6 +560,7 @@ def read_gff3(
     See Also
     --------
     pyranges.read_gtf : read files in the Gene Transfer Format
+
     """
     path = Path(f)
     _skiprows = find_first_data_line_index(path)

@@ -49,11 +49,11 @@ class PyRangesDataFrameGroupBy(pandas.core.groupby.DataFrameGroupBy):
         return self.pandas_groupby.aggregate(*args, **kwargs)
 
     @return_pyranges_if_possible
-    def all(self, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":  # noqa: A003, D102
+    def all(self, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":  # noqa: D102
         return self.pandas_groupby.all(*args, **kwargs)
 
     @return_pyranges_if_possible
-    def any(self, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":  # noqa: A003, D102
+    def any(self, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":  # noqa: D102
         return self.pandas_groupby.any(*args, **kwargs)
 
     @return_pyranges_if_possible
@@ -109,7 +109,7 @@ class PyRangesDataFrameGroupBy(pandas.core.groupby.DataFrameGroupBy):
         return self.pandas_groupby.fillna(*args, **kwargs)
 
     @return_pyranges_if_possible
-    def filter(self, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":  # noqa: A003, D102
+    def filter(self, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":  # noqa: D102
         return self.pandas_groupby.filter(*args, **kwargs)
 
     @return_pyranges_if_possible
@@ -137,7 +137,7 @@ class PyRangesDataFrameGroupBy(pandas.core.groupby.DataFrameGroupBy):
         return self.pandas_groupby.last(*args, **kwargs)
 
     @return_pyranges_if_possible
-    def max(self, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":  # noqa: A003, D102
+    def max(self, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":  # noqa: D102
         return self.pandas_groupby.max(*args, **kwargs)
 
     @return_pyranges_if_possible
@@ -149,7 +149,7 @@ class PyRangesDataFrameGroupBy(pandas.core.groupby.DataFrameGroupBy):
         return self.pandas_groupby.median(*args, **kwargs)
 
     @return_pyranges_if_possible
-    def min(self, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":  # noqa: A003, D102
+    def min(self, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":  # noqa: D102
         return self.pandas_groupby.min(*args, **kwargs)
 
     @return_pyranges_if_possible
@@ -217,7 +217,7 @@ class PyRangesDataFrameGroupBy(pandas.core.groupby.DataFrameGroupBy):
         return self.pandas_groupby.std(*args, **kwargs)
 
     @return_pyranges_if_possible
-    def sum(self, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":  # noqa: A003, D102
+    def sum(self, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":  # noqa: D102
         return self.pandas_groupby.sum(*args, **kwargs)
 
     @return_pyranges_if_possible

@@ -16,6 +16,7 @@ Examples
 PyRanges with 3 rows, 6 columns, and 1 index columns.
 Contains 1 chromosomes and 2 strands.
 
+
 """
 import tempfile
 import typing
@@ -45,6 +46,7 @@ class ExampleData:
         >>> import importlib
         >>> bam == importlib.resources.files().joinpath("data/smaller.bam")
         True
+
         """
         if ExampleData._files:
             return ExampleData._files

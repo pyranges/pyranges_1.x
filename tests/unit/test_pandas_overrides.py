@@ -227,6 +227,7 @@ def test_groupby_getitem_series_as_index_false(gr) -> None:
     agg = result.agg("first")
     assert isinstance(agg, pd.DataFrame), agg
 
+
 def test_groupby_getattr_series(gr) -> None:
     g = gr.groupby("Chromosome")
     result = g["Start"]
