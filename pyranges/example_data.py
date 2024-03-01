@@ -18,6 +18,7 @@ Contains 1 chromosomes and 2 strands.
 
 
 """
+
 import tempfile
 import typing
 from importlib.resources import files

@@ -1,4 +1,5 @@
 """Data structure for genomic intervals and their annotation."""
+
 from collections.abc import Callable, Iterable
 from functools import cached_property
 from typing import (
