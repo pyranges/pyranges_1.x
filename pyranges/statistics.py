@@ -1,4 +1,5 @@
 """Statistics useful for genomics."""
+
 import logging
 import sys
 from collections import defaultdict
