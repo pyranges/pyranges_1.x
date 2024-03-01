@@ -6,6 +6,7 @@ from typing import Any
 import pandas as pd
 
 from pyranges.names import (
+    BY_ENTRY_IN_KWARGS,
     RANGE_COLS,
     SKIP_IF_DF_EMPTY_DEFAULT,
     SKIP_IF_DF_EMPTY_TYPE,
@@ -213,7 +214,15 @@ class RangeFrame(pd.DataFrame):
         preserve_index_col = "__old_index__"
 
         self[preserve_index_col] = self.index
-        result = self.groupby(by).apply(function, by=by, **kwargs).reset_index(drop=True)
+        result = (
+            self.groupby(by)
+            .apply(
+                _with_group_keys_to_kwargs(by)(function),
+                by=by,
+                **kwargs,
+            )
+            .reset_index(drop=True)
+        )
         result = result.set_index(preserve_index_col)
         if isinstance(self.index, pd.MultiIndex):
             result.index.names = self.index.names
@@ -280,7 +289,16 @@ class RangeFrame(pd.DataFrame):
 
             if should_skip_operation(_df, df2=odf, skip_if_empty=skip_if_empty):
                 continue
-            results.append(function(_mypy_ensure_rangeframe(_df), df2=_mypy_ensure_rangeframe(odf), **kwargs))
+            results.append(
+                function(
+                    _mypy_ensure_rangeframe(_df),
+                    df2=_mypy_ensure_rangeframe(odf),
+                    **(
+                        kwargs
+                        | {BY_ENTRY_IN_KWARGS: dict(zip(by, [key] if not isinstance(key, tuple) else key, strict=True))}
+                    ),
+                ),
+            )
 
         if not results:
             return _mypy_ensure_rangeframe(RangeFrame(columns=self.columns))
@@ -328,3 +346,16 @@ def assert_valid_ranges(function: Callable, *args: "RangeFrame") -> None:
         function_repr = function.__name__ if is_not_lambda else inspect.getsource(function).strip()
         msg = f"Cannot perform function on invalid ranges (function was {function_repr})."
         raise ValueError(msg)
+
+
+def _with_group_keys_to_kwargs(by: list[str]) -> Callable:
+    def decorator(func) -> Callable:
+        def wrapper(group, **kwargs) -> Any:
+            # Extract the group keys and add them to kwargs
+            names = group.name if isinstance(group.name, Iterable) and not isinstance(group.name, str) else [group.name]
+            kwargs[BY_ENTRY_IN_KWARGS] = dict(zip(by, names, strict=True))
+            return func(group, **kwargs)
+
+        return wrapper
+
+    return decorator

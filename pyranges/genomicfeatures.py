@@ -381,7 +381,7 @@ Chromosome col had type: {gr[CHROM_COL].dtype} while keys were of type: {', '.jo
 
 def _last_tile(df: DataFrame, sizes: dict[str, int]) -> DataFrame:
     size = sizes[df.Chromosome.iloc[0]]
-    df.iloc[-1, df.columns.get_loc(END_COL)] = size
+    df.iloc[-1, [*df.columns].index(END_COL)] = size
     return df
 
 

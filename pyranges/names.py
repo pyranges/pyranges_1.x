@@ -33,6 +33,8 @@ VALID_OVERLAP_TYPE = Literal["first", "containment", "all", "last"]
 VALID_OVERLAP_OPTIONS = list(get_args(VALID_OVERLAP_TYPE))
 OVERLAP_FIRST, OVERLAP_CONTAINMENT, OVERLAP_ALL, OVERLAP_LAST = VALID_OVERLAP_OPTIONS
 
+BY_ENTRY_IN_KWARGS = "__by__"
+
 CHROM_COL: Final = "Chromosome"
 START_COL = "Start"
 END_COL = "End"
