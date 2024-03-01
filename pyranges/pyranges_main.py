@@ -2259,6 +2259,11 @@ class PyRanges(RangeFrame):
         Contains 3 chromosomes and 2 strands.
 
         """
+        if by is None:
+            # in this case, the results of spliced_subsequence and subsequence are identical,
+            # so we can optimize just one of them methods
+            return self.subsequence(start=start, end=end, use_strand=use_strand)
+
         from pyranges.methods.spliced_subsequence import _spliced_subseq
 
         if use_strand and not self.strand_values_valid:
@@ -2266,10 +2271,12 @@ class PyRanges(RangeFrame):
             raise ValueError(msg)
 
         use_strand = validate_and_convert_strand(self, use_strand)
+        if use_strand:
+            sorted_p = self.sort_by_5_prime_ascending_and_3_prime_descending()
+        else:
+            sorted_p = self.sort_by_position()
 
-        sorted_p = self.sort_by_5_prime_ascending_and_3_prime_descending()
-
-        result = sorted_p.apply_single(_spliced_subseq, by=by, use_strand=use_strand, start=start, end=end)
+        result = sorted_p.apply_single(_spliced_subseq, by=by, use_strand=use_strand, start=start, end=end, preserve_index=True)
 
         return mypy_ensure_pyranges(result)
 
@@ -2575,7 +2582,7 @@ class PyRanges(RangeFrame):
         """
         from pyranges.methods.subsequence import _subseq
 
-        result = self.apply_single(_subseq, by=by, use_strand=use_strand, start=start, end=end)
+        result = self.apply_single(_subseq, by=by, use_strand=use_strand, start=start, end=end, preserve_index=True)
 
         return mypy_ensure_pyranges(result)
 
