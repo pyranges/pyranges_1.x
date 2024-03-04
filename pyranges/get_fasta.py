@@ -209,11 +209,7 @@ def get_transcript_sequence(
     ...         _bytes_written = fw.write(f'>{row.transcript}\\n{s}\\n')
 
     """
-    gr = (
-        gr.sort_by_5_prime_ascending_and_3_prime_descending()
-        if gr.strand_values_valid
-        else gr.sort_by_position()
-    )
+    gr = gr.sort_by_5_prime_ascending_and_3_prime_descending() if gr.strand_values_valid else gr.sort_by_position()
 
     seq = get_sequence(gr, path=path, pyfaidx_fasta=pyfaidx_fasta)
     gr["Sequence"] = seq.to_numpy()
