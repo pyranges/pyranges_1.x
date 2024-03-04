@@ -2219,8 +2219,8 @@ class PyRanges(RangeFrame):
         -------  ---  ------------  --------  -------  -------  ---------------
               0  |               1  +               1       11  t1
               1  |               1  +              40       45  t1
-              2  |               2  -              70       80  t2
-              3  |               2  -              20       25  t2
+              2  |               2  -              20       25  t2
+              3  |               2  -              70       80  t2
               4  |               3  +             140      152  t3
         PyRanges with 5 rows, 5 columns, and 1 index columns.
         Contains 3 chromosomes and 2 strands.
@@ -2230,10 +2230,10 @@ class PyRanges(RangeFrame):
           index  |      Chromosome  Strand      Start      End  transcript_id
           int64  |           int64  object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
-              0  |               1  +              40       60  t1
-              1  |               2  -              70       75  t2
+              1  |               1  +              40       60  t1
               2  |               2  -              10       25  t2
-              3  |               3  +             140      152  t3
+              3  |               2  -              70       75  t2
+              4  |               3  +             140      152  t3
         PyRanges with 4 rows, 5 columns, and 1 index columns.
         Contains 3 chromosomes and 2 strands.
 
@@ -2242,7 +2242,7 @@ class PyRanges(RangeFrame):
           index  |      Chromosome  Strand      Start      End  transcript_id
           int64  |           int64  object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
-              0  |               1  +              55       60  t1
+              1  |               1  +              55       60  t1
         PyRanges with 1 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 1 strands.
 
@@ -2253,8 +2253,8 @@ class PyRanges(RangeFrame):
         -------  ---  ------------  --------  -------  -------  ---------------
               0  |               1  +               4       11  t1
               1  |               1  +              40       57  t1
-              2  |               2  -              70       77  t2
-              3  |               2  -              13       25  t2
+              2  |               2  -              13       25  t2
+              3  |               2  -              70       77  t2
               4  |               3  +             143      149  t3
         PyRanges with 5 rows, 5 columns, and 1 index columns.
         Contains 3 chromosomes and 2 strands.
@@ -2271,6 +2271,7 @@ class PyRanges(RangeFrame):
             msg = "spliced_subsequence: you can use strand=True only for stranded PyRanges!"
             raise ValueError(msg)
 
+
         use_strand = validate_and_convert_strand(self, use_strand)
         if use_strand:
             sorted_p = self.sort_by_5_prime_ascending_and_3_prime_descending()
@@ -2278,6 +2279,10 @@ class PyRanges(RangeFrame):
             sorted_p = self.sort_by_position()
 
         result = sorted_p.apply_single(_spliced_subseq, by=by, use_strand=use_strand, start=start, end=end, preserve_index=True)
+
+        # reordering as the original one
+        common_index = self.index.intersection(result.index)
+        result=result.reindex(common_index)
 
         return mypy_ensure_pyranges(result)
 
@@ -2554,8 +2559,8 @@ class PyRanges(RangeFrame):
           int64  |           int64  object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
               0  |               1  +               1       11  t1
-              1  |               2  -               2       12  t2
-              2  |               3  +             140      150  t3
+              2  |               2  -               2       12  t2
+              4  |               3  +             140      150  t3
         PyRanges with 3 rows, 5 columns, and 1 index columns.
         Contains 3 chromosomes and 2 strands.
 
@@ -2564,9 +2569,9 @@ class PyRanges(RangeFrame):
           index  |      Chromosome  Strand      Start      End  transcript_id
           int64  |           int64  object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
-              0  |               1  +              40       60  t1
-              1  |               2  -              30       45  t2
-              2  |               3  +             140      155  t3
+              1  |               1  +              40       60  t1
+              3  |               2  -              30       45  t2
+              4  |               3  +             140      155  t3
         PyRanges with 3 rows, 5 columns, and 1 index columns.
         Contains 3 chromosomes and 2 strands.
 
@@ -2575,8 +2580,8 @@ class PyRanges(RangeFrame):
           index  |      Chromosome  Strand      Start      End  transcript_id
           int64  |           int64  object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
-              0  |               1  +              40       60  t1
-              1  |               2  -              32       45  t2
+              1  |               1  +              40       60  t1
+              3  |               2  -              32       45  t2
         PyRanges with 2 rows, 5 columns, and 1 index columns.
         Contains 2 chromosomes and 2 strands.
 
