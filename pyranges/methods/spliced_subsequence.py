@@ -30,7 +30,6 @@ def _spliced_subseq(
         return df
 
     df = df.copy()
-    orig_order = df.index.copy()
 
     by_argument_given = kwargs.get("by")
     _by = kwargs.get("by", TEMP_INDEX_COL)
@@ -106,7 +105,6 @@ def _spliced_subseq(
         adjust_end = end_adjustments > 0
         df.loc[adjust_end, END_COL] -= end_adjustments[adjust_end].astype(df[END_COL].dtype)
 
-    _df = df.loc[orig_order]
-    _df = _df[(_df[START_COL] < _df[END_COL])]
+    df = df[(df[START_COL] < df[END_COL])]
 
-    return _df.drop([TEMP_INDEX_COL, TEMP_LENGTH_COL, TEMP_CUMSUM_COL], axis=1)
+    return df.drop([TEMP_INDEX_COL, TEMP_LENGTH_COL, TEMP_CUMSUM_COL], axis=1)
