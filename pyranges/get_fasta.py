@@ -43,7 +43,7 @@ def get_sequence(
     -------
     Series
 
-        Sequences, one per interval.
+        Sequences, one per interval. The series is named 'Sequence'
 
     Note
     ----
@@ -90,7 +90,7 @@ def get_sequence(
     >>> seq
     0      CAT
     1    ATTAC
-    dtype: object
+    Name: Sequence, dtype: object
 
     >>> gr["seq"] = seq
     >>> gr
@@ -197,9 +197,9 @@ def get_transcript_sequence(
     >>> seq
       transcript Sequence
     0         t1     AAAC
-    1         t2  TCCCAAA
-    2         t4      AAA
-    3         t5     TCCC
+    1         t2  AAATCCC
+    2         t4     TCCC
+    3         t5      AAA
 
     To write to a file in fasta format:
     >>> with open('outfile.fasta', 'w') as fw:
