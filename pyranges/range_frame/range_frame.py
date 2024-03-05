@@ -7,6 +7,7 @@ import pandas as pd
 
 from pyranges.names import (
     BY_ENTRY_IN_KWARGS,
+    PRESERVE_INDEX_COLUMN,
     RANGE_COLS,
     SKIP_IF_DF_EMPTY_DEFAULT,
     SKIP_IF_DF_EMPTY_TYPE,
@@ -208,27 +209,25 @@ class RangeFrame(pd.DataFrame):
             return _mypy_ensure_rangeframe(function(self, **kwargs))
         by = self._by_to_list(by)
 
+        f = _with_group_keys_to_kwargs(by)(function)
         if not preserve_index:
-            return _mypy_ensure_rangeframe(self.groupby(by).apply(function, by=by, **kwargs).reset_index(drop=True))
+            return _mypy_ensure_rangeframe(self.groupby(by).apply(f, by=by, **kwargs).reset_index(drop=True))
 
-        preserve_index_col = "__old_index__"
-
-        self[preserve_index_col] = self.index
         result = (
-            self.groupby(by)
+            self.assign(**{PRESERVE_INDEX_COLUMN: lambda df: df.index})
+            .groupby(by)
             .apply(
-                _with_group_keys_to_kwargs(by)(function),
+                f,
                 by=by,
                 **kwargs,
             )
             .reset_index(drop=True)
         )
-        result = result.set_index(preserve_index_col)
+        result = result.set_index(PRESERVE_INDEX_COLUMN)
         if isinstance(self.index, pd.MultiIndex):
             result.index.names = self.index.names
         else:
             result.index.name = self.index.name
-        self = self.drop(preserve_index_col, axis="columns")
         return _mypy_ensure_rangeframe(result)
 
     def apply_pair(
