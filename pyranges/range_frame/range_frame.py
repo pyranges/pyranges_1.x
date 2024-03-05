@@ -7,6 +7,7 @@ import pandas as pd
 
 from pyranges.names import (
     BY_ENTRY_IN_KWARGS,
+    PRESERVE_INDEX_COLUMN,
     RANGE_COLS,
     SKIP_IF_DF_EMPTY_DEFAULT,
     SKIP_IF_DF_EMPTY_TYPE,
@@ -17,7 +18,7 @@ from pyranges.names import (
     VALID_BY_TYPES,
     VALID_OVERLAP_TYPE,
     BinaryOperation,
-    UnaryOperation, PRESERVE_INDEX_COLUMN,
+    UnaryOperation,
 )
 from pyranges.range_frame.range_frame_validator import InvalidRangesReason
 from pyranges.tostring import tostring
