@@ -7,7 +7,7 @@ import pandas as pd
 from pandas.core.frame import DataFrame
 from pandas.core.series import Series
 
-from pyranges.names import END_COL, FORWARD_STRAND, START_COL
+from pyranges.names import CHROM_COL, END_COL, FORWARD_STRAND, START_COL, STRAND_COL
 
 if TYPE_CHECKING:
     import pyfaidx  # type: ignore[import]
@@ -43,7 +43,7 @@ def get_sequence(
     -------
     Series
 
-        Sequences, one per interval.
+        Sequences, one per interval. The series is named 'Sequence'
 
     Note
     ----
@@ -90,7 +90,7 @@ def get_sequence(
     >>> seq
     0      CAT
     1    ATTAC
-    dtype: object
+    Name: Sequence, dtype: object
 
     >>> gr["seq"] = seq
     >>> gr
@@ -117,19 +117,19 @@ def get_sequence(
             raise ValueError(msg)
         pyfaidx_fasta = pyfaidx.Fasta(path, read_ahead=int(1e5))
 
-    seqs = []
     use_strand = gr.strand_values_valid
-    for key, df in gr.groupby(gr.location_cols_include_strand_only_if_valid):
-        _seqs = []
-        chromosome, strand = key + (() if use_strand else (FORWARD_STRAND,))
+    iterables = (
+        zip(gr[CHROM_COL], gr[START_COL], gr[END_COL], [FORWARD_STRAND], strict=False)
+        if not use_strand
+        else zip(gr[CHROM_COL], gr[START_COL], gr[END_COL], gr[STRAND_COL], strict=False)
+    )
+    seqs = []
+    for chromosome, start, end, strand in iterables:
         _fasta = pyfaidx_fasta[chromosome]
         forward_strand = strand == FORWARD_STRAND
-        for start, end in zip(df[START_COL], df[END_COL], strict=True):
-            if (seq := _fasta[start:end]) is not None:
-                _seqs.append(seq.seq if forward_strand else (-seq).seq)
-
-        seqs.extend(_seqs if forward_strand else _seqs[::-1])
-    return pd.Series(pd.concat([pd.Series(s) for s in seqs]).reset_index(drop=True))
+        if (seq := _fasta[start:end]) is not None:
+            seqs.append(seq.seq if forward_strand else (-seq).seq)
+    return pd.Series(data=seqs, index=gr.index, name="Sequence")
 
 
 def get_transcript_sequence(
@@ -197,9 +197,9 @@ def get_transcript_sequence(
     >>> seq
       transcript Sequence
     0         t1     AAAC
-    1         t2  TCCCAAA
-    2         t4      AAA
-    3         t5     TCCC
+    1         t2  AAATCCC
+    2         t4     TCCC
+    3         t5      AAA
 
     To write to a file in fasta format:
     >>> with open('outfile.fasta', 'w') as fw:
