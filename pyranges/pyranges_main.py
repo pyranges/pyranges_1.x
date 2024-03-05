@@ -2272,10 +2272,7 @@ class PyRanges(RangeFrame):
             raise ValueError(msg)
 
         use_strand = validate_and_convert_strand(self, use_strand)
-        if use_strand:
-            sorted_p = self.sort_by_5_prime_ascending_and_3_prime_descending()
-        else:
-            sorted_p = self.sort_by_position()
+        sorted_p = self.sort_by_5_prime_ascending_and_3_prime_descending() if use_strand else self.sort_by_position()
 
         result = sorted_p.apply_single(
             _spliced_subseq,

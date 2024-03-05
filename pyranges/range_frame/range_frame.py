@@ -213,9 +213,9 @@ class RangeFrame(pd.DataFrame):
         if not preserve_index:
             return _mypy_ensure_rangeframe(self.groupby(by).apply(f, by=by, **kwargs).reset_index(drop=True))
 
-        self[PRESERVE_INDEX_COLUMN] = self.index
         result = (
-            self.groupby(by)
+            self.assign(**{PRESERVE_INDEX_COLUMN: lambda df: df.index})
+            .groupby(by)
             .apply(
                 f,
                 by=by,
@@ -228,7 +228,6 @@ class RangeFrame(pd.DataFrame):
             result.index.names = self.index.names
         else:
             result.index.name = self.index.name
-        self.drop(PRESERVE_INDEX_COLUMN, axis="columns", inplace=True)
         return _mypy_ensure_rangeframe(result)
 
     def apply_pair(
