@@ -63,7 +63,7 @@ def test_spliced_subsequence_without_by():
         },
     )
 
-    result = p.spliced_subsequence(0, 5, use_strand=False, by="transcript_id")
+    result = p.spliced_subsequence(0, 5, use_strand=False)
 
     _expected_result = {
         "Chromosome":{
