@@ -2278,7 +2278,12 @@ class PyRanges(RangeFrame):
             sorted_p = self.sort_by_position()
 
         result = sorted_p.apply_single(
-            _spliced_subseq, by=by, use_strand=use_strand, start=start, end=end, preserve_index=True,
+            _spliced_subseq,
+            by=by,
+            use_strand=use_strand,
+            start=start,
+            end=end,
+            preserve_index=True,
         )
 
         # reordering as the original one
