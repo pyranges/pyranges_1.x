@@ -71,7 +71,7 @@ def _spliced_subseq(
                 df.loc[:, [*by, TEMP_INDEX_COL]].merge(len_per_transc, on=by).set_index(TEMP_INDEX_COL).loc[df.index]
             )
         else:
-            exp_len_per_transc = df.loc[:, by].merge(len_per_transc, on=by).set_index(TEMP_INDEX_COL).loc[df.index]
+            exp_len_per_transc = df.loc[:, by].merge(len_per_transc, on=by).set_index(TEMP_INDEX_COL).loc[df.index]  # type: ignore[reportArgumentType, reportCallIssue]
 
         starts = exp_len_per_transc[TOTAL_EXON_LENGTH_COL] + start if start < 0 else start
 
@@ -105,6 +105,4 @@ def _spliced_subseq(
         adjust_end = end_adjustments > 0
         df.loc[adjust_end, END_COL] -= end_adjustments[adjust_end].astype(df[END_COL].dtype)
 
-    df = df[(df[START_COL] < df[END_COL])]
-
-    return df.drop([TEMP_INDEX_COL, TEMP_LENGTH_COL, TEMP_CUMSUM_COL], axis=1)
+    return df[(df[START_COL] < df[END_COL])].drop([TEMP_INDEX_COL, TEMP_LENGTH_COL, TEMP_CUMSUM_COL], axis=1)
