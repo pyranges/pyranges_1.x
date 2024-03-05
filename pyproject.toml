@@ -24,9 +24,10 @@ keywords = ["bioinformatics", "genomicranges", "genomics"]
 dependencies = ["pandas", "ncls>=0.0.63", "tabulate", "sorted_nearest>=0.0.33", "natsort"]
 
 [project.optional-dependencies]
-add-ons = ["pyrle >= 0.0.39", "bamread", "bwread", "fisher", "pyfaidx"]
+add-ons = ["pyrle >= 0.0.39", "bamread", "bwread", "fisher", "pyfaidx", "joblib"]
 dev = ["tox", "ruff == 0.3.0", "pyright", "pandas-stubs", "types-tabulate", "pytest-watcher", "pytest-xdist", "hypothesis>=6.92.1"]
-all = ["pyranges[add-ons]", "pyranges[dev]"]
+docs = ["sphinx", "sphinx_rtd_theme", "sphinx-autoapi", "sphinxcontrib-napoleon"]
+all = ["pyranges[add-ons]", "pyranges[dev]", "pyranges[docs]"]
 
 [tool.setuptools.packages.find]
 where = ["."]
