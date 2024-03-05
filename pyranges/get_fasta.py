@@ -7,7 +7,7 @@ import pandas as pd
 from pandas.core.frame import DataFrame
 from pandas.core.series import Series
 
-from pyranges.names import END_COL, FORWARD_STRAND, START_COL, CHROM_COL, STRAND_COL
+from pyranges.names import CHROM_COL, END_COL, FORWARD_STRAND, START_COL, STRAND_COL
 
 if TYPE_CHECKING:
     import pyfaidx  # type: ignore[import]
@@ -119,9 +119,9 @@ def get_sequence(
 
     use_strand = gr.strand_values_valid
     iterables = (
-        zip(gr[CHROM_COL], gr[START_COL], gr[END_COL], [FORWARD_STRAND])
+        zip(gr[CHROM_COL], gr[START_COL], gr[END_COL], [FORWARD_STRAND], strict=False)
         if not use_strand
-        else zip(gr[CHROM_COL], gr[START_COL], gr[END_COL], gr[STRAND_COL])
+        else zip(gr[CHROM_COL], gr[START_COL], gr[END_COL], gr[STRAND_COL], strict=True)
     )
     seqs = []
     for chromosome, start, end, strand in iterables:

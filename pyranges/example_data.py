@@ -19,6 +19,8 @@ Contains 1 chromosomes and 2 strands.
 
 """
 
+import logging
+import sys
 import tempfile
 import typing
 from importlib.resources import files
@@ -28,7 +30,13 @@ from typing import ClassVar
 import pyranges as pr
 
 if typing.TYPE_CHECKING:
+    import pyfaidx
+
     from pyranges.pyranges_main import PyRanges
+
+logging.basicConfig(level=logging.INFO)
+LOGGER = logging.getLogger(__name__)
+LOGGER.setLevel(logging.INFO)
 
 
 class ExampleData:
