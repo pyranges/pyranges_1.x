@@ -2271,18 +2271,19 @@ class PyRanges(RangeFrame):
             msg = "spliced_subsequence: you can use strand=True only for stranded PyRanges!"
             raise ValueError(msg)
 
-
         use_strand = validate_and_convert_strand(self, use_strand)
         if use_strand:
             sorted_p = self.sort_by_5_prime_ascending_and_3_prime_descending()
         else:
             sorted_p = self.sort_by_position()
 
-        result = sorted_p.apply_single(_spliced_subseq, by=by, use_strand=use_strand, start=start, end=end, preserve_index=True)
+        result = sorted_p.apply_single(
+            _spliced_subseq, by=by, use_strand=use_strand, start=start, end=end, preserve_index=True,
+        )
 
         # reordering as the original one
         common_index = self.index.intersection(result.index)
-        result=result.reindex(common_index)
+        result = result.reindex(common_index)
 
         return mypy_ensure_pyranges(result)
 
