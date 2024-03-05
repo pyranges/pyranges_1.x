@@ -121,7 +121,7 @@ def get_sequence(
     iterables = (
         zip(gr[CHROM_COL], gr[START_COL], gr[END_COL], [FORWARD_STRAND], strict=False)
         if not use_strand
-        else zip(gr[CHROM_COL], gr[START_COL], gr[END_COL], gr[STRAND_COL], strict=False)
+        else zip(gr[CHROM_COL], gr[START_COL], gr[END_COL], gr[STRAND_COL], strict=True)
     )
     seqs = []
     for chromosome, start, end, strand in iterables:
