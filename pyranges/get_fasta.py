@@ -7,7 +7,7 @@ import pandas as pd
 from pandas.core.frame import DataFrame
 from pandas.core.series import Series
 
-from pyranges.names import END_COL, FORWARD_STRAND, START_COL, CHROM_COL, STRAND_COL
+from pyranges.names import CHROM_COL, END_COL, FORWARD_STRAND, START_COL, STRAND_COL
 
 if TYPE_CHECKING:
     import pyfaidx  # type: ignore[import]
@@ -43,7 +43,7 @@ def get_sequence(
     -------
     Series
 
-        Sequences, one per interval.
+        Sequences, one per interval. The series is named 'Sequence'
 
     Note
     ----
@@ -90,7 +90,7 @@ def get_sequence(
     >>> seq
     0      CAT
     1    ATTAC
-    dtype: object
+    Name: Sequence, dtype: object
 
     >>> gr["seq"] = seq
     >>> gr
@@ -119,9 +119,9 @@ def get_sequence(
 
     use_strand = gr.strand_values_valid
     iterables = (
-        zip(gr[CHROM_COL], gr[START_COL], gr[END_COL], [FORWARD_STRAND])
+        zip(gr[CHROM_COL], gr[START_COL], gr[END_COL], [FORWARD_STRAND], strict=False)
         if not use_strand
-        else zip(gr[CHROM_COL], gr[START_COL], gr[END_COL], gr[STRAND_COL])
+        else zip(gr[CHROM_COL], gr[START_COL], gr[END_COL], gr[STRAND_COL], strict=True)
     )
     seqs = []
     for chromosome, start, end, strand in iterables:
@@ -197,9 +197,9 @@ def get_transcript_sequence(
     >>> seq
       transcript Sequence
     0         t1     AAAC
-    1         t2  TCCCAAA
-    2         t4      AAA
-    3         t5     TCCC
+    1         t2  AAATCCC
+    2         t4     TCCC
+    3         t5      AAA
 
     To write to a file in fasta format:
     >>> with open('outfile.fasta', 'w') as fw:
