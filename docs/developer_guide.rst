@@ -169,12 +169,6 @@ If you modified core Pyranges functions, you may want to also run the non-compul
 
 If any of the tests fail, you must amend them before proceeding. 
 
-Next, we use **tox** to test whether the code works across all the versions of python and main dependencies 
-that we intend to support. For this, run:
-
-.. code:: bash
-
-	tox
 
 
 5. Format, lint, type-checking code
@@ -207,8 +201,20 @@ Lastly, let's use pyright to ensure correct type-checking:
 Again, any error in the pyright must be amended before proceeding. Note that if you edit the code, 
 you may want to format and lint code again with ruff.
 
+6. Test on all supported python and package versions
+-----------------------------------------------------
 
-6. Inspect the Sphynx documentation
+Next, we use **tox** to test whether the code works across all the versions of python and main dependencies 
+that we intend to support. This step internally runs steps 4 and 5 for every such version defined in 
+pyproject.toml. (Advanced users may actually directly run 6 instead of 4-5). For this, run:
+
+.. code:: bash
+
+	tox
+
+If any errors emerge, correct them (or ask us for help).
+
+7. Inspect the Sphynx documentation
 -----------------------------------
 
 Your code edits may warrant edits in the Pyranges docstrings. In this case, it is compelling to
@@ -228,7 +234,7 @@ been affected by your changes, and fix any potential problems. To know more abou
 read about the Sphynx system.
 
 
-7. Log your changes
+8. Log your changes
 ----------------------
 
 At this stage, you are ready to submit your code for integration into the
@@ -241,7 +247,7 @@ concise summary of the modifications, additions, and fixes made in each version 
 relevant details such as feature enhancements, bug fixes, and any other notable alterations to help
 maintain a transparent and informative record of your project's evolution.
 
-8. Commit and push to your remote repository
+9. Commit and push to your remote repository
 ---------------------------------------------
 
 Run this command to list all the local files you modified:
@@ -285,7 +291,7 @@ You will be requested your github credentials. Note that your online password ma
 case, google how to set up a github token that you can use.
 
 
-9. Open a pull request
+10. Open a pull request
 ----------------------
 
 The easiest way to open a pull request is through the github website. Go to **your**
@@ -305,7 +311,7 @@ Pyranges administrators will inspect the pull request, comment it if necessary, 
 
 
 
-10. Core team only: upload to PyPI
+11. Core team only: upload to PyPI
 ---------------------------------
 
 Every now and then, the core development team considers that a new pyranges version should be
@@ -321,7 +327,7 @@ pip selects the new version.
 Finally, the pyranges conda package at Bioconda is updated automatically upon pip upload. Check
 that this is updated correctly.
 
-11. Assorted tips and recommended tools
+12. Assorted tips and recommended tools
 ---------------------------------------
 
 While developing you might want to autorerun all the unittests and doctests if the contents of the
