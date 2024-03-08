@@ -5,10 +5,7 @@ import numpy as np
 import pandas as pd
 from pandas.core.frame import DataFrame
 
-from pyranges.names import (
-    END_COL,
-    START_COL,
-)
+from pyranges.names import BY_ENTRY_IN_KWARGS, END_COL, FORWARD_STRAND, REVERSE_STRAND, START_COL
 
 
 def run_in_parallel(function, dfs: list[DataFrame], nb_cpu: int, *args, **kwargs) -> Generator:
@@ -103,8 +100,8 @@ def _extend(
     dtype = df.Start.dtype
 
     if ext is not None:
-        df.loc[:, "Start"] = df.Start - ext
-        df.loc[df.Start < 0, "Start"] = 0
+        df.loc[:, START_COL] = df.Start - ext
+        df.loc[df.Start < 0, START_COL] = 0
         df.End = df.End + ext
     else:
         if len(strands := df.Strand.drop_duplicates()) > 1:
@@ -113,16 +110,16 @@ def _extend(
         strand = strands.iloc[0]
 
         if ext_5 and strand == "+":
-            df.loc[:, "Start"] -= ext_5
+            df.loc[:, START_COL] -= ext_5
         elif ext_5 and strand == "-":
-            df.loc[:, "End"] += ext_5
+            df.loc[:, END_COL] += ext_5
 
         if ext_3 and strand == "-":
-            df.loc[:, "Start"] -= ext_3
+            df.loc[:, START_COL] -= ext_3
         elif ext_3 and strand == "+":
-            df.loc[:, "End"] += ext_3
+            df.loc[:, END_COL] += ext_3
 
-    df = df.astype({"Start": dtype, "End": dtype})
+    df = df.astype({START_COL: dtype, END_COL: dtype})
 
     if not (df.Start < df.End).all():
         msg = "Some intervals are negative or zero length after applying extend!"
@@ -131,41 +128,37 @@ def _extend(
     return df
 
 
-def _extend_grp(df: pd.DataFrame, **kwargs) -> pd.DataFrame:
+def _extend_grp(
+    df: DataFrame,
+    group_by: list[str] | str,
+    ext: int | None = None,
+    ext_3: int | None = None,
+    ext_5: int | None = None,
+    **kwargs,
+) -> DataFrame:
     df = df.copy()
-    dtype = df.Start.dtype
-    slack = kwargs["ext"]
-    by = kwargs["group_by"]
-    g = df.groupby(by)
-
-    if not isinstance(slack, int | dict):
-        msg = f"Extend parameter must be integer or dict, is {type(slack)}"
-        raise TypeError(msg)
+    g = df.groupby(group_by)
 
     minstarts_pos = g.Start.idxmin()
     maxends_pos = g.End.idxmax()
 
-    if isinstance(slack, int):
-        df.loc[minstarts_pos, START_COL] = df.Start - slack
+    if ext is not None:
+        df.loc[minstarts_pos, START_COL] = df.Start - ext
         df.loc[df.Start < 0, START_COL] = 0
-        df.loc[maxends_pos, END_COL] = df.End + slack
+        df.loc[maxends_pos, END_COL] = df.End + ext
 
     else:
-        strand = df.Strand.iloc[0]
-        five_end_slack = slack.get("5")
-        three_end_slack = slack.get("3")
+        strand = kwargs.get(BY_ENTRY_IN_KWARGS, {}).get("Strand")
 
-        if five_end_slack and strand == "+":
-            df.loc[minstarts_pos, START_COL] -= five_end_slack
-        elif five_end_slack and strand == "-":
-            df.loc[maxends_pos, END_COL] += five_end_slack
+        if ext_5 and strand == FORWARD_STRAND:
+            df.loc[minstarts_pos, START_COL] -= ext_5
+        elif ext_5 and strand == REVERSE_STRAND:
+            df.loc[maxends_pos, END_COL] += ext_5
 
-        if three_end_slack and strand == "-":
-            df.loc[minstarts_pos, START_COL] -= three_end_slack
-        elif three_end_slack and strand == "+":
-            df.loc[maxends_pos, END_COL] += three_end_slack
-
-    df = df.astype({START_COL: dtype, END_COL: dtype})
+        if ext_3 and strand == REVERSE_STRAND:
+            df.loc[minstarts_pos, START_COL] -= ext_3
+        elif ext_3 and strand == FORWARD_STRAND:
+            df.loc[maxends_pos, END_COL] += ext_3
 
     if not (df.Start < df.End).all():
         msg = "Some intervals are negative or zero length after applying extend!"

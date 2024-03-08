@@ -53,6 +53,7 @@ from pyranges.names import (
 )
 from pyranges.parallelism import (
     _extend,
+    _extend_grp,
     _tes,
     _tss,
 )
@@ -1184,6 +1185,27 @@ class PyRanges(RangeFrame):
         ...
         ValueError: Some intervals are negative or zero length after applying extend!
 
+        >>> gr.extend(ext_3=1, ext_5=2)
+          index  |    Chromosome      Start      End  Strand
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                1        7  +
+              1  |    chr1                6       10  +
+              2  |    chr1                4        9  -
+        PyRanges with 3 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        >>> gr['transcript_id']=['a', 'a', 'b']
+        >>> gr.extend(by='transcript_id', ext_3=3)
+          index  |    Chromosome      Start      End  Strand    transcript_id
+          int64  |    object          int64    int64  object    object
+        -------  ---  ------------  -------  -------  --------  ---------------
+              0  |    chr1                3        6  +         a
+              1  |    chr1                8       12  +         a
+              2  |    chr1                2        7  -         b
+        PyRanges with 3 rows, 5 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
         """
         if (ext_3 or ext_5) and not self.strand_values_valid:
             msg = "PyRanges must be stranded to add 5/3-end specific extend."
@@ -1193,12 +1215,25 @@ class PyRanges(RangeFrame):
             msg = "Must use at least one and not both of ext and ext3 or ext5."
             raise ValueError(msg)
 
-        return self.apply_single(
-            _extend,
-            by=group_keys_single(self, use_strand=self.strand_values_valid, by=by),
-            ext=ext,
-            ext_3=ext_3,
-            ext_5=ext_5,
+        return (
+            self.apply_single(
+                _extend,
+                by=group_keys_single(self, use_strand=self.strand_values_valid),
+                ext=ext,
+                ext_3=ext_3,
+                ext_5=ext_5,
+            )
+            if not by
+            else (
+                self.apply_single(
+                    _extend_grp,
+                    by=group_keys_single(self, use_strand=self.strand_values_valid),
+                    ext=ext,
+                    ext_3=ext_3,
+                    ext_5=ext_5,
+                    group_by=by,
+                )
+            )
         )
 
     def five_end(self) -> "PyRanges":
