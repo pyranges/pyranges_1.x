@@ -16,7 +16,7 @@ def test_spliced_subsequence_use_strand_false():
         },
     )
 
-    result = p.spliced_subsequence(0, 5, use_strand=False, by="transcript_id")
+    result = p.spliced_subsequence(0, 5, use_strand=False, transcript_id="transcript_id")
 
     _expected_result = {
         "Chromosome":{
@@ -52,7 +52,7 @@ def test_spliced_subsequence_use_strand_false():
 
 
 
-def test_spliced_subsequence_without_by():
+def test_spliced_subsequence_without_transcript_id():
     p = pr.PyRanges(
         {
             "Chromosome": [1, 1, 2, 2, 3],
