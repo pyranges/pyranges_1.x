@@ -37,6 +37,7 @@ from pyranges.names import (
     TEMP_END_SLACK_COL,
     TEMP_INDEX_COL,
     TEMP_LENGTH_COL,
+    TEMP_NAME_COL,
     TEMP_NUM_COL,
     TEMP_START_SLACK_COL,
     TEMP_STRAND_COL,
@@ -2108,6 +2109,204 @@ class PyRanges(RangeFrame):
         gr = pr.concat([self, other])
 
         return gr.merge_overlaps(use_strand=strand)
+
+    def sort_ranges(
+        self,
+        by: str | Iterable[str] | None = None,
+        *,
+        use_strand: VALID_USE_STRAND_TYPE = "auto",
+        natsorting: bool = False,
+        reverse: bool = False,
+    ) -> "PyRanges":
+        """Sort PyRanges according to Chromosome, Strand (if present), Start, and End; or by the specified columns.
+
+        If PyRanges is stranded and use_strand is True, intervals on the negative strand are sorted in descending
+        order, and End is considered before Start. This is to have a 5' to 3' order.
+        For uses not covered by this function, use  DataFrame.sort_values().
+
+        Parameters
+        ----------
+        by : str or list of str, default None
+            If provided, sorting occurs by Chromosome, Strand (if present), *by, Start, and End.
+            To prioritize columns differently (e.g. Strand before Chromosome), explicitly provide all columns
+            in the desired order as part of the 'by' argument.
+            You can prepend any column name with '-' to reverse the order of sorting for that column.
+
+        use_strand : bool, default None, i.e. auto
+            Whether negative strand intervals should be sorted in descending order, meaning 5' to 3'.
+
+        natsorting : bool, default False
+            Whether to use natural sorting for Chromosome column, so that e.g. chr2 < chr11. Slows down sorting.
+
+        reverse : bool, default False
+            Whether to reverse the sort order.
+
+        Returns
+        -------
+        PyRanges
+
+            Sorted PyRanges. The index is preserved. Use .reset_index(drop=True) to reset the index.
+
+        Examples
+        --------
+        >>> p = pr.PyRanges({"Chromosome": ["chr1", "chr1", "chr1", "chr1", "chr2", "chr11", "chr11", "chr1"],
+        ...                  "Strand": ["+", "+", "-", "-", "+", "+", "+",  "+"],
+        ...                  "Start": [40, 1, 10, 70, 300, 140, 160, 90],
+        ...                  "End": [60, 11, 25, 80, 400, 152, 190, 100],
+        ...                  "transcript_id":["t3", "t3", "t2", "t2", "t4", "t5", "t5", "t1"]})
+        >>> p
+          index  |    Chromosome    Strand      Start      End  transcript_id
+          int64  |    object        object      int64    int64  object
+        -------  ---  ------------  --------  -------  -------  ---------------
+              0  |    chr1          +              40       60  t3
+              1  |    chr1          +               1       11  t3
+              2  |    chr1          -              10       25  t2
+              3  |    chr1          -              70       80  t2
+              4  |    chr2          +             300      400  t4
+              5  |    chr11         +             140      152  t5
+              6  |    chr11         +             160      190  t5
+              7  |    chr1          +              90      100  t1
+        PyRanges with 8 rows, 5 columns, and 1 index columns.
+        Contains 3 chromosomes and 2 strands.
+
+        >>> p.sort_ranges()
+          index  |    Chromosome    Strand      Start      End  transcript_id
+          int64  |    object        object      int64    int64  object
+        -------  ---  ------------  --------  -------  -------  ---------------
+              1  |    chr1          +               1       11  t3
+              0  |    chr1          +              40       60  t3
+              7  |    chr1          +              90      100  t1
+              3  |    chr1          -              70       80  t2
+              2  |    chr1          -              10       25  t2
+              5  |    chr11         +             140      152  t5
+              6  |    chr11         +             160      190  t5
+              4  |    chr2          +             300      400  t4
+        PyRanges with 8 rows, 5 columns, and 1 index columns.
+        Contains 3 chromosomes and 2 strands.
+
+        Do not sort negative strand intervals in descending order:
+        >>> p.sort_ranges(use_strand=False)
+          index  |    Chromosome    Strand      Start      End  transcript_id
+          int64  |    object        object      int64    int64  object
+        -------  ---  ------------  --------  -------  -------  ---------------
+              1  |    chr1          +               1       11  t3
+              0  |    chr1          +              40       60  t3
+              7  |    chr1          +              90      100  t1
+              2  |    chr1          -              10       25  t2
+              3  |    chr1          -              70       80  t2
+              5  |    chr11         +             140      152  t5
+              6  |    chr11         +             160      190  t5
+              4  |    chr2          +             300      400  t4
+        PyRanges with 8 rows, 5 columns, and 1 index columns.
+        Contains 3 chromosomes and 2 strands.
+
+        Sort chromosomes in natural order:
+        >>> p.sort_ranges(natsorting=True)
+          index  |    Chromosome    Strand      Start      End  transcript_id
+          int64  |    object        object      int64    int64  object
+        -------  ---  ------------  --------  -------  -------  ---------------
+              1  |    chr1          +               1       11  t3
+              0  |    chr1          +              40       60  t3
+              7  |    chr1          +              90      100  t1
+              3  |    chr1          -              70       80  t2
+              2  |    chr1          -              10       25  t2
+              4  |    chr2          +             300      400  t4
+              5  |    chr11         +             140      152  t5
+              6  |    chr11         +             160      190  t5
+        PyRanges with 8 rows, 5 columns, and 1 index columns.
+        Contains 3 chromosomes and 2 strands.
+
+        Sort by 'transcript_id' before than by columns Start and End (but after Chromosome and Strand):
+        >>> p.sort_ranges(by='transcript_id')
+          index  |    Chromosome    Strand      Start      End  transcript_id
+          int64  |    object        object      int64    int64  object
+        -------  ---  ------------  --------  -------  -------  ---------------
+              7  |    chr1          +              90      100  t1
+              1  |    chr1          +               1       11  t3
+              0  |    chr1          +              40       60  t3
+              3  |    chr1          -              70       80  t2
+              2  |    chr1          -              10       25  t2
+              5  |    chr11         +             140      152  t5
+              6  |    chr11         +             160      190  t5
+              4  |    chr2          +             300      400  t4
+        PyRanges with 8 rows, 5 columns, and 1 index columns.
+        Contains 3 chromosomes and 2 strands.
+
+        Sort by 'transcript_id' before than by columns Strand, Start and End:
+        >>> p.sort_ranges(by=['transcript_id', 'Strand'])
+          index  |    Chromosome    Strand      Start      End  transcript_id
+          int64  |    object        object      int64    int64  object
+        -------  ---  ------------  --------  -------  -------  ---------------
+              7  |    chr1          +              90      100  t1
+              3  |    chr1          -              70       80  t2
+              2  |    chr1          -              10       25  t2
+              1  |    chr1          +               1       11  t3
+              0  |    chr1          +              40       60  t3
+              5  |    chr11         +             140      152  t5
+              6  |    chr11         +             160      190  t5
+              4  |    chr2          +             300      400  t4
+        PyRanges with 8 rows, 5 columns, and 1 index columns.
+        Contains 3 chromosomes and 2 strands.
+
+        Same as before, but 'transcript_id' is sorted in descending order:
+        >>> p.sort_ranges(by=['-transcript_id', 'Strand'])
+          index  |    Chromosome    Strand      Start      End  transcript_id
+          int64  |    object        object      int64    int64  object
+        -------  ---  ------------  --------  -------  -------  ---------------
+              1  |    chr1          +               1       11  t3
+              0  |    chr1          +              40       60  t3
+              3  |    chr1          -              70       80  t2
+              2  |    chr1          -              10       25  t2
+              7  |    chr1          +              90      100  t1
+              5  |    chr11         +             140      152  t5
+              6  |    chr11         +             160      190  t5
+              4  |    chr2          +             300      400  t4
+        PyRanges with 8 rows, 5 columns, and 1 index columns.
+        Contains 3 chromosomes and 2 strands.
+
+        """
+        by = [] if by is None else [by] if isinstance(by, str) else list(by)
+
+        use_strand = validate_and_convert_strand(self, use_strand)
+
+        cols_to_sort_for = (
+            ([CHROM_COL] if CHROM_COL not in by else [])
+            + ([STRAND_COL] if STRAND_COL not in by and STRAND_COL in self.columns else [])
+            + by
+            + ([START_COL] if START_COL not in by else [])
+            + ([END_COL] if END_COL not in by else [])
+        )
+
+        # If a column is prepended with '-', it will be sorted in descending order
+        ascending = [not col.startswith("-") for col in cols_to_sort_for]
+        if reverse:
+            ascending = [not asc for asc in ascending]
+        cols_to_sort_for = [col.lstrip("-") for col in cols_to_sort_for]
+
+        z = self.copy()
+        if natsorting:
+            natsort_fn = natsort.natsort_keygen()
+            z = z.assign(**{TEMP_NAME_COL: natsort_fn(self[CHROM_COL])})
+            cols_to_sort_for = [c if c != CHROM_COL else TEMP_NAME_COL for c in cols_to_sort_for]
+
+        if not use_strand:
+            z = z.sort_values(cols_to_sort_for, ascending=ascending)
+        else:
+            mask = z["Strand"] == "-"
+            initial_starts = z.loc[mask, "Start"].copy()
+            initial_ends = z.loc[mask, "End"].copy()
+
+            # Swapping Start and End for negative strand intervals, and multiplying by -1 to sort in descending order
+            z.loc[mask, "Start"], z.loc[mask, "End"] = (
+                z.loc[mask, "End"].to_numpy() * -1,
+                z.loc[mask, "Start"].to_numpy() * -1,
+            )
+            z = z.sort_values(cols_to_sort_for, ascending=ascending)
+
+            # Swapping back
+            z.loc[mask, "Start"], z.loc[mask, "End"] = initial_starts, initial_ends
+
+        return mypy_ensure_pyranges(z.drop(TEMP_NAME_COL, axis=1) if natsorting else z)
 
     def sort_by_5_prime_ascending_and_3_prime_descending(
         self,
