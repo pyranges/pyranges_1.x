@@ -787,7 +787,6 @@ class PyRanges(RangeFrame):
         """Return chromosomes in natsorted order."""
         return natsorted(self[CHROM_COL].drop_duplicates())
 
-    # TO DO: does this contain duplicates?
     @property
     def chromosomes_and_strands(self) -> list[tuple[str, str]]:
         """Return chromosomes and strands in natsorted order.
