@@ -818,7 +818,7 @@ class PyRanges(RangeFrame):
         self,
         *,
         use_strand: VALID_USE_STRAND_TYPE = "auto",
-        by: VALID_BY_TYPES = None,
+        match_by: VALID_BY_TYPES = None,
         slack: int = 0,
         cluster_column: str = "Cluster",
         count_column: str | None = None,
@@ -830,8 +830,8 @@ class PyRanges(RangeFrame):
         use_strand : bool, default None, i.e. auto
             Whether to ignore strand information if PyRanges is stranded.
 
-        by : str or list, default None
-            Only intervals with an equal value in column(s) `by` are clustered.
+        match_by : str or list, default None
+            If provided, only intervals with an equal value in column(s) `match_by` may be considered as overlapping.
 
         slack : int, default 0
             Consider intervals separated by less than `slack` to be in the same cluster. If `slack`
@@ -888,7 +888,7 @@ class PyRanges(RangeFrame):
         PyRanges with 5 rows, 5 columns, and 1 index columns.
         Contains 2 chromosomes.
 
-        >>> gr.cluster(by=["Gene"], count_column="Counts")
+        >>> gr.cluster(match_by=["Gene"], count_column="Counts")
           index  |      Chromosome    Start      End     Gene    Cluster    Counts
           int64  |           int64    int64    int64    int64      int64     int64
         -------  ---  ------------  -------  -------  -------  ---------  --------
@@ -906,10 +906,10 @@ class PyRanges(RangeFrame):
         strand = validate_and_convert_strand(self, use_strand=use_strand)
         _self = self.copy() if (not strand and self.has_strand_column) else self
 
-        _by = [by] if isinstance(by, str) else ([*by] if by is not None else [])
+        _by = [match_by] if isinstance(match_by, str) else ([*match_by] if match_by is not None else [])
         gr = _self.apply_single(
             _cluster,
-            by=by,
+            by=match_by,
             use_strand=strand,
             slack=slack,
             count_column=count_column,
@@ -927,22 +927,22 @@ class PyRanges(RangeFrame):
         self,
         other: "PyRanges",
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
-        by: str | list[str] | None = None,
+        match_by: str | list[str] | None = None,
         overlap_col: str = "NumberOverlaps",
         *,
         keep_nonoverlapping: bool = True,
     ) -> "PyRanges":
         """Count number of overlaps per interval.
 
-        Count how many intervals in self overlap with those in other.
+        For each interval in self, report how many intervals in 'other' overlap with it.
 
         Parameters
         ----------
         other: PyRanges
             Count overlaps with this PyRanges.
 
-        by: str or list of str, default: None
-            Operate on these columns.
+        match_by : str or list, default None
+            If provided, only intervals with an equal value in column(s) `match_by` may be considered as overlapping.
 
         strand_behavior : {"auto", "same", "opposite", "ignore"}, default "auto"
             Whether to consider overlaps of intervals on the same strand, the opposite or ignore strand
@@ -1005,7 +1005,7 @@ class PyRanges(RangeFrame):
             other,
             _number_overlapping,
             strand_behavior=strand_behavior,
-            by=by,
+            by=match_by,
             keep_nonoverlapping=keep_nonoverlapping,
             overlap_col=overlap_col,
             skip_if_empty=not keep_nonoverlapping,
@@ -1017,7 +1017,7 @@ class PyRanges(RangeFrame):
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
         overlap_col: str = "NumberOverlaps",
         fraction_col: str = "FractionOverlaps",
-        by: str | list[str] | None = None,
+        match_by: VALID_BY_TYPES = None,
         *,
         keep_nonoverlapping: bool = True,
     ) -> "PyRanges":
@@ -1030,8 +1030,8 @@ class PyRanges(RangeFrame):
         other: PyRanges
             Count overlaps from this PyRanges.
 
-        by : str or list of str, default: None
-            group intervals by these column name(s), and perform the operation on each group separately.
+        match_by : str or list, default None
+            If provided, only intervals with an equal value in column(s) `match_by` may be considered as overlapping.
 
         strand_behavior : {"auto", "same", "opposite", "ignore"}, default "auto"
             Whether to consider overlaps of intervals on the same strand, the opposite or ignore strand
@@ -1109,7 +1109,7 @@ class PyRanges(RangeFrame):
             other,
             _coverage,
             strand_behavior=strand_behavior,
-            by=by,
+            by=match_by,
             fraction_col=fraction_col,
             keep_nonoverlapping=keep_nonoverlapping,
             overlap_col=overlap_col,
@@ -1334,7 +1334,7 @@ class PyRanges(RangeFrame):
         """
         return STRAND_COL in self.columns
 
-# TO DO: Join outer??
+    # TO DO: Join outer??
     def interval_join(
         self,
         other: "PyRanges",
@@ -1586,23 +1586,23 @@ class PyRanges(RangeFrame):
 
     def max_disjoint(
         self,
-        strand: VALID_USE_STRAND_TYPE = "auto",
+        use_strand: VALID_USE_STRAND_TYPE = "auto",
         slack: int = 0,
-        by: VALID_BY_TYPES = None,
+        match_by: VALID_BY_TYPES = None,
         **_,
     ) -> "PyRanges":
         """Find the maximal disjoint set of intervals.
 
         Parameters
         ----------
-        strand : bool, default None, i.e. auto
+        use_strand : bool, default None, i.e. auto
             Find the max disjoint set separately for each strand.
 
         slack : int, default 0
             Consider intervals within a distance of slack to be overlapping.
 
-        by: str or list of str, default: None
-            Find max disjoint intervals for these groups.
+        match_by : str or list, default None
+            If provided, only intervals with an equal value in column(s) `match_by` may be considered as overlapping.
 
         Returns
         -------
@@ -1623,7 +1623,7 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> gr.max_disjoint(strand=False)
+        >>> gr.max_disjoint(use_strand=False)
           index  |    Chromosome      Start      End  Name         Score  Strand
           int64  |    category        int64    int64  object       int64  category
         -------  ---  ------------  -------  -------  ---------  -------  ----------
@@ -1633,16 +1633,16 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 1 strands.
 
         """
-        strand = validate_and_convert_strand(self, strand)
+        use_strand = validate_and_convert_strand(self, use_strand)
         from pyranges.methods.max_disjoint import _max_disjoint
 
-        return self.apply_single(_max_disjoint, by=by, use_strand=strand, preserve_index=True, slack=slack)
+        return self.apply_single(_max_disjoint, by=match_by, use_strand=use_strand, preserve_index=True, slack=slack)
 
     def merge_overlaps(
         self,
         use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
         count_col: str | None = None,
-        by: VALID_BY_TYPES = None,
+        match_by: VALID_BY_TYPES = None,
         slack: int = 0,
     ) -> "PyRanges":
         """Merge overlapping intervals into one.
@@ -1658,8 +1658,8 @@ class PyRanges(RangeFrame):
         count_col : str, default "Count"
             Name of column with counts.
 
-        by : str or list of str, default None
-            Only merge intervals with equal values in these columns.
+        match_by : str or list, default None
+            If provided, only intervals with an equal value in column(s) `match_by` may be considered as overlapping.
 
         slack : int, default 0
             Allow this many nucleotides between each interval to merge.
@@ -1709,7 +1709,7 @@ class PyRanges(RangeFrame):
         PyRanges with 4 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> gr.merge_overlaps(count_col="Count",by="gene_name")
+        >>> gr.merge_overlaps(count_col="Count", match_by="gene_name")
           index  |      Chromosome    Start      End  Strand    gene_name      Count
           int64  |          object    int64    int64  object    object         int64
         -------  ---  ------------  -------  -------  --------  -----------  -------
@@ -1722,15 +1722,15 @@ class PyRanges(RangeFrame):
 
         """
         use_strand = validate_and_convert_strand(self, use_strand)
-        _by = get_by_columns_including_chromosome_and_strand(self=self, by=by, use_strand=use_strand)
+        _by = get_by_columns_including_chromosome_and_strand(self=self, by=match_by, use_strand=use_strand)
         return self.apply_single(_merge, by=_by, use_strand=use_strand, count_col=count_col, slack=slack)
 
     def nearest(
         self,
         other: "PyRanges",
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "ignore",
-        how: VALID_NEAREST_TYPE = "any",
-        suffix: str = "_b",
+        direction: VALID_NEAREST_TYPE = "any",
+        suffix: str = JOIN_SUFFIX,
         *,
         overlap: bool = True,
     ) -> "PyRanges":
@@ -1751,7 +1751,7 @@ class PyRanges(RangeFrame):
         overlap : bool, default True
             Whether to include overlaps.
 
-        direction : {None, "upstream", "downstream"}, default None, i.e. both directions
+        direction : {"any", "upstream", "downstream"}, default "any", i.e. both directions
             Whether to only look for nearest in one direction. Always with respect to the PyRanges
             it is called on.
 
@@ -1801,7 +1801,7 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 8 columns, and 1 index columns (with 1 index duplicates).
         Contains 1 chromosomes and 2 strands.
 
-        >>> f1.nearest(f2, how="upstream")
+        >>> f1.nearest(f2, direction="upstream")
           index  |    Chromosome      Start      End  Strand        Start_b    End_b  Strand_b      Distance
           int64  |    category        int64    int64  category        int64    int64  category         int64
         -------  ---  ------------  -------  -------  ----------  ---------  -------  ----------  ----------
@@ -1814,7 +1814,7 @@ class PyRanges(RangeFrame):
         """
         from pyranges.methods.nearest import _nearest
 
-        if how in {NEAREST_UPSTREAM, NEAREST_DOWNSTREAM} and not other.strand_values_valid:
+        if direction in {NEAREST_UPSTREAM, NEAREST_DOWNSTREAM} and not other.strand_values_valid:
             msg = "If doing upstream or downstream nearest, other pyranges must be stranded"
             raise AssertionError(msg)
 
@@ -1822,7 +1822,7 @@ class PyRanges(RangeFrame):
             other,
             _nearest,
             strand_behavior=strand_behavior,
-            how=how,
+            how=direction,
             overlap=overlap,
             suffix=suffix,
         )
@@ -1831,7 +1831,7 @@ class PyRanges(RangeFrame):
         self,
         other: "PyRanges",
         how: VALID_OVERLAP_TYPE = "first",
-        by: VALID_BY_TYPES = None,
+        match_by: VALID_BY_TYPES = None,
         *,
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
         invert: bool = False,
@@ -1858,8 +1858,8 @@ class PyRanges(RangeFrame):
         invert : bool, default False
             Whether to return the intervals without overlaps.
 
-        by : str or list of str, default None
-            Only report overlaps when equal values in these columns.
+        match_by : str or list, default None
+            If provided, only overlapping intervals with an equal value in column(s) `match_by` are reported.
 
         Returns
         -------
@@ -1930,7 +1930,7 @@ class PyRanges(RangeFrame):
             other,
             _overlap,
             strand_behavior=strand_behavior,
-            by=by,
+            by=match_by,
             invert=invert,
             skip_if_empty=False if invert else SKIP_IF_EMPTY_LEFT,
             how=how,
@@ -2519,7 +2519,7 @@ class PyRanges(RangeFrame):
     def split(
         self,
         use_strand: VALID_USE_STRAND_TYPE = "auto",
-        by: VALID_BY_TYPES = None,
+        match_by: VALID_BY_TYPES = None,
         *,
         between: bool = False,
     ) -> "PyRanges":
@@ -2533,9 +2533,8 @@ class PyRanges(RangeFrame):
         between : bool, default False
             Include lengths between intervals.
 
-        by : str or list of str, default None
-            Only intervals with an equal value in column(s) `by` are considered overlapping, and are thus split.
-
+        match_by : str or list, default None
+            If provided, only intervals with an equal value in column(s) `match_by` may be split.
 
         Returns
         -------
@@ -2625,7 +2624,7 @@ class PyRanges(RangeFrame):
         PyRanges with 4 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> gr.split(use_strand=False, by='ID')
+        >>> gr.split(use_strand=False, match_by='ID')
           index  |    Chromosome      Start      End
           int64  |    object          int64    int64
         -------  ---  ------------  -------  -------
@@ -2643,7 +2642,7 @@ class PyRanges(RangeFrame):
         strand = validate_and_convert_strand(self, use_strand=use_strand)
         df = self.apply_single(
             _split,
-            by=by,
+            by=match_by,
             preserve_index=False,
             use_strand=strand,
         )
@@ -2827,7 +2826,7 @@ class PyRanges(RangeFrame):
         self,
         other: "pr.PyRanges",
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
-        by: VALID_BY_TYPES = None,
+        match_by: VALID_BY_TYPES = None,
     ) -> "pr.PyRanges":
         """Subtract intervals, i.e. return non-overlapping subintervals.
 
@@ -2843,8 +2842,8 @@ class PyRanges(RangeFrame):
             otherwise ignore the strand information. "same" means only subtract intervals on the same strand.
             "opposite" means only subtract intervals on the opposite strand. "ignore" means ignore strand
 
-        by : str or list of str, default None
-            Only intervals with an equal value in column(s) `by` are considered overlapping, and thus may be subtracted.
+        match_by : str or list, default None
+            If provided, only intervals with an equal value in column(s) `match_by` may be considered as overlapping.
 
         See Also
         --------
@@ -2906,7 +2905,7 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        >>> gr.subtract_intervals(gr2, by="tag")
+        >>> gr.subtract_intervals(gr2, match_by="tag")
           index  |    Chromosome      Start      End  ID        tag
           int64  |    object          int64    int64  object    object
         -------  ---  ------------  -------  -------  --------  --------
@@ -2921,11 +2920,16 @@ class PyRanges(RangeFrame):
 
         strand = other.strand_values_valid if strand_behavior == STRAND_BEHAVIOR_AUTO else strand_behavior != "ignore"
 
-        other_clusters = other.merge_overlaps(use_strand=strand, by=by)
+        other_clusters = other.merge_overlaps(use_strand=strand, match_by=match_by)
 
-        _by = group_keys_from_strand_behavior(self, other_clusters, strand_behavior=strand_behavior, by=by)
+        _by = group_keys_from_strand_behavior(self, other_clusters, strand_behavior=strand_behavior, by=match_by)
 
-        gr = self.count_overlaps(other_clusters, strand_behavior=strand_behavior, overlap_col=TEMP_NUM_COL, by=_by)
+        gr = self.count_overlaps(
+            other_clusters,
+            strand_behavior=strand_behavior,
+            overlap_col=TEMP_NUM_COL,
+            match_by=_by,
+        )
 
         result = gr.apply_pair(
             other_clusters,
@@ -3957,7 +3961,7 @@ class PyRanges(RangeFrame):
         self,
         other: "PyRanges",
         how: VALID_OVERLAP_TYPE = "first",
-        by: VALID_BY_TYPES = None,
+        match_by: VALID_BY_TYPES = None,
         *,
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
         **_,
@@ -3980,8 +3984,8 @@ class PyRanges(RangeFrame):
             What intervals to report. By default, reports every interval in self with overlap once.
             "containment" reports all intervals where the overlapping is contained within it.
 
-        by : str or list of str, default None
-            Only report overlaps when equal values in these columns.
+        match_by : str or list, default None
+            If provided, only intervals with an equal value in column(s) `match_by` may be considered as overlapping.
 
         Returns
         -------
@@ -4053,7 +4057,7 @@ class PyRanges(RangeFrame):
             other,
             _intersect,
             strand_behavior=strand_behavior,
-            by=by,
+            by=match_by,
             how=how,
         )
 
