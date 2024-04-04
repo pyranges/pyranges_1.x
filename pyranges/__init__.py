@@ -13,6 +13,7 @@ from pyranges.get_fasta import get_sequence, get_transcript_sequence
 from pyranges.methods.concat import concat
 from pyranges.multioverlap import count_overlaps
 from pyranges.names import END_COL
+from pyranges.option_manager import options  # noqa: F401
 from pyranges.pyranges_helpers import mypy_ensure_pyranges
 from pyranges.pyranges_main import PyRanges  # noqa: F401
 from pyranges.range_frame.range_frame import RangeFrame  # noqa: F401

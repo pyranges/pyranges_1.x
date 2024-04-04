@@ -10,10 +10,6 @@ import pyranges
 if TYPE_CHECKING:
     import pyranges as pr
 
-MAX_COLUMN_NAMES_TO_SHOW = 3
-MAX_ROWS_TO_SHOW = 8
-HALF_OF_MAX_ROWS_TO_SHOW = MAX_ROWS_TO_SHOW // 2
-
 
 @dataclass
 class AdjustedTableData:
@@ -63,9 +59,15 @@ def tostring(
     number_duplicated_indices = self.index.duplicated().sum()
     has_duplicated_index = number_duplicated_indices > 0
 
+    from pyranges import options
+
+    max_rows_to_show = options.get_option("max_rows_to_show")
+    max_column_names_to_show = options.get_option("max_column_names_to_show")
+
+    half_of_max_rows_to_show = max_rows_to_show // 2
     _self = (
-        pd.concat([self.head(HALF_OF_MAX_ROWS_TO_SHOW), self.tail(HALF_OF_MAX_ROWS_TO_SHOW + 1)])
-        if len(self) > MAX_ROWS_TO_SHOW
+        pd.concat([self.head(half_of_max_rows_to_show), self.tail(half_of_max_rows_to_show + 1)])
+        if len(self) > max_rows_to_show
         else pd.DataFrame(self.copy())
     )
 
@@ -75,9 +77,9 @@ def tostring(
     _self = pd.DataFrame(_self).reset_index()
 
     truncation_marker = ["..."]
-    if len(_self) > MAX_ROWS_TO_SHOW:
-        head = [list(v) for _, v in _self.head(HALF_OF_MAX_ROWS_TO_SHOW).iterrows()]
-        tail = [list(v) for _, v in _self.tail(HALF_OF_MAX_ROWS_TO_SHOW).iterrows()]
+    if len(_self) > max_rows_to_show:
+        head = [list(v) for _, v in _self.head(half_of_max_rows_to_show).iterrows()]
+        tail = [list(v) for _, v in _self.tail(half_of_max_rows_to_show).iterrows()]
         data = [*head, truncation_marker * _self.shape[1], *tail]
     else:
         data = [list(v) for _, v in _self.iterrows()]
@@ -99,10 +101,10 @@ def tostring(
         not_shown = [
             f'"{e}"'
             for e in _self.columns[
-                adjusted_data.included_columns : adjusted_data.included_columns + MAX_COLUMN_NAMES_TO_SHOW
+                adjusted_data.included_columns : adjusted_data.included_columns + max_column_names_to_show
             ]
         ]
-        if num_not_shown > MAX_COLUMN_NAMES_TO_SHOW:
+        if num_not_shown > max_column_names_to_show:
             not_shown.append("...")
         columns_not_shown = f" ({num_not_shown} columns not shown: {', '.join(not_shown)})."
         truncated_data = [row + truncation_marker for row in truncated_data]

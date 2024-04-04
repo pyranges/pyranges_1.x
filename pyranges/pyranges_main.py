@@ -191,7 +191,7 @@ class PyRanges(RangeFrame):
     def __new__(cls, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame":  # type: ignore[misc]
         """Create a new instance of a PyRanges object."""
         # __new__ is a special static method used for creating and
-        # returning a new instance of a class. It is called before
+        # returning a new instance of a class. It is caladdled before
         # __init__ and is typically used in scenarios requiring
         # control over the creation of new instances
 
@@ -484,20 +484,21 @@ class PyRanges(RangeFrame):
         >>> gr2.loc[:, "Strand"] = ["+", "-", "X"]
         >>> gr = pr.concat([gr2, gr, gr])
         >>> gr  # If a PyRanges has more than eight rows the repr is truncated in the middle.
-        index    |    Chromosome    Start    End      Strand
-        int64    |    int64         int64    int64    object
+          index  |      Chromosome    Start      End  Strand
+          int64  |           int64    int64    int64  object
         -------  ---  ------------  -------  -------  --------
-        0        |    3             0        10       +
-        1        |    2             100      125      -
-        2        |    1             250      251      X
-        0        |    3             0        10       .
-        ...      |    ...           ...      ...      ...
-        2        |    1             250      251      /
-        0        |    3             0        10       .
-        1        |    2             100      125      ^
-        2        |    1             250      251      /
+              0  |               3        0       10  +
+              1  |               2      100      125  -
+              2  |               1      250      251  X
+              0  |               3        0       10  .
+              1  |               2      100      125  ^
+              2  |               1      250      251  /
+              0  |               3        0       10  .
+              1  |               2      100      125  ^
+              2  |               1      250      251  /
         PyRanges with 9 rows, 4 columns, and 1 index columns (with 6 index duplicates).
         Contains 3 chromosomes and 6 strands (including non-genomic strands: ., /, X, ...).
+
         >>> gr = PyRanges({"Chromosome": [1], "Start": [1], "End": [2], "Strand": ["+"], "Name": ["Sonic The Hedgehog"], "gene_id": ["ENSG00000188976"], "short_gene_name": ["SHH"], "type": ["transcript"]})
 
         # The index is shown separated from the columns with |
