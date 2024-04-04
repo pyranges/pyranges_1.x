@@ -1360,10 +1360,11 @@ class PyRanges(RangeFrame):
             information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_values_valid)
             otherwise ignore the strand information.
 
-        join_type : {"inner", "left", "right"}, default "inner"
+        join_type : {"inner", "left", "right", "outer"}, default "inner"
             How to handle intervals without overlap. "inner" means only keep overlapping intervals.
-            "left" keeps all intervals in self, "right" keeps all intervals in other.
-
+            "left" keeps all intervals in self, "right" keeps all intervals in other, "outer" keeps both.
+            For types other than "inner", intervals in self without overlaps will have NaN in columns from other,
+            and/or vice versa.
 
         report_overlap : bool, default False
             Report amount of overlap in base pairs.
@@ -1377,9 +1378,6 @@ class PyRanges(RangeFrame):
         apply_strand_suffix : bool, default None
             If first pyranges is unstranded, but the second is not, the first will be given a strand column.
             apply_strand_suffix makes the added strand column a regular data column instead by adding a suffix.
-
-        preserve_order : bool, default False
-            If True, preserves the order after performing the join (only relevant in "outer", "left" and "right" joins).
 
         Returns
         -------
