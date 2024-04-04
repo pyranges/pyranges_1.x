@@ -25,7 +25,7 @@ def _both_dfs(
     df: pd.DataFrame,
     df2: pd.DataFrame,
     join_type: VALID_JOIN_TYPE,
-    suffix: str = "_b",
+    suffix: str,
     **_,
 ) -> pd.DataFrame:
     _self_indexes, _other_indexes = _both_indexes(df, df2)

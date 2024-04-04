@@ -82,6 +82,9 @@ JOIN_LEFT: Final = "left"
 VALID_JOIN_TYPE = Literal["inner", "left", "outer", "right"]
 VALID_JOIN_OPTIONS = [JOIN_INNER, JOIN_LEFT, JOIN_OUTER, JOIN_RIGHT]
 
+JOIN_SUFFIX = "_b"
+VALID_COMBINE_OPTIONS = Literal["intersect", "union"]
+
 NEAREST_ANY_DIRECTION: Final = "any"
 NEAREST_UPSTREAM: Final = "upstream"
 NEAREST_DOWNSTREAM: Final = "downstream"
@@ -143,4 +146,22 @@ class BinaryOperation[T: "RangeFrame"](Protocol):
 
         Examples: overlap, nearest, join, etc.
         """
+        ...
+
+
+class CombineIntervalColumnsOperation(Protocol):
+    """A protocol for functions passed to combine_interval_columns.
+
+    A protocol indicating that the operation combines interval columns from a Pyranges object,
+    expecting four pd.Series as inputs (starts, ends, starts2, ends2), and returns a tuple of pd.Series (new_starts, new_ends).
+    """
+
+    def __call__(
+        self,
+        starts: pd.Series,
+        ends: pd.Series,
+        starts2: pd.Series,
+        ends2: pd.Series,
+    ) -> tuple[pd.Series, pd.Series]:
+        """Perform the operation on starts, starts2, ends, ends2 columns and return new start and end columns."""
         ...
