@@ -944,10 +944,10 @@ class PyRanges(RangeFrame):
         by: str or list of str, default: None
             Operate on these columns.
 
-        strand_behavior : {"same", "opposite", None, False}, default None, i.e. auto
-            Whether to perform the operation on the same, opposite or no strand. Use False to
-            ignore the strand. None means use "same" if both PyRanges are stranded, otherwise
-            ignore.
+        strand_behavior : {"auto", "same", "opposite", "ignore"}, default "auto"
+            Whether to consider overlaps of intervals on the same strand, the opposite or ignore strand
+            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_values_valid)
+            otherwise ignore the strand information.
 
         keep_nonoverlapping : bool, default True
             Keep intervals without overlaps.
@@ -1033,10 +1033,10 @@ class PyRanges(RangeFrame):
         by : str or list of str, default: None
             group intervals by these column name(s), and perform the operation on each group separately.
 
-        strand_behavior : {"same", "opposite", None, False}, default None, i.e. auto
-            Whether to perform the operation on the same, opposite or no strand. Use False to
-            ignore the strand. None means use "same" if both PyRanges are stranded, otherwise
-            ignore.
+        strand_behavior : {"auto", "same", "opposite", "ignore"}, default "auto"
+            Whether to consider overlaps of intervals on the same strand, the opposite or ignore strand
+            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_values_valid)
+            otherwise ignore the strand information.
 
         keep_nonoverlapping : bool, default True
             Keep intervals without overlaps.
@@ -1352,9 +1352,9 @@ class PyRanges(RangeFrame):
         other : PyRanges
             PyRanges to join.
 
-        strand_behavior : {None, "same", "opposite", "ignore"}, default None, i.e. auto
-            Whether to compare PyRanges on the same strand, the opposite or ignore strand
-            information. The default, None, means use "same" if both PyRanges are strande,
+        strand_behavior : {"auto", "same", "opposite", "ignore"}, default "auto"
+            Whether to consider overlaps of intervals on the same strand, the opposite or ignore strand
+            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_values_valid)
             otherwise ignore the strand information.
 
         join_type : {"inner", "left", "right"}, default "inner"
@@ -1743,9 +1743,9 @@ class PyRanges(RangeFrame):
         other : PyRanges
             PyRanges to find nearest interval in.
 
-        strand_behavior : {"auto", "same", "opposite", False}, default None, i.e. auto
-            Whether to compare PyRanges on the same strand, the opposite or ignore strand
-            information. The default, None, means use "same" if both PyRanges are strande,
+        strand_behavior : {"auto", "same", "opposite", "ignore"}, default "auto"
+            Whether to consider overlaps of intervals on the same strand, the opposite or ignore strand
+            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_values_valid)
             otherwise ignore the strand information.
 
         overlap : bool, default True
@@ -1951,9 +1951,9 @@ class PyRanges(RangeFrame):
         other : PyRanges
             PyRanges to set-intersect.
 
-        strand_behavior : {None, "same", "opposite", "ignore"}, default None, i.e. auto
-            Whether to compare PyRanges on the same strand, the opposite or ignore strand
-            information. The default, None, means use "same" if both PyRanges are strande,
+        strand_behavior : {"auto", "same", "opposite", "ignore"}, default "auto"
+            Whether to consider overlaps of intervals on the same strand, the opposite or ignore strand
+            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_values_valid)
             otherwise ignore the strand information.
 
         how : {"all", "first", "containment", None}, default None, i.e. all
@@ -2036,9 +2036,9 @@ class PyRanges(RangeFrame):
         other : PyRanges
             PyRanges to do union with.
 
-        strand_behavior : {None, "same", "opposite", "ignore"}, default None, i.e. auto
-            Whether to compare PyRanges on the same strand, the opposite or ignore strand
-            information. The default, None, means use "same" if both PyRanges are strande,
+        strand_behavior : {"auto", "same", "opposite", "ignore"}, default "auto"
+            Whether to consider overlaps of intervals on the same strand, the opposite or ignore strand
+            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_values_valid)
             otherwise ignore the strand information.
 
         Returns
@@ -3971,9 +3971,9 @@ class PyRanges(RangeFrame):
         other : PyRanges
             PyRanges to find overlaps with.
 
-        strand_behavior : {"auto", "same", "opposite", "ignore"}, default None, i.e. auto
-            Whether to compare PyRanges on the same strand, the opposite or ignore strand
-            information. The default, None, means use "same" if both PyRanges are strande,
+        strand_behavior : {"auto", "same", "opposite", "ignore"}, default "auto"
+            Whether to consider overlaps of intervals on the same strand, the opposite or ignore strand
+            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_values_valid)
             otherwise ignore the strand information.
 
         how : {"first", "containment", False, None}, default "first"
