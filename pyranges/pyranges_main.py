@@ -3699,16 +3699,23 @@ class PyRanges(RangeFrame):
             return self
         return self.drop_and_return(STRAND_COL, axis=1)
 
-    def window(self, window_size: int) -> "PyRanges":
+    def window(
+        self,
+        window_size: int,
+        use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
+    ) -> "PyRanges":
         """Return non-overlapping genomic windows.
 
         Every interval is split into windows of length `window_size` starting from its 5' end.
-        TO DOOOOOOO
 
         Parameters
         ----------
         window_size : int
             Length of the windows.
+
+        use_strand : bool, default None, i.e. auto
+            Whether negative strand intervals should be sliced in descending order, meaning 5' to 3'.
+            If None (default), it is treated as True if the PyRanges is stranded (see .strand_values_valid)
 
         Returns
         -------
@@ -3720,7 +3727,6 @@ class PyRanges(RangeFrame):
         -------
         The returned Pyranges may have index duplicates. Call .reset_index(drop=True) to fix it.
 
-
         See Also
         --------
         pyranges.PyRanges.tile : divide intervals into adjacent tiles.
@@ -3728,23 +3734,69 @@ class PyRanges(RangeFrame):
         Examples
         --------
         >>> import pyranges as pr
-        >>> gr = pr.PyRanges({"Chromosome": [1], "Start": [895], "End": [1259]})
+        >>> gr = pr.PyRanges({"Chromosome": [1], "Start": [800], "End": [1012]})
         >>> gr
           index  |      Chromosome    Start      End
           int64  |           int64    int64    int64
         -------  ---  ------------  -------  -------
-              0  |               1      895     1259
+              0  |               1      800     1012
         PyRanges with 1 rows, 3 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        >>> gr.window(200)
+        >>> gr.window(100)
           index  |      Chromosome    Start      End
           int64  |           int64    int64    int64
         -------  ---  ------------  -------  -------
-              0  |               1      895     1095
-              0  |               1     1095     1259
-        PyRanges with 2 rows, 3 columns, and 1 index columns (with 1 index duplicates).
+              0  |               1      800      900
+              0  |               1      900     1000
+              0  |               1     1000     1012
+        PyRanges with 3 rows, 3 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes.
+
+        >>> gr.window(100).reset_index(drop=True)
+          index  |      Chromosome    Start      End
+          int64  |           int64    int64    int64
+        -------  ---  ------------  -------  -------
+              0  |               1      800      900
+              1  |               1      900     1000
+              2  |               1     1000     1012
+        PyRanges with 3 rows, 3 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        # Negative strand intervals are sliced in descending order by default:
+        >>> gs = pr.PyRanges({"Chromosome": [1, 1], "Start": [200, 600], "End": [332, 787], "Strand":['+', '-']})
+        >>> gs
+          index  |      Chromosome    Start      End  Strand
+          int64  |           int64    int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |               1      200      332  +
+              1  |               1      600      787  -
+        PyRanges with 2 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        >>> w=gs.window(100)
+        >>> w['lengths']=w.lengths() # add lengths column to see the length of the windows
+        >>> w
+          index  |      Chromosome    Start      End  Strand      lengths
+          int64  |           int64    int64    int64  object        int64
+        -------  ---  ------------  -------  -------  --------  ---------
+              0  |               1      200      300  +               100
+              0  |               1      300      332  +                32
+              1  |               1      687      787  -               100
+              1  |               1      600      687  -                87
+        PyRanges with 4 rows, 5 columns, and 1 index columns (with 2 index duplicates).
+        Contains 1 chromosomes and 2 strands.
+
+        >>> gs.window(100, use_strand=False)
+          index  |      Chromosome    Start      End  Strand
+          int64  |           int64    int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |               1      200      300  +
+              0  |               1      300      332  +
+              1  |               1      600      700  -
+              1  |               1      700      787  -
+        PyRanges with 4 rows, 4 columns, and 1 index columns (with 2 index duplicates).
+        Contains 1 chromosomes and 2 strands.
 
         >>> gr2 = pr.example_data.ensembl_gtf.get_with_loc_columns(["Feature", "gene_name"])
         >>> gr2
@@ -3773,7 +3825,7 @@ class PyRanges(RangeFrame):
         0        |    1             13868    14409    +           gene        DDX11L1
         1        |    1             11868    12868    +           transcript  DDX11L1
         ...      |    ...           ...      ...      ...         ...         ...
-        7        |    1             132724   133723   -           transcript  AL627309.1
+        7        |    1             120724   121723   -           transcript  AL627309.1
         8        |    1             133373   133723   -           exon        AL627309.1
         9        |    1             129054   129223   -           exon        AL627309.1
         10       |    1             120873   120932   -           exon        AL627309.1
@@ -3783,12 +3835,14 @@ class PyRanges(RangeFrame):
         """
         from pyranges.methods.windows import _windows
 
+        use_strand = validate_and_convert_strand(self, use_strand)
+
         kwargs = {
             "window_size": window_size,
         }
 
         # every interval can be processed individually. This may be optimized in the future.
-        df = self.apply_single(_windows, by=None, use_strand=False, preserve_index=True, **kwargs)
+        df = self.apply_single(_windows, by=None, use_strand=use_strand, preserve_index=True, **kwargs)
         return mypy_ensure_pyranges(df)
 
     def remove_nonloc_columns(self) -> "PyRanges":

@@ -176,8 +176,6 @@ def fisher_exact(tp: Series, fp: Series, fn: Series, tn: Series, pseudocount: in
     return pd.DataFrame({"odds_ratio": odds_ratio, "P": twosided, "PLeft": left, "PRight": right})
 
 
-### TO DO: add tests
-# mcc can't work: see intersect_interval_columns call does not provided non-default args
 def mcc(
     grs: list["PyRanges"],
     *,
