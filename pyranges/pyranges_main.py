@@ -3026,11 +3026,19 @@ class PyRanges(RangeFrame):
         overlap_column
             Name of column to add with the overlap between each bookended tile.
 
+
+
         Returns
         -------
         PyRanges
 
             Tiled PyRanges.
+
+        Warning
+        -------
+        The returned Pyranges may have index duplicates. Call .reset_index(drop=True) to fix it.
+
+
 
         See Also
         --------
@@ -3086,6 +3094,23 @@ class PyRanges(RangeFrame):
         10       |    1             120900   121000   -           exon        AL627309.1   32
         PyRanges with 223 rows, 7 columns, and 1 index columns (with 212 index duplicates).
         Contains 1 chromosomes and 2 strands.
+
+        >>> gr.tile(100, overlap_column="TileOverlap").reset_index(drop=True)
+        index    |    Chromosome    Start    End      Strand      Feature     gene_name    TileOverlap
+        int64    |    category      int64    int64    category    category    object       int64
+        -------  ---  ------------  -------  -------  ----------  ----------  -----------  -------------
+        0        |    1             11800    11900    +           gene        DDX11L1      32
+        1        |    1             11900    12000    +           gene        DDX11L1      100
+        2        |    1             12000    12100    +           gene        DDX11L1      100
+        3        |    1             12100    12200    +           gene        DDX11L1      100
+        ...      |    ...           ...      ...      ...         ...         ...          ...
+        219      |    1             129100   129200   -           exon        AL627309.1   100
+        220      |    1             129200   129300   -           exon        AL627309.1   23
+        221      |    1             120800   120900   -           exon        AL627309.1   27
+        222      |    1             120900   121000   -           exon        AL627309.1   32
+        PyRanges with 223 rows, 7 columns, and 1 index columns (with 212 index duplicates).
+        Contains 1 chromosomes and 2 strands.
+
 
         """
         from pyranges.methods.windows import _tiles
@@ -3690,6 +3715,11 @@ class PyRanges(RangeFrame):
         PyRanges
 
             Sliding window PyRanges.
+
+        Warning
+        -------
+        The returned Pyranges may have index duplicates. Call .reset_index(drop=True) to fix it.
+
 
         See Also
         --------
