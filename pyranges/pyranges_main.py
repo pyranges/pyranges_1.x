@@ -22,6 +22,7 @@ from pyranges.names import (
     FRAME_COL,
     GENOME_LOC_COLS,
     GENOME_LOC_COLS_WITH_STRAND,
+    JOIN_SUFFIX,
     NEAREST_DOWNSTREAM,
     NEAREST_UPSTREAM,
     OVERLAP_FIRST,
@@ -43,6 +44,7 @@ from pyranges.names import (
     TEMP_STRAND_COL,
     USE_STRAND_DEFAULT,
     VALID_BY_TYPES,
+    VALID_COMBINE_OPTIONS,
     VALID_GENOMIC_STRAND_INFO,
     VALID_JOIN_TYPE,
     VALID_NEAREST_TYPE,
@@ -50,6 +52,7 @@ from pyranges.names import (
     VALID_STRAND_BEHAVIOR_TYPE,
     VALID_USE_STRAND_TYPE,
     BinaryOperation,
+    CombineIntervalColumnsOperation,
     UnaryOperation,
 )
 from pyranges.parallelism import (
@@ -1316,7 +1319,7 @@ class PyRanges(RangeFrame):
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
         join_type: VALID_JOIN_TYPE = "inner",
         slack: int = 0,
-        suffix: str = "_b",
+        suffix: str = JOIN_SUFFIX,
         *,
         report_overlap: bool = False,
     ) -> "PyRanges":
@@ -1368,7 +1371,7 @@ class PyRanges(RangeFrame):
 
         See Also
         --------
-        PyRanges.new_position : give joined PyRanges new coordinates
+        PyRanges.combine_interval_columns : give joined PyRanges new coordinates
 
         Examples
         --------
@@ -4011,28 +4014,36 @@ class PyRanges(RangeFrame):
             how=how,
         )
 
-    def intersect_interval_columns(
+    def combine_interval_columns(
         self,
+        function: VALID_COMBINE_OPTIONS | CombineIntervalColumnsOperation = "intersect",
         *,
-        start2: str,
-        end2: str,
         start: str = START_COL,
         end: str = END_COL,
+        start2: str = START_COL + JOIN_SUFFIX,
+        end2: str = END_COL + JOIN_SUFFIX,
         drop_old_columns: bool = True,
     ) -> "pr.PyRanges":
         """Use two pairs of columns representing intervals to create a new start and end column.
 
+        By default, the new start and end columns will be the intersection of the intervals.
+
         Parameters
         ----------
-        start
-            Start of first interval to intersect
-        end
-            End of first interval to intersect
-        start2
-            Start of second interval to intersect
-        end2
-            End of second interval to intersect
-        drop_old_columns
+        function : {"intersect", "union"} or Callable, default "intersect"
+            How to combine the intervals: "intersect" or "union".
+            If a callable is passed, it should take four Series arguments: start1, end1, start2, end2;
+            and return a tuple of two integers: (new_starts, new_ends).
+
+        start : str, default "Start"
+            Column name for Start of first interval
+        end : str, default "End"
+            Column name for End of first interval
+        start2 : str, default "Start_b"
+            Column name for Start of second interval
+        end2 : str, default "End_b"
+            Column name for End of second interval
+        drop_old_columns : bool, default True
             Whether to drop the above mentioned columns.
 
         Examples
@@ -4051,7 +4062,8 @@ class PyRanges(RangeFrame):
         PyRanges with 5 rows, 8 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes and 2 strands.
 
-        >>> j.intersect_interval_columns(start="Start", end="End", start2="Start_b", end2="End_b")
+        # intersect the intervals by default
+        >>> j.combine_interval_columns()
           index  |    Chromosome      Start      End  Strand      Chromosome_b    Strand_b
           int64  |    category        int64    int64  category    category        category
         -------  ---  ------------  -------  -------  ----------  --------------  ----------
@@ -4063,20 +4075,48 @@ class PyRanges(RangeFrame):
         PyRanges with 5 rows, 6 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes and 2 strands.
 
+        # take the union instead
+        >>> j.combine_interval_columns('union')
+          index  |    Chromosome      Start      End  Strand      Chromosome_b    Strand_b
+          int64  |    category        int64    int64  category    category        category
+        -------  ---  ------------  -------  -------  ----------  --------------  ----------
+              1  |    chr1             9939    10272  +           chr1            +
+              0  |    chr1             9916    10187  -           chr1            -
+              0  |    chr1             9916    10278  -           chr1            -
+              2  |    chr1             9951    10187  -           chr1            -
+              2  |    chr1             9951    10278  -           chr1            -
+        PyRanges with 5 rows, 6 columns, and 1 index columns (with 2 index duplicates).
+        Contains 1 chromosomes and 2 strands.
+
+        # use a custom function that keeps the start of the first interval and the end of the second
+        >>> def custom_combine(s1, e1, s2, e2): return (s1, e2)
+        >>> j.combine_interval_columns(custom_combine)
+          index  |    Chromosome      Start      End  Strand      Chromosome_b    Strand_b
+          int64  |    category        int64    int64  category    category        category
+        -------  ---  ------------  -------  -------  ----------  --------------  ----------
+              1  |    chr1             9939    10272  +           chr1            +
+              0  |    chr1             9916    10187  -           chr1            -
+              0  |    chr1             9916    10278  -           chr1            -
+              2  |    chr1             9951    10187  -           chr1            -
+              2  |    chr1             9951    10278  -           chr1            -
+        PyRanges with 5 rows, 6 columns, and 1 index columns (with 2 index duplicates).
+        Contains 1 chromosomes and 2 strands.
+
+
         """
-        new_starts = pd.Series(
-            np.where(self[start] > self[start2].to_numpy(), self[start], self[start2]),
-            index=self.index,
-        )
+        from pyranges.methods.combine_positions import _intersect_interval_columns, _union_interval_columns
 
-        new_ends = pd.Series(
-            np.where(self[end] < self[end2].to_numpy(), self[end], self[end2]),
-            index=self.index,
-        )
+        if function == "intersect":
+            function = _intersect_interval_columns
+        elif function == "union":
+            function = _union_interval_columns
 
-        self[START_COL] = new_starts
-        self[END_COL] = new_ends
+        new_starts, new_ends = function(self[start], self[end], self[start2], self[end2])
+
+        z = self.copy()
+        z[START_COL] = new_starts
+        z[END_COL] = new_ends
 
         cols_to_drop = list({start, end, start2, end2}.difference(RANGE_COLS) if drop_old_columns else {})
 
-        return self.drop_and_return(labels=cols_to_drop, axis="columns")
+        return z.drop_and_return(labels=cols_to_drop, axis="columns")

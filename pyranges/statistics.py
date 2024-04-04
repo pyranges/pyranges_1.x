@@ -269,7 +269,7 @@ def mcc(
 
         else:  # noqa: RET507
             j = t.interval_join(f, strand_behavior=strand_behavior)
-            tp_gr = j.intersect_interval_columns(start2="Start_b", end2="End_b").merge_overlaps(use_strand=strand)
+            tp_gr = j.combine_interval_columns().merge_overlaps(use_strand=strand)
             if strand:
                 for _strand in "+ -".split():
                     tp = tp_gr[_strand].length
