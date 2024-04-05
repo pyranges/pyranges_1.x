@@ -554,7 +554,7 @@ class PyRanges(RangeFrame):
         preserve_index: bool = False,
         **kwargs: Any,
     ) -> "pr.PyRanges":
-        """Apply function to each group of overlapping intervals, by chromosome and optionally strand.
+        """Apply function to each group of intervals, defined by chromosome and optionally strand.
 
         Parameters
         ----------
@@ -564,6 +564,11 @@ class PyRanges(RangeFrame):
 
         function : Callable
             Function that takes a PyRanges and optionally kwargs and returns a PyRanges.
+            The function must accept a **kwargs argument. It may be used to extract useful information:
+            use_strand = kwargs.get("use_strand", False)
+            group = kwargs.get("__by__", {})
+            # e.g. chromosome = group.get("Chromosome", None)
+            # e.g. strand = group.get("Strand", "+")
 
         by : str or list of str or None
             Columns - in addition to chromosome and strand - to group by.
@@ -604,10 +609,16 @@ class PyRanges(RangeFrame):
             Second PyRanges to apply function to.
 
         function : Callable
-            Function that takes two PyRanges - and optionally kwargs - and returns a PyRanges.
+            Function that takes two PyRanges  and returns a PyRanges.
+            The function shouldb accept a **kwargs argument. It may be used to extract useful information:
+            group = kwargs.get("__by__", {})
+            # e.g. chromosome = group.get("Chromosome", None)
+            # e.g. strand = group.get("Strand", "+")
 
-        strand_behavior: str
-            "auto", "same", "opposite" (default: "auto")
+        strand_behavior : {"auto", "same", "opposite", "ignore"}, default "auto"
+            Whether to consider overlaps of intervals on the same strand, the opposite or ignore strand
+            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_values_valid)
+            otherwise ignore the strand information.
 
         by : str or list of str or None
             Additional columns - in addition to chromosome and strand - to group by.
