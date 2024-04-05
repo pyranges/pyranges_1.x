@@ -12,7 +12,7 @@ def test_join_issue_4_right() -> None:
     signal_data = pr.example_data.chipseq
     signal_data["Score"] = np.random.randint(0, 100, len(signal_data))
 
-    query_regions.interval_join(signal_data)
+    query_regions.join_ranges(signal_data)
 
 
 def test_join_issue_8():
@@ -32,7 +32,7 @@ def test_join_issue_8():
     g = pr.PyRanges(gd)
     m = pr.PyRanges(md)
 
-    j = m.interval_join(g)
+    j = m.join_ranges(g)
     expected_result = pr.PyRanges(
         {
             "Chromosome": ["chr1", "chr1"],
@@ -67,7 +67,7 @@ def test_join_issue_8_right():
     g = pr.PyRanges(gd)
     m = pr.PyRanges(md)
 
-    j = m.interval_join(g, join_type="right")
+    j = m.join_ranges(g, join_type="right")
 
     expected_result = pr.PyRanges(
         {

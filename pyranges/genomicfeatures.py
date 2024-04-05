@@ -70,7 +70,7 @@ class GenomicFeaturesMethods:
         """
         gr = self.pr
 
-        if not gr.strand_values_valid:
+        if not gr.strand_valid:
             msg = (
                 "Cannot compute TSSes or TESes without strand info. Perhaps use extend()"
                 "or subsequence() or spliced_subsequence() instead?"
@@ -125,7 +125,7 @@ class GenomicFeaturesMethods:
         """
         gr = self.pr
 
-        if not gr.strand_values_valid:
+        if not gr.strand_valid:
             msg = "Cannot compute TSSes or TESes without strand info. Perhaps use extend() or subsequence() or spliced_subsequence() instead?"
             raise ValueError(msg)
 
@@ -220,7 +220,7 @@ class GenomicFeaturesMethods:
         inner_df = mypy_ensure_pyranges(gr.loc[gr[feature_column] == inner_feature])
         outer_df = mypy_ensure_pyranges(gr.loc[gr[feature_column] == outer_feature])
 
-        return outer_df.subtract_intervals(inner_df, match_by=by)
+        return outer_df.subtract_ranges(inner_df, match_by=by)
 
 
 def _outside_bounds(df: DataFrame, **kwargs) -> DataFrame:

@@ -357,7 +357,7 @@ def test_join(gr, gr2, strandedness) -> None:
         dtype={"Chromosome": "category", "Strand": "category"},
     ).drop("Chromosome_b Overlap".split(), axis=1)
 
-    result = gr.interval_join(gr2, strandedness=strandedness)
+    result = gr.join_ranges(gr2, strandedness=strandedness)
 
     if result.df.empty:
         assert bedtools_df.empty

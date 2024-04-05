@@ -104,7 +104,7 @@ def chrom_or_strand_with_slice(pr: "PyRanges", key: tuple) -> "pd.Series[bool]":
     if chrom_or_strand in (col := pr[CHROM_COL].astype(type(chrom_or_strand))).to_numpy():
         gr = pr[col == chrom_or_strand]
         rows = _rows_matching_range(gr, loc)
-    elif pr.strand_values_valid and chrom_or_strand in (col := pr[STRAND_COL].astype(type(chrom_or_strand))).to_numpy():
+    elif pr.strand_valid and chrom_or_strand in (col := pr[STRAND_COL].astype(type(chrom_or_strand))).to_numpy():
         rows = _rows_matching_range(pr.loc[col == chrom_or_strand], loc)
     else:
         msg = f"Chromosome or strand {chrom_or_strand} not found in PyRanges."
@@ -124,7 +124,7 @@ def get_chrom_and_strand(pr: "PyRanges", key: str | int) -> "pd.Series[bool]":
     We do not know whether the key is a chromosome or a strand, so we potentially have to check both.
     """
     key_is_chrom = str(key) in (pr[CHROM_COL].astype(str)).to_numpy()
-    key_is_strand = pr.has_strand_column and str(key) in pr[STRAND_COL].astype(str).to_numpy()
+    key_is_strand = pr.has_strand and str(key) in pr[STRAND_COL].astype(str).to_numpy()
     if key_is_chrom:
         chrom_col: "pd.Series[str]" = pr[CHROM_COL]
         rows = chrom_col == str(key)
