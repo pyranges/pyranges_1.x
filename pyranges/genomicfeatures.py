@@ -220,7 +220,7 @@ class GenomicFeaturesMethods:
         inner_df = mypy_ensure_pyranges(gr.loc[gr[feature_column] == inner_feature])
         outer_df = mypy_ensure_pyranges(gr.loc[gr[feature_column] == outer_feature])
 
-        return outer_df.subtract_intervals(inner_df, by=by)
+        return outer_df.subtract_intervals(inner_df, match_by=by)
 
 
 def _outside_bounds(df: DataFrame, **kwargs) -> DataFrame:
