@@ -250,7 +250,7 @@ def test_subtraction(gr, gr2, strand_behavior) -> None:
         sep="\t",
     )
 
-    result = gr.subtract_intervals(gr2, strand_behavior=strand_behavior)
+    result = gr.subtract_ranges(gr2, strand_behavior=strand_behavior)
 
     assert_equal(result, bedtools_df)
 

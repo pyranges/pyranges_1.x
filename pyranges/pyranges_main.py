@@ -393,7 +393,7 @@ class PyRanges(RangeFrame):
         Contains 15 chromosomes and 2 strands.
 
         """
-        self = mypy_ensure_pyranges(self.sort_values(([STRAND_COL] if self.has_strand_column else []) + RANGE_COLS))
+        self = mypy_ensure_pyranges(self.sort_values(([STRAND_COL] if self.has_strand else []) + RANGE_COLS))
         sorted_indexlike = np.array(
             natsort.order_by_index(
                 [int(i) for i in self.index],
@@ -432,10 +432,10 @@ class PyRanges(RangeFrame):
 
         max_strands_to_show = 3
 
-        if self.has_strand_column:
+        if self.has_strand:
             num_strands = self[STRAND_COL].nunique()
             strands = f" and {num_strands} strands"
-            if not self.strand_values_valid:
+            if not self.strand_valid:
                 nongenomic_strands = sorted(set(self[STRAND_COL]).difference(VALID_GENOMIC_STRAND_INFO))
                 example_strands = ", ".join(
                     [str(s) for s in nongenomic_strands[:max_strands_to_show]]
@@ -560,7 +560,7 @@ class PyRanges(RangeFrame):
         ----------
         use_strand: {"auto", True, False}, default: "auto"
             Whether to use strand information when grouping.
-            The default "auto" means True if PyRanges has valid strands (see .strand_values_valid).
+            The default "auto" means True if PyRanges has valid strands (see .strand_valid).
 
         function : Callable
             Function that takes a PyRanges and optionally kwargs and returns a PyRanges.
@@ -617,7 +617,7 @@ class PyRanges(RangeFrame):
 
         strand_behavior : {"auto", "same", "opposite", "ignore"}, default "auto"
             Whether to consider overlaps of intervals on the same strand, the opposite or ignore strand
-            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_values_valid)
+            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_valid)
             otherwise ignore the strand information.
 
         by : str or list of str or None
@@ -645,32 +645,34 @@ class PyRanges(RangeFrame):
 
     def boundaries(
         self,
-        transcript_id: str | list[str],
+        transcript_id: str | list[str] | None = None,
         agg: dict[str, str | Callable] | None = None,
     ) -> "PyRanges":
         """Return the boundaries of groups of intervals (e.g. transcripts).
 
+        While designed with transcript in mind, it can be used for any group of intervals.
+
         Parameters
         ----------
-        transcript_id : str or list of str
-            Name(s) of column(s) to group intervals
+        transcript_id : str or list of str or None
+            Name(s) of column(s) to group intervals.
+            If None, intervals are grouped by chromosome, and strand if present and valid (see .strand_valid).
 
         agg : dict or None
             Defines how to aggregate metadata columns. Provided as
             dictionary of column names -> functions, function names or list of such,
             as accepted by the pd.DataFrame.agg method.
 
-
         Returns
         -------
         PyRanges
             One interval per group, with the min(Start) and max(End) of the group
 
-
         Examples
         --------
-        >>> d = {"Chromosome": [1, 1, 1], "Start": [1, 60, 110], "End": [40, 68, 130], "transcript_id": ["tr1", "tr1", "tr2"], "meta": ["a", "b", "c"]}
-        >>> gr = pr.PyRanges(d)
+        >>> gr = pr.PyRanges({"Chromosome": [1, 1, 1], "Start": [1, 60, 110], "End": [40, 68, 130],
+        ...                   "transcript_id": ["tr1", "tr1", "tr2"], "meta": ["a", "b", "c"]})
+        >>>
         >>> gr["Length"] = gr.lengths()
         >>> gr
           index  |      Chromosome    Start      End  transcript_id    meta        Length
@@ -691,6 +693,14 @@ class PyRanges(RangeFrame):
         PyRanges with 2 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes.
 
+        >>> gr.boundaries()
+          index  |      Chromosome    Start      End
+          int64  |           int64    int64    int64
+        -------  ---  ------------  -------  -------
+              0  |               1        1      130
+        PyRanges with 1 rows, 3 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
         >>> gr.boundaries("transcript_id", agg={"Length":"sum", "meta": ",".join})
           index  |      Chromosome    Start      End  transcript_id    meta        Length
           int64  |           int64    int64    int64  object           object       int64
@@ -703,15 +713,11 @@ class PyRanges(RangeFrame):
         """
         from pyranges.methods.boundaries import _bounds
 
-        if not transcript_id:
-            msg = "by must be a string or list of strings"
-            raise ValueError(msg)
-
         return self.apply_single(
             _bounds,
             by=self._by_to_list(transcript_id),
             agg=agg,
-            use_strand=self.strand_values_valid,
+            use_strand=self.strand_valid,
         )
 
     # TO DO: fix, move to orfs namespace (add extend_orf to it)
@@ -796,12 +802,12 @@ class PyRanges(RangeFrame):
 
     @property
     def chromosomes(self) -> list[str]:
-        """Return chromosomes in natsorted order."""
+        """Return the list of unique chromosomes in this PyRanges, in natsorted order (e.g. chr2 < chr11)."""
         return natsorted(self[CHROM_COL].drop_duplicates())
 
     @property
     def chromosomes_and_strands(self) -> list[tuple[str, str]]:
-        """Return chromosomes and strands in natsorted order.
+        """Return the list of unique (chromosome, strand) pairs in this PyRanges in natsorted order (e.g. chr2 < chr11).
 
         Examples
         --------
@@ -818,13 +824,13 @@ class PyRanges(RangeFrame):
         return natsorted({*zip(self["Chromosome"], self["Strand"], strict=True)})
 
     def _assert_has_strand(self) -> None:
-        if not self.has_strand_column:
+        if not self.has_strand:
             msg = "PyRanges has no strand column."
             raise ValueError(msg)
 
     def _assert_strand_values_valid(self) -> None:
         self._assert_has_strand()
-        if not self.strand_values_valid:
+        if not self.strand_valid:
             msg = f"PyRanges contains non-genomic strands. Only {VALID_GENOMIC_STRAND_INFO} valid."
             raise ValueError(msg)
 
@@ -843,7 +849,7 @@ class PyRanges(RangeFrame):
         ----------
         use_strand: {"auto", True, False}, default: "auto"
             Whether to cluster only intervals on the same strand.
-            The default "auto" means True if PyRanges has valid strands (see .strand_values_valid).
+            The default "auto" means True if PyRanges has valid strands (see .strand_valid).
 
         match_by : str or list, default None
             If provided, only intervals with an equal value in column(s) `match_by` may be considered as overlapping.
@@ -919,7 +925,7 @@ class PyRanges(RangeFrame):
         from pyranges.methods.cluster import _cluster
 
         strand = validate_and_convert_strand(self, use_strand=use_strand)
-        _self = self.copy() if (not strand and self.has_strand_column) else self
+        _self = self.copy() if (not strand and self.has_strand) else self
 
         _by = [match_by] if isinstance(match_by, str) else ([*match_by] if match_by is not None else [])
         gr = _self.apply_single(
@@ -931,7 +937,7 @@ class PyRanges(RangeFrame):
             cluster_column=cluster_column,
             preserve_index=True,
         )
-        gr[cluster_column] = gr.groupby(self.location_cols + _by + [cluster_column]).ngroup()
+        gr[cluster_column] = gr.groupby(self.loc_columns + _by + [cluster_column]).ngroup()
         return gr
 
     def copy(self, *args, **kwargs) -> "pr.PyRanges":
@@ -961,7 +967,7 @@ class PyRanges(RangeFrame):
 
         strand_behavior : {"auto", "same", "opposite", "ignore"}, default "auto"
             Whether to consider overlaps of intervals on the same strand, the opposite or ignore strand
-            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_values_valid)
+            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_valid)
             otherwise ignore the strand information.
 
         keep_nonoverlapping : bool, default True
@@ -1050,7 +1056,7 @@ class PyRanges(RangeFrame):
 
         strand_behavior : {"auto", "same", "opposite", "ignore"}, default "auto"
             Whether to consider overlaps of intervals on the same strand, the opposite or ignore strand
-            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_values_valid)
+            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_valid)
             otherwise ignore the strand information.
 
         keep_nonoverlapping : bool, default True
@@ -1230,7 +1236,7 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         """
-        if (ext_3 or ext_5) and not self.strand_values_valid:
+        if (ext_3 or ext_5) and not self.strand_valid:
             msg = "PyRanges must be stranded to add 5/3-end specific extend."
             raise ValueError(msg)
 
@@ -1241,7 +1247,7 @@ class PyRanges(RangeFrame):
         return (
             self.apply_single(
                 _extend,
-                by=group_keys_single(self, use_strand=self.strand_values_valid),
+                by=group_keys_single(self, use_strand=self.strand_valid),
                 ext=ext,
                 ext_3=ext_3,
                 ext_5=ext_5,
@@ -1250,7 +1256,7 @@ class PyRanges(RangeFrame):
             else (
                 self.apply_single(
                     _extend_grp,
-                    by=group_keys_single(self, use_strand=self.strand_values_valid),
+                    by=group_keys_single(self, use_strand=self.strand_valid),
                     ext=ext,
                     ext_3=ext_3,
                     ext_5=ext_5,
@@ -1323,7 +1329,7 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         """
-        if not (self.has_strand_column and self.strand_values_valid):
+        if not (self.has_strand and self.strand_valid):
             msg = f"Need PyRanges with valid strands ({VALID_GENOMIC_STRAND_INFO}) to find 5'."
             raise AssertionError(msg)
 
@@ -1334,33 +1340,34 @@ class PyRanges(RangeFrame):
         )
 
     @property
-    def location_cols(self) -> list[str]:
-        """Return location columns.
-
-        If the PyRanges has a strand column, the strand column is included.
-        """
-        return CHROM_AND_STRAND_COLS if self.has_strand_column else [CHROM_COL]
+    def loc_columns(self) -> list[str]:
+        """Return the names of genomic location columns of this PyRanges (Chromosome, and Strand if present)."""
+        return CHROM_AND_STRAND_COLS if self.has_strand else [CHROM_COL]
 
     @property
-    def has_strand_column(self) -> bool:
+    def has_strand(self) -> bool:
         """Return whether PyRanges has a strand column.
 
         Does not check whether the strand column contains valid values.
         """
         return STRAND_COL in self.columns
 
-    # TO DO: Join outer??
-    def interval_join(
+    def join_ranges(
         self,
         other: "PyRanges",
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
         join_type: VALID_JOIN_TYPE = "inner",
         *,
+        match_by: VALID_BY_TYPES = None,
         slack: int = 0,
         suffix: str = JOIN_SUFFIX,
         report_overlap: bool = False,
     ) -> "PyRanges":
-        """Join PyRanges on genomic location.
+        """Join PyRanges based on genomic overlap.
+
+        Find pairs of overlapping intervals between two PyRanges (self and other) and combine their columns.
+        Each row in the return PyRanges contains columns of both intervals, including their coordinates.
+        By default, intervals without overlap are not reported.
 
         Parameters
         ----------
@@ -1369,7 +1376,7 @@ class PyRanges(RangeFrame):
 
         strand_behavior : {"auto", "same", "opposite", "ignore"}, default "auto"
             Whether to consider overlaps of intervals on the same strand, the opposite or ignore strand
-            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_values_valid)
+            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_valid)
             otherwise ignore the strand information.
 
         join_type : {"inner", "left", "right", "outer"}, default "inner"
@@ -1377,6 +1384,9 @@ class PyRanges(RangeFrame):
             "left" keeps all intervals in self, "right" keeps all intervals in other, "outer" keeps both.
             For types other than "inner", intervals in self without overlaps will have NaN in columns from other,
             and/or vice versa.
+
+        match_by : str or list, default None
+            If provided, only intervals with an equal value in column(s) `match_by` may be joined.
 
         report_overlap : bool, default False
             Report amount of overlap in base pairs.
@@ -1434,7 +1444,7 @@ class PyRanges(RangeFrame):
         PyRanges with 2 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        >>> f1.interval_join(f2)
+        >>> f1.join_ranges(f2)
           index  |    Chromosome      Start      End  Name       Chromosome_b      Start_b    End_b  Name_b
           int64  |    object          int64    int64  object     object              int64    int64  object
         -------  ---  ------------  -------  -------  ---------  --------------  ---------  -------  --------
@@ -1444,7 +1454,7 @@ class PyRanges(RangeFrame):
 
         # Note that since some start and end columns are nan, a regular DataFrame is returned.
 
-        >>> f1.interval_join(f2, join_type="left")
+        >>> f1.join_ranges(f2, join_type="left")
           index  |    Chromosome      Start      End  Name       Chromosome_b      Start_b      End_b  Name_b
           int64  |    object          int64    int64  object     object            float64    float64  object
         -------  ---  ------------  -------  -------  ---------  --------------  ---------  ---------  --------
@@ -1454,7 +1464,7 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 8 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        >>> f1.interval_join(f2, join_type="outer")
+        >>> f1.join_ranges(f2, join_type="outer")
           index  |    Chromosome        Start        End  Name       Chromosome_b      Start_b      End_b  Name_b
           int64  |    object          float64    float64  object     object            float64    float64  object
         -------  ---  ------------  ---------  ---------  ---------  --------------  ---------  ---------  --------
@@ -1467,7 +1477,50 @@ class PyRanges(RangeFrame):
         Invalid ranges:
           * 1 starts or ends are nan. See indexes: 0
 
-        >>> bad = f1.interval_join(f2, join_type="right")
+        >>> gr = pr.PyRanges({"Chromosome": ["chr1", "chr2", "chr1", "chr3"], "Start": [1, 4, 10, 0],
+        ...                   "End": [3, 9, 11, 1], "ID": ["a", "b", "c", "d"]})
+        >>> gr
+          index  |    Chromosome      Start      End  ID
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                1        3  a
+              1  |    chr2                4        9  b
+              2  |    chr1               10       11  c
+              3  |    chr3                0        1  d
+        PyRanges with 4 rows, 4 columns, and 1 index columns.
+        Contains 3 chromosomes.
+
+        >>> gr2 = pr.PyRanges({"Chromosome": ["chr1", "chr1", "chr1"], "Start": [2, 2, 1], "End": [3, 9, 10],
+        ...                     "ID": ["a", "b", "c"]})
+        >>> gr2
+          index  |    Chromosome      Start      End  ID
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                2        3  a
+              1  |    chr1                2        9  b
+              2  |    chr1                1       10  c
+        PyRanges with 3 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        >>> gr.join_ranges(gr2)
+          index  |    Chromosome      Start      End  ID        Chromosome_b      Start_b    End_b  ID_b
+          int64  |    object          int64    int64  object    object              int64    int64  object
+        -------  ---  ------------  -------  -------  --------  --------------  ---------  -------  --------
+              0  |    chr1                1        3  a         chr1                    1       10  c
+              0  |    chr1                1        3  a         chr1                    2        9  b
+              0  |    chr1                1        3  a         chr1                    2        3  a
+        PyRanges with 3 rows, 8 columns, and 1 index columns (with 2 index duplicates).
+        Contains 1 chromosomes.
+
+        >>> gr.join_ranges(gr2, match_by="ID")
+          index  |    Chromosome      Start      End  ID        Chromosome_b      Start_b    End_b  ID_b
+          int64  |    object          int64    int64  object    object              int64    int64  object
+        -------  ---  ------------  -------  -------  --------  --------------  ---------  -------  --------
+              0  |    chr1                1        3  a         chr1                    2        3  a
+        PyRanges with 1 rows, 8 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        >>> bad = f1.join_ranges(f2, join_type="right")
         >>> bad
           index  |    Chromosome        Start        End  Name       Chromosome_b      Start_b    End_b  Name_b
           int64  |    object          float64    float64  object     object              int64    int64  object
@@ -1478,14 +1531,14 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes.
         Invalid ranges:
           * 1 starts or ends are nan. See indexes: 0
-        >>> f2.interval_join(bad)  # bad.interval_join(f2) would not work either.
+        >>> f2.join_ranges(bad)  # bad.join_ranges(f2) would not work either.
         Traceback (most recent call last):
         ...
         ValueError: Cannot perform function on invalid ranges (function was _both_dfs).
 
         With slack 1, bookended features are joined (see row 1):
 
-        >>> f1.interval_join(f2, slack=1)
+        >>> f1.join_ranges(f2, slack=1)
           index  |    Chromosome      Start      End  Name       Chromosome_b      Start_b    End_b  Name_b
           int64  |    object          int64    int64  object     object              int64    int64  object
         -------  ---  ------------  -------  -------  ---------  --------------  ---------  -------  --------
@@ -1508,6 +1561,7 @@ class PyRanges(RangeFrame):
             other,
             _both_dfs,
             strand_behavior=strand_behavior,
+            by=match_by,
             join_type=join_type,
             report_overlap=report_overlap,
             suffix=suffix,
@@ -1607,11 +1661,14 @@ class PyRanges(RangeFrame):
     ) -> "PyRanges":
         """Find the maximal disjoint set of intervals.
 
+        Returns a subset of the rows in self so that no two intervals overlap, choosing those that
+        maximize the number of intervals in the result.
+
         Parameters
         ----------
         use_strand: {"auto", True, False}, default: "auto"
             Find the max disjoint set separately for each strand.
-            The default "auto" means True if PyRanges has valid strands (see .strand_values_valid).
+            The default "auto" means True if PyRanges has valid strands (see .strand_valid).
 
         slack : int, default 0
             Consider intervals within a distance of slack to be overlapping.
@@ -1651,7 +1708,13 @@ class PyRanges(RangeFrame):
         use_strand = validate_and_convert_strand(self, use_strand)
         from pyranges.methods.max_disjoint import _max_disjoint
 
-        return self.apply_single(_max_disjoint, by=match_by, use_strand=use_strand, preserve_index=True, slack=slack)
+        result = self.apply_single(_max_disjoint, by=match_by, use_strand=use_strand, preserve_index=True, slack=slack)
+
+        # reordering as the original one
+        common_index = self.index.intersection(result.index)
+        result = result.reindex(common_index)
+
+        return mypy_ensure_pyranges(result)
 
     def merge_overlaps(
         self,
@@ -1667,7 +1730,7 @@ class PyRanges(RangeFrame):
         ----------
         use_strand: {"auto", True, False}, default: "auto"
             Only merge intervals on same strand.
-            The default "auto" means True if PyRanges has valid strands (see .strand_values_valid).
+            The default "auto" means True if PyRanges has valid strands (see .strand_valid).
 
         count : bool, default False
             Count intervals in each superinterval.
@@ -1762,7 +1825,7 @@ class PyRanges(RangeFrame):
 
         strand_behavior : {"auto", "same", "opposite", "ignore"}, default "auto"
             Whether to consider overlaps of intervals on the same strand, the opposite or ignore strand
-            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_values_valid)
+            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_valid)
             otherwise ignore the strand information.
 
         overlap : bool, default True
@@ -1831,7 +1894,7 @@ class PyRanges(RangeFrame):
         """
         from pyranges.methods.nearest import _nearest
 
-        if direction in {NEAREST_UPSTREAM, NEAREST_DOWNSTREAM} and not other.strand_values_valid:
+        if direction in {NEAREST_UPSTREAM, NEAREST_DOWNSTREAM} and not other.strand_valid:
             msg = "If doing upstream or downstream nearest, other pyranges must be stranded"
             raise AssertionError(msg)
 
@@ -1865,7 +1928,7 @@ class PyRanges(RangeFrame):
 
         strand_behavior : {"auto", "same", "opposite", "ignore"}, default "auto"
             Whether to consider overlaps of intervals on the same strand, the opposite or ignore strand
-            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_values_valid)
+            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_valid)
             otherwise ignore the strand information.
 
         invert : bool, default False
@@ -1971,7 +2034,7 @@ class PyRanges(RangeFrame):
 
         strand_behavior : {"auto", "same", "opposite", "ignore"}, default "auto"
             Whether to consider overlaps of intervals on the same strand, the opposite or ignore strand
-            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_values_valid)
+            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_valid)
             otherwise ignore the strand information.
 
         multiple : {"all", "first", "last"}, default "all"
@@ -2039,8 +2102,8 @@ class PyRanges(RangeFrame):
         from pyranges.methods.overlap import _intersect
 
         use_strand = strand_from_strand_behavior(self, other, strand_behavior)
-        self_clusters = self.merge_overlaps(use_strand=use_strand and self.has_strand_column)
-        other_clusters = other.merge_overlaps(use_strand=use_strand and other.has_strand_column)
+        self_clusters = self.merge_overlaps(use_strand=use_strand and self.has_strand)
+        other_clusters = other.merge_overlaps(use_strand=use_strand and other.has_strand)
         return mypy_ensure_pyranges(
             self_clusters.apply_pair(
                 other_clusters,
@@ -2060,7 +2123,7 @@ class PyRanges(RangeFrame):
 
         strand_behavior : {"auto", "same", "opposite", "ignore"}, default "auto"
             Whether to consider overlaps of intervals on the same strand, the opposite or ignore strand
-            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_values_valid)
+            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_valid)
             otherwise ignore the strand information.
 
         Returns
@@ -2145,7 +2208,7 @@ class PyRanges(RangeFrame):
 
         use_strand: {"auto", True, False}, default: "auto"
             Whether negative strand intervals should be sorted in descending order, meaning 5' to 3'.
-            The default "auto" means True if PyRanges has valid strands (see .strand_values_valid).
+            The default "auto" means True if PyRanges has valid strands (see .strand_valid).
 
         natsorting : bool, default False
             Whether to use natural sorting for Chromosome column, so that e.g. chr2 < chr11. Slows down sorting.
@@ -2428,7 +2491,7 @@ class PyRanges(RangeFrame):
             Whether strand is considered when interpreting the start and end arguments of this function.
             If True, counting is from the 5' end (the leftmost coordinate for + strand and the rightmost for - strand).
             If False, all intervals are processed like they reside on the + strand.
-            The default "auto" means True if PyRanges has valid strands (see .strand_values_valid).
+            The default "auto" means True if PyRanges has valid strands (see .strand_valid).
 
         Returns
         -------
@@ -2517,7 +2580,7 @@ class PyRanges(RangeFrame):
 
         from pyranges.methods.spliced_subsequence import _spliced_subseq
 
-        if use_strand and not self.strand_values_valid:
+        if use_strand and not self.strand_valid:
             msg = "spliced_subsequence: you can use strand=True only for stranded PyRanges!"
             raise ValueError(msg)
 
@@ -2548,14 +2611,17 @@ class PyRanges(RangeFrame):
     ) -> "PyRanges":
         """Split into non-overlapping intervals.
 
+        The output does not contain overlapping intervals, but intervals that are adjacent are not merged.
+        No columns other than Chromosome, Start, End, and Strand (if present) are output.
+
         Parameters
         ----------
         use_strand: {"auto", True, False}, default: "auto"
             Whether to split only intervals on the same strand.
-            The default "auto" means True if PyRanges has valid strands (see .strand_values_valid).
+            The default "auto" means True if PyRanges has valid strands (see .strand_valid).
 
         between : bool, default False
-            Include lengths between intervals.
+            Output also intervals corresponding to the gaps between the intervals in self.
 
         match_by : str or list, default None
             If provided, only intervals with an equal value in column(s) `match_by` may be split.
@@ -2572,9 +2638,8 @@ class PyRanges(RangeFrame):
 
         Examples
         --------
-        >>> d = {'Chromosome': ['chr1', 'chr1', 'chr1', 'chr1'], 'Start': [3, 5, 5, 11],
-        ...       'End': [6, 9, 7, 12], 'Strand': ['+', '+', '-', '-']}
-        >>> gr = pr.PyRanges(d)
+        >>> gr = pr.PyRanges({'Chromosome': ['chr1', 'chr1', 'chr1', 'chr1'], 'Start': [3, 5, 5, 11],
+        ...                   'End': [6, 9, 7, 12], 'Strand': ['+', '+', '-', '-']})
         >>> gr
           index  |    Chromosome      Start      End  Strand
           int64  |    object          int64    int64  object
@@ -2663,24 +2728,24 @@ class PyRanges(RangeFrame):
         """
         from pyranges.methods.split import _split
 
-        strand = validate_and_convert_strand(self, use_strand=use_strand)
+        use_strand = validate_and_convert_strand(self, use_strand=use_strand)
         df = self.apply_single(
             _split,
             by=match_by,
             preserve_index=False,
-            use_strand=strand,
+            use_strand=use_strand,
         )
         if not between:
             df = df.overlap(
                 self,
                 how=OVERLAP_FIRST,
-                strand_behavior=strand_behavior_from_strand_and_validate(self, strand),
+                strand_behavior=strand_behavior_from_strand_and_validate(self, use_strand),
             )
 
         return df
 
     @property
-    def strand_values_valid(self) -> bool:
+    def strand_valid(self) -> bool:
         """Whether PyRanges has (valid) strand info.
 
         Note:
@@ -2690,7 +2755,7 @@ class PyRanges(RangeFrame):
         See Also:
         --------
         PyRanges.strands : return the strands
-        PyRanges.has_strand_column : whether a Strand column is present
+        PyRanges.has_strand : whether a Strand column is present
 
         Examples:
         --------
@@ -2705,7 +2770,7 @@ class PyRanges(RangeFrame):
               1  |    chr1                6        8  .
         PyRanges with 2 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands (including non-genomic strands: .).
-        >>> gr.strand_values_valid  # invalid strand value: '.'
+        >>> gr.strand_valid  # invalid strand value: '.'
         False
 
         >>> "Strand" in gr.columns
@@ -2752,7 +2817,7 @@ class PyRanges(RangeFrame):
             Whether strand is considered when interpreting the start and end arguments of this function.
             If True, counting is from the 5' end (the leftmost coordinate for + strand and the rightmost for - strand).
             If False, all intervals are processed like they reside on the + strand.
-            The default "auto" means True if PyRanges has valid strands (see .strand_values_valid).
+            The default "auto" means True if PyRanges has valid strands (see .strand_valid).
 
         Returns
         -------
@@ -2846,7 +2911,7 @@ class PyRanges(RangeFrame):
 
         return mypy_ensure_pyranges(result)
 
-    def subtract_intervals(
+    def subtract_ranges(
         self,
         other: "pr.PyRanges",
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
@@ -2899,7 +2964,7 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 3 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        >>> gr.subtract_intervals(gr2)
+        >>> gr.subtract_ranges(gr2)
           index  |    Chromosome      Start      End  ID
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
@@ -2930,7 +2995,7 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        >>> gr.subtract_intervals(gr2, match_by="tag")
+        >>> gr.subtract_ranges(gr2, match_by="tag")
           index  |    Chromosome      Start      End  ID        tag
           int64  |    object          int64    int64  object    object
         -------  ---  ------------  -------  -------  --------  --------
@@ -2943,7 +3008,7 @@ class PyRanges(RangeFrame):
         """
         from pyranges.methods.subtraction import _subtraction
 
-        strand = other.strand_values_valid if strand_behavior == STRAND_BEHAVIOR_AUTO else strand_behavior != "ignore"
+        strand = other.strand_valid if strand_behavior == STRAND_BEHAVIOR_AUTO else strand_behavior != "ignore"
 
         other_clusters = other.merge_overlaps(use_strand=strand, match_by=match_by)
 
@@ -3219,7 +3284,7 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         """
-        if not (self.has_strand_column and self.strand_values_valid):
+        if not (self.has_strand and self.strand_valid):
             msg = f"Need PyRanges with valid strands ({VALID_GENOMIC_STRAND_INFO}) to find 3'."
             raise AssertionError(msg)
         return (
@@ -3680,7 +3745,7 @@ class PyRanges(RangeFrame):
 
         """
         if strand is None:
-            strand = self.strand_values_valid
+            strand = self.strand_valid
 
         from pyranges.methods.to_rle import _to_rle
 
@@ -3729,7 +3794,7 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes.
 
         """
-        if not self.has_strand_column:
+        if not self.has_strand:
             return self
         return self.drop_and_return(STRAND_COL, axis=1)
 
@@ -3749,7 +3814,7 @@ class PyRanges(RangeFrame):
 
         use_strand: {"auto", True, False}, default: "auto"
             Whether negative strand intervals should be sliced in descending order, meaning 5' to 3'.
-            The default "auto" means True if PyRanges has valid strands (see .strand_values_valid).
+            The default "auto" means True if PyRanges has valid strands (see .strand_valid).
 
         Returns
         -------
@@ -3901,7 +3966,7 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 1 strands.
 
         """
-        cols = GENOME_LOC_COLS_WITH_STRAND if self.has_strand_column else GENOME_LOC_COLS
+        cols = GENOME_LOC_COLS_WITH_STRAND if self.has_strand else GENOME_LOC_COLS
         return mypy_ensure_pyranges(super().__getitem__(cols))
 
     def get_with_loc_columns(
@@ -3976,7 +4041,7 @@ class PyRanges(RangeFrame):
                 keys,
             )
         else:
-            loc_columns = GENOME_LOC_COLS_WITH_STRAND if self.has_strand_column else GENOME_LOC_COLS
+            loc_columns = GENOME_LOC_COLS_WITH_STRAND if self.has_strand else GENOME_LOC_COLS
             cols_to_include_genome_loc_correct_order = loc_columns + keys
 
         return mypy_ensure_pyranges(super().__getitem__(cols_to_include_genome_loc_correct_order))
@@ -4010,7 +4075,7 @@ class PyRanges(RangeFrame):
 
         strand_behavior : {"auto", "same", "opposite", "ignore"}, default "auto"
             Whether to consider overlaps of intervals on the same strand, the opposite or ignore strand
-            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_values_valid)
+            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_valid)
             otherwise ignore the strand information.
 
         match_by : str or list, default None
@@ -4025,7 +4090,7 @@ class PyRanges(RangeFrame):
         See Also
         --------
         PyRanges.overlap : report overlapping (unmodified) intervals
-        PyRanges.subtract_intervals : report non-overlapping subintervals
+        PyRanges.subtract_ranges : report non-overlapping subintervals
         PyRanges.set_intersect : set-intersect PyRanges
 
         Examples
@@ -4132,7 +4197,7 @@ class PyRanges(RangeFrame):
         Examples
         --------
         >>> gr1, gr2 = pr.example_data.aorta.head(3).remove_nonloc_columns(), pr.example_data.aorta2.head(3).remove_nonloc_columns()
-        >>> j = gr1.interval_join(gr2)
+        >>> j = gr1.join_ranges(gr2)
         >>> j
           index  |    Chromosome      Start      End  Strand      Chromosome_b      Start_b    End_b  Strand_b
           int64  |    category        int64    int64  category    category            int64    int64  category

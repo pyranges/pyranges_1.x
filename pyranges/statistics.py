@@ -268,7 +268,7 @@ def mcc(
             continue
 
         else:  # noqa: RET507
-            j = t.interval_join(f, strand_behavior=strand_behavior)
+            j = t.join_ranges(f, strand_behavior=strand_behavior)
             tp_gr = j.combine_interval_columns().merge_overlaps(use_strand=strand)
             if strand:
                 for _strand in "+ -".split():
@@ -566,7 +566,7 @@ def simes(
 
     if keep_position:
         positions += GENOME_LOC_COLS
-        if df.has_strand_column:
+        if df.has_strand:
             positions += ["Strand"]
 
     sorter = [*by, pcol]
@@ -591,7 +591,7 @@ def simes(
             "Simes": "min",
         }
 
-        if sdf.has_strand_column:
+        if sdf.has_strand:
             grpby_dict["Strand"] = "first"
 
         simes = sdf.groupby(by).agg(grpby_dict).reset_index()
@@ -671,11 +671,7 @@ class StatisticsMethods:
         _chromsizes = chromsizes_as_int(chromsizes)
 
         ensure_strand_behavior_options_valid(self.pr, other, strand_behavior=strand_behavior)
-        strand = (
-            self.pr.strand_values_valid
-            and other.strand_values_valid
-            and strand_behavior in {STRAND_BEHAVIOR_AUTO, True}
-        )
+        strand = self.pr.strand_valid and other.strand_valid and strand_behavior in {STRAND_BEHAVIOR_AUTO, True}
         reference_length = self.pr.merge_overlaps(use_strand=strand).length
         query_length = other.merge_overlaps(use_strand=strand).length
 
@@ -718,11 +714,7 @@ class StatisticsMethods:
 
         """
         ensure_strand_behavior_options_valid(self.pr, other, strand_behavior=strand_behavior)
-        strand = (
-            self.pr.strand_values_valid
-            and other.strand_values_valid
-            and strand_behavior in {STRAND_BEHAVIOR_AUTO, True}
-        )
+        strand = self.pr.strand_valid and other.strand_valid and strand_behavior in {STRAND_BEHAVIOR_AUTO, True}
 
         intersection_sum = self.pr.set_intersect(other).lengths().sum()
 

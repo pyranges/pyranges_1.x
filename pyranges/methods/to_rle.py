@@ -32,7 +32,7 @@ def _to_rle(
     }  # already sparse
     kwargs.update(_kwargs)
 
-    result = {k: coverage(v, **kwargs) for k, v in ranges.groupby(ranges.location_cols)}
+    result = {k: coverage(v, **kwargs) for k, v in ranges.groupby(ranges.loc_columns)}
 
     if rpm:
         multiplier = 1e6 / len(ranges)

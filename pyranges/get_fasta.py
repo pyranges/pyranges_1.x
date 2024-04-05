@@ -117,7 +117,7 @@ def get_sequence(
             raise ValueError(msg)
         pyfaidx_fasta = pyfaidx.Fasta(path, read_ahead=int(1e5))
 
-    use_strand = gr.strand_values_valid
+    use_strand = gr.strand_valid
     iterables = (
         zip(gr[CHROM_COL], gr[START_COL], gr[END_COL], [FORWARD_STRAND], strict=False)
         if not use_strand
@@ -209,7 +209,7 @@ def get_transcript_sequence(
     ...         _bytes_written = fw.write(f'>{row.transcript}\\n{s}\\n')
 
     """
-    gr = gr.sort_by_5_prime_ascending_and_3_prime_descending() if gr.strand_values_valid else gr.sort_by_position()
+    gr = gr.sort_by_5_prime_ascending_and_3_prime_descending() if gr.strand_valid else gr.sort_by_position()
 
     seq = get_sequence(gr, path=path, pyfaidx_fasta=pyfaidx_fasta)
     gr["Sequence"] = seq.to_numpy()

@@ -44,7 +44,7 @@ def _spliced_subseq(
     #     which updates it to '-' or '+' before calling _spliced_subseq, or
     #  2. it was called with strand=None and self is stranded
 
-    if strand and not df.strand_values_valid:
+    if strand and not df.strand_valid:
         msg = "Cannot have strand=True on unstranded pyranges!"
         raise AssertionError(msg)
 
