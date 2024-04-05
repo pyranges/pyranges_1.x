@@ -554,16 +554,21 @@ class PyRanges(RangeFrame):
         preserve_index: bool = False,
         **kwargs: Any,
     ) -> "pr.PyRanges":
-        """Apply function to each group of overlapping intervals, by chromosome and optionally strand.
+        """Apply function to each group of intervals, defined by chromosome and optionally strand.
 
         Parameters
         ----------
-        use_strand: "auto", True, False (default: "auto")
-            Whether to use strand information when grouping. "auto" means use strand if
-            the PyRanges has a strand column.
+        use_strand: {"auto", True, False}, default: "auto"
+            Whether to use strand information when grouping.
+            The default "auto" means True if PyRanges has valid strands (see .strand_values_valid).
 
         function : Callable
             Function that takes a PyRanges and optionally kwargs and returns a PyRanges.
+            The function must accept a **kwargs argument. It may be used to extract useful information:
+            use_strand = kwargs.get("use_strand", False)
+            group = kwargs.get("__by__", {})
+            # e.g. chromosome = group.get("Chromosome", None)
+            # e.g. strand = group.get("Strand", "+")
 
         by : str or list of str or None
             Columns - in addition to chromosome and strand - to group by.
@@ -604,10 +609,16 @@ class PyRanges(RangeFrame):
             Second PyRanges to apply function to.
 
         function : Callable
-            Function that takes two PyRanges - and optionally kwargs - and returns a PyRanges.
+            Function that takes two PyRanges  and returns a PyRanges.
+            The function shouldb accept a **kwargs argument. It may be used to extract useful information:
+            group = kwargs.get("__by__", {})
+            # e.g. chromosome = group.get("Chromosome", None)
+            # e.g. strand = group.get("Strand", "+")
 
-        strand_behavior: str
-            "auto", "same", "opposite" (default: "auto")
+        strand_behavior : {"auto", "same", "opposite", "ignore"}, default "auto"
+            Whether to consider overlaps of intervals on the same strand, the opposite or ignore strand
+            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_values_valid)
+            otherwise ignore the strand information.
 
         by : str or list of str or None
             Additional columns - in addition to chromosome and strand - to group by.
@@ -830,8 +841,9 @@ class PyRanges(RangeFrame):
 
         Parameters
         ----------
-        use_strand : bool, default None, i.e. auto
-            Whether to ignore strand information if PyRanges is stranded.
+        use_strand: {"auto", True, False}, default: "auto"
+            Whether to cluster only intervals on the same strand.
+            The default "auto" means True if PyRanges has valid strands (see .strand_values_valid).
 
         match_by : str or list, default None
             If provided, only intervals with an equal value in column(s) `match_by` may be considered as overlapping.
@@ -1597,8 +1609,9 @@ class PyRanges(RangeFrame):
 
         Parameters
         ----------
-        use_strand : bool, default None, i.e. auto
+        use_strand: {"auto", True, False}, default: "auto"
             Find the max disjoint set separately for each strand.
+            The default "auto" means True if PyRanges has valid strands (see .strand_values_valid).
 
         slack : int, default 0
             Consider intervals within a distance of slack to be overlapping.
@@ -1652,8 +1665,9 @@ class PyRanges(RangeFrame):
 
         Parameters
         ----------
-        use_strand : bool, default None, i.e. auto
+        use_strand: {"auto", True, False}, default: "auto"
             Only merge intervals on same strand.
+            The default "auto" means True if PyRanges has valid strands (see .strand_values_valid).
 
         count : bool, default False
             Count intervals in each superinterval.
@@ -2129,8 +2143,9 @@ class PyRanges(RangeFrame):
             in the desired order as part of the 'by' argument.
             You can prepend any column name with '-' to reverse the order of sorting for that column.
 
-        use_strand : bool, default None, i.e. auto
+        use_strand: {"auto", True, False}, default: "auto"
             Whether negative strand intervals should be sorted in descending order, meaning 5' to 3'.
+            The default "auto" means True if PyRanges has valid strands (see .strand_values_valid).
 
         natsorting : bool, default False
             Whether to use natural sorting for Chromosome column, so that e.g. chr2 < chr11. Slows down sorting.
@@ -2409,11 +2424,11 @@ class PyRanges(RangeFrame):
             intervals are grouped by this/these ID column(s) beforehand, e.g. exons belonging to same transcripts
 
 
-        use_strand : bool, default None, i.e. auto
+        use_strand: {"auto", True, False}, default: "auto"
             Whether strand is considered when interpreting the start and end arguments of this function.
-            If True, counting is from the 5' end, which is the leftmost coordinate for + strand and the rightmost for - strand.
+            If True, counting is from the 5' end (the leftmost coordinate for + strand and the rightmost for - strand).
             If False, all intervals are processed like they reside on the + strand.
-            If None (default), strand is considered if the PyRanges is stranded.
+            The default "auto" means True if PyRanges has valid strands (see .strand_values_valid).
 
         Returns
         -------
@@ -2535,8 +2550,9 @@ class PyRanges(RangeFrame):
 
         Parameters
         ----------
-        use_strand : bool, default "auto", i.e. auto
-            Whether to ignore strand information if PyRanges is stranded.
+        use_strand: {"auto", True, False}, default: "auto"
+            Whether to split only intervals on the same strand.
+            The default "auto" means True if PyRanges has valid strands (see .strand_values_valid).
 
         between : bool, default False
             Include lengths between intervals.
@@ -2732,11 +2748,11 @@ class PyRanges(RangeFrame):
         transcript_id : list of str, default None
             intervals are grouped by this/these ID column(s) beforehand, e.g. exons belonging to same transcripts
 
-        use_strand : bool, default None, i.e. auto
+        use_strand: {"auto", True, False}, default: "auto"
             Whether strand is considered when interpreting the start and end arguments of this function.
-            If True, counting is from the 5' end, which is the leftmost coordinate for + strand and the rightmost for - strand.
+            If True, counting is from the 5' end (the leftmost coordinate for + strand and the rightmost for - strand).
             If False, all intervals are processed like they reside on the + strand.
-            If None (default), strand is considered if the PyRanges is stranded.
+            The default "auto" means True if PyRanges has valid strands (see .strand_values_valid).
 
         Returns
         -------
@@ -3731,9 +3747,9 @@ class PyRanges(RangeFrame):
         window_size : int
             Length of the windows.
 
-        use_strand : bool, default None, i.e. auto
+        use_strand: {"auto", True, False}, default: "auto"
             Whether negative strand intervals should be sliced in descending order, meaning 5' to 3'.
-            If None (default), it is treated as True if the PyRanges is stranded (see .strand_values_valid)
+            The default "auto" means True if PyRanges has valid strands (see .strand_values_valid).
 
         Returns
         -------
