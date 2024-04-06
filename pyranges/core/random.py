@@ -3,7 +3,7 @@ import pandas as pd
 
 import pyranges as pr
 from pyranges import names
-from pyranges.example_data_manager import example_data
+from pyranges.core.example_data_manager import example_data
 from pyranges.pyranges_helpers import mypy_ensure_pyranges
 
 Chromsizes = dict[str, int] | dict[tuple[str, str], int]

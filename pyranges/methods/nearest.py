@@ -8,7 +8,7 @@ from sorted_nearest import (  # type: ignore[import]
     nearest_previous_nonoverlapping,
 )
 
-import pyranges.empty
+import pyranges.core.empty
 from pyranges import PyRanges
 from pyranges.methods.sort import sort_one_by_one
 from pyranges.names import END_COL, START_COL
@@ -120,9 +120,9 @@ def _nearest(df: "DataFrame", df2: "DataFrame", **kwargs) -> pd.DataFrame:
         nearest_df, df_to_find_nearest_in = _overlapping_for_nearest(df, df2, suffix)
     else:
         df_to_find_nearest_in = df
-        nearest_df = pyranges.empty.empty()
+        nearest_df = pyranges.core.empty.empty()
 
-    df = pyranges.empty.empty_df()
+    df = pyranges.core.empty.empty_df()
     if not df_to_find_nearest_in.empty:
         df_to_find_nearest_in = sort_one_by_one(df_to_find_nearest_in, "Start", "End")
         df2 = sort_one_by_one(df2, "Start", "End")

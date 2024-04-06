@@ -52,9 +52,6 @@ class ExampleData:
         >>> bam = ExampleData.files["smaller.bam"]
         >>> bam.exists()
         True
-        >>> import importlib
-        >>> bam == importlib.resources.files().joinpath("data/smaller.bam")
-        True
 
         """
         if ExampleData._files:

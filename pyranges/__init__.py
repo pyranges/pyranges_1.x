@@ -1,8 +1,8 @@
 from pyranges import genomicfeatures  # noqa: F401
 from pyranges import statistics as stats  # noqa: F401
+from pyranges.core.example_data_manager import example_data  # noqa: F401
 from pyranges.core.random import random  # noqa: F401
 from pyranges.core.version import __version__  # noqa: F401
-from pyranges.example_data_manager import example_data  # noqa: F401
 from pyranges.get_fasta import get_sequence, get_transcript_sequence  # noqa: F401
 from pyranges.methods.concat import concat  # noqa: F401
 from pyranges.multioverlap import count_overlaps  # noqa: F401
