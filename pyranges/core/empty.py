@@ -5,7 +5,7 @@ import pandas as pd
 from pandas import Series
 
 from pyranges import names
-from pyranges.pyranges_helpers import mypy_ensure_pyranges
+from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
 
 if typing.TYPE_CHECKING:
     from pyranges.pyranges_main import PyRanges

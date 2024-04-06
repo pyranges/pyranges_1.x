@@ -1,5 +1,4 @@
-from pyranges import genomicfeatures  # noqa: F401
-from pyranges import statistics as stats  # noqa: F401
+from pyranges import genomicfeatures, stats  # noqa: F401
 from pyranges.core.example_data_manager import example_data  # noqa: F401
 from pyranges.core.multioverlap import count_overlaps  # noqa: F401
 from pyranges.core.option_manager import options  # noqa: F401

@@ -8,7 +8,7 @@ from pyranges.names import CHROM_COL, END_COL, START_COL
 
 __all__ = ["genome_bounds", "tile_genome", "GenomicFeaturesMethods"]
 
-from pyranges.pyranges_helpers import mypy_ensure_pyranges
+from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
 
 if TYPE_CHECKING:
     try:

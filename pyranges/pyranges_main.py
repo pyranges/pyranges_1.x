@@ -19,6 +19,16 @@ from pyranges.core.parallelism import (
     _tes,
     _tss,
 )
+from pyranges.core.pyranges_helpers import (
+    ensure_strand_behavior_options_valid,
+    get_by_columns_including_chromosome_and_strand,
+    group_keys_from_strand_behavior,
+    group_keys_single,
+    mypy_ensure_pyranges,
+    strand_behavior_from_strand_and_validate,
+    strand_from_strand_behavior,
+    validate_and_convert_strand,
+)
 from pyranges.core.tostring import tostring
 from pyranges.methods.merge import _merge
 from pyranges.names import (
@@ -63,16 +73,6 @@ from pyranges.names import (
     UnaryOperation,
 )
 from pyranges.pyranges_groupby import PyRangesDataFrameGroupBy
-from pyranges.pyranges_helpers import (
-    ensure_strand_behavior_options_valid,
-    get_by_columns_including_chromosome_and_strand,
-    group_keys_from_strand_behavior,
-    group_keys_single,
-    mypy_ensure_pyranges,
-    strand_behavior_from_strand_and_validate,
-    strand_from_strand_behavior,
-    validate_and_convert_strand,
-)
 from pyranges.range_frame.range_frame import RangeFrame
 from pyranges.range_frame.range_frame_validator import InvalidRangesReason
 
@@ -80,7 +80,7 @@ if TYPE_CHECKING:
     from pyrle.rledict import Rledict  # type: ignore[import]
 
     from pyranges.genomicfeatures import GenomicFeaturesMethods
-    from pyranges.statistics import StatisticsMethods
+    from pyranges.stats import StatisticsMethods
 
 __all__ = ["PyRanges"]
 
@@ -233,7 +233,7 @@ class PyRanges(RangeFrame):
     @property
     def stats(self) -> "StatisticsMethods":
         """Namespace for statistical methods."""
-        from pyranges.statistics import StatisticsMethods
+        from pyranges.stats import StatisticsMethods
 
         return StatisticsMethods(self)
 

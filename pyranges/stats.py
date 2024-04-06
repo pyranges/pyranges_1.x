@@ -14,6 +14,11 @@ from numpy import ndarray
 from pandas import DataFrame, Series
 
 import pyranges as pr
+from pyranges.core.pyranges_helpers import (
+    ensure_strand_behavior_options_valid,
+    mypy_ensure_pyranges,
+    strand_behavior_from_strand_and_validate,
+)
 from pyranges.methods.statistics import _relative_distance
 from pyranges.names import (
     CHROM_COL,
@@ -23,11 +28,6 @@ from pyranges.names import (
     STRAND_BEHAVIOR_IGNORE,
     STRAND_BEHAVIOR_SAME,
     VALID_STRAND_BEHAVIOR_TYPE,
-)
-from pyranges.pyranges_helpers import (
-    ensure_strand_behavior_options_valid,
-    mypy_ensure_pyranges,
-    strand_behavior_from_strand_and_validate,
 )
 
 if TYPE_CHECKING:

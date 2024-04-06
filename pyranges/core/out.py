@@ -8,8 +8,8 @@ import pandas as pd
 from natsort import natsorted  # type: ignore[import]
 from pandas.core.frame import DataFrame
 
+from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
 from pyranges.names import BIGWIG_SCORE_COL, CHROM_COL, END_COL, PANDAS_COMPRESSION_TYPE, START_COL
-from pyranges.pyranges_helpers import mypy_ensure_pyranges
 from pyranges.pyranges_main import PyRanges
 
 GTF_COLUMNS_TO_PYRANGES = {
