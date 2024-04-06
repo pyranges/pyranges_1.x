@@ -32,7 +32,7 @@ import pyranges as pr
 if typing.TYPE_CHECKING:
     import pyfaidx
 
-    from pyranges.pyranges_main import PyRanges
+    from pyranges.core.pyranges_main import PyRanges
 
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)

@@ -5,7 +5,7 @@ from pyranges.methods import concat
 from pyranges.names import VALID_OVERLAP_TYPE, VALID_STRAND_BEHAVIOR_TYPE
 
 if TYPE_CHECKING:
-    from pyranges.pyranges_main import PyRanges
+    from pyranges.core.pyranges_main import PyRanges
 
 
 def count_overlaps(

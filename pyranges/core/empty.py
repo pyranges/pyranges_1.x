@@ -8,7 +8,7 @@ from pyranges import names
 from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
 
 if typing.TYPE_CHECKING:
-    from pyranges.pyranges_main import PyRanges
+    from pyranges.core.pyranges_main import PyRanges
 
 
 def empty_df(
