@@ -13,6 +13,12 @@ from natsort import natsort, natsorted  # type: ignore[import]
 
 import pyranges as pr
 from pyranges.core.loci_getter import LociGetter
+from pyranges.core.parallelism import (
+    _extend,
+    _extend_grp,
+    _tes,
+    _tss,
+)
 from pyranges.core.tostring import tostring
 from pyranges.methods.merge import _merge
 from pyranges.names import (
@@ -55,12 +61,6 @@ from pyranges.names import (
     BinaryOperation,
     CombineIntervalColumnsOperation,
     UnaryOperation,
-)
-from pyranges.parallelism import (
-    _extend,
-    _extend_grp,
-    _tes,
-    _tss,
 )
 from pyranges.pyranges_groupby import PyRangesDataFrameGroupBy
 from pyranges.pyranges_helpers import (
@@ -3419,7 +3419,7 @@ class PyRanges(RangeFrame):
         ['chr1\t1\t5\t.\t.\t+\t1\n', 'chr1\t6\t8\t.\t.\t-\t2\n']
 
         """
-        from pyranges.out import _to_bed
+        from pyranges.core.out import _to_bed
 
         return _to_bed(self, path, keep=keep, compression=compression)
 
@@ -3530,7 +3530,7 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes.
 
         """
-        from pyranges.out import _to_bigwig
+        from pyranges.core.out import _to_bigwig
 
         _chromosome_sizes = pr.example_data.chromsizes if chromosome_sizes is None else chromosome_sizes
 
@@ -3635,7 +3635,7 @@ class PyRanges(RangeFrame):
         1	.	CDS	6	9	.	.	1	Gene=3;function=def
 
         """
-        from pyranges.out import _to_gff_like
+        from pyranges.core.out import _to_gff_like
 
         return _to_gff_like(self, path=path, out_format="gff3", compression=compression)
 
@@ -3703,7 +3703,7 @@ class PyRanges(RangeFrame):
             1	.	EXON	6	9	.	.	.
 
         """
-        from pyranges.out import _to_gff_like
+        from pyranges.core.out import _to_gff_like
 
         return _to_gff_like(self, path=path, out_format="gtf", compression=compression)
 
