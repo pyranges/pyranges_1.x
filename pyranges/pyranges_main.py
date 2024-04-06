@@ -13,6 +13,7 @@ from natsort import natsort, natsorted  # type: ignore[import]
 
 import pyranges as pr
 from pyranges.core.loci_getter import LociGetter
+from pyranges.core.tostring import tostring
 from pyranges.methods.merge import _merge
 from pyranges.names import (
     CHROM_AND_STRAND_COLS,
@@ -74,7 +75,6 @@ from pyranges.pyranges_helpers import (
 )
 from pyranges.range_frame.range_frame import RangeFrame
 from pyranges.range_frame.range_frame_validator import InvalidRangesReason
-from pyranges.tostring import tostring
 
 if TYPE_CHECKING:
     from pyrle.rledict import Rledict  # type: ignore[import]
