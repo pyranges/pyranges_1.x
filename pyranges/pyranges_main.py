@@ -2847,7 +2847,7 @@ class PyRanges(RangeFrame):
             result = self.copy()
             result.loc[~(self[STRAND_COL].isin(VALID_GENOMIC_STRAND_INFO)), STRAND_COL] = "+"
 
-        return result
+        return mypy_ensure_pyranges(result)
 
     def subsequence(
         self,
@@ -3828,7 +3828,7 @@ class PyRanges(RangeFrame):
         )
 
     def remove_strand(self) -> "PyRanges":
-        """Returns a copy with the Strand column removed
+        """Return a copy with the Strand column removed.
 
         Strand is removed regardless of whether it contains valid strand info.
 
@@ -3837,7 +3837,7 @@ class PyRanges(RangeFrame):
         PyRanges.strand_valid : whether PyRanges has valid strand info
         PyRanges.remove_strand : remove the Strand column from PyRanges
 
-        Examples:
+        Examples
         --------
         >>> gr = pr.PyRanges({'Chromosome': ['chr1', 'chr1'], 'Start': [1, 6],
         ...                   'End': [5, 8], 'Strand': ['+', '-']})
