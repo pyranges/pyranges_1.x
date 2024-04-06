@@ -8,7 +8,7 @@ def test_join_issue_4_right() -> None:
     import numpy as np
 
     chromsizes = pr.example_data.chromsizes
-    query_regions = pr.gf.tile_genome(chromsizes, int(1e6))
+    query_regions = pr.genomicfeatures.tile_genome(chromsizes, int(1e6))
     signal_data = pr.example_data.chipseq
     signal_data["Score"] = np.random.randint(0, 100, len(signal_data))
 

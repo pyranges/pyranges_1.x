@@ -245,3 +245,6 @@ chr1	6	7	b	0	-"""
 
         # note: example data include ncbi.fasta.fai, the pyfaidx index
         return pyfaidx.Fasta(ExampleData.files["ncbi.fasta"])  # type: ignore[index, misc]
+
+
+example_data = ExampleData()

@@ -318,7 +318,7 @@ def genome_bounds(
     >>> chromsizes
     {1: 249250621, 3: 500}
 
-    >>> pr.gf.genome_bounds(gr, chromsizes)
+    >>> pr.genomicfeatures.genome_bounds(gr, chromsizes)
       index  |      Chromosome    Start      End
       int64  |           int64    int64    int64
     -------  ---  ------------  -------  -------
@@ -327,7 +327,7 @@ def genome_bounds(
     PyRanges with 2 rows, 3 columns, and 1 index columns.
     Contains 2 chromosomes.
 
-    >>> pr.gf.genome_bounds(gr, chromsizes, clip=True)
+    >>> pr.genomicfeatures.genome_bounds(gr, chromsizes, clip=True)
       index  |      Chromosome      Start        End
       int64  |           int64      int64      int64
     -------  ---  ------------  ---------  ---------
@@ -341,7 +341,7 @@ def genome_bounds(
     >>> chromsizes
     {1: 249250621}
 
-    >>> pr.gf.genome_bounds(gr, chromsizes)
+    >>> pr.genomicfeatures.genome_bounds(gr, chromsizes)
     Traceback (most recent call last):
     ...
     ValueError: Not all chromosomes were in the chromsize dict. This might mean that their types differed.
@@ -428,7 +428,7 @@ def tile_genome(
     PyRanges with 25 rows, 3 columns, and 1 index columns.
     Contains 25 chromosomes.
 
-    >>> pr.gf.tile_genome(chromsizes, int(1e6))
+    >>> pr.genomicfeatures.tile_genome(chromsizes, int(1e6))
     index    |    Chromosome    Start     End
     int64    |    category      int64     int64
     -------  ---  ------------  --------  --------

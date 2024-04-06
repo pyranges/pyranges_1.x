@@ -7,7 +7,7 @@ def set_max_console_width() -> None:
     # Assuming MAX_CONSOLE_WIDTH is a global variable in your module
     import pyranges
 
-    pyranges.TOSTRING_CONSOLE_WIDTH = 120
+    pyranges.tostring.TOSTRING_CONSOLE_WIDTH = 120
 
 
 def pytest_addoption(parser):
