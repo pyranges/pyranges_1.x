@@ -12,7 +12,7 @@ import pandas as pd
 from natsort import natsort, natsorted  # type: ignore[import]
 
 import pyranges as pr
-from pyranges.loci_getter import LociGetter
+from pyranges.core.loci_getter import LociGetter
 from pyranges.methods.merge import _merge
 from pyranges.names import (
     CHROM_AND_STRAND_COLS,
