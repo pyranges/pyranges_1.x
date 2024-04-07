@@ -1,5 +1,5 @@
 class PyRangesOptions:
-    """Class to manage PyRanges options. Instantiated in pyranges_main."""
+    """Class to manage PyRanges options. ."""
 
     def __init__(self) -> None:
         self.options_in_use = {
@@ -104,4 +104,4 @@ class PyRangesOptions:
         return self.display_options()
 
 
-options = PyRangesOptions()
+option_manager = PyRangesOptions()

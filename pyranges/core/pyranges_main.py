@@ -79,8 +79,8 @@ from pyranges.range_frame.range_frame_validator import InvalidRangesReason
 if TYPE_CHECKING:
     from pyrle.rledict import Rledict  # type: ignore[import]
 
+    from pyranges.ext.stats import StatsManager
     from pyranges.genomicfeatures import GenomicFeaturesMethods
-    from pyranges.stats import StatisticsMethods
 
 __all__ = ["PyRanges"]
 
@@ -187,8 +187,8 @@ class PyRanges(RangeFrame):
 
     See Also
     --------
-    pyranges.statistics : namespace for statistics
-    pyranges.stats.StatisticsMethods : namespace for statistics
+    pyranges.stats : namespace for stats
+    pyranges.stats.StatisticsMethods : namespace for stats
     """
 
     def __new__(cls, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame":  # type: ignore[misc]
@@ -231,11 +231,11 @@ class PyRanges(RangeFrame):
         return GenomicFeaturesMethods(self)
 
     @property
-    def stats(self) -> "StatisticsMethods":
+    def stats(self) -> "StatsManager":
         """Namespace for statistical methods."""
-        from pyranges.stats import StatisticsMethods
+        from pyranges.ext.stats import StatsManager
 
-        return StatisticsMethods(self)
+        return StatsManager(self)
 
     @property
     def loci(self) -> LociGetter:
