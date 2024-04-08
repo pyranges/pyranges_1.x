@@ -2188,6 +2188,7 @@ class PyRanges(RangeFrame):
         by: str | Iterable[str] | None = None,
         use_strand: VALID_USE_STRAND_TYPE = "auto",
         *,
+        sort_descending: str | Iterable[str] | None = None,
         natsorting: bool = False,
         reverse: bool = False,
     ) -> "PyRanges":
@@ -2208,6 +2209,10 @@ class PyRanges(RangeFrame):
         use_strand: {"auto", True, False}, default: "auto"
             Whether negative strand intervals should be sorted in descending order, meaning 5' to 3'.
             The default "auto" means True if PyRanges has valid strands (see .strand_valid).
+
+        sort_descending : str or list of str, default None
+            A column name or list of column names to sort in descending order, instead of ascending.
+            These may include column names in the 'by' argument, or those implicitly included (e.g. Chromosome).
 
         natsorting : bool, default False
             Whether to use natural sorting for Chromosome column, so that e.g. chr2 < chr11. Slows down sorting.
@@ -2323,7 +2328,7 @@ class PyRanges(RangeFrame):
         Contains 3 chromosomes and 2 strands.
 
         Same as before, but 'transcript_id' is sorted in descending order:
-        >>> p.sort_ranges(by=['-transcript_id', 'Strand'])
+        >>> p.sort_ranges(by=['transcript_id', 'Strand'], sort_descending='transcript_id')
           index  |    Chromosome    Strand      Start      End  transcript_id
           int64  |    object        object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
@@ -2340,6 +2345,13 @@ class PyRanges(RangeFrame):
 
         """
         by = [] if by is None else [by] if isinstance(by, str) else list(by)
+        sort_descending = (
+            []
+            if sort_descending is None
+            else [sort_descending]
+            if isinstance(sort_descending, str)
+            else list(sort_descending)
+        )
 
         use_strand = validate_and_convert_strand(self, use_strand)
 
@@ -2351,11 +2363,16 @@ class PyRanges(RangeFrame):
             + ([END_COL] if END_COL not in by else [])
         )
 
-        # If a column is prepended with '-', it will be sorted in descending order
-        ascending = [not col.startswith("-") for col in cols_to_sort_for]
+        missing_sort_descending_cols = [col for col in sort_descending if col not in cols_to_sort_for]
+        if missing_sort_descending_cols:
+            msg = "Sort_descending arguments must be among column names used for sorting! Not found: " + ", ".join(
+                missing_sort_descending_cols,
+            )
+            raise ValueError(msg)
+
+        ascending = [col not in sort_descending for col in cols_to_sort_for]
         if reverse:
             ascending = [not asc for asc in ascending]
-        cols_to_sort_for = [col.lstrip("-") for col in cols_to_sort_for]
 
         z = self.copy()
         if natsorting:
