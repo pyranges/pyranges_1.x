@@ -12,8 +12,24 @@ import pandas as pd
 from natsort import natsort, natsorted  # type: ignore[import]
 
 import pyranges as pr
-import pyranges.empty
-from pyranges.loci_getter import LociGetter
+from pyranges.core.loci_getter import LociGetter
+from pyranges.core.parallelism import (
+    _extend,
+    _extend_grp,
+    _tes,
+    _tss,
+)
+from pyranges.core.pyranges_helpers import (
+    ensure_strand_behavior_options_valid,
+    get_by_columns_including_chromosome_and_strand,
+    group_keys_from_strand_behavior,
+    group_keys_single,
+    mypy_ensure_pyranges,
+    strand_behavior_from_strand_and_validate,
+    strand_from_strand_behavior,
+    validate_and_convert_strand,
+)
+from pyranges.core.tostring import tostring
 from pyranges.methods.merge import _merge
 from pyranges.names import (
     CHROM_AND_STRAND_COLS,
@@ -56,32 +72,15 @@ from pyranges.names import (
     CombineIntervalColumnsOperation,
     UnaryOperation,
 )
-from pyranges.parallelism import (
-    _extend,
-    _extend_grp,
-    _tes,
-    _tss,
-)
 from pyranges.pyranges_groupby import PyRangesDataFrameGroupBy
-from pyranges.pyranges_helpers import (
-    ensure_strand_behavior_options_valid,
-    get_by_columns_including_chromosome_and_strand,
-    group_keys_from_strand_behavior,
-    group_keys_single,
-    mypy_ensure_pyranges,
-    strand_behavior_from_strand_and_validate,
-    strand_from_strand_behavior,
-    validate_and_convert_strand,
-)
 from pyranges.range_frame.range_frame import RangeFrame
 from pyranges.range_frame.range_frame_validator import InvalidRangesReason
-from pyranges.tostring import tostring
 
 if TYPE_CHECKING:
     from pyrle.rledict import Rledict  # type: ignore[import]
 
+    from pyranges.ext.stats import StatsManager
     from pyranges.genomicfeatures import GenomicFeaturesMethods
-    from pyranges.statistics import StatisticsMethods
 
 __all__ = ["PyRanges"]
 
@@ -188,8 +187,8 @@ class PyRanges(RangeFrame):
 
     See Also
     --------
-    pyranges.statistics : namespace for statistics
-    pyranges.stats.StatisticsMethods : namespace for statistics
+    pyranges.stats : namespace for stats
+    pyranges.stats.StatisticsMethods : namespace for stats
     """
 
     def __new__(cls, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame":  # type: ignore[misc]
@@ -205,7 +204,7 @@ class PyRanges(RangeFrame):
             df.__class__ = pr.PyRanges
             return df
 
-        df = pd.DataFrame(kwargs.get("data") or args[0])
+        df = pd.DataFrame(kwargs.get("../data") or args[0])
         missing_any_required_columns = not set(GENOME_LOC_COLS).issubset({*df.columns})
         if missing_any_required_columns:
             return df
@@ -232,11 +231,11 @@ class PyRanges(RangeFrame):
         return GenomicFeaturesMethods(self)
 
     @property
-    def stats(self) -> "StatisticsMethods":
+    def stats(self) -> "StatsManager":
         """Namespace for statistical methods."""
-        from pyranges.statistics import StatisticsMethods
+        from pyranges.ext.stats import StatsManager
 
-        return StatisticsMethods(self)
+        return StatsManager(self)
 
     @property
     def loci(self) -> LociGetter:
@@ -1846,7 +1845,7 @@ class PyRanges(RangeFrame):
 
         See Also
         --------
-        PyRanges.join : Has a slack argument to find intervals within a distance.
+        PyRanges.join_ranges : Has a slack argument to find intervals within a distance.
 
         Examples
         --------
@@ -1949,7 +1948,7 @@ class PyRanges(RangeFrame):
         See Also
         --------
         PyRanges.intersect : report overlapping subintervals
-        PyRanges.set_intersect : set-intersect PyRanges
+        PyRanges.set_intersect : set-intersect PyRanges (e.g. merge then intersect)
 
         Examples
         --------
@@ -2189,6 +2188,7 @@ class PyRanges(RangeFrame):
         by: str | Iterable[str] | None = None,
         use_strand: VALID_USE_STRAND_TYPE = "auto",
         *,
+        sort_descending: str | Iterable[str] | None = None,
         natsorting: bool = False,
         reverse: bool = False,
     ) -> "PyRanges":
@@ -2209,6 +2209,10 @@ class PyRanges(RangeFrame):
         use_strand: {"auto", True, False}, default: "auto"
             Whether negative strand intervals should be sorted in descending order, meaning 5' to 3'.
             The default "auto" means True if PyRanges has valid strands (see .strand_valid).
+
+        sort_descending : str or list of str, default None
+            A column name or list of column names to sort in descending order, instead of ascending.
+            These may include column names in the 'by' argument, or those implicitly included (e.g. Chromosome).
 
         natsorting : bool, default False
             Whether to use natural sorting for Chromosome column, so that e.g. chr2 < chr11. Slows down sorting.
@@ -2324,7 +2328,7 @@ class PyRanges(RangeFrame):
         Contains 3 chromosomes and 2 strands.
 
         Same as before, but 'transcript_id' is sorted in descending order:
-        >>> p.sort_ranges(by=['-transcript_id', 'Strand'])
+        >>> p.sort_ranges(by=['transcript_id', 'Strand'], sort_descending='transcript_id')
           index  |    Chromosome    Strand      Start      End  transcript_id
           int64  |    object        object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
@@ -2341,6 +2345,13 @@ class PyRanges(RangeFrame):
 
         """
         by = [] if by is None else [by] if isinstance(by, str) else list(by)
+        sort_descending = (
+            []
+            if sort_descending is None
+            else [sort_descending]
+            if isinstance(sort_descending, str)
+            else list(sort_descending)
+        )
 
         use_strand = validate_and_convert_strand(self, use_strand)
 
@@ -2352,11 +2363,16 @@ class PyRanges(RangeFrame):
             + ([END_COL] if END_COL not in by else [])
         )
 
-        # If a column is prepended with '-', it will be sorted in descending order
-        ascending = [not col.startswith("-") for col in cols_to_sort_for]
+        missing_sort_descending_cols = [col for col in sort_descending if col not in cols_to_sort_for]
+        if missing_sort_descending_cols:
+            msg = "Sort_descending arguments must be among column names used for sorting! Not found: " + ", ".join(
+                missing_sort_descending_cols,
+            )
+            raise ValueError(msg)
+
+        ascending = [col not in sort_descending for col in cols_to_sort_for]
         if reverse:
             ascending = [not asc for asc in ascending]
-        cols_to_sort_for = [col.lstrip("-") for col in cols_to_sort_for]
 
         z = self.copy()
         if natsorting:
@@ -2504,7 +2520,7 @@ class PyRanges(RangeFrame):
 
         See Also
         --------
-        subsequence : analogous to this method, but input coordinates refer to the unspliced transcript
+        PyRanges.subsequence : analogous to this method, but input coordinates refer to the unspliced transcript
 
         Examples
         --------
@@ -2746,22 +2762,20 @@ class PyRanges(RangeFrame):
 
     @property
     def strand_valid(self) -> bool:
-        """Whether PyRanges has (valid) strand info.
+        """Whether PyRanges has valid strand info.
 
-        Note:
-        ----
-        A PyRanges can have invalid values in the Strand-column. It is not considered stranded.
+        Values other than '+' and '-' in the Strand column are not considered valid.
+        A PyRanges without a Strand column is also not considered to have valid strand info.
 
-        See Also:
+        See Also
         --------
-        PyRanges.strands : return the strands
         PyRanges.has_strand : whether a Strand column is present
+        PyRanges.make_strand_valid : make the strand information in PyRanges valid
 
-        Examples:
+        Examples
         --------
-        >>> d =  {'Chromosome': ['chr1', 'chr1'], 'Start': [1, 6],
-        ...       'End': [5, 8], 'Strand': ['+', '.']}
-        >>> gr = pr.PyRanges(d)
+        >>> gr = pr.PyRanges({'Chromosome': ['chr1', 'chr1'], 'Start': [1, 6],
+        ...                   'End': [5, 8], 'Strand': ['+', '.']})
         >>> gr
           index  |    Chromosome      Start      End  Strand
           int64  |    object          int64    int64  object
@@ -2780,6 +2794,76 @@ class PyRanges(RangeFrame):
         if STRAND_COL not in self.columns and len(self) > 0:
             return False
         return bool(self[STRAND_COL].isin(VALID_GENOMIC_STRAND_INFO).all())
+
+    def make_strand_valid(self) -> "PyRanges":
+        """Make the strand information in PyRanges valid.
+
+        Convert all invalid Strand values (those other than "+" and "-") to positive stranded values "+".
+        If the Strand column is not present, add it with all values set to "+".
+
+        Returns
+        -------
+        PyRanges
+            PyRanges with valid strand information.
+
+        See Also
+        --------
+        PyRanges.strand_valid : whether PyRanges has valid strand info
+        PyRanges.remove_strand : remove the Strand column from PyRanges
+
+        Examples
+        --------
+        >>> gr = pr.PyRanges({'Chromosome': ['chr1', 'chr1'], 'Start': [1, 6],
+        ...                   'End': [5, 8], 'Strand': ['-', '.']})
+        >>> gr
+          index  |    Chromosome      Start      End  Strand
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                1        5  -
+              1  |    chr1                6        8  .
+        PyRanges with 2 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands (including non-genomic strands: .).
+
+        >>> gr.strand_valid
+        False
+
+        >>> gr.make_strand_valid()
+          index  |    Chromosome      Start      End  Strand
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                1        5  -
+              1  |    chr1                6        8  +
+        PyRanges with 2 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        >>> gr2 = pr.PyRanges({'Chromosome': ['chr1', 'chr1'], 'Start': [5, 22],
+        ...                    'End': [15, 30]})
+        >>> gr2
+          index  |    Chromosome      Start      End
+          int64  |    object          int64    int64
+        -------  ---  ------------  -------  -------
+              0  |    chr1                5       15
+              1  |    chr1               22       30
+        PyRanges with 2 rows, 3 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        >>> gr2.make_strand_valid()
+          index  |    Chromosome      Start      End  Strand
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                5       15  +
+              1  |    chr1               22       30  +
+        PyRanges with 2 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 1 strands.
+
+        """
+        if STRAND_COL not in self.columns:
+            result = self.copy().assign(**{STRAND_COL: "+"})
+        else:
+            result = self.copy()
+            result.loc[~(self[STRAND_COL].isin(VALID_GENOMIC_STRAND_INFO)), STRAND_COL] = "+"
+
+        return mypy_ensure_pyranges(result)
 
     def subsequence(
         self,
@@ -2830,7 +2914,7 @@ class PyRanges(RangeFrame):
 
         See Also
         --------
-        spliced_subsequence : analogous to this method, but intronic regions are not counted, so that input coordinates refer to the spliced transcript
+        PyRanges.spliced_subsequence : analogous to this method, but intronic regions are not counted, so that input coordinates refer to the spliced transcript
 
 
         Examples
@@ -2937,7 +3021,7 @@ class PyRanges(RangeFrame):
 
         See Also
         --------
-        pyranges.PyRanges.overlap : use with invert=True to return all intervals without overlap
+        PyRanges.overlap : use with invert=True to return all intervals without overlap
 
         Examples
         --------
@@ -3352,7 +3436,7 @@ class PyRanges(RangeFrame):
         ['chr1\t1\t5\t.\t.\t+\t1\n', 'chr1\t6\t8\t.\t.\t-\t2\n']
 
         """
-        from pyranges.out import _to_bed
+        from pyranges.core.out import _to_bed
 
         return _to_bed(self, path, keep=keep, compression=compression)
 
@@ -3463,7 +3547,7 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes.
 
         """
-        from pyranges.out import _to_bigwig
+        from pyranges.core.out import _to_bigwig
 
         _chromosome_sizes = pr.example_data.chromsizes if chromosome_sizes is None else chromosome_sizes
 
@@ -3568,7 +3652,7 @@ class PyRanges(RangeFrame):
         1	.	CDS	6	9	.	.	1	Gene=3;function=def
 
         """
-        from pyranges.out import _to_gff_like
+        from pyranges.core.out import _to_gff_like
 
         return _to_gff_like(self, path=path, out_format="gff3", compression=compression)
 
@@ -3636,7 +3720,7 @@ class PyRanges(RangeFrame):
             1	.	EXON	6	9	.	.	.
 
         """
-        from pyranges.out import _to_gff_like
+        from pyranges.core.out import _to_gff_like
 
         return _to_gff_like(self, path=path, out_format="gtf", compression=compression)
 
@@ -3760,21 +3844,19 @@ class PyRanges(RangeFrame):
         )
 
     def remove_strand(self) -> "PyRanges":
-        """Remove strand.
+        """Return a copy with the Strand column removed.
 
-        Note:
-        ----
-        Removes Strand column even if PyRanges is not stranded.
+        Strand is removed regardless of whether it contains valid strand info.
 
-        See Also:
+        See Also
         --------
-        PyRanges.stranded : whether PyRanges contains valid strand info.
+        PyRanges.strand_valid : whether PyRanges has valid strand info
+        PyRanges.remove_strand : remove the Strand column from PyRanges
 
-        Examples:
+        Examples
         --------
-        >>> d =  {'Chromosome': ['chr1', 'chr1'], 'Start': [1, 6],
-        ...       'End': [5, 8], 'Strand': ['+', '-']}
-        >>> gr = pr.PyRanges(d)
+        >>> gr = pr.PyRanges({'Chromosome': ['chr1', 'chr1'], 'Start': [1, 6],
+        ...                   'End': [5, 8], 'Strand': ['+', '-']})
         >>> gr
           index  |    Chromosome      Start      End  Strand
           int64  |    object          int64    int64  object
@@ -3828,7 +3910,7 @@ class PyRanges(RangeFrame):
 
         See Also
         --------
-        pyranges.PyRanges.tile : divide intervals into adjacent tiles.
+        PyRanges.tile : divide intervals into adjacent tiles.
 
         Examples
         --------

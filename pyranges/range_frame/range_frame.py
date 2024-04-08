@@ -5,6 +5,7 @@ from typing import Any
 
 import pandas as pd
 
+from pyranges.core.tostring import tostring
 from pyranges.names import (
     BY_ENTRY_IN_KWARGS,
     PRESERVE_INDEX_COLUMN,
@@ -21,7 +22,6 @@ from pyranges.names import (
     UnaryOperation,
 )
 from pyranges.range_frame.range_frame_validator import InvalidRangesReason
-from pyranges.tostring import tostring
 
 
 def should_skip_operation(df: pd.DataFrame, *, df2: pd.DataFrame, skip_if_empty: SKIP_IF_DF_EMPTY_TYPE) -> bool:

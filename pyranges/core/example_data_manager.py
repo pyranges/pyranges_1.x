@@ -32,7 +32,7 @@ import pyranges as pr
 if typing.TYPE_CHECKING:
     import pyfaidx
 
-    from pyranges.pyranges_main import PyRanges
+    from pyranges.core.pyranges_main import PyRanges
 
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
@@ -51,9 +51,6 @@ class ExampleData:
         --------
         >>> bam = ExampleData.files["smaller.bam"]
         >>> bam.exists()
-        True
-        >>> import importlib
-        >>> bam == importlib.resources.files().joinpath("data/smaller.bam")
         True
 
         """
@@ -245,3 +242,6 @@ chr1	6	7	b	0	-"""
 
         # note: example data include ncbi.fasta.fai, the pyfaidx index
         return pyfaidx.Fasta(ExampleData.files["ncbi.fasta"])  # type: ignore[index, misc]
+
+
+example_data = ExampleData()

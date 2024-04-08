@@ -6,10 +6,10 @@ from typing import TYPE_CHECKING
 import pandas as pd
 from natsort import natsorted  # type: ignore[import]
 
-from pyranges.pyranges_helpers import mypy_ensure_pyranges
+from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
 
 if TYPE_CHECKING:
-    from pyranges.pyranges_main import PyRanges
+    from pyranges.core.pyranges_main import PyRanges
 
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)

@@ -39,7 +39,7 @@ def _summary(
 
     summaries = OrderedDict()
 
-    # statistics for lengths
+    # stats for lengths
     for summary, s in lengths.items():
         summaries[summary] = s.describe()
 

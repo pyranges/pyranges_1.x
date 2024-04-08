@@ -14,6 +14,12 @@ from numpy import ndarray
 from pandas import DataFrame, Series
 
 import pyranges as pr
+from pyranges.core.namespace_utils import decorate_to_pyranges_method
+from pyranges.core.pyranges_helpers import (
+    ensure_strand_behavior_options_valid,
+    mypy_ensure_pyranges,
+    strand_behavior_from_strand_and_validate,
+)
 from pyranges.methods.statistics import _relative_distance
 from pyranges.names import (
     CHROM_COL,
@@ -24,31 +30,100 @@ from pyranges.names import (
     STRAND_BEHAVIOR_SAME,
     VALID_STRAND_BEHAVIOR_TYPE,
 )
-from pyranges.pyranges_helpers import (
-    ensure_strand_behavior_options_valid,
-    mypy_ensure_pyranges,
-    strand_behavior_from_strand_and_validate,
-)
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from pyranges import PyRanges
 
-__all__ = [
-    "simes",
-    "fisher_exact",
-    "StatisticsMethods",
-    "fdr",
-    "rowbased_rankdata",
-    "rowbased_pearson",
-    "rowbased_spearman",
-    "mcc",
-]
-
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.INFO)
+
+
+####################################################################################################
+# methods and objects that are not exported
+GenomeType = dict[str, int] | pd.DataFrame | None
+LabelsType = list[str] | list[int]
+
+
+def _chromsizes_as_int(chromsizes: "PyRanges | DataFrame | dict[Any, int]") -> int:
+    if isinstance(chromsizes, dict):
+        _chromsizes = sum(chromsizes.values())
+    elif isinstance(chromsizes, pd.DataFrame | pr.PyRanges):
+        _chromsizes = chromsizes.End.sum()
+    else:
+        msg = f"chromsizes must be dict, DataFrame or PyRanges, was {type(chromsizes)}"
+        raise TypeError(msg)
+
+    return _chromsizes
+
+
+def _mcc(tp: int, fp: int, tn: int, fn: int) -> float:
+    # https://stackoverflow.com/a/56875660/992687
+    x = (tp + fp) * (tp + fn) * (tn + fp) * (tn + fn)
+    return ((tp * tn) - (fp * fn)) / sqrt(x)
+
+
+def _process_genome_data(grs: list[Any], genome: GenomeType, labels: LabelsType) -> tuple[pd.DataFrame, int, Iterable]:
+    _genome = _find_chromosome_max_end_positions(grs) if genome is None else _ensure_genome_dataframe(genome)
+
+    genome_length = _compute_genome_length(_genome)
+
+    _labels = (
+        _generate_labels(labels, grs) if labels is not None else combinations_with_replacement(np.arange(len(grs)), r=2)
+    )
+
+    return _genome, genome_length, _labels
+
+
+def _ensure_genome_dataframe(genome: GenomeType) -> pd.DataFrame:
+    if isinstance(genome, dict):
+        return _create_genome_dataframe(genome)
+
+    if isinstance(genome, pd.DataFrame):
+        return genome
+
+    msg = f"genome must be dict or DataFrame, was {type(genome)}"
+    raise TypeError(msg)
+
+
+def _find_chromosome_max_end_positions(grs: list["PyRanges"]) -> pd.DataFrame:
+    """Find the largest end position in each chromosome.
+
+    Examples
+    --------
+    >>> f1, f2 = pr.example_data.f1, pr.example_data.f2  # both only have chr1
+    >>> f1["End"].max()
+    9
+    >>> f2["End"].max()
+    7
+
+    """
+    genome: dict[str, int] = defaultdict(int)
+    for gr in grs:
+        for chrom, chrom_df in gr.groupby(CHROM_COL):
+            genome[chrom] = max(chrom_df[END_COL].max(), genome[chrom])
+    return _create_genome_dataframe(dict(genome))
+
+
+def _create_genome_dataframe(genome: dict[str, int]) -> pd.DataFrame:
+    return pd.DataFrame({"Chromosome": list(genome.keys()), "Start": 0, "End": list(genome.values())})
+
+
+def _compute_genome_length(genome: pd.DataFrame) -> int:
+    return int(genome[END_COL].sum())
+
+
+def _generate_labels(labels: LabelsType, grs: list[Any]) -> Iterable:
+    if len(labels) != len(grs):
+        msg = "Labels length must match the length of grs"
+        raise ValueError(msg)
+    return combinations_with_replacement(labels, r=2)
+
+
+####################################################################################################
+# methods available at pr.stats:
 
 
 def fdr(p_vals: Series) -> Series:
@@ -226,7 +301,7 @@ def mcc(
     c  0.55168  0.55168  1.00000
 
     """
-    _genome, genome_length, _labels = process_genome_data(grs, labels=labels, genome=genome)
+    _genome, genome_length, _labels = _process_genome_data(grs, labels=labels, genome=genome)
 
     # remove all non-loc columns before computation
     grs = [gr.merge_overlaps(use_strand=strand) for gr in grs]
@@ -353,7 +428,7 @@ def rowbased_spearman(x: ndarray, y: ndarray) -> ndarray:
 
     See Also
     --------
-    pyranges.statistics.rowbased_pearson : fast row-based Pearson's correlation.
+    pyranges.stats.rowbased_pearson : fast row-based Pearson's correlation.
     pr.stats.fdr : correct for multiple testing
 
     Examples
@@ -395,7 +470,7 @@ def rowbased_pearson(x: ndarray | DataFrame, y: ndarray | DataFrame) -> ndarray:
 
     See Also
     --------
-    pyranges.statistics.rowbased_spearman : fast row-based Spearman's correlation.
+    pyranges.stats.rowbased_spearman : fast row-based Spearman's correlation.
     pr.stats.fdr : correct for multiple testing
 
     Examples
@@ -606,257 +681,199 @@ def simes(
     return _simes
 
 
-def chromsizes_as_int(chromsizes: "PyRanges | DataFrame | dict[Any, int]") -> int:
-    if isinstance(chromsizes, dict):
-        _chromsizes = sum(chromsizes.values())
-    elif isinstance(chromsizes, pd.DataFrame | pr.PyRanges):
-        _chromsizes = chromsizes.End.sum()
-    else:
-        msg = f"chromsizes must be dict, DataFrame or PyRanges, was {type(chromsizes)}"
-        raise TypeError(msg)
-
-    return _chromsizes
+####################################################################################################
+# methods available at pr.stats and at pr.PyRanges.stats: (see usages of StatsManager for how to)
 
 
-class StatisticsMethods:
-    """Namespace for statistical comparsion-operations.
+def forbes(
+    self: "PyRanges",
+    other: "PyRanges",
+    chromsizes: "PyRanges | DataFrame | dict[Any, int]",
+    strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
+) -> float:
+    """Compute Forbes coefficient.
 
-    Accessed with gr.stats.
-    """
+    Ratio which represents observed versus expected co-occurence.
 
-    def __init__(self, pr: "PyRanges") -> None:
-        self.pr = pr
+    Described in ``Forbes SA (1907): On the local distribution of certain Illinois fishes: an essay in statistical ecology.``
 
-    def forbes(
-        self,
-        other: "PyRanges",
-        chromsizes: "PyRanges | DataFrame | dict[Any, int]",
-        strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
-    ) -> float:
-        """Compute Forbes coefficient.
+    Parameters
+    ----------
+    self : PyRanges
+        Intervals to compare.
 
-        Ratio which represents observed versus expected co-occurence.
+    other : PyRanges
+        Intervals to compare with.
 
-        Described in ``Forbes SA (1907): On the local distribution of certain Illinois fishes: an essay in statistical ecology.``
+    chromsizes : int, dict, DataFrame or PyRanges
+        Integer representing genome length or mapping from chromosomes
+        to its length.
 
-        Parameters
-        ----------
-        other : PyRanges
-            Intervals to compare with.
+    strand_behavior : {"auto", "same", "opposite", False}, default None, i.e. "auto"
+        Whether to compute without regards to strand or on same or opposite.
 
-        chromsizes : int, dict, DataFrame or PyRanges
-            Integer representing genome length or mapping from chromosomes
-            to its length.
+    Returns
+    -------
+    float
 
-        strand_behavior : {"auto", "same", "opposite", False}, default None, i.e. "auto"
-            Whether to compute without regards to strand or on same or opposite.
+        Ratio of observed versus expected co-occurence.
 
-        Returns
-        -------
-        float
-
-            Ratio of observed versus expected co-occurence.
-
-        See Also
-        --------
-        pyranges.statistics.jaccard : compute the jaccard coefficient
-
-        Examples
-        --------
-        >>> gr, gr2 = pr.example_data.f1, pr.example_data.f2
-        >>> gr.stats.forbes(gr2, chromsizes={"chr1": 10})
-        0.8333333333333334
-
-        """
-        _chromsizes = chromsizes_as_int(chromsizes)
-
-        ensure_strand_behavior_options_valid(self.pr, other, strand_behavior=strand_behavior)
-        strand = self.pr.strand_valid and other.strand_valid and strand_behavior in {STRAND_BEHAVIOR_AUTO, True}
-        reference_length = self.pr.merge_overlaps(use_strand=strand).length
-        query_length = other.merge_overlaps(use_strand=strand).length
-
-        intersection_sum = self.pr.set_intersect(other, strand_behavior=strand_behavior).lengths().sum()
-        return _chromsizes * intersection_sum / (reference_length * query_length)
-
-    def jaccard(
-        self,
-        other: "PyRanges",
-        strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
-    ) -> float:
-        """Compute Jaccards coefficient.
-
-        Ratio of the intersection and union of two sets.
-
-        Parameters
-        ----------
-        other : PyRanges
-            Intervals to compare with.
-
-        strand_behavior : {"auto", "same", "opposite"}
-            Whether to compute without regards to strand or on same or opposite.
-
-        Returns
-        -------
-        float
-
-            Ratio of the intersection and union of two sets.
-
-        See Also
-        --------
-        pyranges.statistics.forbes : compute the forbes coefficient
-
-        Examples
-        --------
-        >>> gr, gr2 = pr.example_data.f1, pr.example_data.f2
-        >>> chromsizes = pr.example_data.chromsizes
-        >>> gr.stats.jaccard(gr2)
-        0.14285714285714285
-
-        """
-        ensure_strand_behavior_options_valid(self.pr, other, strand_behavior=strand_behavior)
-        strand = self.pr.strand_valid and other.strand_valid and strand_behavior in {STRAND_BEHAVIOR_AUTO, True}
-
-        intersection_sum = self.pr.set_intersect(other).lengths().sum()
-
-        union_sum = 0
-        for gr in [self.pr, other]:
-            union_sum += gr.merge_overlaps(use_strand=strand).lengths().sum()
-
-        denominator = union_sum - intersection_sum
-        if denominator == 0:
-            return 1.0
-        return intersection_sum / denominator
-
-    def relative_distance(self, other: "PyRanges", **_) -> DataFrame:
-        """Compute spatial correllation between two sets.
-
-        Metric which describes relative distance between each interval in one
-        set and two closest intervals in another.
-
-        Parameters
-        ----------
-        other : PyRanges
-            Intervals to compare with.
-
-        chromsizes : int, dict, DataFrame or PyRanges
-
-            Integer representing genome length or mapping from chromosomes
-            to its length.
-
-        strandedness : {None, "same", "opposite", False}, default None, i.e. "auto"
-
-            Whether to compute without regards to strand or on same or opposite.
-
-        Returns
-        -------
-        pandas.DataFrame
-
-            DataFrame containing the frequency of each relative distance.
-
-        See Also
-        --------
-        pyranges.statistics.jaccard : compute the jaccard coefficient
-        pyranges.statistics.forbes : compute the forbes coefficient
-
-        Examples
-        --------
-        >>> gr1, gr2 = pr.example_data.chipseq, pr.example_data.chipseq_background
-        >>> gr = pd.concat([gr1, gr1.head(4), gr2.tail(4)])
-        >>> chromsizes = pr.example_data.chromsizes
-        >>> gr.stats.relative_distance(gr2)
-            reldist  count  total  fraction
-        0      0.00      4     18  0.222222
-        1      0.03      1     18  0.055556
-        2      0.04      1     18  0.055556
-        3      0.10      1     18  0.055556
-        4      0.12      1     18  0.055556
-        5      0.13      1     18  0.055556
-        6      0.19      1     18  0.055556
-        7      0.23      1     18  0.055556
-        8      0.24      1     18  0.055556
-        9      0.38      1     18  0.055556
-        10     0.41      2     18  0.111111
-        11     0.42      1     18  0.055556
-        12     0.43      2     18  0.111111
-
-        """
-        result = pd.Series(_relative_distance(self.pr, other))
-
-        not_nan = ~np.isnan(result)
-        result.loc[not_nan] = np.floor(result[not_nan] * 100) / 100
-        vc = result.value_counts(dropna=False).to_frame().reset_index()
-        vc.columns = pd.Index(["reldist", "count"])
-        vc.insert(vc.shape[1], "total", len(result))
-        vc.insert(vc.shape[1], "fraction", vc["count"] / len(result))
-        vc = vc.sort_values("reldist", ascending=True)
-        return vc.reset_index(drop=True)
-
-
-def _mcc(tp: int, fp: int, tn: int, fn: int) -> float:
-    # https://stackoverflow.com/a/56875660/992687
-    x = (tp + fp) * (tp + fn) * (tn + fp) * (tn + fn)
-    return ((tp * tn) - (fp * fn)) / sqrt(x)
-
-
-GenomeType = dict[str, int] | pd.DataFrame | None
-LabelsType = list[str] | list[int]
-
-
-def process_genome_data(grs: list[Any], genome: GenomeType, labels: LabelsType) -> tuple[pd.DataFrame, int, Iterable]:
-    _genome = find_chromosome_max_end_positions(grs) if genome is None else ensure_genome_dataframe(genome)
-
-    genome_length = compute_genome_length(_genome)
-
-    _labels = (
-        generate_labels(labels, grs) if labels is not None else combinations_with_replacement(np.arange(len(grs)), r=2)
-    )
-
-    return _genome, genome_length, _labels
-
-
-def ensure_genome_dataframe(genome: GenomeType) -> pd.DataFrame:
-    if isinstance(genome, dict):
-        return create_genome_dataframe(genome)
-
-    if isinstance(genome, pd.DataFrame):
-        return genome
-
-    msg = f"genome must be dict or DataFrame, was {type(genome)}"
-    raise TypeError(msg)
-
-
-def find_chromosome_max_end_positions(grs: list["PyRanges"]) -> pd.DataFrame:
-    """Find the largest end position in each chromosome.
+    See Also
+    --------
+    pyranges.stats.jaccard : compute the jaccard coefficient
 
     Examples
     --------
-    >>> f1, f2 = pr.example_data.f1, pr.example_data.f2  # both only have chr1
-    >>> f1["End"].max()
-    9
-    >>> f2["End"].max()
-    7
-    >>> pr.stats.find_chromosome_max_end_positions([f1, f2])
-      Chromosome  Start  End
-    0       chr1      0    9
+    >>> gr, gr2 = pr.example_data.f1, pr.example_data.f2
+    >>> gr.stats.forbes(gr2, chromsizes={"chr1": 10})
+    0.8333333333333334
 
     """
-    genome: dict[str, int] = defaultdict(int)
-    for gr in grs:
-        for chrom, chrom_df in gr.groupby(CHROM_COL):
-            genome[chrom] = max(chrom_df[END_COL].max(), genome[chrom])
-    return create_genome_dataframe(dict(genome))
+    _chromsizes = _chromsizes_as_int(chromsizes)
+
+    ensure_strand_behavior_options_valid(self, other, strand_behavior=strand_behavior)
+    strand = self.strand_valid and other.strand_valid and strand_behavior in {STRAND_BEHAVIOR_AUTO, True}
+    reference_length = self.merge_overlaps(use_strand=strand).length
+    query_length = other.merge_overlaps(use_strand=strand).length
+
+    intersection_sum = self.set_intersect(other, strand_behavior=strand_behavior).lengths().sum()
+    return _chromsizes * intersection_sum / (reference_length * query_length)
 
 
-def create_genome_dataframe(genome: dict[str, int]) -> pd.DataFrame:
-    return pd.DataFrame({"Chromosome": list(genome.keys()), "Start": 0, "End": list(genome.values())})
+def jaccard(
+    self: "PyRanges",
+    other: "PyRanges",
+    strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
+) -> float:
+    """Compute Jaccards coefficient.
+
+    Ratio of the intersection and union of two sets.
+
+    Parameters
+    ----------
+    self : PyRanges
+        Intervals to compare.
+
+    other : PyRanges
+        Intervals to compare with.
+
+    strand_behavior : {"auto", "same", "opposite"}
+        Whether to compute without regards to strand or on same or opposite.
+
+    Returns
+    -------
+    float
+
+        Ratio of the intersection and union of two sets.
+
+    See Also
+    --------
+    pyranges.stats.forbes : compute the forbes coefficient
+
+    Examples
+    --------
+    >>> gr, gr2 = pr.example_data.f1, pr.example_data.f2
+    >>> chromsizes = pr.example_data.chromsizes
+    >>> gr.stats.jaccard(gr2)
+    0.14285714285714285
+
+    """
+    ensure_strand_behavior_options_valid(self, other, strand_behavior=strand_behavior)
+    strand = self.strand_valid and other.strand_valid and strand_behavior in {STRAND_BEHAVIOR_AUTO, True}
+
+    intersection_sum = self.set_intersect(other).lengths().sum()
+
+    union_sum = 0
+    for gr in [self, other]:
+        union_sum += gr.merge_overlaps(use_strand=strand).lengths().sum()
+
+    denominator = union_sum - intersection_sum
+    if denominator == 0:
+        return 1.0
+    return intersection_sum / denominator
 
 
-def compute_genome_length(genome: pd.DataFrame) -> int:
-    return int(genome[END_COL].sum())
+def relative_distance(self: "PyRanges", other: "PyRanges", **_) -> DataFrame:
+    """Compute spatial correlation between two sets.
+
+    Metric which describes relative distance between each interval in one
+    set and two closest intervals in another.
+
+    Parameters
+    ----------
+    self : PyRanges
+        Intervals to compare.
+
+    other : PyRanges
+        Intervals to compare with.
+
+    chromsizes : int, dict, DataFrame or PyRanges
+
+        Integer representing genome length or mapping from chromosomes
+        to its length.
+
+    strandedness : {None, "same", "opposite", False}, default None, i.e. "auto"
+
+        Whether to compute without regards to strand or on same or opposite.
+
+    Returns
+    -------
+    pandas.DataFrame
+
+        DataFrame containing the frequency of each relative distance.
+
+    See Also
+    --------
+    pyranges.stats.jaccard : compute the jaccard coefficient
+    pyranges.stats.forbes : compute the forbes coefficient
+
+    Examples
+    --------
+    >>> gr1, gr2 = pr.example_data.chipseq, pr.example_data.chipseq_background
+    >>> gr = pd.concat([gr1, gr1.head(4), gr2.tail(4)])
+    >>> chromsizes = pr.example_data.chromsizes
+    >>> gr.stats.relative_distance(gr2)
+        reldist  count  total  fraction
+    0      0.00      4     18  0.222222
+    1      0.03      1     18  0.055556
+    2      0.04      1     18  0.055556
+    3      0.10      1     18  0.055556
+    4      0.12      1     18  0.055556
+    5      0.13      1     18  0.055556
+    6      0.19      1     18  0.055556
+    7      0.23      1     18  0.055556
+    8      0.24      1     18  0.055556
+    9      0.38      1     18  0.055556
+    10     0.41      2     18  0.111111
+    11     0.42      1     18  0.055556
+    12     0.43      2     18  0.111111
+
+    """
+    result = pd.Series(_relative_distance(self, other))
+
+    not_nan = ~np.isnan(result)
+    result.loc[not_nan] = np.floor(result[not_nan] * 100) / 100
+    vc = result.value_counts(dropna=False).to_frame().reset_index()
+    vc.columns = pd.Index(["reldist", "count"])
+    vc.insert(vc.shape[1], "total", len(result))
+    vc.insert(vc.shape[1], "fraction", vc["count"] / len(result))
+    vc = vc.sort_values("reldist", ascending=True)
+    return vc.reset_index(drop=True)
 
 
-def generate_labels(labels: LabelsType, grs: list[Any]) -> Iterable:
-    if len(labels) != len(grs):
-        msg = "Labels length must match the length of grs"
-        raise ValueError(msg)
-    return combinations_with_replacement(labels, r=2)
+####################################################################################################
+# Namespace managers:
+
+
+class StatsManager:
+    """Namespace manager for statistical methods that accept PyRanges as first argument, accessed with pr.PyRanges.stats.
+
+    Additional methods are available at pyranges.stats.
+    """
+
+    def __init__(self, p: "PyRanges") -> None:
+        self.pyranges_instance = p
+
+    forbes = decorate_to_pyranges_method(forbes)
+    jaccard = decorate_to_pyranges_method(jaccard)
+    relative_distance = decorate_to_pyranges_method(relative_distance)

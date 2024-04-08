@@ -4,10 +4,11 @@ from collections.abc import Iterable
 import pandas as pd
 from pandas import Series
 
-from pyranges import mypy_ensure_pyranges, names
+from pyranges import names
+from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
 
 if typing.TYPE_CHECKING:
-    from pyranges.pyranges_main import PyRanges
+    from pyranges.core.pyranges_main import PyRanges
 
 
 def empty_df(

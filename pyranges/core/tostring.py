@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING
 import pandas as pd
 from tabulate import tabulate
 
-import pyranges
-
 if TYPE_CHECKING:
     import pyranges as pr
+
+TOSTRING_CONSOLE_WIDTH: int | None = None
 
 
 @dataclass
@@ -23,7 +23,7 @@ def console_width(max_total_width: int | None = None) -> int:
     """Return console width."""
     if max_total_width is not None:
         return max_total_width
-    if width := pyranges.TOSTRING_CONSOLE_WIDTH:
+    if width := TOSTRING_CONSOLE_WIDTH:
         return width
     return shutil.get_terminal_size().columns
 

@@ -6,8 +6,8 @@ import pandas as pd
 
 if typing.TYPE_CHECKING:
     from pyranges import PyRanges
+from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
 from pyranges.names import CHROM_COL, END_COL, START_COL, STRAND_COL
-from pyranges.pyranges_helpers import mypy_ensure_pyranges
 
 # Three types of accessors:
 # 1. Columns or columns, rows
