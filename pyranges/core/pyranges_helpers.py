@@ -1,8 +1,11 @@
-from typing import TYPE_CHECKING, Literal
+import inspect
+import warnings
+from typing import TYPE_CHECKING
 
 from pyranges.names import (
     CHROM_AND_STRAND_COLS,
     CHROM_COL,
+    REVERSE_STRAND,
     STRAND_BEHAVIOR_AUTO,
     STRAND_BEHAVIOR_IGNORE,
     STRAND_BEHAVIOR_OPPOSITE,
@@ -26,27 +29,25 @@ if TYPE_CHECKING:
 
 def validate_and_convert_strand(self: "PyRanges", use_strand: VALID_USE_STRAND_TYPE) -> bool:
     """Validate and convert strand option."""
-    if use_strand is None or use_strand == "auto":
+    if use_strand not in VALID_USE_STRAND_OPTIONS:
+        msg = f"Invalid use_strand option: {use_strand}"
+        raise ValueError(msg)
+    if use_strand is True and not self.has_strand:
+        msg = "Cannot have use_strand=True when the Strand column is missing."
+        raise ValueError(msg)
+    if use_strand == USE_STRAND_AUTO:
         use_strand = self.strand_valid
-    elif not isinstance(use_strand, bool):
-        msg = f"Only 'auto'/None, True, and False are valid values for strand. Was: {use_strand}."
-        raise ValueError(msg)
+
+        # If Strand column is invalid, set use_strand to False
+        # but if there are intervals on the negative strand, warn user
+        if not use_strand and contains_negative_strand(self):
+            fn_name = stack[1].function if len(stack := inspect.stack()) > 1 else "unknown_function"
+            msg = (
+                f"{fn_name}: '{USE_STRAND_AUTO}' use_strand treated as False due to invalid Strand values. Suppress "
+                f"this warning with use_strand=False"
+            )
+            warnings.warn(msg, stacklevel=3)
     return use_strand
-
-
-def resolve_strand_argument_ensure_valid(
-    self: "PyRanges",
-    strand: VALID_USE_STRAND_TYPE,
-) -> bool:
-    """Resolve strand argument and ensure it is valid."""
-    if strand == USE_STRAND_AUTO:
-        _strand = self.strand_valid
-    elif isinstance(strand, bool):
-        _strand = strand
-    else:
-        msg = f"Only 'auto'/None, True, and False are valid values for strand. Was: {strand}."
-        raise ValueError(msg)
-    return _strand
 
 
 def ensure_strand_behavior_options_valid(
@@ -63,9 +64,9 @@ def ensure_strand_behavior_options_valid(
         raise ValueError(msg)
 
 
-def strand_behavior_from_strand_bool(*, strand: bool) -> Literal["same", "ignore"]:
-    """Return strand behavior based on strand bool."""
-    return STRAND_BEHAVIOR_SAME if strand else STRAND_BEHAVIOR_IGNORE
+def contains_negative_strand(self: "PyRanges") -> bool:
+    """Return True if negative strand is present."""
+    return self.has_strand and REVERSE_STRAND in self[STRAND_COL].to_numpy()
 
 
 def group_keys_from_strand_behavior(
