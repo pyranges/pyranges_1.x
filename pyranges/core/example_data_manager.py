@@ -42,10 +42,23 @@ LOGGER.setLevel(logging.INFO)
 class ExampleData:
     _files: ClassVar[dict[str, Path]] = {}
 
+    def __repr__(self) -> str:
+        methods_info = "Available example data:\n-----------------------\n"
+        items = [
+            (name, prop)
+            for name, prop in self.__class__.__dict__.items()
+            if isinstance(prop, property) and not name.startswith("_")
+        ]
+        max_name_len = max(len(name) for name, _ in items)
+        for name, prop in items:
+            doc_line = prop.fget.__doc__.split("\n")[0] if prop.fget.__doc__ else ""
+            methods_info += f"example_data.{name:<{max_name_len}} : {doc_line}\n"
+        return methods_info.strip()
+
     @classmethod  # type: ignore[misc]
     @property
     def files(cls) -> dict[str, Path]:
-        """Return a dict of the basenames to full paths of the example data in the project.
+        """Return a dict of basenames to full file paths of available example data.
 
         Examples
         --------
@@ -129,10 +142,7 @@ chr10	73781101	73781126	U0	0	+"""
 
     @property
     def chromsizes(self) -> "pr.PyRanges":
-        """Example chromsizes file.
-
-        From hg19.
-        """
+        """Example chromsizes data (hg19)."""
         contents = """chr1	0	249250621
 chr2	0	243199373
 chr3	0	198022430
