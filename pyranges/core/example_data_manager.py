@@ -43,8 +43,7 @@ class ExampleData:
     _files: ClassVar[dict[str, Path]] = {}
 
     def __repr__(self) -> str:
-        methods_info = "Available example data:\n"
-        methods_info += "-----------------------\n"
+        methods_info = "Available example data:\n-----------------------\n"
         items = [
             (name, prop)
             for name, prop in self.__class__.__dict__.items()
