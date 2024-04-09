@@ -5,7 +5,7 @@ import sys
 from collections.abc import Callable, Iterable
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, cast
 
 import numpy as np
 import pandas as pd
@@ -4551,3 +4551,112 @@ class PyRanges(RangeFrame):
         gr["Sequence"] = seq.to_numpy()
 
         return gr.groupby(transcript_id, as_index=False).agg({"Sequence": "".join})
+
+    def genome_bounds(
+        self: "PyRanges",
+        chromsizes: "dict[str | int, int] | PyRanges",
+        *,
+        clip: bool = False,
+        only_right: bool = False,
+    ) -> "PyRanges":
+        """Remove or clip intervals outside of genome bounds.
+
+        Parameters
+        ----------
+        self : PyRanges
+            Input intervals
+
+        chromsizes : dict or PyRanges or pyfaidx.Fasta
+            Dict or PyRanges describing the lengths of the chromosomes.
+            pyfaidx.Fasta object is also accepted since it conveniently loads chromosome length
+
+        clip : bool, default False
+            Returns the portions of intervals within bounds,
+            instead of dropping intervals entirely if they are even partially
+            out of bounds
+
+        only_right : bool, default False
+            If True, remove or clip only intervals that are out-of-bounds on the right,
+            and do not alter those out-of-bounds on the left (whose Start is < 0)
+
+
+        Examples
+        --------
+        >>> import pyranges as pr
+        >>> d = {"Chromosome": [1, 1, 3], "Start": [1, 249250600, 5], "End": [2, 249250640, 7]}
+        >>> gr = pr.PyRanges(d)
+        >>> gr
+          index  |      Chromosome      Start        End
+          int64  |           int64      int64      int64
+        -------  ---  ------------  ---------  ---------
+              0  |               1          1          2
+              1  |               1  249250600  249250640
+              2  |               3          5          7
+        PyRanges with 3 rows, 3 columns, and 1 index columns.
+        Contains 2 chromosomes.
+
+        >>> chromsizes = {1: 249250621, 3: 500}
+        >>> chromsizes
+        {1: 249250621, 3: 500}
+
+        >>> gr.genome_bounds(chromsizes)
+          index  |      Chromosome    Start      End
+          int64  |           int64    int64    int64
+        -------  ---  ------------  -------  -------
+              0  |               1        1        2
+              1  |               3        5        7
+        PyRanges with 2 rows, 3 columns, and 1 index columns.
+        Contains 2 chromosomes.
+
+        >>> gr.genome_bounds(chromsizes, clip=True)
+          index  |      Chromosome      Start        End
+          int64  |           int64      int64      int64
+        -------  ---  ------------  ---------  ---------
+              0  |               1          1          2
+              1  |               1  249250600  249250621
+              2  |               3          5          7
+        PyRanges with 3 rows, 3 columns, and 1 index columns.
+        Contains 2 chromosomes.
+
+        >>> del chromsizes[3]
+        >>> chromsizes
+        {1: 249250621}
+
+        >>> gr.genome_bounds(chromsizes)
+        Traceback (most recent call last):
+        ...
+        ValueError: Not all chromosomes were in the chromsize dict. This might mean that their types differed.
+        Missing keys: {3}.
+        Chromosome col had type: int64 while keys were of type: int
+
+        """
+        from pyranges.methods.boundaries import _outside_bounds
+
+        if isinstance(chromsizes, pd.DataFrame):
+            chromsizes = dict(*zip(chromsizes[CHROM_COL], chromsizes[END_COL], strict=True))
+        elif isinstance(chromsizes, dict):
+            pass
+        else:  # A hack because pyfaidx might not be installed, but we want type checking anyway
+            pyfaidx_chromsizes = cast(dict[str | int, list], chromsizes)
+            chromsizes = {k: len(pyfaidx_chromsizes[k]) for k in pyfaidx_chromsizes}
+
+        if missing_keys := set(self[CHROM_COL]).difference(set(chromsizes.keys())):
+            msg = f"""Not all chromosomes were in the chromsize dict. This might mean that their types differed.
+Missing keys: {missing_keys}.
+Chromosome col had type: {self[CHROM_COL].dtype} while keys were of type: {', '.join({type(k).__name__ for k in chromsizes})}"""
+            raise ValueError(msg)
+
+        if not isinstance(chromsizes, dict):
+            msg = "ERROR chromsizes must be a dictionary, or a PyRanges, or a pyfaidx.Fasta object"
+            raise TypeError(msg)
+
+        return (
+            self.groupby(CHROM_COL)
+            .apply(
+                _outside_bounds,
+                chromsizes=chromsizes,
+                clip=clip,
+                only_right=only_right,
+            )
+            .reset_index(drop=True)
+        )
