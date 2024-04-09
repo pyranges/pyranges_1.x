@@ -5,8 +5,7 @@ from typing import Any
 
 import pandas as pd
 
-from pyranges.core.tostring import tostring
-from pyranges.names import (
+from pyranges.core.names import (
     BY_ENTRY_IN_KWARGS,
     PRESERVE_INDEX_COLUMN,
     RANGE_COLS,
@@ -21,6 +20,7 @@ from pyranges.names import (
     BinaryOperation,
     UnaryOperation,
 )
+from pyranges.core.tostring import tostring
 from pyranges.range_frame.range_frame_validator import InvalidRangesReason
 
 

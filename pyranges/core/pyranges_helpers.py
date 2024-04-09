@@ -2,7 +2,7 @@ import inspect
 import warnings
 from typing import TYPE_CHECKING
 
-from pyranges.names import (
+from pyranges.core.names import (
     CHROM_AND_STRAND_COLS,
     CHROM_COL,
     REVERSE_STRAND,

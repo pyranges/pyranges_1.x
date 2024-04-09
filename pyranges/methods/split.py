@@ -2,8 +2,8 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
+from pyranges.core.names import CHROM_COL, END_COL, RANGE_COLS, START_COL, STRAND_COL
 from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
-from pyranges.names import CHROM_COL, END_COL, RANGE_COLS, START_COL, STRAND_COL
 
 if TYPE_CHECKING:
     from pyranges import PyRanges

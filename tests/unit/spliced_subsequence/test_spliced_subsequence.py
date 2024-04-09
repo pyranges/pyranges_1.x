@@ -1,8 +1,5 @@
-import io
-
 import pandas as pd
 import pyranges as pr
-from pyranges.names import PRESERVE_INDEX_COLUMN
 
 
 def test_spliced_subsequence_use_strand_false():

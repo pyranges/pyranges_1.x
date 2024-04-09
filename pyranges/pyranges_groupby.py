@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any
 import pandas as pd
 import pandas.core.groupby  # type: ignore[name-defined]
 
-from pyranges.names import return_pyranges_if_possible
+from pyranges.core.names import return_pyranges_if_possible
 
 if TYPE_CHECKING:
     import pyranges as pr

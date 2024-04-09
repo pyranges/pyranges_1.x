@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 
-import pyranges as pr
-from pyranges import names
+import pyranges as pr  # noqa: TCH001
+from pyranges.core import names
 from pyranges.core.example_data_manager import example_data
 from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
 

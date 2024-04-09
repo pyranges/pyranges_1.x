@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from pyranges.names import CHROM_COL, END_COL, START_COL, STRAND_COL
+from pyranges.core.names import CHROM_COL, END_COL, START_COL, STRAND_COL
 
 if TYPE_CHECKING:
     import pyranges as pr

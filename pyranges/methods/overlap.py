@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from ncls import NCLS  # type: ignore[import]
 
-from pyranges.names import (
+from pyranges.core.names import (
     END_COL,
     OVERLAP_ALL,
     OVERLAP_CONTAINMENT,

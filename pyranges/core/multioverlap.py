@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING, Optional
 
+from pyranges.core.names import VALID_OVERLAP_TYPE, VALID_STRAND_BEHAVIOR_TYPE
 from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
 from pyranges.methods import concat
-from pyranges.names import VALID_OVERLAP_TYPE, VALID_STRAND_BEHAVIOR_TYPE
 
 if TYPE_CHECKING:
     from pyranges.core.pyranges_main import PyRanges

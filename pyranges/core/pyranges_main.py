@@ -13,25 +13,7 @@ from natsort import natsort, natsorted  # type: ignore[import]
 
 import pyranges as pr
 from pyranges.core.loci_getter import LociGetter
-from pyranges.core.parallelism import (
-    _extend,
-    _extend_grp,
-    _tes,
-    _tss,
-)
-from pyranges.core.pyranges_helpers import (
-    ensure_strand_behavior_options_valid,
-    get_by_columns_including_chromosome_and_strand,
-    group_keys_from_strand_behavior,
-    group_keys_single,
-    mypy_ensure_pyranges,
-    strand_behavior_from_strand_and_validate,
-    strand_from_strand_behavior,
-    validate_and_convert_strand,
-)
-from pyranges.core.tostring import tostring
-from pyranges.methods.merge import _merge
-from pyranges.names import (
+from pyranges.core.names import (
     CHROM_AND_STRAND_COLS,
     CHROM_COL,
     END_COL,
@@ -73,6 +55,24 @@ from pyranges.names import (
     CombineIntervalColumnsOperation,
     UnaryOperation,
 )
+from pyranges.core.parallelism import (
+    _extend,
+    _extend_grp,
+    _tes,
+    _tss,
+)
+from pyranges.core.pyranges_helpers import (
+    ensure_strand_behavior_options_valid,
+    get_by_columns_including_chromosome_and_strand,
+    group_keys_from_strand_behavior,
+    group_keys_single,
+    mypy_ensure_pyranges,
+    strand_behavior_from_strand_and_validate,
+    strand_from_strand_behavior,
+    validate_and_convert_strand,
+)
+from pyranges.core.tostring import tostring
+from pyranges.methods.merge import _merge
 from pyranges.pyranges_groupby import PyRangesDataFrameGroupBy
 from pyranges.range_frame.range_frame import RangeFrame
 from pyranges.range_frame.range_frame_validator import InvalidRangesReason

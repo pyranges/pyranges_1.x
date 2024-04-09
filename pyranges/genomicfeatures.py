@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any
 import pandas as pd
 from pandas.core.frame import DataFrame
 
-from pyranges.names import CHROM_COL, END_COL, START_COL
+from pyranges.core.names import CHROM_COL, END_COL, START_COL
 
 __all__ = ["genome_bounds", "tile_genome", "GenomicFeaturesMethods"]
 

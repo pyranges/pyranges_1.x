@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 from sorted_nearest import maketiles, makewindows  # type: ignore[import-untyped]
 
-from pyranges.names import BY_ENTRY_IN_KWARGS, END_COL, START_COL, TEMP_END_COL, TEMP_START_COL
+from pyranges.core.names import BY_ENTRY_IN_KWARGS, END_COL, START_COL, TEMP_END_COL, TEMP_START_COL
 
 if TYPE_CHECKING:
     from pyranges import RangeFrame

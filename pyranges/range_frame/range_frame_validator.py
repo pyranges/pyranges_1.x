@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from pyranges.names import END_COL, RANGE_COLS, START_COL
+from pyranges.core.names import END_COL, RANGE_COLS, START_COL
 
 if TYPE_CHECKING:
     import pandas as pd

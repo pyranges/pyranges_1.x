@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from ncls import NCLS  # type: ignore[import]
 
-from pyranges.names import VALID_JOIN_TYPE
+from pyranges.core.names import VALID_JOIN_TYPE
 
 
 def _both_indexes(
