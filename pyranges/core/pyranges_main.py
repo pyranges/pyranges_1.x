@@ -712,6 +712,7 @@ class PyRanges(RangeFrame):
         """
         from pyranges.methods.boundaries import _bounds
 
+        # may be optimized: no need to split by chromosome/strands
         return self.apply_single(
             _bounds,
             by=self._by_to_list(transcript_id),
@@ -830,7 +831,7 @@ class PyRanges(RangeFrame):
     def _assert_strand_values_valid(self) -> None:
         self._assert_has_strand()
         if not self.strand_valid:
-            msg = f"PyRanges contains non-genomic strands. Only {VALID_GENOMIC_STRAND_INFO} valid."
+            msg = f"PyRanges contains non-genomic strands. Only {VALID_GENOMIC_STRAND_INFO} are valid."
             raise ValueError(msg)
 
     def cluster(
@@ -1328,7 +1329,7 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         """
-        if not (self.has_strand and self.strand_valid):
+        if not self.strand_valid:
             msg = f"Need PyRanges with valid strands ({VALID_GENOMIC_STRAND_INFO}) to find 5'."
             raise AssertionError(msg)
 
@@ -2596,11 +2597,8 @@ class PyRanges(RangeFrame):
 
         from pyranges.methods.spliced_subsequence import _spliced_subseq
 
-        if use_strand and not self.strand_valid:
-            msg = "spliced_subsequence: you can use strand=True only for stranded PyRanges!"
-            raise ValueError(msg)
-
         use_strand = validate_and_convert_strand(self, use_strand)
+
         sorted_p = self.sort_by_5_prime_ascending_and_3_prime_descending() if use_strand else self.sort_by_position()
 
         result = sorted_p.apply_single(
