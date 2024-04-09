@@ -81,8 +81,9 @@ if TYPE_CHECKING:
     import pyfaidx  # type: ignore[import]
     from pyrle.rledict import Rledict  # type: ignore[import]
 
+    from pyranges.ext.genomicfeatures import GenomicFeaturesManager
     from pyranges.ext.stats import StatsManager
-    from pyranges.genomicfeatures import GenomicFeaturesMethods
+
 
 __all__ = ["PyRanges"]
 
@@ -231,11 +232,11 @@ class PyRanges(RangeFrame):
         return pr.PyRanges
 
     @property
-    def features(self) -> "GenomicFeaturesMethods":
+    def features(self) -> "GenomicFeaturesManager":
         """Namespace for genomic-features methods."""
-        from pyranges.genomicfeatures import GenomicFeaturesMethods
+        from pyranges.ext.genomicfeatures import GenomicFeaturesManager
 
-        return GenomicFeaturesMethods(self)
+        return GenomicFeaturesManager(self)
 
     @property
     def stats(self) -> "StatsManager":
@@ -243,6 +244,13 @@ class PyRanges(RangeFrame):
         from pyranges.ext.stats import StatsManager
 
         return StatsManager(self)
+
+    @property
+    def genomicfeatures(self) -> "GenomicFeaturesManager":
+        """Namespace for genomic-features methods."""
+        from pyranges.ext.genomicfeatures import GenomicFeaturesManager
+
+        return GenomicFeaturesManager(self)
 
     @property
     def loci(self) -> LociGetter:
