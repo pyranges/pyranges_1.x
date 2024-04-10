@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 from ncls import NCLS  # type: ignore[import]
 
-from pyranges.names import TEMP_NUM_COL
+from pyranges.core.names import TEMP_NUM_COL
 
 if TYPE_CHECKING:
     from pyranges import RangeFrame

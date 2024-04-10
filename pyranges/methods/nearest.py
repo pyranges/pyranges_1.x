@@ -10,8 +10,8 @@ from sorted_nearest import (  # type: ignore[import]
 
 import pyranges.core.empty
 from pyranges import PyRanges
+from pyranges.core.names import END_COL, START_COL
 from pyranges.methods.sort import sort_one_by_one
-from pyranges.names import END_COL, START_COL
 
 if TYPE_CHECKING:
     from numpy.typing import ArrayLike, NDArray

@@ -6,11 +6,11 @@ import hypothesis.strategies as st
 import numpy as np
 import pandas as pd
 import pytest
-from hypothesis import given, reproduce_failure, settings
+from hypothesis import given, settings
 from hypothesis.extra.pandas import column, data_frames, indexes
 
 from pyranges import PyRanges
-from pyranges.names import VALID_GENOMIC_STRAND_INFO
+from pyranges.core.names import VALID_GENOMIC_STRAND_INFO
 
 max_examples = 15
 slow_max_examples = 5

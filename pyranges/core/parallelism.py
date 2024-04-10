@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from pandas.core.frame import DataFrame
 
-from pyranges.names import BY_ENTRY_IN_KWARGS, END_COL, FORWARD_STRAND, REVERSE_STRAND, START_COL
+from pyranges.core.names import BY_ENTRY_IN_KWARGS, END_COL, FORWARD_STRAND, REVERSE_STRAND, START_COL
 
 
 def run_in_parallel(function, dfs: list[DataFrame], nb_cpu: int, *args, **kwargs) -> Generator:
