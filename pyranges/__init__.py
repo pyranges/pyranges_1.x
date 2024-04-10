@@ -15,6 +15,7 @@ from pyranges.core.random import random  # noqa: F401
 from pyranges.core.version import __version__  # noqa: F401
 from pyranges.ext import (
     genomicfeatures,  # noqa: F401
+    orfs,  # noqa: F401
     stats,  # noqa: F401
 )
 from pyranges.methods.concat import concat  # noqa: F401

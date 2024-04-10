@@ -18,7 +18,6 @@ from pyranges.core.names import (
     CHROM_COL,
     END_COL,
     FORWARD_STRAND,
-    FRAME_COL,
     GENOME_LOC_COLS,
     GENOME_LOC_COLS_WITH_STRAND,
     JOIN_SUFFIX,
@@ -34,10 +33,7 @@ from pyranges.core.names import (
     STRAND_BEHAVIOR_DEFAULT,
     STRAND_BEHAVIOR_OPPOSITE,
     STRAND_COL,
-    TEMP_CUMSUM_COL,
     TEMP_END_SLACK_COL,
-    TEMP_INDEX_COL,
-    TEMP_LENGTH_COL,
     TEMP_NAME_COL,
     TEMP_NUM_COL,
     TEMP_START_SLACK_COL,
@@ -61,6 +57,7 @@ from pyranges.core.parallelism import (
     _tes,
     _tss,
 )
+from pyranges.core.pyranges_groupby import PyRangesDataFrameGroupBy
 from pyranges.core.pyranges_helpers import (
     ensure_strand_behavior_options_valid,
     get_by_columns_including_chromosome_and_strand,
@@ -73,7 +70,6 @@ from pyranges.core.pyranges_helpers import (
 )
 from pyranges.core.tostring import tostring
 from pyranges.methods.merge import _merge
-from pyranges.pyranges_groupby import PyRangesDataFrameGroupBy
 from pyranges.range_frame.range_frame import RangeFrame
 from pyranges.range_frame.range_frame_validator import InvalidRangesReason
 
@@ -82,6 +78,7 @@ if TYPE_CHECKING:
     from pyrle.rledict import Rledict  # type: ignore[import]
 
     from pyranges.ext.genomicfeatures import GenomicFeaturesManager
+    from pyranges.ext.orfs import OrfsManager
     from pyranges.ext.stats import StatsManager
 
 
@@ -232,11 +229,11 @@ class PyRanges(RangeFrame):
         return pr.PyRanges
 
     @property
-    def features(self) -> "GenomicFeaturesManager":
-        """Namespace for genomic-features methods."""
-        from pyranges.ext.genomicfeatures import GenomicFeaturesManager
+    def orfs(self) -> "OrfsManager":
+        """Namespace for ORFs/CDSs related methods."""
+        from pyranges.ext.orfs import OrfsManager
 
-        return GenomicFeaturesManager(self)
+        return OrfsManager(self)
 
     @property
     def stats(self) -> "StatsManager":
@@ -734,86 +731,6 @@ class PyRanges(RangeFrame):
             agg=agg,
             use_strand=self.strand_valid,
         )
-
-    # TO DO: fix, move to orfs namespace (add extend_orf to it)
-    def calculate_frame(self, transcript_id: str | list[str]) -> "PyRanges":
-        """Calculate the frame of each genomic interval, assuming all are coding sequences (CDS), and add it as column inplace.
-
-        After this, the input Pyranges will contain an added "Frame" column, which determines the base of the CDS that is the first base of a codon.
-        Resulting values are in range between 0 and 2 included. 0 indicates that the first base of the CDS is the first base of a codon,
-        1 indicates the second base and 2 indicates the third base of the CDS.
-        While the 5'-most interval of each transcript has always 0 frame, the following ones may have any of these values.
-
-        Parameters
-        ----------
-        transcript_id : str or list of str
-            Column(s) to group by the intervals: coding exons belonging to the same transcript have the same values in this/these column(s).
-
-        Returns
-        -------
-        PyRanges
-
-        Examples
-        --------
-        >>> p = pr.PyRanges({"Chromosome": [1,1,1,2,2],
-        ...                   "Strand": ["+","+","+","-","-"],
-        ...                   "Start": [1,31,52,101,201],
-        ...                   "End": [10,45,90,130,218],
-        ...                   "transcript_id": ["t1","t1","t1","t2","t2"]})
-        >>> p
-          index  |      Chromosome  Strand      Start      End  transcript_id
-          int64  |           int64  object      int64    int64  object
-        -------  ---  ------------  --------  -------  -------  ---------------
-              0  |               1  +               1       10  t1
-              1  |               1  +              31       45  t1
-              2  |               1  +              52       90  t1
-              3  |               2  -             101      130  t2
-              4  |               2  -             201      218  t2
-        PyRanges with 5 rows, 5 columns, and 1 index columns.
-        Contains 2 chromosomes and 2 strands.
-
-        >>> p.calculate_frame(transcript_id=['transcript_id'])
-          index  |      Chromosome  Strand      Start      End  transcript_id      Frame
-          int64  |           int64  object      int64    int64  object             int64
-        -------  ---  ------------  --------  -------  -------  ---------------  -------
-              0  |               1  +               1       10  t1                     0
-              1  |               1  +              31       45  t1                     9
-              2  |               1  +              52       90  t1                    23
-              3  |               2  -             101      130  t2                    17
-              4  |               2  -             201      218  t2                     0
-        PyRanges with 5 rows, 6 columns, and 1 index columns.
-        Contains 2 chromosomes and 2 strands.
-
-        """
-        if not transcript_id:
-            msg = "transcript_id must be a string or list of strings"
-            raise ValueError(msg)
-
-        gr = self.copy()
-        # Column to save the initial index
-        gr[TEMP_INDEX_COL] = np.arange(len(self))
-
-        # Filtering for desired columns
-        sorted_p = gr.get_with_loc_columns([TEMP_INDEX_COL, *self._by_to_list(transcript_id)])
-
-        # Sorting by 5' (Intervals on + are sorted by ascending order and - are sorted by descending order)
-        sorted_p = sorted_p.sort_by_5_prime_ascending_and_3_prime_descending()
-
-        # Creating a column saving the length for the intervals (for selenoprofiles and ensembl)
-        sorted_p[TEMP_LENGTH_COL] = sorted_p.lengths()
-
-        # Creating a column saving the cumulative length for the intervals
-        sorted_p[TEMP_CUMSUM_COL] = sorted_p.groupby(transcript_id)[TEMP_LENGTH_COL].cumsum()
-
-        # Creating a frame column
-        sorted_p[FRAME_COL] = sorted_p[TEMP_CUMSUM_COL] - sorted_p[TEMP_LENGTH_COL]
-
-        # Appending the Frame of sorted_p by the index of p
-        sorted_p = mypy_ensure_pyranges(sorted_p.sort_values(by=TEMP_INDEX_COL))
-
-        gr["Frame"] = sorted_p.Frame
-
-        return gr.drop_and_return(TEMP_INDEX_COL, axis=1)
 
     @property
     def chromosomes(self) -> list[str]:
