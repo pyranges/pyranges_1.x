@@ -4,6 +4,7 @@ import pyranges as pr
 from pyranges.core.names import FRAME_COL, TEMP_CUMSUM_COL, TEMP_INDEX_COL, TEMP_LENGTH_COL
 from pyranges.core.namespace_utils import decorate_to_pyranges_method
 from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
+from pyranges.ext.orfs.extend_orfs import extend_orfs
 
 
 def calculate_frame(self: pr.PyRanges, transcript_id: str | list[str], frame_col: str = "Frame") -> pr.PyRanges:
@@ -105,3 +106,4 @@ class OrfsManager:
         self.pyranges_instance = p
 
     calculate_frame = decorate_to_pyranges_method(calculate_frame)
+    extend_orfs = decorate_to_pyranges_method(extend_orfs)
