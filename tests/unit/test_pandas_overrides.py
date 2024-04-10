@@ -5,7 +5,7 @@ import pandas.core.groupby
 import pytest
 
 import pyranges as pr
-from pyranges.pyranges_groupby import PyRangesDataFrameGroupBy
+from pyranges.core.pyranges_groupby import PyRangesDataFrameGroupBy
 
 
 def test_getitem() -> None:
@@ -194,7 +194,7 @@ def test_groupby_transform(gr) -> None:
 def test_groupby_getitem_frame(gr) -> None:
     g = gr.groupby("Chromosome")
     result = g[["Start", "Gene"]]
-    assert isinstance(result, pr.pyranges_groupby.PyRangesDataFrameGroupBy)
+    assert isinstance(result, PyRangesDataFrameGroupBy)
 
     # The Chromosome is now the index, so it is not a PyRanges object
     assert isinstance(result.agg("first"), pd.DataFrame)
@@ -214,7 +214,7 @@ def test_groupby_getitem_frame_as_index_false(gr) -> None:
 def test_groupby_getitem_series(gr) -> None:
     g = gr.groupby("Chromosome")
     result = g["Start"]
-    assert isinstance(result, pr.pyranges_groupby.PyRangesDataFrameGroupBy)
+    assert isinstance(result, PyRangesDataFrameGroupBy)
 
     assert isinstance(result.agg("first"), pd.Series)
 
@@ -231,7 +231,7 @@ def test_groupby_getitem_series_as_index_false(gr) -> None:
 def test_groupby_getattr_series(gr) -> None:
     g = gr.groupby("Chromosome")
     result = g["Start"]
-    assert isinstance(result, pr.pyranges_groupby.PyRangesDataFrameGroupBy)
+    assert isinstance(result, PyRangesDataFrameGroupBy)
 
     assert isinstance(result.agg("first"), pd.Series)
 

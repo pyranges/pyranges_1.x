@@ -61,6 +61,7 @@ from pyranges.core.parallelism import (
     _tes,
     _tss,
 )
+from pyranges.core.pyranges_groupby import PyRangesDataFrameGroupBy
 from pyranges.core.pyranges_helpers import (
     ensure_strand_behavior_options_valid,
     get_by_columns_including_chromosome_and_strand,
@@ -73,7 +74,6 @@ from pyranges.core.pyranges_helpers import (
 )
 from pyranges.core.tostring import tostring
 from pyranges.methods.merge import _merge
-from pyranges.pyranges_groupby import PyRangesDataFrameGroupBy
 from pyranges.range_frame.range_frame import RangeFrame
 from pyranges.range_frame.range_frame_validator import InvalidRangesReason
 

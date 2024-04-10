@@ -89,7 +89,7 @@ include = ["pyranges"]
 # typeCheckingMode = "strict"
 pythonVersion = "3.12"
 
-ignore = ["pyranges/pyranges_groupby.py"]
+ignore = ["pyranges/core/pyranges_groupby.py"]
 
 # specific rules to disable
 reportUnknownParameterType = false
