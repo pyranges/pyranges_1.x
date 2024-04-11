@@ -31,15 +31,15 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     fasta_path: str,
     transcript_id: str | list[str] | None = None,
     *,
+    direction: Iterable[DIRECTION_OPTIONS] | DIRECTION_OPTIONS | None = None,
     starts: list[str] = STARTS_NUCLEOTIDE_SEQ,
     stops: list[str] = STOPS_NUCLEOTIDE_SEQ,
     keep_off_bounds: bool = False,
-    direction: Iterable[DIRECTION_OPTIONS] | DIRECTION_OPTIONS | None = None,
-    chunk_size: int = 900,
     record_extensions: bool = False,
+    chunk_size: int = 900,
     verbose: bool = False,
 ) -> pr.PyRanges:
-    """Extend PyRanges intervals to form complete open reading frames.
+    r"""Extend PyRanges intervals to form complete open reading frames.
 
     The input intervals are extended their next Stop codon downstream, and to their leftmost Start codon upstream
     before encountering a Stop.
@@ -62,21 +62,188 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     stops : list containing the nucleotide pattern to look for downstream.
         Default ['TAG', 'TGA', 'TAA']
 
+    direction : whether the extension should be upstream ('up'), downstream
+        ('down') or both. Default (None) means: ['up', 'down']
+
     keep_off_bounds : if True, those intervals that reached out of bounds during extension
         without finding any stop are returned in their largest (3-nt multiple) extension.
         In this case, these intervals will not begin with a start or end with a stop
 
-    direction : whether the extension should be upstream ('up'), downstream
-        ('down') or both. Default (None) means: ['up', 'down']
-
-    chunk_size : the amount of nucleotides to be extended on each iteration.
-        Default 900.
-
     record_extensions : if True, add columns extension_up and extension_down
         with the extensions amounts. Default: False
 
+    chunk_size : the amount of nucleotides to be extended on each iteration. Does not affect output, only speed/memory.
+        Default 900.
+
     verbose : if True, print information about the progress of the extension.
         Default: False
+
+    Note
+    ----
+
+    This function requires the library pyfaidx, it can be installed with
+    ``conda install -c bioconda pyfaidx`` or ``pip install pyfaidx``.
+
+    Sorting the PyRanges is likely to improve the speed.
+    Intervals on the negative strand will be reverse complemented.
+
+    Examples
+    --------
+    >>> p = pr.PyRanges({"Chromosome": ['seq1'], "Start":[20], "End":[29], "Strand" : ["+"]})
+    >>> p
+      index  |    Chromosome      Start      End  Strand
+      int64  |    object          int64    int64  object
+    -------  ---  ------------  -------  -------  --------
+          0  |    seq1               20       29  +
+    PyRanges with 1 rows, 4 columns, and 1 index columns.
+    Contains 1 chromosomes and 1 strands.
+
+    #                *       ^       ^      ... ... ...          *                        #  ... = input interval
+    >>> seq1 = " AA TAA TGT ATG GTA ATG GGC GCC GGG ATT CCA CAG TAA GTG C".replace(' ', '')
+    >>> tmp_handle = open("temp.fasta", "w+")
+    >>> _ = tmp_handle.write(">seq1\n")
+    >>> _ = tmp_handle.write(seq1+'\n')
+    >>> tmp_handle.close()
+
+    >>> p.get_sequence("temp.fasta")
+    0    GCCGGGATT
+    Name: Sequence, dtype: object
+
+    >>> ep = p.orfs.extend_orfs(fasta_path="temp.fasta")
+    >>> ep
+      index  |    Chromosome      Start      End  Strand
+      int64  |    object          int64    int64  object
+    -------  ---  ------------  -------  -------  --------
+          0  |    seq1                8       38  +
+    PyRanges with 1 rows, 4 columns, and 1 index columns.
+    Contains 1 chromosomes and 1 strands.
+
+    >>> ep.get_sequence("temp.fasta")
+    0    ATGGTAATGGGCGCCGGGATTCCACAGTAA
+    Name: Sequence, dtype: object
+
+    >>> p.orfs.extend_orfs(fasta_path="temp.fasta", record_extensions=True)
+      index  |    Chromosome      Start      End  Strand      extension_up    extension_down
+      int64  |    object          int64    int64  object             int64             int64
+    -------  ---  ------------  -------  -------  --------  --------------  ----------------
+          0  |    seq1                8       38  +                     12                 9
+    PyRanges with 1 rows, 6 columns, and 1 index columns.
+    Contains 1 chromosomes and 1 strands.
+
+    # extending only in one direction
+    >>> p.orfs.extend_orfs(fasta_path="temp.fasta", direction='up')
+      index  |    Chromosome      Start      End  Strand
+      int64  |    object          int64    int64  object
+    -------  ---  ------------  -------  -------  --------
+          0  |    seq1                8       29  +
+    PyRanges with 1 rows, 4 columns, and 1 index columns.
+    Contains 1 chromosomes and 1 strands.
+
+    # with starts=[], any codon can be used as a start (i.e. ORFs defined as stop-delimited sequences)
+    >>> ep=p.orfs.extend_orfs(fasta_path="temp.fasta", starts=[])
+    >>> ep
+      index  |    Chromosome      Start      End  Strand
+      int64  |    object          int64    int64  object
+    -------  ---  ------------  -------  -------  --------
+          0  |    seq1                5       38  +
+    PyRanges with 1 rows, 4 columns, and 1 index columns.
+    Contains 1 chromosomes and 1 strands.
+
+    >>> ep.get_sequence("temp.fasta")
+    0    TGTATGGTAATGGGCGCCGGGATTCCACAGTAA
+    Name: Sequence, dtype: object
+
+    #                              *           ^      ... .        ..      *             # ... = input interval
+    # reverse complemented seq: C TAG CGT TTG ATG TTG GGC CAG GTG TTT CAG TAG CCC GG
+    >>> seq2 = " CC GGG CTA CTG AAA CAC CTG GCC CAA CAT CAA ACG CTA G".replace(' ', '')
+    >>> tmp_handle = open("temp1.fasta", "w+")
+    >>> _ = tmp_handle.write(">seq2\n")
+    >>> _ = tmp_handle.write(seq2+'\n')
+    >>> tmp_handle.close()
+
+    # example with multi-exon input intervals
+    # intervals on the negative strand are extended accordingly
+    >>> np = pr.PyRanges({"Chromosome": ['seq2']*2, "Start":[19, 11], "End":[23, 13],
+    ...                   "Strand" : ["-"]*2, "ID":["a", "a"]})
+    >>> np
+      index  |    Chromosome      Start      End  Strand    ID
+      int64  |    object          int64    int64  object    object
+    -------  ---  ------------  -------  -------  --------  --------
+          0  |    seq2               19       23  -         a
+          1  |    seq2               11       13  -         a
+    PyRanges with 2 rows, 5 columns, and 1 index columns.
+    Contains 1 chromosomes and 1 strands.
+
+    >>> np.get_sequence("temp1.fasta")
+    0    GGCC
+    1      TT
+    Name: Sequence, dtype: object
+
+    >>> ep = np.orfs.extend_orfs(fasta_path="temp1.fasta", transcript_id='ID')
+    >>> ep.get_sequence("temp1.fasta")
+    0    ATGTTGGGCC
+    1      TTCAGTAG
+    Name: Sequence, dtype: object
+
+
+    # A sequence with no in-frame stops after the input interval before the end
+    #                 *       ^       ^      ... ... ...                   #  ... = input interval
+    >>> seq1b = " AA TAA TGT ATG GTA ATG GGC GCC GGG ATT CCA CAG AAA GTG C".replace(' ', '')
+    >>> tmp_handle = open("temp2.fasta", "w+")
+    >>> _ = tmp_handle.write(">seq1\n")
+    >>> _ = tmp_handle.write(seq1b+'\n')
+    >>> tmp_handle.close()
+
+    >>> p.orfs.extend_orfs(fasta_path="temp2.fasta", record_extensions=True)
+      index  |    Chromosome      Start      End  Strand      extension_up    extension_down
+      int64  |    object          int64    int64  object             int64             int64
+    -------  ---  ------------  -------  -------  --------  --------------  ----------------
+          0  |    seq1                8       29  +                     12                 0
+    PyRanges with 1 rows, 6 columns, and 1 index columns.
+    Contains 1 chromosomes and 1 strands.
+
+    # showcasing keep_off_bounds
+    >>> ep=p.orfs.extend_orfs(fasta_path="temp2.fasta", record_extensions=True, keep_off_bounds=True)
+    >>> ep
+      index  |    Chromosome      Start      End  Strand      extension_up    extension_down
+      int64  |    object          int64    int64  object             int64             int64
+    -------  ---  ------------  -------  -------  --------  --------------  ----------------
+          0  |    seq1                8       41  +                     12                12
+    PyRanges with 1 rows, 6 columns, and 1 index columns.
+    Contains 1 chromosomes and 1 strands.
+    >>> ep.get_sequence("temp2.fasta")
+    0    ATGGTAATGGGCGCCGGGATTCCACAGAAAGTG
+    Name: Sequence, dtype: object
+
+    # A sequence with no in-frame stops BEFORE the input interval
+    #                         ^       ^      ... ... ...          *        #  ... = input interval
+    >>> seq1c = " AA TAC TGT ATG GTA ATG GGC GCC GGG ATT CCA CAG TAA GTG C".replace(' ', '')
+    >>> tmp_handle = open("temp3.fasta", "w+")
+    >>> _ = tmp_handle.write(">seq1\n")
+    >>> _ = tmp_handle.write(seq1c+'\n')
+    >>> tmp_handle.close()
+
+    >>> p.orfs.extend_orfs(fasta_path="temp3.fasta", record_extensions=True)
+      index  |    Chromosome      Start      End  Strand      extension_up    extension_down
+      int64  |    object          int64    int64  object             int64             int64
+    -------  ---  ------------  -------  -------  --------  --------------  ----------------
+          0  |    seq1                8       38  +                     12                 9
+    PyRanges with 1 rows, 6 columns, and 1 index columns.
+    Contains 1 chromosomes and 1 strands.
+
+    # showcasing keep_off_bounds
+    >>> ep = p.orfs.extend_orfs(fasta_path="temp3.fasta", record_extensions=True, keep_off_bounds=True)
+    >>> ep
+      index  |    Chromosome      Start      End  Strand      extension_up    extension_down
+      int64  |    object          int64    int64  object             int64             int64
+    -------  ---  ------------  -------  -------  --------  --------------  ----------------
+          0  |    seq1                2       38  +                     18                 9
+    PyRanges with 1 rows, 6 columns, and 1 index columns.
+    Contains 1 chromosomes and 1 strands.
+
+    >>> ep.get_sequence("temp3.fasta")
+    0    TACTGTATGGTAATGGGCGCCGGGATTCCACAGTAA
+    Name: Sequence, dtype: object
 
     """
     try:
@@ -98,6 +265,10 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
 
     if not all(len(pattern) == len(STARTS_NUCLEOTIDE_SEQ[0]) for pattern in starts + stops):
         msg = "Ensure that all patterns have a length of 3 nt."
+        raise AssertionError(msg)
+
+    if not stops:
+        msg = "At least one stop codon must be provided."
         raise AssertionError(msg)
 
     direction = direction if direction is not None else ["up", "down"]
@@ -137,7 +308,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
 
     # get a minimal interval per group, with min start and max end
     minp = (
-        (p[[STRAND_COL, START_COL, END_COL, CHROM_COL]+cds_id])
+        (p[[STRAND_COL, START_COL, END_COL, CHROM_COL, *cds_id]])
         .groupby(cds_id, as_index=False)
         .agg(
             {
@@ -192,16 +363,19 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
 
             ## looking for a stop if didn't find it already
             z = pup.loc[selector, "__seq"].apply(lambda x: _find_rightmost_stop(x, stops))
+
             found_stop_selector = selector.copy()  # made to index pup
             found_stop_selector[found_stop_selector] = z != -1
             pup.loc[found_stop_selector, "__up_stop_dist"] = z[z != -1] + ic * chunk_size
+
+            no_stop_off_bounds = selector.copy()
+            no_stop_off_bounds[no_stop_off_bounds] = z == -1
 
             if keep_off_bounds:
                 # focus on intervals that reached out of bounds in this iteration and did not find a stop:
                 #  record their max extension as up_stop_dist and __up_start_dist so they are considered whether starts was provided or not
                 # btw this means these intervals can be identified by looking at rows with __up_start_dist == __up_stop_dist
-                no_stop_off_bounds = found_stop_selector.copy()
-                no_stop_off_bounds[no_stop_off_bounds] = z == -1
+
                 pup.loc[no_stop_off_bounds, "__up_stop_dist"] = (
                     pup.loc[no_stop_off_bounds, END_COL] - pup.loc[no_stop_off_bounds, START_COL]
                 ) + ic * chunk_size
@@ -209,14 +383,21 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
 
             ## looking for a start
             if starts:
-                z = pup.loc[selector, ["__seq", "__up_stop_dist"]].apply(
+                w = pup.loc[selector, ["__seq", "__up_stop_dist"]].apply(
                     lambda x: _find_leftmost_start(x, starts, chunk_size),
                     axis=1,
                 )
                 ## if start is not found now, but was found in a previous iteration, the previous will be kept (not overwriting a -1)
                 found_start_selector = selector.copy()  # made to index pup
-                found_start_selector[found_start_selector] = z != -1
-                pup.loc[found_start_selector, "__up_start_dist"] = z[z != -1] + ic * chunk_size
+                found_start_selector[found_start_selector] = w != -1
+                if not keep_off_bounds:
+                    pup.loc[found_start_selector, "__up_start_dist"] = w[w != -1] + ic * chunk_size
+                else:
+                    found_start_and_stop_selector = found_start_selector & ~no_stop_off_bounds
+                    pup.loc[found_start_and_stop_selector, "__up_start_dist"] = w[w != -1] + ic * chunk_size
+            else:
+                # if no starts are provided, the start is whatever comes after the stop
+                pup.loc[found_stop_selector, "__up_start_dist"] = pup.loc[found_stop_selector, "__up_stop_dist"] - 3
 
             pup.loc[found_stop_selector, "__seq"] = ""  ## frees memory
             pverbose(" ---> After iteration:")
@@ -225,11 +406,8 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
             selector = (pup.__up_stop_dist == -1) & ~(pup.__out_of_bounds)  # noqa: SLF001
             ic += 1
 
-        ext_up = (
-            pup["__up_stop_dist"].rename("extension_up")
-            if not starts
-            else pup["__up_start_dist"].rename("extension_up")
-        )
+        ext_up = pup["__up_start_dist"].rename("extension_up")
+
         ext_up[ext_up == -1] = 0
         del pup
 
@@ -240,7 +418,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     if "down" in direction or direction == "down":
         pdo = minp.copy()
         pdo["__out_of_bounds"] = False
-        pdo["__up_stop_dist"] = -1  # -1 means not found
+        pdo["__down_stop_dist"] = -1  # -1 means not found
         selector = pd.Series(
             data=True,
             index=pdo.index,
@@ -262,45 +440,48 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
             z = pdo.loc[selector, "__seq"].apply(lambda x: _find_leftmost_stop(x, stops))
             found_stop_selector = selector.copy()  # made to index pdo
             found_stop_selector[found_stop_selector] = z != -1
-            pdo.loc[found_stop_selector, "__up_stop_dist"] = z[z != -1] + ic * chunk_size
+            pdo.loc[found_stop_selector, "__down_stop_dist"] = z[z != -1] + ic * chunk_size
 
             if keep_off_bounds:
                 # focus on intervals that reached out of bounds in this iteration and did not find a stop:
-                #  record their max extension as up_stop_dist
-                no_stop_off_bounds = found_stop_selector.copy()
+                #  record their max extension as down_stop_dist
+
+                no_stop_off_bounds = selector.copy()
                 no_stop_off_bounds[no_stop_off_bounds] = z == -1
-                pdo.loc[no_stop_off_bounds, "__up_stop_dist"] = (
+
+                pdo.loc[no_stop_off_bounds, "__down_stop_dist"] = (
                     pdo.loc[no_stop_off_bounds, END_COL] - pdo.loc[no_stop_off_bounds, START_COL]
                 ) + ic * chunk_size
 
             pdo.loc[found_stop_selector, "__seq"] = ""  ## frees memory
             pverbose(" ---> After iteration:")
             pverbose(pdo[selector])
-            selector = (pdo.__up_stop_dist == -1) & ~(pdo.__out_of_bounds)  # noqa: SLF001
+            selector = (pdo.__down_stop_dist == -1) & ~(pdo.__out_of_bounds)  # noqa: SLF001
             ic += 1
 
-        ext_down = pdo["__up_stop_dist"].rename("extension_down")
+        ext_down = pdo["__down_stop_dist"].rename("extension_down")
         ext_down[ext_down == -1] = 0
         del pdo
 
     else:  # No extension downstream (i.e. the extension is 0)
-        ext_down = pd.Series(0, index=minp.index)
+        ext_down = pd.Series(data=0, index=minp.index)
 
     ### Extensions have been determined. Now let's apply them to the original DF
     p["__order"] = np.arange(len(p))
-    zp = p.merge(
-        pd.DataFrame({"__extension_up": ext_up, "__extension_down": ext_down}),
-        left_on=cds_id,
-        right_index=True,
+    zp = mypy_ensure_pyranges(
+        p.merge(
+            pd.DataFrame({"__extension_up": ext_up, "__extension_down": ext_down}),
+            left_on=cds_id,
+            right_index=True,
+        ),
     )
     if len(zp) != nexons:
         msg = "ERROR malformed gene structures"
         raise AssertionError(msg)
 
-    p = p.drop(columns=["__order"])
     p = zp
 
-    p=p.sort_ranges()
+    p = p.sort_ranges()
     _extend_groups(p, cds_id)
     p = mypy_ensure_pyranges(p.sort_values("__order"))  # restore order
 
@@ -340,36 +521,24 @@ def _extend_groups(dfg, cds_id) -> None:
     first_exon_indices = dfg.groupby(cds_id).apply(lambda x: x.index[0]).reset_index(drop=True)
     last_exon_indices = dfg.groupby(cds_id).apply(lambda x: x.index[-1]).reset_index(drop=True)
 
-    # Convert first_exon_indices to a set for faster intersection operations
-    first_exon_index_set = set(first_exon_indices)
-    last_exon_index_set = set(last_exon_indices)
+    # boolean Series to select first exons
+    first_exon_selector = dfg.index.isin(set(first_exon_indices))
+    last_exon_selector = dfg.index.isin(set(last_exon_indices))
 
+    # boolean Series to select positive and negative strand
     sp = dfg.Strand == FORWARD_STRAND
     sm = dfg.Strand == REVERSE_STRAND
-    # Get indices where sp is True
-    positive_strand_indices = set(sp.index[sp])
-    negative_strand_indices = set(sm.index[sm])
 
-    # Find the intersection of first exon indices and positive strand indices
-    first_exon_positive_strand_indices = list(first_exon_index_set & positive_strand_indices)
-    last_exon_positive_strand_indices = list(last_exon_index_set & positive_strand_indices)
+    # Find the intersection to get, e.g. first exon on positive strand
+    fe_sp = first_exon_selector & sp
+    fe_sm = first_exon_selector & sm
+    le_sp = last_exon_selector & sp
+    le_sm = last_exon_selector & sm
 
-    # same for negative strand
-    first_exon_negative_strand_indices = list(first_exon_index_set & negative_strand_indices)
-    last_exon_negative_strand_indices = list(last_exon_index_set & negative_strand_indices)
-
-    #print(dfg, first_exon_indices, sp)
-
-    dfg.loc[first_exon_positive_strand_indices, START_COL] -= dfg.loc[first_exon_positive_strand_indices, "__extension_up"]
-    dfg.loc[last_exon_positive_strand_indices, END_COL] += dfg.loc[last_exon_positive_strand_indices, "__extension_down"]
-    dfg.loc[first_exon_negative_strand_indices, END_COL] += dfg.loc[first_exon_negative_strand_indices, "__extension_up"]
-    dfg.loc[last_exon_negative_strand_indices, START_COL] -= dfg.loc[last_exon_negative_strand_indices, "__extension_down"]
-
-
-    # dfg.loc[sp[first_exon_indices], START_COL] -= dfg.loc[sp[first_exon_indices], "__extension_up"]
-    # dfg.loc[sp[last_exon_indices], END_COL] += dfg.loc[sp[last_exon_indices], "__extension_down"]
-    # dfg.loc[sm[first_exon_indices], END_COL] += dfg.loc[sm[first_exon_indices], "__extension_up"]
-    # dfg.loc[sm[last_exon_indices], START_COL] -= dfg.loc[sm[last_exon_indices], "__extension_down"]
+    dfg.loc[fe_sp, START_COL] -= dfg.loc[fe_sp, "__extension_up"]
+    dfg.loc[le_sp, END_COL] += dfg.loc[le_sp, "__extension_down"]
+    dfg.loc[fe_sm, END_COL] += dfg.loc[fe_sm, "__extension_up"]
+    dfg.loc[le_sm, START_COL] -= dfg.loc[le_sm, "__extension_down"]
 
 
 def _get_seqs(df, fs, selector) -> None:
@@ -455,4 +624,3 @@ def _find_leftmost_stop(seq, motifs) -> int:
         if seq[i : i + 3] in motifs:
             return i + 3
     return -1
-
