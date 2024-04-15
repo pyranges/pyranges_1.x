@@ -7,8 +7,19 @@ from typing import Any, Literal
 import numpy as np
 import pandas as pd
 
-import pyranges as pr
-from pyranges.core.names import CHROM_COL, END_COL, FORWARD_STRAND, REVERSE_STRAND, START_COL, STRAND_COL
+import pyranges as pr  # noqa: TCH001
+from pyranges.core.names import (
+    CHROM_COL,
+    END_COL,
+    FORWARD_STRAND,
+    FRAME_COL,
+    REVERSE_STRAND,
+    START_COL,
+    STRAND_COL,
+    TEMP_CUMSUM_COL,
+    TEMP_INDEX_COL,
+    TEMP_LENGTH_COL,
+)
 from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
 
 ## Joan Pallares started this function
@@ -26,8 +37,97 @@ STOPS_NUCLEOTIDE_SEQ = ["TAG", "TGA", "TAA"]
 N_PRINTED_NON_MULTIPLE_3 = 10
 
 
+def calculate_frame(p: "pr.PyRanges", transcript_id: str | list[str], frame_col: str = "Frame") -> "pr.PyRanges":
+    """Calculate the frame of genomic intervals, assuming all are coding sequences (CDS), and add it as column.
+
+    A stranded
+    After this, the input Pyranges will contain an added "Frame" column, which determines the nucleotide of the CDS
+    that is the first base of a codon.Resulting values are in range between 0 and 2 included.
+    0 indicates that the first nucleotide of that interval is the first base of a codon,
+    1 indicates the second base and 2 indicates the third base.
+    While the 5'-most interval of each transcript has always 0 frame, the following ones may have any of these values.
+
+    Parameters
+    ----------
+    p : PyRanges
+        Input CDS intervals.
+
+    transcript_id : str or list of str
+        Column(s) to group by the intervals: coding exons belonging to the same transcript have the same values in this/these column(s).
+
+    frame_col : str, default 'Frame'
+        Name of the column to store the frame values.
+
+    Returns
+    -------
+    PyRanges
+
+    Examples
+    --------
+    >>> p = pr.PyRanges({"Chromosome": [1,1,1,2,2],
+    ...                   "Strand": ["+","+","+","-","-"],
+    ...                   "Start": [1,31,52,101,201],
+    ...                   "End": [10,45,90,130,218],
+    ...                   "transcript_id": ["t1","t1","t1","t2","t2"]})
+    >>> p
+      index  |      Chromosome  Strand      Start      End  transcript_id
+      int64  |           int64  object      int64    int64  object
+    -------  ---  ------------  --------  -------  -------  ---------------
+          0  |               1  +               1       10  t1
+          1  |               1  +              31       45  t1
+          2  |               1  +              52       90  t1
+          3  |               2  -             101      130  t2
+          4  |               2  -             201      218  t2
+    PyRanges with 5 rows, 5 columns, and 1 index columns.
+    Contains 2 chromosomes and 2 strands.
+
+    >>> pr.orfs.calculate_frame(p, transcript_id=['transcript_id'])
+      index  |      Chromosome  Strand      Start      End  transcript_id      Frame
+      int64  |           int64  object      int64    int64  object             int64
+    -------  ---  ------------  --------  -------  -------  ---------------  -------
+          0  |               1  +               1       10  t1                     0
+          1  |               1  +              31       45  t1                     0
+          2  |               1  +              52       90  t1                     2
+          3  |               2  -             101      130  t2                     2
+          4  |               2  -             201      218  t2                     0
+    PyRanges with 5 rows, 6 columns, and 1 index columns.
+    Contains 2 chromosomes and 2 strands.
+
+    """
+    if not p.strand_valid:
+        msg = "Strand must be valid to run calculate_frame."
+        raise AssertionError(msg)
+
+    gr = p.copy()
+
+    # Column to save the initial index
+    gr[TEMP_INDEX_COL] = np.arange(len(p))
+
+    # Filtering for desired columns
+    sorted_p = gr.get_with_loc_columns([TEMP_INDEX_COL, *p._by_to_list(transcript_id)])  # noqa: SLF001
+
+    # Sorting by 5' (Intervals on + are sorted by ascending order and - are sorted by descending order)
+    sorted_p = sorted_p.sort_by_5_prime_ascending_and_3_prime_descending()
+
+    # Creating a column saving the length for the intervals (for selenoprofiles and ensembl)
+    sorted_p[TEMP_LENGTH_COL] = sorted_p.lengths()
+
+    # Creating a column saving the cumulative length for the intervals
+    sorted_p[TEMP_CUMSUM_COL] = sorted_p.groupby(transcript_id)[TEMP_LENGTH_COL].cumsum()
+
+    # Creating a frame column
+    sorted_p[FRAME_COL] = (sorted_p[TEMP_CUMSUM_COL] - sorted_p[TEMP_LENGTH_COL]) % 3
+
+    # Appending the Frame of sorted_p by the index of p
+    sorted_p = mypy_ensure_pyranges(sorted_p.sort_values(by=TEMP_INDEX_COL))
+
+    gr[frame_col] = sorted_p[FRAME_COL]
+
+    return gr.drop_and_return(TEMP_INDEX_COL, axis=1)
+
+
 def extend_orfs(  # noqa: C901,PLR0912,PLR0915
-    self: pr.PyRanges,
+    p: "pr.PyRanges",
     fasta_path: str,
     transcript_id: str | list[str] | None = None,
     *,
@@ -38,7 +138,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     record_extensions: bool = False,
     chunk_size: int = 900,
     verbose: bool = False,
-) -> pr.PyRanges:
+) -> "pr.PyRanges":
     r"""Extend PyRanges intervals to form complete open reading frames.
 
     The input intervals are extended their next Stop codon downstream, and to their leftmost Start codon upstream
@@ -46,7 +146,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
 
     Parameters
     ----------
-    self : PyRanges
+    p : PyRanges
         Input CDS intervals.
 
     fasta_path : location of the Fasta file from which the sequences
@@ -109,7 +209,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     0    GCCGGGATT
     Name: Sequence, dtype: object
 
-    >>> ep = p.orfs.extend_orfs(fasta_path="temp.fasta")
+    >>> ep = pr.orfs.extend_orfs(p, fasta_path="temp.fasta")
     >>> ep
       index  |    Chromosome      Start      End  Strand
       int64  |    object          int64    int64  object
@@ -122,7 +222,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     0    ATGGTAATGGGCGCCGGGATTCCACAGTAA
     Name: Sequence, dtype: object
 
-    >>> p.orfs.extend_orfs(fasta_path="temp.fasta", record_extensions=True)
+    >>> pr.orfs.extend_orfs(p, fasta_path="temp.fasta", record_extensions=True)
       index  |    Chromosome      Start      End  Strand      extension_up    extension_down
       int64  |    object          int64    int64  object             int64             int64
     -------  ---  ------------  -------  -------  --------  --------------  ----------------
@@ -131,7 +231,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     Contains 1 chromosomes and 1 strands.
 
     # extending only in one direction
-    >>> p.orfs.extend_orfs(fasta_path="temp.fasta", direction='up')
+    >>> pr.orfs.extend_orfs(p, fasta_path="temp.fasta", direction='up')
       index  |    Chromosome      Start      End  Strand
       int64  |    object          int64    int64  object
     -------  ---  ------------  -------  -------  --------
@@ -140,7 +240,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     Contains 1 chromosomes and 1 strands.
 
     # with starts=[], any codon can be used as a start (i.e. ORFs defined as stop-delimited sequences)
-    >>> ep=p.orfs.extend_orfs(fasta_path="temp.fasta", starts=[])
+    >>> ep=pr.orfs.extend_orfs(p, fasta_path="temp.fasta", starts=[])
     >>> ep
       index  |    Chromosome      Start      End  Strand
       int64  |    object          int64    int64  object
@@ -179,7 +279,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     1      TT
     Name: Sequence, dtype: object
 
-    >>> ep = np.orfs.extend_orfs(fasta_path="temp1.fasta", transcript_id='ID')
+    >>> ep = pr.orfs.extend_orfs(np, fasta_path="temp1.fasta", transcript_id='ID')
     >>> ep.get_sequence("temp1.fasta")
     0    ATGTTGGGCC
     1      TTCAGTAG
@@ -194,7 +294,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     >>> _ = tmp_handle.write(seq1b+'\n')
     >>> tmp_handle.close()
 
-    >>> p.orfs.extend_orfs(fasta_path="temp2.fasta", record_extensions=True)
+    >>> pr.orfs.extend_orfs(p, fasta_path="temp2.fasta", record_extensions=True)
       index  |    Chromosome      Start      End  Strand      extension_up    extension_down
       int64  |    object          int64    int64  object             int64             int64
     -------  ---  ------------  -------  -------  --------  --------------  ----------------
@@ -203,7 +303,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     Contains 1 chromosomes and 1 strands.
 
     # showcasing keep_off_bounds
-    >>> ep=p.orfs.extend_orfs(fasta_path="temp2.fasta", record_extensions=True, keep_off_bounds=True)
+    >>> ep=pr.orfs.extend_orfs(p, fasta_path="temp2.fasta", record_extensions=True, keep_off_bounds=True)
     >>> ep
       index  |    Chromosome      Start      End  Strand      extension_up    extension_down
       int64  |    object          int64    int64  object             int64             int64
@@ -223,7 +323,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     >>> _ = tmp_handle.write(seq1c+'\n')
     >>> tmp_handle.close()
 
-    >>> p.orfs.extend_orfs(fasta_path="temp3.fasta", record_extensions=True)
+    >>> pr.orfs.extend_orfs(p, fasta_path="temp3.fasta", record_extensions=True)
       index  |    Chromosome      Start      End  Strand      extension_up    extension_down
       int64  |    object          int64    int64  object             int64             int64
     -------  ---  ------------  -------  -------  --------  --------------  ----------------
@@ -232,7 +332,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     Contains 1 chromosomes and 1 strands.
 
     # showcasing keep_off_bounds
-    >>> ep = p.orfs.extend_orfs(fasta_path="temp3.fasta", record_extensions=True, keep_off_bounds=True)
+    >>> ep = pr.orfs.extend_orfs(p, fasta_path="temp3.fasta", record_extensions=True, keep_off_bounds=True)
     >>> ep
       index  |    Chromosome      Start      End  Strand      extension_up    extension_down
       int64  |    object          int64    int64  object             int64             int64
@@ -273,7 +373,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
 
     direction = direction if direction is not None else ["up", "down"]
 
-    p = self.copy()
+    p = p.copy()
 
     if not p.strand_valid:
         msg = "Intervals must be have valid strands to call extend_orfs"
