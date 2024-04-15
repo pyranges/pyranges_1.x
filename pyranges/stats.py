@@ -1,5 +1,4 @@
-from pyranges.ext.stats.stats_methods import (
-    StatsManager,  # noqa: F401
+from pyranges.ext.stats import (
     fdr,  # noqa: F401
     fisher_exact,  # noqa: F401
     forbes,  # noqa: F401

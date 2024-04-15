@@ -23,7 +23,6 @@ from pyranges.core.names import (
     STRAND_BEHAVIOR_SAME,
     VALID_STRAND_BEHAVIOR_TYPE,
 )
-from pyranges.core.namespace_utils import decorate_to_pyranges_method
 from pyranges.core.pyranges_helpers import (
     ensure_strand_behavior_options_valid,
     mypy_ensure_pyranges,
@@ -120,10 +119,6 @@ def _generate_labels(labels: LabelsType, grs: list[Any]) -> Iterable:
         msg = "Labels length must match the length of grs"
         raise ValueError(msg)
     return combinations_with_replacement(labels, r=2)
-
-
-####################################################################################################
-# methods available at pr.stats:
 
 
 def fdr(p_vals: Series) -> Series:
@@ -429,7 +424,7 @@ def rowbased_spearman(x: ndarray, y: ndarray) -> ndarray:
     See Also
     --------
     pyranges.stats.rowbased_pearson : fast row-based Pearson's correlation.
-    pr.stats.fdr : correct for multiple testing
+    pyranges.stats.fdr : correct for multiple testing
 
     Examples
     --------
@@ -471,7 +466,7 @@ def rowbased_pearson(x: ndarray | DataFrame, y: ndarray | DataFrame) -> ndarray:
     See Also
     --------
     pyranges.stats.rowbased_spearman : fast row-based Spearman's correlation.
-    pr.stats.fdr : correct for multiple testing
+    pyranges.stats.fdr : correct for multiple testing
 
     Examples
     --------
@@ -686,7 +681,7 @@ def simes(
 
 
 def forbes(
-    self: "PyRanges",
+    p: "PyRanges",
     other: "PyRanges",
     chromsizes: "PyRanges | DataFrame | dict[Any, int]",
     strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
@@ -699,7 +694,7 @@ def forbes(
 
     Parameters
     ----------
-    self : PyRanges
+    p : PyRanges
         Intervals to compare.
 
     other : PyRanges
@@ -725,23 +720,23 @@ def forbes(
     Examples
     --------
     >>> gr, gr2 = pr.example_data.f1, pr.example_data.f2
-    >>> gr.stats.forbes(gr2, chromsizes={"chr1": 10})
+    >>> pr.stats.forbes(gr, gr2, chromsizes={"chr1": 10})
     0.8333333333333334
 
     """
     _chromsizes = _chromsizes_as_int(chromsizes)
 
-    ensure_strand_behavior_options_valid(self, other, strand_behavior=strand_behavior)
-    strand = self.strand_valid and other.strand_valid and strand_behavior in {STRAND_BEHAVIOR_AUTO, True}
-    reference_length = self.merge_overlaps(use_strand=strand).length
+    ensure_strand_behavior_options_valid(p, other, strand_behavior=strand_behavior)
+    strand = p.strand_valid and other.strand_valid and strand_behavior in {STRAND_BEHAVIOR_AUTO, True}
+    reference_length = p.merge_overlaps(use_strand=strand).length
     query_length = other.merge_overlaps(use_strand=strand).length
 
-    intersection_sum = self.set_intersect(other, strand_behavior=strand_behavior).lengths().sum()
+    intersection_sum = p.set_intersect(other, strand_behavior=strand_behavior).lengths().sum()
     return _chromsizes * intersection_sum / (reference_length * query_length)
 
 
 def jaccard(
-    self: "PyRanges",
+    p: "PyRanges",
     other: "PyRanges",
     strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
 ) -> float:
@@ -751,7 +746,7 @@ def jaccard(
 
     Parameters
     ----------
-    self : PyRanges
+    p : PyRanges
         Intervals to compare.
 
     other : PyRanges
@@ -774,17 +769,17 @@ def jaccard(
     --------
     >>> gr, gr2 = pr.example_data.f1, pr.example_data.f2
     >>> chromsizes = pr.example_data.chromsizes
-    >>> gr.stats.jaccard(gr2)
+    >>> pr.stats.jaccard(gr, gr2)
     0.14285714285714285
 
     """
-    ensure_strand_behavior_options_valid(self, other, strand_behavior=strand_behavior)
-    strand = self.strand_valid and other.strand_valid and strand_behavior in {STRAND_BEHAVIOR_AUTO, True}
+    ensure_strand_behavior_options_valid(p, other, strand_behavior=strand_behavior)
+    strand = p.strand_valid and other.strand_valid and strand_behavior in {STRAND_BEHAVIOR_AUTO, True}
 
-    intersection_sum = self.set_intersect(other).lengths().sum()
+    intersection_sum = p.set_intersect(other).lengths().sum()
 
     union_sum = 0
-    for gr in [self, other]:
+    for gr in [p, other]:
         union_sum += gr.merge_overlaps(use_strand=strand).lengths().sum()
 
     denominator = union_sum - intersection_sum
@@ -793,7 +788,7 @@ def jaccard(
     return intersection_sum / denominator
 
 
-def relative_distance(self: "PyRanges", other: "PyRanges", **_) -> DataFrame:
+def relative_distance(p: "PyRanges", other: "PyRanges", **_) -> DataFrame:
     """Compute spatial correlation between two sets.
 
     Metric which describes relative distance between each interval in one
@@ -801,7 +796,7 @@ def relative_distance(self: "PyRanges", other: "PyRanges", **_) -> DataFrame:
 
     Parameters
     ----------
-    self : PyRanges
+    p : PyRanges
         Intervals to compare.
 
     other : PyRanges
@@ -832,7 +827,7 @@ def relative_distance(self: "PyRanges", other: "PyRanges", **_) -> DataFrame:
     >>> gr1, gr2 = pr.example_data.chipseq, pr.example_data.chipseq_background
     >>> gr = pd.concat([gr1, gr1.head(4), gr2.tail(4)])
     >>> chromsizes = pr.example_data.chromsizes
-    >>> gr.stats.relative_distance(gr2)
+    >>> pr.stats.relative_distance(gr, gr2)
         reldist  count  total  fraction
     0      0.00      4     18  0.222222
     1      0.03      1     18  0.055556
@@ -849,7 +844,7 @@ def relative_distance(self: "PyRanges", other: "PyRanges", **_) -> DataFrame:
     12     0.43      2     18  0.111111
 
     """
-    result = pd.Series(_relative_distance(self, other))
+    result = pd.Series(_relative_distance(p, other))
 
     not_nan = ~np.isnan(result)
     result.loc[not_nan] = np.floor(result[not_nan] * 100) / 100
@@ -859,21 +854,3 @@ def relative_distance(self: "PyRanges", other: "PyRanges", **_) -> DataFrame:
     vc.insert(vc.shape[1], "fraction", vc["count"] / len(result))
     vc = vc.sort_values("reldist", ascending=True)
     return vc.reset_index(drop=True)
-
-
-####################################################################################################
-# Namespace managers:
-
-
-class StatsManager:
-    """Namespace manager for statistical methods that accept PyRanges as first argument, accessed with pr.PyRanges.stats.
-
-    Additional methods are available at pyranges.stats.
-    """
-
-    def __init__(self, p: "PyRanges") -> None:
-        self.pyranges_instance = p
-
-    forbes = decorate_to_pyranges_method(forbes)
-    jaccard = decorate_to_pyranges_method(jaccard)
-    relative_distance = decorate_to_pyranges_method(relative_distance)

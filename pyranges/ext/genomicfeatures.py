@@ -4,7 +4,6 @@ import pandas as pd
 from pandas.core.frame import DataFrame
 
 from pyranges.core.names import CHROM_COL, END_COL, START_COL
-from pyranges.core.namespace_utils import decorate_to_pyranges_method
 from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
 
 if TYPE_CHECKING:
@@ -17,14 +16,19 @@ if TYPE_CHECKING:
     from pyranges import PyRanges
 
 
-def tss(self) -> "PyRanges":
+def tss(p) -> "PyRanges":
     """Return the transcription start sites.
 
     Returns the 5' for every interval with feature "transcript".
 
+    Parameters
+    ----------
+    p : PyRanges
+        Input intervals with an Ensembl GTF/GFF structure
+
     See Also
     --------
-    Pyranges.genomicfeatures.tes : return the transcription end sites
+    pyranges.genomicfeatures.tes : return the transcription end sites
 
     Examples
     --------
@@ -46,7 +50,7 @@ def tss(self) -> "PyRanges":
     PyRanges with 11 rows, 6 columns, and 1 index columns.
     Contains 1 chromosomes and 2 strands.
 
-    >>> gr.genomicfeatures.tss()
+    >>> pr.genomicfeatures.tss(gr)
       index  |      Chromosome    Start      End  Strand      Source    Feature
       int64  |        category    int64    int64  category    object    object
     -------  ---  ------------  -------  -------  ----------  --------  ---------
@@ -56,14 +60,14 @@ def tss(self) -> "PyRanges":
     Contains 1 chromosomes and 2 strands.
 
     """
-    if not self.strand_valid:
+    if not p.strand_valid:
         msg = (
             "Cannot compute TSSes or TESes without strand info. Perhaps use extend()"
             "or subsequence() or spliced_subsequence() instead?"
         )
         raise AssertionError(msg)
 
-    gr = mypy_ensure_pyranges(self.loc[self.Feature == "transcript"])
+    gr = mypy_ensure_pyranges(p.loc[p.Feature == "transcript"])
     gr = gr.groupby(CHROM_COL).apply(_tss).reset_index(drop=True)
 
     gr.Feature = "tss"
@@ -71,19 +75,19 @@ def tss(self) -> "PyRanges":
     return gr
 
 
-def tes(self) -> "PyRanges":
+def tes(p) -> "PyRanges":
     """Return the transcription end sites.
 
     Returns the 3' for every interval with feature "transcript".
 
     Parameters
     ----------
-    self : PyRanges
-        Input intervals.
+    p : PyRanges
+        Input intervals with an Ensembl GTF/GFF structure
 
     See Also
     --------
-    Pyranges.genomicfeatures.tss : return the transcription start sites
+    pyranges.genomicfeatures.tss : return the transcription start sites
 
     Examples
     --------
@@ -105,7 +109,7 @@ def tes(self) -> "PyRanges":
     PyRanges with 11 rows, 6 columns, and 1 index columns.
     Contains 1 chromosomes and 2 strands.
 
-    >>> gr.genomicfeatures.tes()
+    >>> pr.genomicfeatures.tes(gr)
       index  |      Chromosome    Start      End  Strand      Source    Feature
       int64  |        category    int64    int64  category    object    object
     -------  ---  ------------  -------  -------  ----------  --------  ---------
@@ -115,11 +119,11 @@ def tes(self) -> "PyRanges":
     Contains 1 chromosomes and 2 strands.
 
     """
-    if not self.strand_valid:
+    if not p.strand_valid:
         msg = "Cannot compute TSSes or TESes without strand info. Perhaps use extend() or subsequence() or spliced_subsequence() instead?"
         raise ValueError(msg)
 
-    _gr = self[self.Feature == "transcript"]
+    _gr = p[p.Feature == "transcript"]
     _gr = _gr.groupby(CHROM_COL).apply(_tes).reset_index(drop=True)
 
     _gr.Feature = "tes"
@@ -128,7 +132,7 @@ def tes(self) -> "PyRanges":
 
 
 def introns(
-    self,
+    p,
     feature_column: str = "Feature",
     outer_feature: str = "gene",
     inner_feature: str = "exon",
@@ -138,8 +142,8 @@ def introns(
 
     Parameters
     ----------
-    self : PyRanges
-        Input intervals.
+    p : PyRanges
+        Input intervals with an Ensembl GTF/GFF structure
 
     feature_column: str, default "Feature"
         Column to use for feature information.
@@ -155,7 +159,7 @@ def introns(
 
     See Also
     --------
-    pyranges.genomicfeatures.GenomicFeaturesMethods.tss : return the transcription start sites
+    pyranges.genomicfeatures.tss : return the transcription start sites
 
     Examples
     --------
@@ -194,7 +198,7 @@ def introns(
     PyRanges with 6 rows, 6 columns, and 1 index columns.
     Contains 1 chromosomes and 1 strands.
 
-    >>> gr.genomicfeatures.introns(feature_column="Feature", outer_feature="gene", inner_feature="exon", by="Id")
+    >>> pr.genomicfeatures.introns(gr, feature_column="Feature", outer_feature="gene", inner_feature="exon", by="Id")
       index  |      Chromosome    Start      End  Strand    Feature    Id
       int64  |           int64    int64    int64  object    object     object
     -------  ---  ------------  -------  -------  --------  ---------  --------
@@ -207,11 +211,11 @@ def introns(
     Contains 1 chromosomes and 1 strands.
 
     """
-    if self.empty:
-        return self
+    if p.empty:
+        return p
 
-    inner_df = mypy_ensure_pyranges(self.loc[self[feature_column] == inner_feature])
-    outer_df = mypy_ensure_pyranges(self.loc[self[feature_column] == outer_feature])
+    inner_df = mypy_ensure_pyranges(p.loc[p[feature_column] == inner_feature])
+    outer_df = mypy_ensure_pyranges(p.loc[p[feature_column] == outer_feature])
 
     return outer_df.subtract_ranges(inner_df, match_by=by)
 
@@ -349,17 +353,3 @@ def _tes(df: DataFrame, slack: int = 0) -> DataFrame:
 
 
 by_to_id = {"gene": "gene_id", "transcript": "transcript_id"}
-
-
-class GenomicFeaturesManager:
-    """Namespace for methods using feature information.
-
-    Accessed through `gr.features`.
-    """
-
-    def __init__(self, pr: "PyRanges") -> None:
-        self.pyranges_instance = pr
-
-    tss = decorate_to_pyranges_method(tss)
-    tes = decorate_to_pyranges_method(tes)
-    introns = decorate_to_pyranges_method(introns)

@@ -77,10 +77,6 @@ if TYPE_CHECKING:
     import pyfaidx  # type: ignore[import]
     from pyrle.rledict import Rledict  # type: ignore[import]
 
-    from pyranges.ext.genomicfeatures import GenomicFeaturesManager
-    from pyranges.ext.orfs import OrfsManager
-    from pyranges.ext.stats import StatsManager
-
 
 __all__ = ["PyRanges"]
 
@@ -227,27 +223,6 @@ class PyRanges(RangeFrame):
     @property
     def _constructor(self) -> type:
         return pr.PyRanges
-
-    @property
-    def orfs(self) -> "OrfsManager":
-        """Namespace for ORFs/CDSs related methods."""
-        from pyranges.ext.orfs import OrfsManager
-
-        return OrfsManager(self)
-
-    @property
-    def stats(self) -> "StatsManager":
-        """Namespace for statistical methods."""
-        from pyranges.ext.stats import StatsManager
-
-        return StatsManager(self)
-
-    @property
-    def genomicfeatures(self) -> "GenomicFeaturesManager":
-        """Namespace for genomic-features methods."""
-        from pyranges.ext.genomicfeatures import GenomicFeaturesManager
-
-        return GenomicFeaturesManager(self)
 
     @property
     def loci(self) -> LociGetter:
