@@ -10,10 +10,15 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
+import os
+import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
+# sys.path.insert(0, os.path.abspath('..'))  # Adjust this as necessary
+#
+# sys.path.insert(0, os.path.abspath('../pyranges'))  # Adjust this as necessary
+#
+# sys.path.insert(0, os.path.abspath('.'))  # Adjust this as necessary
 
 # -- Project information -----------------------------------------------------
 
@@ -32,22 +37,22 @@ author = "Endre Bakken Stovner"
 extensions = [
     "sphinx.ext.napoleon",
     # "sphinxcontrib.napoleon",
-    "autoapi.extension",
-    # "sphinx.ext.autodoc",
+    #"autoapi.extension",
+    "sphinx.ext.autodoc",
     # "autoapi.extension",
-    # "sphinx.ext.autosummary",
+    "sphinx.ext.autosummary",
+
     # "sphinx.ext.doctest"
 ]
 
-autoapi_dirs = ["../pyranges/"]
+autosummary_generate = True  # Enable summary table generation
 
-autoapi_ignore = [
-    "*methods/*.py",
-    "*out.py",
-    "*.parallelism.py",
-    "*subset.py",
-    "*tostring*.py",
-]
+
+autodoc_default_options = {
+    'members': True,
+    'imported-members': True,
+    # other options...
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -64,7 +69,9 @@ master_doc = "index"
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "alabaster"
+#html_theme = "alabaster"
+html_theme = 'sphinx_rtd_theme'
+
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
