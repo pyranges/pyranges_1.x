@@ -822,9 +822,9 @@ class PyRanges(RangeFrame):
         -------  ---  ------------  -------  -------  -------  ---------  --------
               0  |               1        1        3        1          0         1
               1  |               1        2        3        2          1         1
+              2  |               2        0        4        6          3         1
               3  |               1        3       10        3          2         2
               4  |               1        9       12        3          2         2
-              2  |               2        0        4        6          3         1
         PyRanges with 5 rows, 6 columns, and 1 index columns.
         Contains 2 chromosomes.
 
@@ -845,7 +845,7 @@ class PyRanges(RangeFrame):
             preserve_index=True,
         )
         gr[cluster_column] = gr.groupby(self.loc_columns + _by + [cluster_column]).ngroup()
-        return gr
+        return mypy_ensure_pyranges(gr.reindex(self.index))
 
     def copy(self, *args, **kwargs) -> "pr.PyRanges":
         """Return a copy of the PyRanges."""
@@ -3218,13 +3218,12 @@ class PyRanges(RangeFrame):
     ) -> "PyRanges":
         """Return the 3'-end.
 
-        The 3'-end is the start of intervals on the reverse strand and the end of intervals on the
-        forward strand.
+        The 3'-end is the the end of intervals on the forward strand and the start of intervals on the reverse strand.
 
         Parameters
         ----------
         transcript_id : str or list of str, default: None
-            Optional column name(s). If provided, the five prime end is calculated for each
+            Optional column name(s). If provided, the three prime end is calculated for each
             group of intervals.
 
 
@@ -4455,9 +4454,6 @@ class PyRanges(RangeFrame):
 
         Parameters
         ----------
-        self : PyRanges
-            Input intervals
-
         chromsizes : dict or PyRanges or pyfaidx.Fasta
             Dict or PyRanges describing the lengths of the chromosomes.
             pyfaidx.Fasta object is also accepted since it conveniently loads chromosome length
@@ -4496,7 +4492,7 @@ class PyRanges(RangeFrame):
           int64  |           int64    int64    int64
         -------  ---  ------------  -------  -------
               0  |               1        1        2
-              1  |               3        5        7
+              2  |               3        5        7
         PyRanges with 2 rows, 3 columns, and 1 index columns.
         Contains 2 chromosomes.
 
@@ -4530,7 +4526,7 @@ class PyRanges(RangeFrame):
             pass
         else:  # A hack because pyfaidx might not be installed, but we want type checking anyway
             pyfaidx_chromsizes = cast(dict[str | int, list], chromsizes)
-            chromsizes = {k: len(pyfaidx_chromsizes[k]) for k in pyfaidx_chromsizes}
+            chromsizes = {k: len(pyfaidx_chromsizes[k]) for k in pyfaidx_chromsizes.keys()}  # noqa: SIM118
 
         if missing_keys := set(self[CHROM_COL]).difference(set(chromsizes.keys())):
             msg = f"""Not all chromosomes were in the chromsize dict. This might mean that their types differed.
@@ -4542,13 +4538,12 @@ Chromosome col had type: {self[CHROM_COL].dtype} while keys were of type: {', '.
             msg = "ERROR chromsizes must be a dictionary, or a PyRanges, or a pyfaidx.Fasta object"
             raise TypeError(msg)
 
-        return (
-            self.groupby(CHROM_COL)
-            .apply(
-                _outside_bounds,
-                chromsizes=chromsizes,
-                clip=clip,
-                only_right=only_right,
-            )
-            .reset_index(drop=True)
+        return self.apply_single(
+            _outside_bounds,
+            by=None,
+            use_strand=False,
+            preserve_index=True,
+            chromsizes=chromsizes,
+            clip=clip,
+            only_right=only_right,
         )
