@@ -3,7 +3,6 @@
 import logging
 import sys
 from collections.abc import Callable, Iterable
-from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional, cast
 
@@ -96,28 +95,12 @@ class PyRanges(RangeFrame):
 
     Operations between PyRanges align intervals based on their position.
 
-    If a PyRanges is built using the arguments chromosomes, starts, ends and
-    optionally strands, all non-scalars must be of the same length.
 
     Parameters
     ----------
-    df : DataFrame or dict of DataFrame, default None
-        The data to be stored in the PyRanges.
-
-    chromosomes : array-like or scalar value, default None
-        The chromosome(s) in the PyRanges.
-
-    starts : array-like, default None
-        The start postions in the PyRanges.
-
-    ends : array-like, default None
-        The end postions in the PyRanges.
-
-    strands : array-like or scalar value, default None
-        The strands in the PyRanges.
-
-    copy_df : bool, default True
-        Copy input DataFrame
+    You can initialize a PyRanges object like you would a pandas DataFrame, as long as the resulting DataFrame
+    has the necessary columns (Chromosome, Start, End; Strand is optional).
+    See examples below, and https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html for more information.
 
     See Also
     --------
@@ -141,6 +124,7 @@ class PyRanges(RangeFrame):
     PyRanges with 0 rows, 3 columns, and 1 index columns.
     Contains 0 chromosomes.
 
+    You can initiatize PyRanges with a DataFrame:
     >>> df = pd.DataFrame({"Chromosome": ["chr1", "chr2"], "Start": [100, 200],
     ...                    "End": [150, 201]})
     >>> df
@@ -156,6 +140,7 @@ class PyRanges(RangeFrame):
     PyRanges with 2 rows, 3 columns, and 1 index columns.
     Contains 2 chromosomes.
 
+    Or you can use a dictionary of iterables:
     >>> gr = pr.PyRanges({"Chromosome": [1, 1], "Strand": ["+", "-"], "Start": [1, 4], "End": [2, 27],
     ...                    "TP": [0, 1], "FP": [12, 11], "TN": [10, 9], "FN": [2, 3]})
     >>> gr
@@ -167,29 +152,21 @@ class PyRanges(RangeFrame):
     PyRanges with 2 rows, 8 columns, and 1 index columns.
     Contains 1 chromosomes and 2 strands.
 
-    # Operations that remove a column required for a PyRanges return a
-    # DataFrame instead
+    Operations that remove a column required for a PyRanges return a DataFrame instead
     >>> gr.drop("Chromosome", axis=1)
       Strand  Start  End  TP  FP  TN  FN
     0      +      1    2   0  12  10   2
     1      -      4   27   1  11   9   3
 
-    """
+    >>> pr.PyRanges(dict(Chromosome=["chr1", "chr2"], Start=[1, 2], End=[2, 3]))
+      index  |    Chromosome      Start      End
+      int64  |    object          int64    int64
+    -------  ---  ------------  -------  -------
+          0  |    chr1                1        2
+          1  |    chr2                2        3
+    PyRanges with 2 rows, 3 columns, and 1 index columns.
+    Contains 2 chromosomes.
 
-    """Namespace for genomic-features methods.
-
-    See Also
-    --------
-    pyranges.genomicfeatures : namespace for feature-functionality
-    pyranges.genomicfeatures.GenomicFeaturesMethods : namespace for feature-functionality
-    """
-
-    """Namespace for statistcal methods.
-
-    See Also
-    --------
-    pyranges.stats : namespace for stats
-    pyranges.stats.StatisticsMethods : namespace for stats
     """
 
     def __new__(cls, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame":  # type: ignore[misc]
@@ -394,10 +371,6 @@ class PyRanges(RangeFrame):
                 index=index,
             ),
         )
-
-    @cached_property
-    def _required_columns(self) -> Iterable[str]:
-        return GENOME_LOC_COLS[:]
 
     def __init__(self, *args, **kwargs) -> None:
         called_constructor_without_arguments = not args and "data" not in kwargs

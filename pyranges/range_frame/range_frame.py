@@ -1,6 +1,5 @@
 import inspect
 from collections.abc import Callable, Iterable
-from functools import cached_property
 from typing import Any
 
 import pandas as pd
@@ -64,10 +63,6 @@ class RangeFrame(pd.DataFrame):
     @property
     def _constructor(self) -> type:
         return RangeFrame
-
-    @cached_property
-    def _required_columns(self) -> Iterable[str]:
-        return RANGE_COLS[:]
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)

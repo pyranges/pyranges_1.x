@@ -196,7 +196,7 @@ then it is returned as a PyRanges object. Otherwise, a dataframe is returned.
 We already seen a boolean selector to filter rows. The ``loc`` and ``iloc`` pandas operators are also available.
 Besides, pyranges offers the :func:`loci <pyranges.PyRanges.loci>` operator for selecting intervals in a
 genomic region of interest. It accepts various syntaxes.
-The code below will show intervals completely included in the specified position range in the requested chromosome:
+The code below will show intervals overlapping with the specified position range in the requested chromosome:
 
   >>> reg = cds.loci['CAJFCJ010000097.1', '+', 50000:55000]
   >>> reg
