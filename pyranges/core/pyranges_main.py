@@ -3944,7 +3944,7 @@ class PyRanges(RangeFrame):
         Parameters
         ----------
         key : str or iterable of str
-            Column(s) to return
+            Column(s) to return. If an empty list, return only the genome location columns.
 
         preserve_loc_order : bool, default False
             Whether to preserve the order of the genome location columns.
@@ -3979,6 +3979,14 @@ class PyRanges(RangeFrame):
         -------  ---  ------------  -------  --------  --------  -------  -------
               0  |               1      895  +                2        1     1259
         PyRanges with 1 rows, 6 columns, and 1 index columns.
+        Contains 1 chromosomes and 1 strands.
+
+        >>> gr.get_with_loc_columns([])
+          index  |      Chromosome    Start      End  Strand
+          int64  |           int64    int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |               1      895     1259  +
+        PyRanges with 1 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 1 strands.
 
         >>> gr.get_with_loc_columns(["Score2", "Score", "Score2"], preserve_loc_order=True)

@@ -1,0 +1,392 @@
+Rows operations
+~~~~~~~~~~~~~~~
+
+.. contents::
+   :local:
+   :depth: 2
+   :caption: Contents
+
+
+Indexing with iloc, loc
+-----------------------
+
+PyRanges inherits all the indexing and slicing capabilities of pandas, e.g. boolean Series indexing,
+``iloc``, ``loc``, ``at``, ``iat``.
+Note that these methods return a view, not a copy, with the caveats that it implies.
+See the pandas documentation for details.
+Briefly, to avoid ambiguity it is best to explicitly call ``copy`` if you want an object to not be linked
+to the original object from which it was extracted. For example:
+
+  >>> import pyranges as pr
+  >>> gr = pr.example_data.aorta
+  >>> gr
+  index    |    Chromosome    Start    End      Name      Score    Strand
+  int64    |    category      int64    int64    object    int64    category
+  -------  ---  ------------  -------  -------  --------  -------  ----------
+  0        |    chr1          9916     10115    H3K27me3  5        -
+  1        |    chr1          9939     10138    H3K27me3  7        +
+  2        |    chr1          9951     10150    H3K27me3  8        -
+  3        |    chr1          9953     10152    H3K27me3  5        +
+  ...      |    ...           ...      ...      ...       ...      ...
+  7        |    chr1          10127    10326    H3K27me3  1        -
+  8        |    chr1          10241    10440    H3K27me3  6        -
+  9        |    chr1          10246    10445    H3K27me3  4        +
+  10       |    chr1          110246   110445   H3K27me3  1        +
+  PyRanges with 11 rows, 6 columns, and 1 index columns.
+  Contains 1 chromosomes and 2 strands.
+
+  >>> sgr = gr.iloc[0:3].copy()
+  >>> sgr
+    index  |    Chromosome      Start      End  Name        Score  Strand
+    int64  |    category        int64    int64  object      int64  category
+  -------  ---  ------------  -------  -------  --------  -------  ----------
+        0  |    chr1             9916    10115  H3K27me3        5  -
+        1  |    chr1             9939    10138  H3K27me3        7  +
+        2  |    chr1             9951    10150  H3K27me3        8  -
+  PyRanges with 3 rows, 6 columns, and 1 index columns.
+  Contains 1 chromosomes and 2 strands.
+
+  >>> sgr['Score'] = 100  # does not modify gr
+  >>> gr.head(3)
+    index  |    Chromosome      Start      End  Name        Score  Strand
+    int64  |    category        int64    int64  object      int64  category
+  -------  ---  ------------  -------  -------  --------  -------  ----------
+        0  |    chr1             9916    10115  H3K27me3        5  -
+        1  |    chr1             9939    10138  H3K27me3        7  +
+        2  |    chr1             9951    10150  H3K27me3        8  -
+  PyRanges with 3 rows, 6 columns, and 1 index columns.
+  Contains 1 chromosomes and 2 strands.
+
+On the other hand, to modify even a few lines of a PyRanges object,
+use ``loc`` (label-based indexing) or ``iloc`` (positional indexing) on the whole object, not on a view:
+
+  >>> gr.loc[0:2, 'Score'] = 100  # modifies gr
+  >>> gr.head(5)
+    index  |    Chromosome      Start      End  Name        Score  Strand
+    int64  |    category        int64    int64  object      int64  category
+  -------  ---  ------------  -------  -------  --------  -------  ----------
+        0  |    chr1             9916    10115  H3K27me3      100  -
+        1  |    chr1             9939    10138  H3K27me3      100  +
+        2  |    chr1             9951    10150  H3K27me3      100  -
+        3  |    chr1             9953    10152  H3K27me3        5  +
+        4  |    chr1             9978    10177  H3K27me3        7  -
+  PyRanges with 5 rows, 6 columns, and 1 index columns.
+  Contains 1 chromosomes and 2 strands.
+
+Using boolean indexers
+-----------------------
+
+In PyRanges, boolean indexers work analogously as in pandas, as already seen in the tutorial:
+
+  >>> sel = (gr['Score'] == 100)
+  >>> gr[sel]
+    index  |    Chromosome      Start      End  Name        Score  Strand
+    int64  |    category        int64    int64  object      int64  category
+  -------  ---  ------------  -------  -------  --------  -------  ----------
+        0  |    chr1             9916    10115  H3K27me3      100  -
+        1  |    chr1             9939    10138  H3K27me3      100  +
+        2  |    chr1             9951    10150  H3K27me3      100  -
+  PyRanges with 3 rows, 6 columns, and 1 index columns.
+  Contains 1 chromosomes and 2 strands.
+
+  >>> gr[gr.Score==5]
+    index  |    Chromosome      Start      End  Name        Score  Strand
+    int64  |    category        int64    int64  object      int64  category
+  -------  ---  ------------  -------  -------  --------  -------  ----------
+        3  |    chr1             9953    10152  H3K27me3        5  +
+        5  |    chr1            10001    10200  H3K27me3        5  -
+  PyRanges with 2 rows, 6 columns, and 1 index columns.
+  Contains 1 chromosomes and 2 strands.
+
+Combined with ``loc``, boolean indexers can be used to add or update column values:
+
+  >>> gr.loc[gr['Score'] < 6, 'Score'] = -10  # modifies gr
+  >>> gr.head(5)
+    index  |    Chromosome      Start      End  Name        Score  Strand
+    int64  |    category        int64    int64  object      int64  category
+  -------  ---  ------------  -------  -------  --------  -------  ----------
+        0  |    chr1             9916    10115  H3K27me3      100  -
+        1  |    chr1             9939    10138  H3K27me3      100  +
+        2  |    chr1             9951    10150  H3K27me3      100  -
+        3  |    chr1             9953    10152  H3K27me3      -10  +
+        4  |    chr1             9978    10177  H3K27me3        7  -
+  PyRanges with 5 rows, 6 columns, and 1 index columns.
+  Contains 1 chromosomes and 2 strands.
+
+In pandas, these logical operators can be employed with boolean Series:
+
+* "&" =  element-wise AND operator
+* "|" = element-wise OR operator
+* "~" = NOT operator, inverts the values of the Series on its right
+
+When using logical operators, make sure to parenthesize properly.
+
+Let's get the + intervals with Score<8 starting before 10,000 or ending after 100,000:
+
+  >>> gr[ (gr.Score<8) & (gr.Strand=='+') &
+  ...     ((gr.Start<10000) | (gr.End>100000)) ]
+    index  |    Chromosome      Start      End  Name        Score  Strand
+    int64  |    category        int64    int64  object      int64  category
+  -------  ---  ------------  -------  -------  --------  -------  ----------
+        3  |    chr1             9953    10152  H3K27me3      -10  +
+       10  |    chr1           110246   110445  H3K27me3      -10  +
+  PyRanges with 2 rows, 6 columns, and 1 index columns.
+  Contains 1 chromosomes and 1 strands.
+
+Let's invert the selection:
+  >>> gr[~(
+  ...      (gr.Score<8) & (gr.Strand=='+') &
+  ...      ((gr.Start<10000) | (gr.End>100000)) )]
+  index    |    Chromosome    Start    End      Name      Score    Strand
+  int64    |    category      int64    int64    object    int64    category
+  -------  ---  ------------  -------  -------  --------  -------  ----------
+  0        |    chr1          9916     10115    H3K27me3  100      -
+  1        |    chr1          9939     10138    H3K27me3  100      +
+  2        |    chr1          9951     10150    H3K27me3  100      -
+  4        |    chr1          9978     10177    H3K27me3  7        -
+  ...      |    ...           ...      ...      ...       ...      ...
+  6        |    chr1          10024    10223    H3K27me3  -10      +
+  7        |    chr1          10127    10326    H3K27me3  -10      -
+  8        |    chr1          10241    10440    H3K27me3  6        -
+  9        |    chr1          10246    10445    H3K27me3  -10      +
+  PyRanges with 9 rows, 6 columns, and 1 index columns.
+  Contains 1 chromosomes and 2 strands.
+
+Using PyRanges .loci
+---------------------
+
+PyRanges provides the method :func:`loci <pyranges.PyRanges.loci>`
+to select rows by genomic region:
+
+  >>> gr2 = pr.example_data.aorta2.sort_ranges()
+  >>> gr2
+  index    |    Chromosome    Start    End      Name      Score    Strand
+  int64    |    category      int64    int64    object    int64    category
+  -------  ---  ------------  -------  -------  --------  -------  ----------
+  1        |    chr1          10073    10272    Input     1        +
+  5        |    chr1          10280    10479    Input     1        +
+  6        |    chr1          16056    16255    Input     1        +
+  7        |    chr1          16064    16263    Input     1        +
+  ...      |    ...           ...      ...      ...       ...      ...
+  4        |    chr1          10149    10348    Input     1        -
+  3        |    chr1          10082    10281    Input     1        -
+  2        |    chr1          10079    10278    Input     1        -
+  0        |    chr1          9988     10187    Input     1        -
+  PyRanges with 10 rows, 6 columns, and 1 index columns.
+  Contains 1 chromosomes and 2 strands.
+
+Various syntaxes are accepted, see its API. For example:
+
+  >>> gr2.loci['-'] # get all rows with strand '-'
+    index  |    Chromosome      Start      End  Name        Score  Strand
+    int64  |    category        int64    int64  object      int64  category
+  -------  ---  ------------  -------  -------  --------  -------  ----------
+        9  |    chr1            19958    20157  Input           1  -
+        4  |    chr1            10149    10348  Input           1  -
+        3  |    chr1            10082    10281  Input           1  -
+        2  |    chr1            10079    10278  Input           1  -
+        0  |    chr1             9988    10187  Input           1  -
+  PyRanges with 5 rows, 6 columns, and 1 index columns.
+  Contains 1 chromosomes and 1 strands.
+
+  >>> gr2.loci['chr1', '+'] # get all rows with chromosome 'chr1' and strand '+'
+    index  |    Chromosome      Start      End  Name        Score  Strand
+    int64  |    category        int64    int64  object      int64  category
+  -------  ---  ------------  -------  -------  --------  -------  ----------
+        1  |    chr1            10073    10272  Input           1  +
+        5  |    chr1            10280    10479  Input           1  +
+        6  |    chr1            16056    16255  Input           1  +
+        7  |    chr1            16064    16263  Input           1  +
+        8  |    chr1            16109    16308  Input           1  +
+  PyRanges with 5 rows, 6 columns, and 1 index columns.
+  Contains 1 chromosomes and 1 strands.
+
+  >>> gr2.loci['chr1', 10000:11000] # get all rows on 'chr1' and overlapping 10000:11000
+    index  |    Chromosome      Start      End  Name        Score  Strand
+    int64  |    category        int64    int64  object      int64  category
+  -------  ---  ------------  -------  -------  --------  -------  ----------
+        1  |    chr1            10073    10272  Input           1  +
+        5  |    chr1            10280    10479  Input           1  +
+        4  |    chr1            10149    10348  Input           1  -
+        3  |    chr1            10082    10281  Input           1  -
+        2  |    chr1            10079    10278  Input           1  -
+        0  |    chr1             9988    10187  Input           1  -
+  PyRanges with 6 rows, 6 columns, and 1 index columns.
+  Contains 1 chromosomes and 2 strands.
+
+  >>> gr2.loci['chr1', '+', 10000:11000] # get all rows on 'chr1', strand '+', and overlapping 10000:11000
+    index  |    Chromosome      Start      End  Name        Score  Strand
+    int64  |    category        int64    int64  object      int64  category
+  -------  ---  ------------  -------  -------  --------  -------  ----------
+        1  |    chr1            10073    10272  Input           1  +
+        5  |    chr1            10280    10479  Input           1  +
+  PyRanges with 2 rows, 6 columns, and 1 index columns.
+  Contains 1 chromosomes and 1 strands.
+
+  To use this kind of selection in combination with ``loc`` or ``iloc``, you can use the ``index`` attribute:
+
+  >>> sindex=gr2.loci['chr1', '+', 10000:11000].index
+  >>> gr2.loc[sindex, "Score"]=100
+  >>> gr2
+  index    |    Chromosome    Start    End      Name      Score    Strand
+  int64    |    category      int64    int64    object    int64    category
+  -------  ---  ------------  -------  -------  --------  -------  ----------
+  1        |    chr1          10073    10272    Input     100      +
+  5        |    chr1          10280    10479    Input     100      +
+  6        |    chr1          16056    16255    Input     1        +
+  7        |    chr1          16064    16263    Input     1        +
+  ...      |    ...           ...      ...      ...       ...      ...
+  4        |    chr1          10149    10348    Input     1        -
+  3        |    chr1          10082    10281    Input     1        -
+  2        |    chr1          10079    10278    Input     1        -
+  0        |    chr1          9988     10187    Input     1        -
+  PyRanges with 10 rows, 6 columns, and 1 index columns.
+  Contains 1 chromosomes and 2 strands.
+
+  Note that the above syntax works only for PyRanges with numerical indices.
+  You can always call ``reset_index`` to make the index numerical.
+
+
+Sorting PyRanges
+----------------
+
+PyRanges objects can be sorted (i.e. altering the order of rows) by calling the pandas dataframe method ``sort_values``,
+or the PyRanges method :func:`sort_ranges <pyranges.PyRanges.sort_ranges>`.
+
+  >>> import random; random.seed(123)
+  >>> c = pr.example_data.chipseq.get_with_loc_columns([])
+  >>> c['peak'] = [random.randint(0, 100) for _ in range(len(c))] # add a column with random values
+  >>> c
+  index    |    Chromosome    Start      End        Strand      peak
+  int64    |    category      int64      int64      category    int64
+  -------  ---  ------------  ---------  ---------  ----------  -------
+  0        |    chr8          28510032   28510057   -           6
+  1        |    chr7          107153363  107153388  -           34
+  2        |    chr5          135821802  135821827  -           11
+  3        |    chr14         19418999   19419024   -           98
+  ...      |    ...           ...        ...        ...         ...
+  16       |    chr9          120803448  120803473  +           43
+  17       |    chr6          89296757   89296782   -           71
+  18       |    chr1          194245558  194245583  +           42
+  19       |    chr8          57916061   57916086   +           89
+  PyRanges with 20 rows, 5 columns, and 1 index columns.
+  Contains 15 chromosomes and 2 strands.
+
+
+Pandas ``sort_values`` sorts the whole dataframe by the specified columns. See its API for details.
+For example, let's sort by column ``peak``:
+
+  >>> c.sort_values(by='peak', ascending=False)
+  index    |    Chromosome    Start      End        Strand      peak
+  int64    |    category      int64      int64      category    int64
+  -------  ---  ------------  ---------  ---------  ----------  -------
+  3        |    chr14         19418999   19419024   -           98
+  19       |    chr8          57916061   57916086   +           89
+  17       |    chr6          89296757   89296782   -           71
+  10       |    chr4          98488749   98488774   +           71
+  ...      |    ...           ...        ...        ...         ...
+  2        |    chr5          135821802  135821827  -           11
+  13       |    chr1          80668132   80668157   -           6
+  0        |    chr8          28510032   28510057   -           6
+  7        |    chr19         19571102   19571127   +           4
+  PyRanges with 20 rows, 5 columns, and 1 index columns.
+  Contains 15 chromosomes and 2 strands.
+
+PyRanges :func:`sort_ranges <pyranges.PyRanges.sort_ranges>` is designed for genomic ranges.
+By default, it sorts by Chromosome, Strand, then interval coordinates. If Strands are valid (
+see :func:`strand_valid <pyranges.PyRanges.strand_valid>`), then intervals on the reverse strand are
+sorted in reverse order:
+
+  >>> c.sort_ranges()
+  index    |    Chromosome    Start      End        Strand      peak
+  int64    |    category      int64      int64      category    int64
+  -------  ---  ------------  ---------  ---------  ----------  -------
+  12       |    chr1          38457520   38457545   +           43
+  18       |    chr1          194245558  194245583  +           42
+  13       |    chr1          80668132   80668157   -           6
+  9        |    chr10         35419784   35419809   -           68
+  ...      |    ...           ...        ...        ...         ...
+  19       |    chr8          57916061   57916086   +           89
+  0        |    chr8          28510032   28510057   -           6
+  6        |    chr8          22714402   22714427   -           13
+  16       |    chr9          120803448  120803473  +           43
+  PyRanges with 20 rows, 5 columns, and 1 index columns.
+  Contains 15 chromosomes and 2 strands.
+
+Above, ``chr10`` appears before ``chr8`` because that what string sorting does. We can force 'natural sorting':
+
+  >>> c.sort_ranges(natsorting=True)
+  index    |    Chromosome    Start      End        Strand      peak
+  int64    |    category      int64      int64      category    int64
+  -------  ---  ------------  ---------  ---------  ----------  -------
+  12       |    chr1          38457520   38457545   +           43
+  18       |    chr1          194245558  194245583  +           42
+  13       |    chr1          80668132   80668157   -           6
+  14       |    chr2          152562484  152562509  -           20
+  ...      |    ...           ...        ...        ...         ...
+  4        |    chr12         106679761  106679786  -           52
+  3        |    chr14         19418999   19419024   -           98
+  7        |    chr19         19571102   19571127   +           4
+  5        |    chr21         40099618   40099643   +           34
+  PyRanges with 20 rows, 5 columns, and 1 index columns.
+  Contains 15 chromosomes and 2 strands.
+
+To sort by a different column, use the first argument (``by``). This is used after Chromosome and Strand, but before
+coordinates:
+
+  >>> c.sort_ranges('peak')
+  index    |    Chromosome    Start      End        Strand      peak
+  int64    |    category      int64      int64      category    int64
+  -------  ---  ------------  ---------  ---------  ----------  -------
+  18       |    chr1          194245558  194245583  +           42
+  12       |    chr1          38457520   38457545   +           43
+  13       |    chr1          80668132   80668157   -           6
+  9        |    chr10         35419784   35419809   -           68
+  ...      |    ...           ...        ...        ...         ...
+  19       |    chr8          57916061   57916086   +           89
+  0        |    chr8          28510032   28510057   -           6
+  6        |    chr8          22714402   22714427   -           13
+  16       |    chr9          120803448  120803473  +           43
+  PyRanges with 20 rows, 5 columns, and 1 index columns.
+  Contains 15 chromosomes and 2 strands.
+
+Note that above each block defined by Chromosome and Strand is sorted by ``peak`` in ascending order.
+Let's sort by descending order:
+
+  >>> c.sort_ranges('peak', sort_descending='peak')
+  index    |    Chromosome    Start      End        Strand      peak
+  int64    |    category      int64      int64      category    int64
+  -------  ---  ------------  ---------  ---------  ----------  -------
+  12       |    chr1          38457520   38457545   +           43
+  18       |    chr1          194245558  194245583  +           42
+  13       |    chr1          80668132   80668157   -           6
+  9        |    chr10         35419784   35419809   -           68
+  ...      |    ...           ...        ...        ...         ...
+  19       |    chr8          57916061   57916086   +           89
+  6        |    chr8          22714402   22714427   -           13
+  0        |    chr8          28510032   28510057   -           6
+  16       |    chr9          120803448  120803473  +           43
+  PyRanges with 20 rows, 5 columns, and 1 index columns.
+  Contains 15 chromosomes and 2 strands.
+
+To use a different priorization of genomic location columns, specify them in the first argument (``by``):
+
+  >>> c.sort_ranges(['peak', 'Chromosome', 'Strand'], sort_descending='peak')
+  index    |    Chromosome    Start      End        Strand      peak
+  int64    |    category      int64      int64      category    int64
+  -------  ---  ------------  ---------  ---------  ----------  -------
+  3        |    chr14         19418999   19419024   -           98
+  19       |    chr8          57916061   57916086   +           89
+  10       |    chr4          98488749   98488774   +           71
+  17       |    chr6          89296757   89296782   -           71
+  ...      |    ...           ...        ...        ...         ...
+  2        |    chr5          135821802  135821827  -           11
+  13       |    chr1          80668132   80668157   -           6
+  0        |    chr8          28510032   28510057   -           6
+  7        |    chr19         19571102   19571127   +           4
+  PyRanges with 20 rows, 5 columns, and 1 index columns.
+  Contains 15 chromosomes and 2 strands.
+
+
+
+

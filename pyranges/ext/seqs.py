@@ -152,11 +152,13 @@ def translate(
     >>> pr.seqs.translate("ATGTTGCTGAA")
     'MLLX'
 
-    # translate with vertebrate mithochondrial genetic code
+    Translate with the vertebrate mithochondrial genetic code:
+
     >>> pr.seqs.translate("ATGAAATTTGGGTGA", genetic_code=2)
     'MKFGW'
 
-    # translate with a custom genetic code (all codons starting with A are translated as A, the rest as Q)
+    Translate with a custom genetic code (all codons starting with A are translated as A, the rest as Q):
+
     >>> gc={codon:'A' if codon.startswith('A') else 'Q' for codon in map(''.join, itertools.product("TCAG", repeat=3))}
     >>> pr.seqs.translate("ATGAAATTTGGGTGA", genetic_code=gc)
     'AAQQQ'
@@ -170,8 +172,9 @@ def translate(
     ValueError: translate ERROR cannot find codon AUG (pos 0-3) in genetic_code!
 
 
-    # caching makes sense when translating many sequences
-    # for large enough data, translate with cache=True is 3x faster than non-caching translate
+    Caching makes sense when translating many sequences.
+    For large enough data, translate with ``cache=True`` is 3x faster than non-caching translate:
+
     >>> import random
     >>> random.seed(42)
     >>> many_seqs = [ "".join(random.choices("ATGC", k=1000)) for _ in range(100000) ]

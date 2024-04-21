@@ -198,7 +198,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     PyRanges with 1 rows, 4 columns, and 1 index columns.
     Contains 1 chromosomes and 1 strands.
 
-    #                *       ^       ^      ... ... ...          *                        #  ... = input interval
+    >>> #            *       ^       ^      ... ... ...          *       #  ... = p interval
     >>> seq1 = " AA TAA TGT ATG GTA ATG GGC GCC GGG ATT CCA CAG TAA GTG C".replace(' ', '')
     >>> tmp_handle = open("temp.fasta", "w+")
     >>> _ = tmp_handle.write(">seq1\n")
@@ -230,7 +230,8 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     PyRanges with 1 rows, 6 columns, and 1 index columns.
     Contains 1 chromosomes and 1 strands.
 
-    # extending only in one direction
+    Extending only in one direction:
+
     >>> pr.orfs.extend_orfs(p, fasta_path="temp.fasta", direction='up')
       index  |    Chromosome      Start      End  Strand
       int64  |    object          int64    int64  object
@@ -239,7 +240,8 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     PyRanges with 1 rows, 4 columns, and 1 index columns.
     Contains 1 chromosomes and 1 strands.
 
-    # with starts=[], any codon can be used as a start (i.e. ORFs defined as stop-delimited sequences)
+    With starts=[], any codon can be used as a start (i.e. ORFs defined as stop-delimited sequences):
+
     >>> ep=pr.orfs.extend_orfs(p, fasta_path="temp.fasta", starts=[])
     >>> ep
       index  |    Chromosome      Start      End  Strand
@@ -253,16 +255,18 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     0    TGTATGGTAATGGGCGCCGGGATTCCACAGTAA
     Name: Sequence, dtype: object
 
-    #                              *           ^      ... .        ..      *             # ... = input interval
-    # reverse complemented seq: C TAG CGT TTG ATG TTG GGC CAG GTG TTT CAG TAG CCC GG
+    Example with multi-exon input intervals
+    Intervals on the negative strand are extended accordingly
+
+    >>> #                   :    *           ^      ... .        ..      *      # ... = p interval
+    >>> # reverse complement: C TAG CGT TTG ATG TTG GGC CAG GTG TTT CAG TAG CCC GG
     >>> seq2 = " CC GGG CTA CTG AAA CAC CTG GCC CAA CAT CAA ACG CTA G".replace(' ', '')
     >>> tmp_handle = open("temp1.fasta", "w+")
     >>> _ = tmp_handle.write(">seq2\n")
     >>> _ = tmp_handle.write(seq2+'\n')
     >>> tmp_handle.close()
 
-    # example with multi-exon input intervals
-    # intervals on the negative strand are extended accordingly
+
     >>> np = pr.PyRanges({"Chromosome": ['seq2']*2, "Start":[19, 11], "End":[23, 13],
     ...                   "Strand" : ["-"]*2, "ID":["a", "a"]})
     >>> np
@@ -286,8 +290,9 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     Name: Sequence, dtype: object
 
 
-    # A sequence with no in-frame stops after the input interval before the end
-    #                 *       ^       ^      ... ... ...                   #  ... = input interval
+    A sequence with no in-frame stops after the input interval before the end:
+
+    >>> #             *       ^       ^      ... ... ...                   #  ... = p interval
     >>> seq1b = " AA TAA TGT ATG GTA ATG GGC GCC GGG ATT CCA CAG AAA GTG C".replace(' ', '')
     >>> tmp_handle = open("temp2.fasta", "w+")
     >>> _ = tmp_handle.write(">seq1\n")
@@ -302,7 +307,8 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     PyRanges with 1 rows, 6 columns, and 1 index columns.
     Contains 1 chromosomes and 1 strands.
 
-    # showcasing keep_off_bounds
+    Showcasing keep_off_bounds:
+
     >>> ep=pr.orfs.extend_orfs(p, fasta_path="temp2.fasta", record_extensions=True, keep_off_bounds=True)
     >>> ep
       index  |    Chromosome      Start      End  Strand      extension_up    extension_down
@@ -315,8 +321,9 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     0    ATGGTAATGGGCGCCGGGATTCCACAGAAAGTG
     Name: Sequence, dtype: object
 
-    # A sequence with no in-frame stops BEFORE the input interval
-    #                         ^       ^      ... ... ...          *        #  ... = input interval
+    A sequence with no in-frame stops BEFORE the input interval:
+
+    >>> #                     ^       ^      ... ... ...          *        #  ... = p interval
     >>> seq1c = " AA TAC TGT ATG GTA ATG GGC GCC GGG ATT CCA CAG TAA GTG C".replace(' ', '')
     >>> tmp_handle = open("temp3.fasta", "w+")
     >>> _ = tmp_handle.write(">seq1\n")
@@ -331,7 +338,6 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     PyRanges with 1 rows, 6 columns, and 1 index columns.
     Contains 1 chromosomes and 1 strands.
 
-    # showcasing keep_off_bounds
     >>> ep = pr.orfs.extend_orfs(p, fasta_path="temp3.fasta", record_extensions=True, keep_off_bounds=True)
     >>> ep
       index  |    Chromosome      Start      End  Strand      extension_up    extension_down
