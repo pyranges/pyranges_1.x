@@ -59,7 +59,7 @@ deps =
     joblib
     hypothesis==6.92.1
 commands =
-    # pytest docs/tutorial.rst
+    python tests/run_doctest_tutorial_howto.py
     pytest --doctest-modules pyranges
     pytest tests/unit
     ruff format --check pyranges

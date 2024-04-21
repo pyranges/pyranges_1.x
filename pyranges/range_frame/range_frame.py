@@ -1,6 +1,5 @@
 import inspect
 from collections.abc import Callable, Iterable
-from functools import cached_property
 from typing import Any
 
 import pandas as pd
@@ -36,7 +35,10 @@ def should_skip_operation(df: pd.DataFrame, *, df2: pd.DataFrame, skip_if_empty:
 
 
 class RangeFrame(pd.DataFrame):
-    """Class for range based operations."""
+    """Class for range based operations.
+
+    A table with Start and End columns. Parent class of PyRanges. Subclass of pandas DataFrame.
+    """
 
     def __new__(cls, *args, **kwargs) -> "RangeFrame | pd.DataFrame":  # type: ignore[misc]
         """Create a new instance of a PyRanges object."""
@@ -61,10 +63,6 @@ class RangeFrame(pd.DataFrame):
     @property
     def _constructor(self) -> type:
         return RangeFrame
-
-    @cached_property
-    def _required_columns(self) -> Iterable[str]:
-        return RANGE_COLS[:]
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)

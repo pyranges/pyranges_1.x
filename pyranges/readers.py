@@ -144,7 +144,9 @@ def read_bam(
         Path to bam file
 
     sparse : bool, default True
-        Whether to return only.
+        Whether to return only the columns Chromosome, Start, End, Strand, Flag.
+        Set to False to return also columns
+        QueryStart, QueryEnd, QuerySequence, Name, Cigar, Quality (more time consuming).
 
     mapq : int, default 0
         Minimum mapping quality score.
