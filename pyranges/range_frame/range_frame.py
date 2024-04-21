@@ -36,7 +36,10 @@ def should_skip_operation(df: pd.DataFrame, *, df2: pd.DataFrame, skip_if_empty:
 
 
 class RangeFrame(pd.DataFrame):
-    """Class for range based operations."""
+    """Class for range based operations.
+
+    A table with Start and End columns. Parent class of PyRanges. Subclass of pandas DataFrame.
+    """
 
     def __new__(cls, *args, **kwargs) -> "RangeFrame | pd.DataFrame":  # type: ignore[misc]
         """Create a new instance of a PyRanges object."""

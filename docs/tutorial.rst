@@ -48,7 +48,7 @@ Loading and accessing pyranges objects
 Let's import libraries, and load in memory an example annotation in GFF3 format, consisting of a portion of the genome
 annotation of the worm *Dimorphilus gyrociliatus*.
 
-  >>> import pyranges as pr, pandas as pd
+  >>> import pyranges as pr
   >>> ann = pr.example_data.ncbi_gff
   >>> ann
   index    |    Chromosome         Source    Feature     Start    End      Score     Strand      Frame     ...
@@ -140,8 +140,8 @@ fetch an individual column, which is technically a pandas Series:
   Categories (5, object): ['CDS', 'exon', 'gene', 'mRNA', 'region']
 
 
-The syntax ``ann['Feature']`` is also available. To create a new column, it is the one to use. Let's create a new column
-with the midpoint of each interval:
+The syntax ``ann[column_name]`` is also available, and must be used when creating or updating a column.
+Let's create a new column with the midpoint of each interval:
 
   >>> ann['midpoint'] = (ann.Start + ann.End) // 2
   >>> ann.get_with_loc_columns(['midpoint'])
@@ -198,7 +198,8 @@ Besides, pyranges offers the :func:`loci <pyranges.PyRanges.loci>` operator for 
 genomic region of interest. It accepts various syntaxes.
 The code below will show intervals completely included in the specified position range in the requested chromosome:
 
-  >>> cds.loci['CAJFCJ010000097.1', '+', 50000:55000]
+  >>> reg = cds.loci['CAJFCJ010000097.1', '+', 50000:55000]
+  >>> reg
   index    |    Chromosome         Start    End      Strand      ID
   int64    |    category           int64    int64    category    object
   -------  ---  -----------------  -------  -------  ----------  ----------------
@@ -214,6 +215,29 @@ The code below will show intervals completely included in the specified position
   PyRanges with 9 rows, 5 columns, and 1 index columns.
   Contains 1 chromosomes and 1 strands.
 
+We cannot see all rows because of space. We can set how many rows are displayed using
+:func:`pyranges.options.set_option`:
+
+  >>> pr.options.set_option('max_rows_to_show', 10)
+  >>> reg
+    index  |    Chromosome           Start      End  Strand      ID
+    int64  |    category             int64    int64  category    object
+  -------  ---  -----------------  -------  -------  ----------  ----------------
+      110  |    CAJFCJ010000097.1    51865    52382  +           cds-CAD5126878.1
+      111  |    CAJFCJ010000097.1    52446    52826  +           cds-CAD5126878.1
+      112  |    CAJFCJ010000097.1    52903    53027  +           cds-CAD5126878.1
+      113  |    CAJFCJ010000097.1    53339    53404  +           cds-CAD5126878.1
+      120  |    CAJFCJ010000097.1    51865    52201  +           cds-CAD5126877.1
+      121  |    CAJFCJ010000097.1    52261    52382  +           cds-CAD5126877.1
+      122  |    CAJFCJ010000097.1    52446    52826  +           cds-CAD5126877.1
+      123  |    CAJFCJ010000097.1    52903    53027  +           cds-CAD5126877.1
+      124  |    CAJFCJ010000097.1    53339    53404  +           cds-CAD5126877.1
+  PyRanges with 9 rows, 5 columns, and 1 index columns.
+  Contains 1 chromosomes and 1 strands.
+
+Let's go back to default display settings:
+
+  >>> pr.options.reset_options()
 
 Working with groups of exons
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -247,7 +271,6 @@ groups of intervals. The code below derives the first codon of each CDS group; g
   145      |    CAJFCJ010000025.1  3150     3153     -           cds-CAD5125114.1
   PyRanges with 18 rows, 5 columns, and 1 index columns.
   Contains 3 chromosomes and 2 strands.
-  
 
 Let's **fetch the sequence** for each of these intervals from our genome fasta file.
 The function :func:`get_sequence <pyranges.PyRanges.get_sequence>` returns one sequence per interval, which we assign to a new column of our pyranges object:
@@ -268,6 +291,7 @@ The function :func:`get_sequence <pyranges.PyRanges.get_sequence>` returns one s
   145      |    CAJFCJ010000025.1  3150     3153     -           cds-CAD5125114.1  ATG
   PyRanges with 18 rows, 6 columns, and 1 index columns.
   Contains 3 chromosomes and 2 strands.
+
 
 
 The ``Sequence`` column is a pandas Series containing strings. We see that the starting codon is ATG in most cases, as expected.
@@ -541,24 +565,24 @@ of the overlapping intervals, similar to a SQL join operation:
 The object ``j`` contains the columns of both objects, with the suffix "_b" to distinguish the second one (``cds``).
 It may be a bit too wide for our taste. Let's just look at a few columns to understand the overlap:
 
-  >>> j[ ['ID', 'Start', 'End', 'ID_b', 'Start_b', 'End_b' ] ]
+  >>> j[['ID', 'Start', 'End', 'ID_b', 'Start_b', 'End_b']]
                    ID  Start   End              ID_b  Start_b  End_b
   0  cds-CAD5125115.1   2755  3055  cds-CAD5125114.1     2753   2851
 
 Above, we used a pandas syntax to select columns. Because the returned object does not have all genomic location
 columns, it is a pandas DataFrame.
 
-To get the intersection between the overlapping intervals, using function
+Let's get the intersection between the overlapping intervals, using function
 :func:`intersect <pyranges.PyRanges.intersect>`:
 
   >>> prom_in_cds = cor_prom.intersect(cds)
   >>> prom_in_cds
-  index  |    Chromosome           Start      End  Strand      ID
-  int64  |    category             int64    int64  category    object
--------  ---  -----------------  -------  -------  ----------  ----------------
-      0  |    CAJFCJ010000025.1     2755     2851  -           cds-CAD5125115.1
-PyRanges with 1 rows, 5 columns, and 1 index columns.
-Contains 1 chromosomes and 1 strands.
+    index  |    Chromosome           Start      End  Strand      ID
+    int64  |    category             int64    int64  category    object
+  -------  ---  -----------------  -------  -------  ----------  ----------------
+        0  |    CAJFCJ010000025.1     2755     2851  -           cds-CAD5125115.1
+  PyRanges with 1 rows, 5 columns, and 1 index columns.
+  Contains 1 chromosomes and 1 strands.
 
 Let's go back to the ``cds`` object and see if any of its intervals overlap each other.
 We can use :func:`cluster <pyranges.PyRanges.cluster>`. This will assign each interval to a cluster,
@@ -647,13 +671,165 @@ Thus, sort by chromosome, strand, length (in descending order), then interval co
   PyRanges with 17 rows, 7 columns, and 1 index columns.
   Contains 2 chromosomes and 2 strands.
 
-Overlap-based operations
-~~~~~~~~~~~~~~~~~~~~~~~~
+Other overlap-based operations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-[Do gene boundaries, merge, subtract for some reason]
+Say that we are interested in intergenic regions in chromosome ``CAJFCJ010000097.1``.
+In any genome annotation, the annotation rows "exon" define transcript coordinates. Let's fetch them from
+the annotation ``ann``:
+
+  >>> exons = ann[ ann.Feature == 'exon' ].loci['CAJFCJ010000097.1']
+  >>> exons
+  index    |    Chromosome         Start    End      Strand      Feature     Parent                 ...
+  int64    |    category           int64    int64    category    category    object                 ...
+  -------  ---  -----------------  -------  -------  ----------  ----------  ---------------------  -----
+  86       |    CAJFCJ010000097.1  2248     3308     +           exon        rna-DGYR_LOCUS14091    ...
+  90       |    CAJFCJ010000097.1  6505     6600     -           exon        rna-DGYR_LOCUS14092    ...
+  91       |    CAJFCJ010000097.1  6082     6450     -           exon        rna-DGYR_LOCUS14092    ...
+  92       |    CAJFCJ010000097.1  5579     6029     -           exon        rna-DGYR_LOCUS14092    ...
+  ...      |    ...                ...      ...      ...         ...         ...                    ...
+  116      |    CAJFCJ010000097.1  52261    52382    +           exon        rna-DGYR_LOCUS14095-2  ...
+  117      |    CAJFCJ010000097.1  52446    52826    +           exon        rna-DGYR_LOCUS14095-2  ...
+  118      |    CAJFCJ010000097.1  52903    53027    +           exon        rna-DGYR_LOCUS14095-2  ...
+  119      |    CAJFCJ010000097.1  53339    53404    +           exon        rna-DGYR_LOCUS14095-2  ...
+  PyRanges with 15 rows, 8 columns, and 1 index columns. (2 columns not shown: "ID", "midpoint").
+  Contains 1 chromosomes and 2 strands.
+
+Let's define the boundaries of each mRNA, e.g. the left and right limits of its exons. While this may be readily
+available in the genome annotation, let's use PyRanges to calculate them, using
+:func:`boundaries <pyranges.PyRanges.boundaries>`:
+
+  >>> mRNA_bounds = exons.boundaries(transcript_id='Parent')
+  >>> mRNA_bounds
+    index  |    Chromosome           Start      End  Strand      Parent
+    int64  |    category             int64    int64  category    object
+  -------  ---  -----------------  -------  -------  ----------  ---------------------
+        0  |    CAJFCJ010000097.1     2248     3308  +           rna-DGYR_LOCUS14091
+        1  |    CAJFCJ010000097.1    16697    17634  +           rna-DGYR_LOCUS14093
+        2  |    CAJFCJ010000097.1    51864    53404  +           rna-DGYR_LOCUS14095
+        3  |    CAJFCJ010000097.1    51864    53404  +           rna-DGYR_LOCUS14095-2
+        4  |    CAJFCJ010000097.1     5579     6600  -           rna-DGYR_LOCUS14092
+        5  |    CAJFCJ010000097.1    31876    32195  -           rna-DGYR_LOCUS14094
+  PyRanges with 6 rows, 5 columns, and 1 index columns.
+  Contains 1 chromosomes and 2 strands.
+
+To get the intergenic regions, let's define the maximum and minimum coordinates of any mRNA in this region,
+using :func:`boundaries <pyranges.PyRanges.boundaries>` again without ``transcript_id``. Because we want our result to
+not depend on strand, we remove it using :func:`remove_strand <pyranges.PyRanges.remove_strand>`:
+
+  >>> all_mRNA_bounds = mRNA_bounds.remove_strand().boundaries()
+  >>> all_mRNA_bounds
+    index  |    Chromosome           Start      End
+    int64  |    category             int64    int64
+  -------  ---  -----------------  -------  -------
+        0  |    CAJFCJ010000097.1     2248    53404
+  PyRanges with 1 rows, 3 columns, and 1 index columns.
+  Contains 1 chromosomes.
+
+Now we can get the intergenic regions using :func:`subtract_ranges <pyranges.PyRanges.subtract_ranges>`:
+
+  >>> intergenic = all_mRNA_bounds.subtract_ranges(mRNA_bounds)
+  >>> intergenic
+    index  |    Chromosome           Start      End
+    int64  |    category             int64    int64
+  -------  ---  -----------------  -------  -------
+        0  |    CAJFCJ010000097.1     3308     5579
+        0  |    CAJFCJ010000097.1     6600    16697
+        0  |    CAJFCJ010000097.1    17634    31876
+        0  |    CAJFCJ010000097.1    32195    51864
+  PyRanges with 4 rows, 3 columns, and 1 index columns (with 3 index duplicates).
+  Contains 1 chromosomes.
+
+Note that pyranges indicates that the object has duplicate indices, because all come from the same row in
+``all_mRNA_bounds``, broken into subintervals by the subtraction operation.
+We can use pandas ``reset_index`` to remedy:
+
+  >>> intergenic = intergenic.reset_index(drop=True)
+  >>> intergenic
+    index  |    Chromosome           Start      End
+    int64  |    category             int64    int64
+  -------  ---  -----------------  -------  -------
+        0  |    CAJFCJ010000097.1     3308     5579
+        1  |    CAJFCJ010000097.1     6600    16697
+        2  |    CAJFCJ010000097.1    17634    31876
+        3  |    CAJFCJ010000097.1    32195    51864
+  PyRanges with 4 rows, 3 columns, and 1 index columns.
+  Contains 1 chromosomes.
 
 
+Counting overlaps
+~~~~~~~~~~~~~~~~~
 
+Often, one wants to count the number of overlaps between two PyRanges objects, e.g. to count reads in specific regions.
+Here, let's count the number of CDS intervals that overlap our previously computed objects ``intergenic``
+and  ``all_mRNA_bounds``, using  method :func:`count_overlaps <pyranges.PyRanges.count_overlaps>` :
+
+  >>> intergenic.count_overlaps(cds)
+    index  |    Chromosome           Start      End    NumberOverlaps
+    int64  |    category             int64    int64             int64
+  -------  ---  -----------------  -------  -------  ----------------
+        0  |    CAJFCJ010000097.1     3308     5579                 0
+        1  |    CAJFCJ010000097.1     6600    16697                 0
+        2  |    CAJFCJ010000097.1    17634    31876                 0
+        3  |    CAJFCJ010000097.1    32195    51864                 0
+  PyRanges with 4 rows, 4 columns, and 1 index columns.
+  Contains 1 chromosomes.
+
+  >>> all_mRNA_bounds.count_overlaps(cds)
+    index  |    Chromosome           Start      End    NumberOverlaps
+    int64  |    category             int64    int64             int64
+  -------  ---  -----------------  -------  -------  ----------------
+        0  |    CAJFCJ010000097.1     2248    53404                15
+  PyRanges with 1 rows, 4 columns, and 1 index columns.
+  Contains 1 chromosomes.
+
+As expected, there's no CDS overlapping the intergenic regions, while the other object reports 15. Yet,
+the CDS intervals may be redundant: different splicing isoforms may have some identical exons:
+
+  >>> example = cds.loci['CAJFCJ010000097.1', '+', 51000:54000].sort_ranges()
+  >>> example
+  index    |    Chromosome         Start    End      Strand      ID
+  int64    |    category           int64    int64    category    object
+  -------  ---  -----------------  -------  -------  ----------  ----------------
+  120      |    CAJFCJ010000097.1  51865    52201    +           cds-CAD5126877.1
+  110      |    CAJFCJ010000097.1  51865    52382    +           cds-CAD5126878.1
+  121      |    CAJFCJ010000097.1  52261    52382    +           cds-CAD5126877.1
+  111      |    CAJFCJ010000097.1  52446    52826    +           cds-CAD5126878.1
+  ...      |    ...                ...      ...      ...         ...
+  112      |    CAJFCJ010000097.1  52903    53027    +           cds-CAD5126878.1
+  123      |    CAJFCJ010000097.1  52903    53027    +           cds-CAD5126877.1
+  113      |    CAJFCJ010000097.1  53339    53404    +           cds-CAD5126878.1
+  124      |    CAJFCJ010000097.1  53339    53404    +           cds-CAD5126877.1
+  PyRanges with 9 rows, 5 columns, and 1 index columns.
+  Contains 1 chromosomes and 1 strands.
+
+
+If we want to calculate the intervals that are annotated as CDS in any of the isoforms, we can use
+method :func:`merge_overlaps <pyranges.PyRanges.merge_overlaps>` :
+
+  >>> example.merge_overlaps()
+    index  |    Chromosome           Start      End  Strand
+    int64  |    object               int64    int64  object
+  -------  ---  -----------------  -------  -------  --------
+        0  |    CAJFCJ010000097.1    51865    52382  +
+        1  |    CAJFCJ010000097.1    52446    52826  +
+        2  |    CAJFCJ010000097.1    52903    53027  +
+        3  |    CAJFCJ010000097.1    53339    53404  +
+  PyRanges with 4 rows, 4 columns, and 1 index columns.
+  Contains 1 chromosomes and 1 strands.
+
+Various methods are available to obtain non-overlapping intervals, depending on the desired output. See
+:func:`split <pyranges.PyRanges.split>`, :func:`max_disjoint <pyranges.PyRanges.max_disjoint>`.
+
+Finally, let's count how many non-redundant CDS intervals overlap our target region:
+
+  >>> all_mRNA_bounds.count_overlaps(cds.merge_overlaps())
+    index  |    Chromosome           Start      End    NumberOverlaps
+    int64  |    category             int64    int64             int64
+  -------  ---  -----------------  -------  -------  ----------------
+        0  |    CAJFCJ010000097.1     2248    53404                10
+  PyRanges with 1 rows, 4 columns, and 1 index columns.
+  Contains 1 chromosomes.
 
 
 This concludes our tutorial. The next pages will delve into pyranges functionalities grouped by topic.

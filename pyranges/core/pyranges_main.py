@@ -1589,6 +1589,11 @@ class PyRanges(RangeFrame):
 
             PyRanges with maximal disjoint set of intervals.
 
+        See Also
+        --------
+        PyRanges.merge_overlaps : merge intervals into non-overlapping superintervals
+        PyRanges.split : split intervals into non-overlapping subintervals
+
         Examples
         --------
         >>> gr = pr.example_data.f1
