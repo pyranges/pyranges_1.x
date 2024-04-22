@@ -89,8 +89,8 @@ def run_bedtools(command, gr, gr2, strand_behavior, nearest_overlap=False, neare
 def assert_equal(result, bedtools_df):
     if result.empty and bedtools_df.empty:
         return
-    result = PyRanges(result).sort_by_position().reset_index(drop=True)
-    bedtools_df = PyRanges(bedtools_df).sort_by_position().reset_index(drop=True)
+    result = PyRanges(result).sort_ranges().reset_index(drop=True)
+    bedtools_df = PyRanges(bedtools_df).sort_ranges().reset_index(drop=True)
     pd.testing.assert_frame_equal(result, bedtools_df, check_exact=False, atol=1e-5)
 
 
