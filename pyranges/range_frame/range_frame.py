@@ -19,6 +19,7 @@ from pyranges.core.names import (
     BinaryOperation,
     UnaryOperation,
 )
+from pyranges.core.pyranges_helpers import arg_to_list
 from pyranges.core.tostring import tostring
 from pyranges.range_frame.range_frame_validator import InvalidRangesReason
 
@@ -204,7 +205,7 @@ class RangeFrame(pd.DataFrame):
 
         if not by:
             return _mypy_ensure_rangeframe(function(self, **kwargs))
-        by = self._by_to_list(by)
+        by = arg_to_list(by)
 
         f = _with_group_keys_to_kwargs(by)(function)
         if not preserve_index:
@@ -275,7 +276,7 @@ class RangeFrame(pd.DataFrame):
         if by is None:
             return _mypy_ensure_rangeframe(function(self, df2=other, **kwargs))
 
-        by = self._by_to_list(by)
+        by = arg_to_list(by)
         results = []
         empty = RangeFrame(columns=other.columns)
         others = dict(list(other.groupby(by)))
@@ -303,10 +304,6 @@ class RangeFrame(pd.DataFrame):
     def sort_by_position(self) -> "RangeFrame":
         """Sort by Start and End columns."""
         return _mypy_ensure_rangeframe(self.sort_values(RANGE_COLS))
-
-    @staticmethod
-    def _by_to_list(by: str | Iterable[str] | None) -> list[str]:
-        return [by] if isinstance(by, str) else ([*by] if by is not None else [])
 
     def reasons_why_frame_is_invalid(self) -> list[InvalidRangesReason] | None:  # noqa: D102
         __doc__ = InvalidRangesReason.is_invalid_ranges_reasons.__doc__  # noqa: A001, F841

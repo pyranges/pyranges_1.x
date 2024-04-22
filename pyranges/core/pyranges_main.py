@@ -27,7 +27,6 @@ from pyranges.core.names import (
     RANGE_COLS,
     SKIP_IF_EMPTY_LEFT,
     START_COL,
-    STRAND_BEHAVIOR_AUTO,
     STRAND_BEHAVIOR_DEFAULT,
     STRAND_BEHAVIOR_OPPOSITE,
     STRAND_COL,
@@ -57,14 +56,13 @@ from pyranges.core.parallelism import (
 )
 from pyranges.core.pyranges_groupby import PyRangesDataFrameGroupBy
 from pyranges.core.pyranges_helpers import (
-    ensure_strand_behavior_options_valid,
-    get_by_columns_including_chromosome_and_strand,
-    group_keys_from_strand_behavior,
-    group_keys_single,
+    arg_to_list,
+    group_keys_from_validated_strand_behavior,
     mypy_ensure_pyranges,
-    strand_behavior_from_strand_and_validate,
-    strand_from_strand_behavior,
-    validate_and_convert_strand,
+    strand_behavior_from_validated_use_strand,
+    use_strand_from_validated_strand_behavior,
+    validate_and_convert_strand_behavior,
+    validate_and_convert_use_strand,
 )
 from pyranges.core.tostring import tostring
 from pyranges.methods.merge import _merge
@@ -483,9 +481,10 @@ class PyRanges(RangeFrame):
             Arguments passed along to the function.
 
         """
-        strand = validate_and_convert_strand(self, use_strand=use_strand)
+        use_strand = validate_and_convert_use_strand(self, use_strand=use_strand)
 
-        by = get_by_columns_including_chromosome_and_strand(self, by=by, use_strand=strand)
+        by = [CHROM_COL] + ([STRAND_COL] if use_strand else []) + arg_to_list(by)
+
         return mypy_ensure_pyranges(
             super().apply_single(
                 function=function,
@@ -530,14 +529,14 @@ class PyRanges(RangeFrame):
             Other arguments passed along to the function.
 
         """
-        ensure_strand_behavior_options_valid(self, other, strand_behavior)
-        by = self._by_to_list(by)
+        strand_behavior = validate_and_convert_strand_behavior(self, other, strand_behavior)
+        by = arg_to_list(by)
 
         if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
             self[TEMP_STRAND_COL] = self[STRAND_COL].replace({"+": "-", "-": "+"})
             other[TEMP_STRAND_COL] = other[STRAND_COL]
 
-        grpby_ks = group_keys_from_strand_behavior(self, other, strand_behavior, by=by)
+        grpby_ks = group_keys_from_validated_strand_behavior(strand_behavior, by=by)
 
         res = mypy_ensure_pyranges(super().apply_pair(other, function, by=grpby_ks, **kwargs))
 
@@ -619,7 +618,7 @@ class PyRanges(RangeFrame):
         # may be optimized: no need to split by chromosome/strands
         return self.apply_single(
             _bounds,
-            by=self._by_to_list(transcript_id),
+            by=arg_to_list(transcript_id),
             agg=agg,
             use_strand=self.strand_valid,
         )
@@ -748,7 +747,7 @@ class PyRanges(RangeFrame):
         """
         from pyranges.methods.cluster import _cluster
 
-        strand = validate_and_convert_strand(self, use_strand=use_strand)
+        strand = validate_and_convert_use_strand(self, use_strand=use_strand)
         _self = self.copy() if (not strand and self.has_strand) else self
 
         _by = [match_by] if isinstance(match_by, str) else ([*match_by] if match_by is not None else [])
@@ -961,6 +960,7 @@ class PyRanges(RangeFrame):
             skip_if_empty=not keep_nonoverlapping,
         )
 
+    # to do: optimize, doesn't need to split by chromosome, only strand and only if ext_3/5
     def extend(
         self,
         ext: int | None = None,
@@ -1071,7 +1071,7 @@ class PyRanges(RangeFrame):
         return (
             self.apply_single(
                 _extend,
-                by=group_keys_single(self, use_strand=self.strand_valid),
+                by=None,
                 ext=ext,
                 ext_3=ext_3,
                 ext_5=ext_5,
@@ -1080,7 +1080,7 @@ class PyRanges(RangeFrame):
             else (
                 self.apply_single(
                     _extend_grp,
-                    by=group_keys_single(self, use_strand=self.strand_valid),
+                    by=None,
                     ext=ext,
                     ext_3=ext_3,
                     ext_5=ext_5,
@@ -1533,7 +1533,7 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 1 strands.
 
         """
-        use_strand = validate_and_convert_strand(self, use_strand)
+        use_strand = validate_and_convert_use_strand(self, use_strand)
         from pyranges.methods.max_disjoint import _max_disjoint
 
         result = self.apply_single(_max_disjoint, by=match_by, use_strand=use_strand, preserve_index=True, slack=slack)
@@ -1629,9 +1629,9 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         """
-        use_strand = validate_and_convert_strand(self, use_strand)
-        _by = get_by_columns_including_chromosome_and_strand(self=self, by=match_by, use_strand=use_strand)
-        return self.apply_single(_merge, by=_by, use_strand=use_strand, count_col=count_col, slack=slack)
+        use_strand = validate_and_convert_use_strand(self, use_strand)
+
+        return self.apply_single(_merge, by=match_by, use_strand=use_strand, count_col=count_col, slack=slack)
 
     def nearest(
         self,
@@ -1928,7 +1928,9 @@ class PyRanges(RangeFrame):
         """
         from pyranges.methods.overlap import _intersect
 
-        use_strand = strand_from_strand_behavior(self, other, strand_behavior)
+        strand_behavior = validate_and_convert_strand_behavior(self, other, strand_behavior)
+
+        use_strand = use_strand_from_validated_strand_behavior(self, other, strand_behavior)
         self_clusters = self.merge_overlaps(use_strand=use_strand and self.has_strand)
         other_clusters = other.merge_overlaps(use_strand=use_strand and other.has_strand)
         return mypy_ensure_pyranges(
@@ -2001,15 +2003,16 @@ class PyRanges(RangeFrame):
         if self.empty and other.empty:
             return mypy_ensure_pyranges(self.copy())
 
-        strand = strand_from_strand_behavior(self, other, strand_behavior)
+        strand_behavior = validate_and_convert_strand_behavior(self, other, strand_behavior)
+        use_strand = use_strand_from_validated_strand_behavior(self, other, strand_behavior)
 
-        if not strand:
+        if not use_strand:
             self = self.remove_strand()
             other = other.remove_strand()
 
         gr = pr.concat([self, other])
 
-        return gr.merge_overlaps(use_strand=strand)
+        return gr.merge_overlaps(use_strand=use_strand)
 
     def sort_ranges(
         self,
@@ -2172,7 +2175,7 @@ class PyRanges(RangeFrame):
         Contains 3 chromosomes and 2 strands.
 
         """
-        by = [] if by is None else [by] if isinstance(by, str) else list(by)
+        by = arg_to_list(by)
         sort_descending = (
             []
             if sort_descending is None
@@ -2181,7 +2184,7 @@ class PyRanges(RangeFrame):
             else list(sort_descending)
         )
 
-        use_strand = validate_and_convert_strand(self, use_strand)
+        use_strand = validate_and_convert_use_strand(self, use_strand)
 
         cols_to_sort_for = (
             ([CHROM_COL] if CHROM_COL not in by else [])
@@ -2351,7 +2354,7 @@ class PyRanges(RangeFrame):
 
         from pyranges.methods.spliced_subsequence import _spliced_subseq
 
-        use_strand = validate_and_convert_strand(self, use_strand)
+        use_strand = validate_and_convert_use_strand(self, use_strand)
 
         sorted_p = self.sort_ranges(use_strand=use_strand)
 
@@ -2496,7 +2499,7 @@ class PyRanges(RangeFrame):
         """
         from pyranges.methods.split import _split
 
-        use_strand = validate_and_convert_strand(self, use_strand=use_strand)
+        use_strand = validate_and_convert_use_strand(self, use_strand=use_strand)
         df = self.apply_single(
             _split,
             by=match_by,
@@ -2506,7 +2509,7 @@ class PyRanges(RangeFrame):
         if not between:
             df = df.overlap(
                 self,
-                strand_behavior=strand_behavior_from_strand_and_validate(self, use_strand),
+                strand_behavior=strand_behavior_from_validated_use_strand(self, use_strand),
             )
 
         return df
@@ -2846,24 +2849,24 @@ class PyRanges(RangeFrame):
         """
         from pyranges.methods.subtraction import _subtraction
 
-        strand = other.strand_valid if strand_behavior == STRAND_BEHAVIOR_AUTO else strand_behavior != "ignore"
+        use_strand = use_strand_from_validated_strand_behavior(self, other, strand_behavior)
 
-        other_clusters = other.merge_overlaps(use_strand=strand, match_by=match_by)
+        other_clusters = other.merge_overlaps(use_strand=use_strand, match_by=match_by)
 
-        _by = group_keys_from_strand_behavior(self, other_clusters, strand_behavior=strand_behavior, by=match_by)
+        grpby_ks = group_keys_from_validated_strand_behavior(strand_behavior, match_by)
 
         gr = self.count_overlaps(
             other_clusters,
             strand_behavior=strand_behavior,
             overlap_col=TEMP_NUM_COL,
-            match_by=_by,
+            match_by=grpby_ks,
         )
 
         result = gr.apply_pair(
             other_clusters,
             strand_behavior=strand_behavior,
             function=_subtraction,
-            by=_by,
+            by=grpby_ks,
             skip_if_empty=False,
         )
 
@@ -3585,7 +3588,7 @@ class PyRanges(RangeFrame):
 
         from pyranges.methods.to_rle import _to_rle
 
-        strand = validate_and_convert_strand(self, strand)
+        strand = validate_and_convert_use_strand(self, strand)
         df = self.remove_strand() if not strand else self
 
         return _to_rle(
@@ -3768,7 +3771,7 @@ class PyRanges(RangeFrame):
         """
         from pyranges.methods.windows import _windows
 
-        use_strand = validate_and_convert_strand(self, use_strand)
+        use_strand = validate_and_convert_use_strand(self, use_strand)
 
         kwargs = {
             "window_size": window_size,
@@ -3814,7 +3817,8 @@ class PyRanges(RangeFrame):
         Parameters
         ----------
         key : str or iterable of str
-            Column(s) to return. If an empty list, return only the genome location columns.
+            Column(s) to return.
+            If an empty list, return only the genome location columns.
 
         preserve_loc_order : bool, default False
             Whether to preserve the order of the genome location columns.
@@ -3865,7 +3869,7 @@ class PyRanges(RangeFrame):
         ValueError: Duplicate keys not allowed when preserve_loc_order is True.
 
         """
-        keys = [key] if isinstance(key, str) else ([*key])
+        keys = arg_to_list(key)
 
         def _reorder_according_to_b(a: list[str], b: list[str]) -> list[str]:
             for pos, val in zip(sorted([a.index(x) for x in b]), b, strict=True):
@@ -4212,7 +4216,7 @@ class PyRanges(RangeFrame):
                 raise ValueError(msg)
             pyfaidx_fasta = pyfaidx.Fasta(path, read_ahead=int(1e5))
 
-        use_strand = validate_and_convert_strand(self, use_strand=use_strand)
+        use_strand = validate_and_convert_use_strand(self, use_strand=use_strand)
 
         iterables = (
             zip(self[CHROM_COL], self[START_COL], self[END_COL], [FORWARD_STRAND] * len(self), strict=True)
@@ -4315,7 +4319,7 @@ class PyRanges(RangeFrame):
         ...         _bytes_written = fw.write(f'>{row.transcript}\\n{s}\\n')
 
         """
-        use_strand = validate_and_convert_strand(self, use_strand=use_strand)
+        use_strand = validate_and_convert_use_strand(self, use_strand=use_strand)
         gr = self.sort_ranges(use_strand=use_strand)
 
         seq = gr.get_sequence(path=path, pyfaidx_fasta=pyfaidx_fasta, use_strand=use_strand)

@@ -20,7 +20,7 @@ from pyranges.core.names import (
     TEMP_INDEX_COL,
     TEMP_LENGTH_COL,
 )
-from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
+from pyranges.core.pyranges_helpers import arg_to_list, mypy_ensure_pyranges
 
 ## Joan Pallares started this function
 #  Marco Mariotti later optimized it, made it independent from pyranges
@@ -104,7 +104,7 @@ def calculate_frame(p: "pr.PyRanges", transcript_id: str | list[str], frame_col:
     gr[TEMP_INDEX_COL] = np.arange(len(p))
 
     # Filtering for desired columns
-    sorted_p = gr.get_with_loc_columns([TEMP_INDEX_COL, *p._by_to_list(transcript_id)])  # noqa: SLF001
+    sorted_p = gr.get_with_loc_columns([TEMP_INDEX_COL, *arg_to_list(transcript_id)])
 
     # Sorting by 5' (Intervals on + are sorted by ascending order and - are sorted by descending order)
     sorted_p = sorted_p.sort_ranges()
