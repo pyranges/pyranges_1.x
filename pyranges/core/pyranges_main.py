@@ -1481,7 +1481,6 @@ class PyRanges(RangeFrame):
         *,
         slack: int = 0,
         match_by: VALID_BY_TYPES = None,
-        **_,
     ) -> "PyRanges":
         """Find the maximal disjoint set of intervals.
 
@@ -1744,7 +1743,6 @@ class PyRanges(RangeFrame):
         match_by: VALID_BY_TYPES = None,
         invert: bool = False,
         contained: bool = False,
-        **_,
     ) -> "PyRanges":
         """Return overlapping intervals.
 
@@ -2235,7 +2233,6 @@ class PyRanges(RangeFrame):
         end: int | None = None,
         transcript_id: VALID_BY_TYPES = None,
         use_strand: VALID_USE_STRAND_TYPE = "auto",
-        **_,
     ) -> "PyRanges":
         """Get subsequences of the intervals, using coordinates mapping to spliced transcripts (without introns).
 
@@ -2509,7 +2506,6 @@ class PyRanges(RangeFrame):
         if not between:
             df = df.overlap(
                 self,
-                how=OVERLAP_FIRST,
                 strand_behavior=strand_behavior_from_strand_and_validate(self, use_strand),
             )
 
@@ -2626,7 +2622,6 @@ class PyRanges(RangeFrame):
         end: int | None = None,
         transcript_id: VALID_BY_TYPES = None,
         use_strand: VALID_USE_STRAND_TYPE = "auto",
-        **_,
     ) -> "PyRanges":
         """Get subsequences of the intervals.
 
@@ -3900,7 +3895,6 @@ class PyRanges(RangeFrame):
         multiple: VALID_OVERLAP_TYPE = "all",
         *,
         match_by: VALID_BY_TYPES = None,
-        **_,
     ) -> "PyRanges":
         """Return overlapping subintervals.
 

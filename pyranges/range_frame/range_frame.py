@@ -94,7 +94,6 @@ class RangeFrame(pd.DataFrame):
         other: "RangeFrame",
         how: VALID_OVERLAP_TYPE = "first",
         by: VALID_BY_TYPES = None,
-        **_,
     ) -> "RangeFrame":
         """Find intervals in self overlapping other..
 
