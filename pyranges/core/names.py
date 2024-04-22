@@ -68,6 +68,7 @@ STRAND_BEHAVIOR_OPPOSITE: Final = "opposite"
 STRAND_BEHAVIOR_IGNORE: Final = "ignore"
 STRAND_BEHAVIOR_DEFAULT: Final = "auto"
 VALID_STRAND_BEHAVIOR_TYPE = Literal["auto", "same", "opposite", "ignore"]
+STRICT_STRAND_BEHAVIOR_TYPE = Literal["same", "opposite", "ignore"]
 VALID_STRAND_BEHAVIOR_OPTIONS = [
     STRAND_BEHAVIOR_SAME,
     STRAND_BEHAVIOR_OPPOSITE,

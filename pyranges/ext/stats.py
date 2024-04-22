@@ -18,15 +18,15 @@ from pyranges.core.names import (
     CHROM_COL,
     END_COL,
     GENOME_LOC_COLS,
-    STRAND_BEHAVIOR_AUTO,
     STRAND_BEHAVIOR_IGNORE,
     STRAND_BEHAVIOR_SAME,
     VALID_STRAND_BEHAVIOR_TYPE,
 )
 from pyranges.core.pyranges_helpers import (
-    ensure_strand_behavior_options_valid,
     mypy_ensure_pyranges,
-    strand_behavior_from_strand_and_validate,
+    strand_behavior_from_validated_use_strand,
+    use_strand_from_validated_strand_behavior,
+    validate_and_convert_strand_behavior,
 )
 from pyranges.methods.statistics import _relative_distance
 
@@ -251,7 +251,7 @@ def mcc(
     *,
     labels: list[str],
     genome: "PyRanges | pd.DataFrame | dict[str, int] | None" = None,
-    strand: bool = False,
+    use_strand: bool = False,
 ) -> DataFrame:
     """Compute Matthew's correlation coefficient for PyRanges overlaps.
 
@@ -268,7 +268,7 @@ def mcc(
     labels : list of str, default None
         Names to give the PyRanges in the output.
 
-    strand : bool, default False
+    use_strand : bool, default False
         Whether to compute correlations per strand.
 
     Examples
@@ -298,11 +298,15 @@ def mcc(
     """
     _genome, genome_length, _labels = _process_genome_data(grs, labels=labels, genome=genome)
 
+    if use_strand and not all(gr.strand_valid for gr in grs):
+        msg = "use_strand=True but one or more PyRanges have invalid strand information."
+        raise AssertionError(msg)
+
     # remove all non-loc columns before computation
-    grs = [gr.merge_overlaps(use_strand=strand) for gr in grs]
+    grs = [gr.merge_overlaps(use_strand=use_strand) for gr in grs]
 
     strand_behavior_same = all(
-        strand_behavior_from_strand_and_validate(gr, strand) == STRAND_BEHAVIOR_SAME for gr in grs
+        strand_behavior_from_validated_use_strand(gr, use_strand) == STRAND_BEHAVIOR_SAME for gr in grs
     )
     strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = (
         STRAND_BEHAVIOR_SAME if strand_behavior_same else STRAND_BEHAVIOR_IGNORE
@@ -311,7 +315,7 @@ def mcc(
     rowdicts = []
     for (lt, lf), (t, f) in zip(_labels, combinations_with_replacement(grs, r=2), strict=True):
         if lt == lf:
-            if not strand:
+            if not use_strand:
                 tp = t.length
                 fn = 0
                 tn = genome_length - tp
@@ -319,7 +323,7 @@ def mcc(
                 rowdicts.append({"T": lt, "F": lf, "TP": tp, "FP": fp, "TN": tn, "FN": fn, "MCC": 1})
             else:
                 for _strand in "+ -".split():
-                    tp = t[strand].length
+                    tp = t[use_strand].length
                     fn = 0
                     tn = genome_length - tp
                     fp = 0
@@ -339,8 +343,8 @@ def mcc(
 
         else:  # noqa: RET507
             j = t.join_ranges(f, strand_behavior=strand_behavior)
-            tp_gr = j.combine_interval_columns().merge_overlaps(use_strand=strand)
-            if strand:
+            tp_gr = j.combine_interval_columns().merge_overlaps(use_strand=use_strand)
+            if use_strand:
                 for _strand in "+ -".split():
                     tp = tp_gr[_strand].length
                     fp = f[_strand].length - tp
@@ -704,8 +708,10 @@ def forbes(
         Integer representing genome length or mapping from chromosomes
         to its length.
 
-    strand_behavior : {"auto", "same", "opposite", False}, default None, i.e. "auto"
-        Whether to compute without regards to strand or on same or opposite.
+    strand_behavior : {"auto", "same", "opposite", "ignore"}, default "auto"
+        Whether to consider overlaps of intervals on the same strand, the opposite or ignore strand
+        information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_valid)
+        otherwise ignore the strand information.
 
     Returns
     -------
@@ -726,10 +732,11 @@ def forbes(
     """
     _chromsizes = _chromsizes_as_int(chromsizes)
 
-    ensure_strand_behavior_options_valid(p, other, strand_behavior=strand_behavior)
-    strand = p.strand_valid and other.strand_valid and strand_behavior in {STRAND_BEHAVIOR_AUTO, True}
-    reference_length = p.merge_overlaps(use_strand=strand).length
-    query_length = other.merge_overlaps(use_strand=strand).length
+    strand_behavior = validate_and_convert_strand_behavior(p, other, strand_behavior)
+    use_strand = use_strand_from_validated_strand_behavior(p, other, strand_behavior)
+
+    reference_length = p.merge_overlaps(use_strand=use_strand).length
+    query_length = other.merge_overlaps(use_strand=use_strand).length
 
     intersection_sum = p.set_intersect(other, strand_behavior=strand_behavior).lengths().sum()
     return _chromsizes * intersection_sum / (reference_length * query_length)
@@ -752,8 +759,10 @@ def jaccard(
     other : PyRanges
         Intervals to compare with.
 
-    strand_behavior : {"auto", "same", "opposite"}
-        Whether to compute without regards to strand or on same or opposite.
+    strand_behavior : {"auto", "same", "opposite", "ignore"}, default "auto"
+        Whether to consider overlaps of intervals on the same strand, the opposite or ignore strand
+        information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_valid)
+        otherwise ignore the strand information.
 
     Returns
     -------
@@ -773,14 +782,14 @@ def jaccard(
     0.14285714285714285
 
     """
-    ensure_strand_behavior_options_valid(p, other, strand_behavior=strand_behavior)
-    strand = p.strand_valid and other.strand_valid and strand_behavior in {STRAND_BEHAVIOR_AUTO, True}
+    strand_behavior = validate_and_convert_strand_behavior(p, other, strand_behavior)
+    use_strand = use_strand_from_validated_strand_behavior(p, other, strand_behavior)
 
     intersection_sum = p.set_intersect(other).lengths().sum()
 
     union_sum = 0
     for gr in [p, other]:
-        union_sum += gr.merge_overlaps(use_strand=strand).lengths().sum()
+        union_sum += gr.merge_overlaps(use_strand=use_strand).lengths().sum()
 
     denominator = union_sum - intersection_sum
     if denominator == 0:
