@@ -42,6 +42,7 @@ def validate_and_convert_strand(self: "PyRanges", use_strand: VALID_USE_STRAND_T
         # but if there are intervals on the negative strand, warn user
         if not use_strand and contains_negative_strand(self):
             fn_name = stack[2].function if len(stack := inspect.stack()) > 2 else "unknown_function"  # noqa: PLR2004
+            fn_name = stack[1].function if fn_name == "<module>" else fn_name
             msg = (
                 f"{fn_name}: '{USE_STRAND_AUTO}' use_strand treated as False due to invalid Strand values. Suppress "
                 f"this warning with use_strand=False"

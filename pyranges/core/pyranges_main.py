@@ -4113,6 +4113,7 @@ class PyRanges(RangeFrame):
         self: "PyRanges",
         path: Path | None = None,
         pyfaidx_fasta: Optional["pyfaidx.Fasta"] = None,
+        use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
     ) -> pd.Series:
         r"""Get the sequence of the intervals from a fasta file.
 
@@ -4124,6 +4125,9 @@ class PyRanges(RangeFrame):
         pyfaidx_fasta : pyfaidx.Fasta
             Alternative method to provide fasta target, as a pyfaidx.Fasta object
 
+        use_strand: {"auto", True, False}, default: "auto"
+            If True, intervals on the reverse strand will be reverse complemented.
+            The default "auto" means True if PyRanges has valid strands (see .strand_valid).
 
         Returns
         -------
@@ -4148,7 +4152,7 @@ class PyRanges(RangeFrame):
         See Also
         --------
         PyRanges.get_transcript_sequence : obtain mRNA sequences, by joining exons belonging to the same transcript
-
+        pyranges.seqs : submodule with sequence-related functions
 
         Examples
         --------
@@ -4188,6 +4192,11 @@ class PyRanges(RangeFrame):
         PyRanges with 2 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
+        >>> gr.get_sequence("temp.fasta", use_strand=False)
+        0      CAT
+        1    GTAAT
+        Name: Sequence, dtype: object
+
         """
         try:
             import pyfaidx  # type: ignore[import]
@@ -4203,18 +4212,22 @@ class PyRanges(RangeFrame):
                 raise ValueError(msg)
             pyfaidx_fasta = pyfaidx.Fasta(path, read_ahead=int(1e5))
 
-        use_strand = self.strand_valid
+        use_strand = validate_and_convert_strand(self, use_strand=use_strand)
+
         iterables = (
-            zip(self[CHROM_COL], self[START_COL], self[END_COL], [FORWARD_STRAND], strict=False)
+            zip(self[CHROM_COL], self[START_COL], self[END_COL], [FORWARD_STRAND] * len(self), strict=True)
             if not use_strand
             else zip(self[CHROM_COL], self[START_COL], self[END_COL], self[STRAND_COL], strict=True)
         )
+
+        # below, -seq from pyfaidx is used to get reverse complement of the sequence
         seqs = []
         for chromosome, start, end, strand in iterables:
             _fasta = pyfaidx_fasta[chromosome]
             forward_strand = strand == FORWARD_STRAND
             if (seq := _fasta[start:end]) is not None:
                 seqs.append(seq.seq if forward_strand else (-seq).seq)
+
         return pd.Series(data=seqs, index=self.index, name="Sequence")
 
     def get_transcript_sequence(
@@ -4222,6 +4235,7 @@ class PyRanges(RangeFrame):
         transcript_id: str,
         path: Path | None = None,
         pyfaidx_fasta: Optional["pyfaidx.Fasta"] = None,
+        use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
     ) -> pd.DataFrame:
         r"""Get the sequence of mRNAs, e.g. joining intervals corresponding to exons of the same transcript.
 
@@ -4236,6 +4250,9 @@ class PyRanges(RangeFrame):
         pyfaidx_fasta : pyfaidx.Fasta
             Alternative method to provide fasta target, as a pyfaidx.Fasta object
 
+        use_strand: {"auto", True, False}, default: "auto"
+            If True, intervals on the reverse strand will be reverse complemented.
+            The default "auto" means True if PyRanges has valid strands (see .strand_valid).
 
         Returns
         -------
@@ -4244,7 +4261,6 @@ class PyRanges(RangeFrame):
 
         Note
         ----
-
         This function requires the library pyfaidx, it can be installed with
         ``conda install -c bioconda pyfaidx`` or ``pip install pyfaidx``.
 
@@ -4253,13 +4269,12 @@ class PyRanges(RangeFrame):
 
         Warning
         -------
-
         Note that the names in the fasta header and self.Chromosome must be the same.
 
         See Also
         --------
         PyRanges.get_sequence : obtain sequence of single intervals
-
+        pyranges.seqs : submodule with sequence-related functions
 
         Examples
         --------
@@ -4282,6 +4297,16 @@ class PyRanges(RangeFrame):
         2         t4     TCCC
         3         t5      AAA
 
+        With use_strand=False, all intervals are treated as if on the forward strand:
+
+        >>> seq2 = gr.get_transcript_sequence(path="temp.fasta", transcript_id='transcript', use_strand=False)
+        >>> seq2
+          transcript Sequence
+        0         t1     AAAC
+        1         t2  GGGATTT
+        2         t4     GGGA
+        3         t5      TTT
+
         To write to a file in fasta format:
         >>> with open('outfile.fasta', 'w') as fw:
         ...     nchars=60
@@ -4290,9 +4315,10 @@ class PyRanges(RangeFrame):
         ...         _bytes_written = fw.write(f'>{row.transcript}\\n{s}\\n')
 
         """
-        gr = self.sort_ranges()
+        use_strand = validate_and_convert_strand(self, use_strand=use_strand)
+        gr = self.sort_ranges(use_strand=use_strand)
 
-        seq = gr.get_sequence(path=path, pyfaidx_fasta=pyfaidx_fasta)
+        seq = gr.get_sequence(path=path, pyfaidx_fasta=pyfaidx_fasta, use_strand=use_strand)
         gr["Sequence"] = seq.to_numpy()
 
         return gr.groupby(transcript_id, as_index=False).agg({"Sequence": "".join})
