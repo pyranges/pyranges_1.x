@@ -162,10 +162,11 @@ Now let's filter the original PyRanges object to get all interval groups with th
 Translation and reverse complement
 ----------------------------------
 
-The submodule :mod:`pyranges.seqs` contains functions to translate sequences and reverse complement them:
+The submodule :mod:`pyranges.seqs` contains functions to translate sequences and reverse complement them.
+They can operate on a single sequence, or a Series of sequences as below:
 
-  >>> sg['Protein'] = [pr.seqs.translate(x) for x in sg.Sequence]
-  >>> sg['RevComp'] = [pr.seqs.reverse_complement(x) for x in sg.Sequence]
+  >>> sg['Protein'] = pr.seqs.translate(sg.Sequence)
+  >>> sg['RevComp'] = pr.seqs.reverse_complement(sg.Sequence)
   >>> sg[ ['ID', 'Sequence', 'Protein', 'RevComp'] ].head(1).transpose()  # to allow display
                                                    145
   ID                                  cds-CAD5125114.1
