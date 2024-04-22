@@ -163,7 +163,7 @@ Translation and reverse complement
 ----------------------------------
 
 The submodule :mod:`pyranges.seqs` contains functions to translate sequences and reverse complement them.
-They can operate on a single sequence or a Series of sequences, as below:
+They can operate on a single sequence, or a Series of sequences as below:
 
   >>> sg['Protein'] = pr.seqs.translate(sg.Sequence)
   >>> sg['RevComp'] = pr.seqs.reverse_complement(sg.Sequence)
