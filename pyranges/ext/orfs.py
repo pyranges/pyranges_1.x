@@ -107,7 +107,7 @@ def calculate_frame(p: "pr.PyRanges", transcript_id: str | list[str], frame_col:
     sorted_p = gr.get_with_loc_columns([TEMP_INDEX_COL, *p._by_to_list(transcript_id)])  # noqa: SLF001
 
     # Sorting by 5' (Intervals on + are sorted by ascending order and - are sorted by descending order)
-    sorted_p = sorted_p.sort_by_5_prime_ascending_and_3_prime_descending()
+    sorted_p = sorted_p.sort_ranges()
 
     # Creating a column saving the length for the intervals (for selenoprofiles and ensembl)
     sorted_p[TEMP_LENGTH_COL] = sorted_p.lengths()

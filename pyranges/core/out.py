@@ -200,7 +200,7 @@ def _to_bigwig(
     unique_chromosomes = gr.chromosomes
 
     gr = gr.remove_strand()
-    gr = gr.sort_by_position()
+    gr = gr.sort_ranges()
     gr = gr.get_with_loc_columns(BIGWIG_SCORE_COL)
 
     if dryrun:
