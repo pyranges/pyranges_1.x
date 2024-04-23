@@ -7,9 +7,9 @@ Operating on coordinates
    :caption: Contents
 
 
-Modifying interval coordinates
-------------------------------
-Interval coordinates can be directly modified like any Series in dataframes.
+Modifying coordinates
+---------------------
+Interval coordinates (Start, End) can be directly modified like any Series in dataframes.
 Let's get some data:
 
   >>> import pyranges as pr
@@ -423,5 +423,168 @@ This will obtain the 100 bases downstream of each transcript:
 Other slicing operations
 ------------------------
 
-mention window, tile, tile_genome
+Many genomic analyses involved running a sliding window over the genome or subregions of it.
+Method :func:`window <pyranges.PyRanges.window>` allows to obtain adjacent windows of a specified size and step that
+span each interval in a PyRanges object.
 
+  >>> g = pr.PyRanges(dict(Chromosome=1, Start=[4, 60, 100], End=[11, 66, 107],
+  ...                      Strand=['+', '+', '-'], Name=['a', 'a', 'b']))
+  >>> g
+    index  |      Chromosome    Start      End  Strand    Name
+    int64  |           int64    int64    int64  object    object
+  -------  ---  ------------  -------  -------  --------  --------
+        0  |               1        4       11  +         a
+        1  |               1       60       66  +         a
+        2  |               1      100      107  -         b
+  PyRanges with 3 rows, 5 columns, and 1 index columns.
+  Contains 1 chromosomes and 2 strands.
+
+For example, let's get windows of size 3:
+
+  >>> g.window(3)
+    index  |      Chromosome    Start      End  Strand    Name
+    int64  |           int64    int64    int64  object    object
+  -------  ---  ------------  -------  -------  --------  --------
+        0  |               1        4        7  +         a
+        0  |               1        7       10  +         a
+        0  |               1       10       11  +         a
+        1  |               1       60       63  +         a
+        1  |               1       63       66  +         a
+        2  |               1      104      107  -         b
+        2  |               1      101      104  -         b
+        2  |               1      100      101  -         b
+  PyRanges with 8 rows, 5 columns, and 1 index columns (with 5 index duplicates).
+  Contains 1 chromosomes and 2 strands.
+
+Windows are generated for each interval independently. Strand is considered: they are generated starting from the 5'
+end. To ignore strand, use ``use_strand=False``:
+
+  >>> g.window(3, use_strand=False)
+    index  |      Chromosome    Start      End  Strand    Name
+    int64  |           int64    int64    int64  object    object
+  -------  ---  ------------  -------  -------  --------  --------
+        0  |               1        4        7  +         a
+        0  |               1        7       10  +         a
+        0  |               1       10       11  +         a
+        1  |               1       60       63  +         a
+        1  |               1       63       66  +         a
+        2  |               1      100      103  -         b
+        2  |               1      103      106  -         b
+        2  |               1      106      107  -         b
+  PyRanges with 8 rows, 5 columns, and 1 index columns (with 5 index duplicates).
+  Contains 1 chromosomes and 2 strands.
+
+To avoid duplicated indices, run pandas dataframe method ``reset_index`` on the output:
+
+  >>> g.window(3).reset_index(drop=True)
+    index  |      Chromosome    Start      End  Strand    Name
+    int64  |           int64    int64    int64  object    object
+  -------  ---  ------------  -------  -------  --------  --------
+        0  |               1        4        7  +         a
+        1  |               1        7       10  +         a
+        2  |               1       10       11  +         a
+        3  |               1       60       63  +         a
+        4  |               1       63       66  +         a
+        5  |               1      104      107  -         b
+        6  |               1      101      104  -         b
+        7  |               1      100      101  -         b
+  PyRanges with 8 rows, 5 columns, and 1 index columns.
+  Contains 1 chromosomes and 2 strands.
+
+To may retain the old index as column, with:
+
+  >>> g.window(3).reset_index(names='g_index')
+    index  |      g_index    Chromosome    Start      End  Strand    Name
+    int64  |        int64         int64    int64    int64  object    object
+  -------  ---  ---------  ------------  -------  -------  --------  --------
+        0  |            0             1        4        7  +         a
+        1  |            0             1        7       10  +         a
+        2  |            0             1       10       11  +         a
+        3  |            1             1       60       63  +         a
+        4  |            1             1       63       66  +         a
+        5  |            2             1      104      107  -         b
+        6  |            2             1      101      104  -         b
+        7  |            2             1      100      101  -         b
+  PyRanges with 8 rows, 6 columns, and 1 index columns.
+  Contains 1 chromosomes and 2 strands.
+
+To 'window' a whole genome (e.g. to then quantify reads in each window), pyranges offers
+:func:`pyranges.tile_genome`. Here, you must provide chromosome sizes, with various syntaxes accepted, and again a
+window size. This function will return windows to cover all the chromosomes:
+
+  >>> cs={'chr1':323, 'chr2':125} # creating a dictionary with chromosome sizes
+  >>> pr.tile_genome(cs, 100)
+    index  |    Chromosome      Start      End
+    int64  |    object          int64    int64
+  -------  ---  ------------  -------  -------
+        0  |    chr1                0      100
+        1  |    chr1              100      200
+        2  |    chr1              200      300
+        3  |    chr1              300      323
+        4  |    chr2                0      100
+        5  |    chr2              100      125
+  PyRanges with 6 rows, 3 columns, and 1 index columns.
+  Contains 2 chromosomes.
+
+Note that the last window is not full, as the chromosome size is not a multiple of the window size.
+To ensure tile size consistency, use the ``full_last_tile`` parameter:
+
+  >>> pr.tile_genome(cs, 100, full_last_tile=True)
+    index  |    Chromosome      Start      End
+    int64  |    object          int64    int64
+  -------  ---  ------------  -------  -------
+        0  |    chr1                0      100
+        1  |    chr1              100      200
+        2  |    chr1              200      300
+        3  |    chr1              300      400
+        4  |    chr2                0      100
+        5  |    chr2              100      200
+  PyRanges with 6 rows, 3 columns, and 1 index columns.
+  Contains 2 chromosomes.
+
+
+A related operation is :func:`tile <pyranges.PyRanges.tile>`, whose rationale is to obtain only the genome tiles (of
+a defined size) that overlap the intervals in a PyRanges object:
+
+
+  >>> se = e.loc[[0,7],:]
+  >>> se
+    index  |      Chromosome    Start      End  Strand      transcript_id
+    int64  |        category    int64    int64  category    object
+  -------  ---  ------------  -------  -------  ----------  ---------------
+        0  |               1    11878    12227  +           ENST00000456328
+        7  |               1   133378   133723  -           ENST00000610542
+  PyRanges with 2 rows, 5 columns, and 1 index columns.
+  Contains 1 chromosomes and 2 strands.
+
+  >>> se.tile(200)
+    index  |      Chromosome    Start      End  Strand      transcript_id
+    int64  |        category    int64    int64  category    object
+  -------  ---  ------------  -------  -------  ----------  ---------------
+        0  |               1    11800    12000  +           ENST00000456328
+        0  |               1    12000    12200  +           ENST00000456328
+        0  |               1    12200    12400  +           ENST00000456328
+        7  |               1   133200   133400  -           ENST00000610542
+        7  |               1   133400   133600  -           ENST00000610542
+        7  |               1   133600   133800  -           ENST00000610542
+  PyRanges with 6 rows, 5 columns, and 1 index columns (with 4 index duplicates).
+  Contains 1 chromosomes and 2 strands.
+
+Note that, in contrast with :func:`window <pyranges.PyRanges.window>`, the function
+:func:`tile <pyranges.PyRanges.tile>` returns intervals anchored to genome positions: their Start will always be
+a multiple of the tile size, like :func:`pyranges.tile_genome`, and regardless of the strand of the original intervals.
+Argument ``overlap_column`` can be used to add a column indicating how much of the original interval
+overlaps with the tile returned:
+
+  >>> se.tile(200, overlap_column='nts')
+    index  |      Chromosome    Start      End  Strand      transcript_id        nts
+    int64  |        category    int64    int64  category    object             int64
+  -------  ---  ------------  -------  -------  ----------  ---------------  -------
+        0  |               1    11800    12000  +           ENST00000456328      122
+        0  |               1    12000    12200  +           ENST00000456328      200
+        0  |               1    12200    12400  +           ENST00000456328       27
+        7  |               1   133200   133400  -           ENST00000610542       22
+        7  |               1   133400   133600  -           ENST00000610542      200
+        7  |               1   133600   133800  -           ENST00000610542      123
+  PyRanges with 6 rows, 6 columns, and 1 index columns (with 4 index duplicates).
+  Contains 1 chromosomes and 2 strands.
