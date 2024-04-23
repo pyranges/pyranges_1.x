@@ -75,8 +75,8 @@ If you want to write one bigwig for each strand, you need to do it manually.
   >>> gr.loci["-"].to_bigwig("chipseq_minus.bw", chromsizes) # doctest: +SKIP
 
 
-Writing in tabular formats
---------------------------
+Writing tabular formats
+-----------------------
 
 The csv format is the most flexible format, as it allows for any column to be included, and any separator to be used.
 The method ``to_csv`` is directly inherited by pandas, so search for its API for details.
