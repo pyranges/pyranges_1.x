@@ -3026,9 +3026,8 @@ class PyRanges(RangeFrame):
         tile_size : int
             Length of the tiles.
 
-        overlap_column
+        overlap_column : str, default None
             Name of column to add with the overlap between each bookended tile.
-
 
         Returns
         -------
@@ -3045,6 +3044,8 @@ class PyRanges(RangeFrame):
         See Also
         --------
         PyRanges.window : divide intervals into windows
+        pyranges.tile_genome : divide the genome into tiles
+
 
         Examples
         --------
@@ -3848,12 +3849,8 @@ class PyRanges(RangeFrame):
 
         use_strand = validate_and_convert_use_strand(self, use_strand)
 
-        kwargs = {
-            "window_size": window_size,
-        }
-
         # every interval can be processed individually. This may be optimized in the future.
-        df = self.apply_single(_windows, by=None, use_strand=use_strand, preserve_index=True, **kwargs)
+        df = self.apply_single(_windows, by=None, use_strand=use_strand, preserve_index=True, window_size=window_size)
         return mypy_ensure_pyranges(df)
 
     def remove_nonloc_columns(self) -> "PyRanges":

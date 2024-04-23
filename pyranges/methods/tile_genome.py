@@ -13,9 +13,11 @@ def tile_genome(
     chromsizes: "PyRanges | pd.DataFrame | dict[str | int, int]",
     tile_size: int,
     *,
-    tile_last: bool = False,
+    full_last_tile: bool = False,
 ) -> "PyRanges":
     """Create a tiled genome.
+
+    Split the genome into adjacent non-overlapping tiles of a given size.
 
     Parameters
     ----------
@@ -25,8 +27,8 @@ def tile_genome(
     tile_size : int
         Length of the tiles.
 
-    tile_last : bool, default False
-        Use chromosome length as end of last tile.
+    full_last_tile : bool, default False
+        Do not truncate the last tile to the end of the chromosome. Use to ensure size is consistent for all tiles.
 
     See Also
     --------
@@ -52,7 +54,7 @@ def tile_genome(
     PyRanges with 25 rows, 3 columns, and 1 index columns.
     Contains 25 chromosomes.
 
-    >>> pr.tile_genome(chromsizes, int(1e6))
+    >>> pr.tile_genome(chromsizes,int(1e6))
     index    |    Chromosome    Start     End
     int64    |    category      int64     int64
     -------  ---  ------------  --------  --------
@@ -68,6 +70,22 @@ def tile_genome(
     PyRanges with 3114 rows, 3 columns, and 1 index columns.
     Contains 25 chromosomes.
 
+    >>> pr.tile_genome(chromsizes,int(1e6), full_last_tile=True)
+    index    |    Chromosome    Start     End
+    int64    |    category      int64     int64
+    -------  ---  ------------  --------  --------
+    0        |    chr1          0         1000000
+    1        |    chr1          1000000   2000000
+    2        |    chr1          2000000   3000000
+    3        |    chr1          3000000   4000000
+    ...      |    ...           ...       ...
+    3110     |    chrY          56000000  57000000
+    3111     |    chrY          57000000  58000000
+    3112     |    chrY          58000000  59000000
+    3113     |    chrY          59000000  60000000
+    PyRanges with 3114 rows, 3 columns, and 1 index columns.
+    Contains 25 chromosomes.
+
     """
     if isinstance(chromsizes, dict):
         chromsize_dict = chromsizes
@@ -79,10 +97,11 @@ def tile_genome(
 
     gr = mypy_ensure_pyranges(chromsizes).tile(tile_size)
 
-    if not tile_last:
-        gr = gr.groupby(CHROM_COL).apply(_last_tile, sizes=chromsize_dict).reset_index(drop=True)
-
-    return gr
+    return mypy_ensure_pyranges(
+        gr.reset_index(drop=True)
+        if full_last_tile
+        else gr.groupby(CHROM_COL).apply(_last_tile, sizes=chromsize_dict).reset_index(drop=True),
+    )
 
 
 def _last_tile(df: pd.DataFrame, sizes: dict[str, int]) -> pd.DataFrame:
