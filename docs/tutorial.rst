@@ -555,11 +555,11 @@ of the overlapping intervals, similar to a SQL join operation:
 
   >>> j = cor_prom.join_ranges(cds)
   >>> j
-    index  |    Chromosome           Start      End  Strand      ID                Chromosome_b         Start_b  ...
-    int64  |    category             int64    int64  category    object            category               int64  ...
-  -------  ---  -----------------  -------  -------  ----------  ----------------  -----------------  ---------  -----
-        0  |    CAJFCJ010000025.1     2755     3055  -           cds-CAD5125115.1  CAJFCJ010000025.1       2753  ...
-  PyRanges with 1 rows, 10 columns, and 1 index columns. (3 columns not shown: "End_b", "Strand_b", "ID_b").
+    index  |    Chromosome           Start      End  Strand      ID                  Start_b    End_b  ID_b
+    int64  |    category             int64    int64  category    object                int64    int64  object
+  -------  ---  -----------------  -------  -------  ----------  ----------------  ---------  -------  ----------------
+        0  |    CAJFCJ010000025.1     2755     3055  -           cds-CAD5125115.1       2753     2851  cds-CAD5125114.1
+  PyRanges with 1 rows, 8 columns, and 1 index columns.
   Contains 1 chromosomes and 1 strands.
 
 The object ``j`` contains the columns of both objects, with the suffix "_b" to distinguish the second one (``cds``).
