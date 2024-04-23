@@ -40,6 +40,16 @@ A single PyRanges column (which are pandas Series) can be extracted through the 
   Name: Chromosome, dtype: category
   Categories (15, object): ['chr1', 'chr10', 'chr11', 'chr12', ..., 'chr6', 'chr7', 'chr8', 'chr9']
 
+
+  >>> ( (gr.End + gr.Start)/2 ).head()
+  0     28510044.5
+  1    107153375.5
+  2    135821814.5
+  3     19419011.5
+  4    106679773.5
+  dtype: float64
+
+
 The ``gr[column_name]`` syntax also extracts a column from a PyRanges object:
 
   >>> gr['Chromosome'].head()
@@ -50,6 +60,7 @@ The ``gr[column_name]`` syntax also extracts a column from a PyRanges object:
   4    chr12
   Name: Chromosome, dtype: category
   Categories (15, object): ['chr1', 'chr10', 'chr11', 'chr12', ..., 'chr6', 'chr7', 'chr8', 'chr9']
+
 
 The ``gr[column_name]`` syntax is the only one accepted for assignment (i.e. create or edit a column):
 
