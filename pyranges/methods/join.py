@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from ncls import NCLS  # type: ignore[import]
 
-from pyranges.core.names import VALID_JOIN_TYPE
+from pyranges.core.names import BY_ENTRY_IN_KWARGS, VALID_JOIN_TYPE
 
 
 def _both_indexes(
@@ -26,8 +26,14 @@ def _both_dfs(
     df2: pd.DataFrame,
     join_type: VALID_JOIN_TYPE,
     suffix: str,
-    **_,
+    **kwargs,
 ) -> pd.DataFrame:
+    columns_used_for_by = kwargs.get(BY_ENTRY_IN_KWARGS, {}).keys()
+
+    # apply_pair has already matched df and df2, so
+    #  we can drop the columns used for by (Chromosome, maybe Strand, and match_by if provided)
+    df2 = df2.drop(columns=columns_used_for_by)
+
     _self_indexes, _other_indexes = _both_indexes(df, df2)
     expected_columns = [*df.head(0).join(df2.head(0), how="inner", rsuffix=suffix).columns]
     df2 = pd.DataFrame(df2)
