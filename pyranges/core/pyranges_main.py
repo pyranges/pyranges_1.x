@@ -107,8 +107,8 @@ class PyRanges(RangeFrame):
     pyranges.read_gtf: read gtf-file into PyRanges
     pyranges.from_string: create PyRanges from multiline string
 
-    Notes
-    -----
+    Note
+    ----
     A PyRanges object is represented internally as a dictionary efficiency. The keys are
     chromosomes or chromosome/strand tuples and the values are pandas pd.DataFrames.
 
@@ -122,6 +122,7 @@ class PyRanges(RangeFrame):
     Contains 0 chromosomes.
 
     You can initiatize PyRanges with a DataFrame:
+
     >>> df = pd.DataFrame({"Chromosome": ["chr1", "chr2"], "Start": [100, 200],
     ...                    "End": [150, 201]})
     >>> df
@@ -138,6 +139,7 @@ class PyRanges(RangeFrame):
     Contains 2 chromosomes.
 
     Or you can use a dictionary of iterables:
+
     >>> gr = pr.PyRanges({"Chromosome": [1, 1], "Strand": ["+", "-"], "Start": [1, 4], "End": [2, 27],
     ...                    "TP": [0, 1], "FP": [12, 11], "TN": [10, 9], "FN": [2, 3]})
     >>> gr
@@ -149,7 +151,8 @@ class PyRanges(RangeFrame):
     PyRanges with 2 rows, 8 columns, and 1 index columns.
     Contains 1 chromosomes and 2 strands.
 
-    Operations that remove a column required for a PyRanges return a DataFrame instead
+    Operations that remove a column required for a PyRanges return a DataFrame instead:
+
     >>> gr.drop("Chromosome", axis=1)
       Strand  Start  End  TP  FP  TN  FN
     0      +      1    2   0  12  10   2
@@ -215,8 +218,8 @@ class PyRanges(RangeFrame):
     def loci(self) -> LociGetter:
         """Get or set items in pyranges using .loci accessor.
 
-        Notes
-        -----
+        Note
+        ----
         In case of a 2-tuple with (val, slice), the method will first check if the val is in
         the chromosome col, and if so, it will subset on the matching rows. If val is not in
         the chromosome col it will look in the strand col.
@@ -967,20 +970,31 @@ class PyRanges(RangeFrame):
         ext_3: int | None = None,
         ext_5: int | None = None,
         transcript_id: str | list[str] | None = None,
+        use_strand: VALID_USE_STRAND_TYPE = "auto",
     ) -> "PyRanges":
-        """Extend the intervals from the ends.
+        """Extend the intervals from the 5' and/or 3' ends.
+
+        The Strand (if valid) is considered when extending the intervals:
+        a 5' extension applies to the Start of a "+" strand interval and to the End of a "-" strand interval.
 
         Parameters
         ----------
         ext: int or None
             Extend intervals by this amount from both ends.
+
         ext_3: int or None
             Extend intervals by this amount from the 3' end.
+
         ext_5: int or None
             Extend intervals by this amount from the 5' end.
+
         transcript_id : str or list of str, default: None
             group intervals into transcripts by these column name(s), so that the
             extension is applied only to the left-most and/or right-most interval.
+
+        use_strand: {"auto", True, False}, default: "auto"
+            If False, ignore strand information when extending intervals.
+            The default "auto" means True if PyRanges has valid strands (see .strand_valid).
 
         See Also
         --------
@@ -1001,16 +1015,6 @@ class PyRanges(RangeFrame):
               0  |    chr1                3        6  +
               1  |    chr1                8        9  +
               2  |    chr1                5        7  -
-        PyRanges with 3 rows, 4 columns, and 1 index columns.
-        Contains 1 chromosomes and 2 strands.
-
-
-          index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
-              0  |    chr1                3        7  +
-              1  |    chr1                8       10  +
-              2  |    chr1                4        7  -
         PyRanges with 3 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
@@ -1062,13 +1066,11 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         """
-        if (ext_3 or ext_5) and not self.strand_valid:
-            msg = "PyRanges must be stranded to add 5/3-end specific extend."
-            raise ValueError(msg)
-
         if ext is not None == (ext_3 is not None or ext_5 is not None):
             msg = "Must use at least one and not both of ext and ext3 or ext5."
             raise ValueError(msg)
+
+        use_strand = validate_and_convert_use_strand(self, use_strand) if (ext_3 or ext_5) else False
 
         return (
             self.apply_single(
@@ -1077,6 +1079,7 @@ class PyRanges(RangeFrame):
                 ext=ext,
                 ext_3=ext_3,
                 ext_5=ext_5,
+                use_strand=use_strand,
             )
             if not transcript_id
             else (
@@ -1086,6 +1089,7 @@ class PyRanges(RangeFrame):
                     ext=ext,
                     ext_3=ext_3,
                     ext_5=ext_5,
+                    use_strand=use_strand,
                     group_by=transcript_id,
                 )
             )
@@ -1111,8 +1115,8 @@ class PyRanges(RangeFrame):
 
             PyRanges with the five prime ends
 
-        Notes
-        -----
+        Note
+        ----
         Requires the PyRanges to be stranded.
 
         See Also
@@ -1233,8 +1237,8 @@ class PyRanges(RangeFrame):
 
             A PyRanges appended with columns of another.
 
-        Notes
-        -----
+        Note
+        ----
         The chromosome from other will never be reported as it is always the same as in self.
 
         As pandas did not have NaN for non-float datatypes until recently, "left" and "right" join
@@ -1278,7 +1282,7 @@ class PyRanges(RangeFrame):
         PyRanges with 1 rows, 8 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        # Note that since some start and end columns are nan, a regular DataFrame is returned.
+        Note that since some start and end columns are nan, a regular DataFrame is returned.
 
         >>> f1.join_ranges(f2, join_type="left")
           index  |    Chromosome      Start      End  Name       Chromosome_b      Start_b      End_b  Name_b
@@ -1442,7 +1446,7 @@ class PyRanges(RangeFrame):
 
         See Also
         --------
-        PyRanges.lengths : return the intervals lengths
+        PyRanges.length : return the total length of all intervals combined
 
         Examples
         --------
@@ -1580,8 +1584,8 @@ class PyRanges(RangeFrame):
 
             PyRanges with superintervals.
 
-        Notes
-        -----
+        Note
+        ----
         To avoid losing metadata, use cluster instead. If you want to perform a reduction function
         on the metadata, use pandas groupby.
 
@@ -2097,6 +2101,7 @@ class PyRanges(RangeFrame):
         Contains 3 chromosomes and 2 strands.
 
         Do not sort negative strand intervals in descending order:
+
         >>> p.sort_ranges(use_strand=False)
           index  |    Chromosome    Strand      Start      End  transcript_id
           int64  |    object        object      int64    int64  object
@@ -2113,6 +2118,7 @@ class PyRanges(RangeFrame):
         Contains 3 chromosomes and 2 strands.
 
         Sort chromosomes in natural order:
+
         >>> p.sort_ranges(natsorting=True)
           index  |    Chromosome    Strand      Start      End  transcript_id
           int64  |    object        object      int64    int64  object
@@ -2129,6 +2135,7 @@ class PyRanges(RangeFrame):
         Contains 3 chromosomes and 2 strands.
 
         Sort by 'transcript_id' before than by columns Start and End (but after Chromosome and Strand):
+
         >>> p.sort_ranges(by='transcript_id')
           index  |    Chromosome    Strand      Start      End  transcript_id
           int64  |    object        object      int64    int64  object
@@ -2145,6 +2152,7 @@ class PyRanges(RangeFrame):
         Contains 3 chromosomes and 2 strands.
 
         Sort by 'transcript_id' before than by columns Strand, Start and End:
+
         >>> p.sort_ranges(by=['transcript_id', 'Strand'])
           index  |    Chromosome    Strand      Start      End  transcript_id
           int64  |    object        object      int64    int64  object
@@ -2161,6 +2169,7 @@ class PyRanges(RangeFrame):
         Contains 3 chromosomes and 2 strands.
 
         Same as before, but 'transcript_id' is sorted in descending order:
+
         >>> p.sort_ranges(by=['transcript_id', 'Strand'], sort_descending='transcript_id')
           index  |    Chromosome    Strand      Start      End  transcript_id
           int64  |    object        object      int64    int64  object
@@ -3226,18 +3235,20 @@ class PyRanges(RangeFrame):
         >>> gr.to_bed()
         'chr1\t1\t5\t.\t.\t+\t1\nchr1\t6\t8\t.\t.\t-\t2\n'
 
-        # File contents:
-        chr1	1	5	.	.	+	1
-        chr1	6	8	.	.	-	2
+        File contents::
+
+            chr1	1	5	.	.	+	1
+            chr1	6	8	.	.	-	2
 
         Does not include noncanonical bed-column `Gene`:
 
         >>> gr.to_bed(keep=False)
         'chr1\t1\t5\t.\t.\t+\nchr1\t6\t8\t.\t.\t-\n'
 
-        # File contents:
-        chr1	1	5	.	.	+
-        chr1	6	8	.	.	-
+        File contents::
+
+            chr1	1	5	.	.	+
+            chr1	6	8	.	.	-
 
         >>> gr.to_bed("test.bed")
 
@@ -3388,15 +3399,15 @@ class PyRanges(RangeFrame):
         GFF contains a fixed amount of columns, indicated below (names before ":").
         For each of these, PyRanges will use the corresponding column (names after ":").
 
-        ``seqname: Chromosome
-        source: Source
-        type: Feature
-        start: Start
-        end: End
-        score: Score
-        strand: Strand
-        phase: Frame
-        attribute: autofilled``
+        * seqname: Chromosome
+        * source: Source
+        * type: Feature
+        * start: Start
+        * end: End
+        * score: Score
+        * strand: Strand
+        * phase: Frame
+        * attribute: autofilled
 
         Columns which are not mapped to GFF columns are appended as a field
         in the attribute string (i.e. the last field).
@@ -3409,8 +3420,8 @@ class PyRanges(RangeFrame):
         compression : {'infer', 'gzip', 'bz2', 'zip', 'xz', None}, default "infer"
             Which compression to use. Uses file extension to infer by default.
 
-        Notes
-        -----
+        Note
+        ----
         Nonexisting columns will be added with a '.' to represent the missing values.
 
         See Also
@@ -3425,20 +3436,22 @@ class PyRanges(RangeFrame):
         >>> gr.to_gff3()
         '1\t.\tgene\t2\t4\t.\t.\t.\t\n1\t.\texon\t4\t6\t.\t.\t.\t\n1\t.\texon\t6\t9\t.\t.\t.\t\n'
 
-        # How the file would look
-        1	.	gene	2	4	.	.	.
-        1	.	exon	4	6	.	.	.
-        1	.	exon	6	9	.	.	.
+        How the file would look::
+
+            1	.	gene	2	4	.	.	.
+            1	.	exon	4	6	.	.	.
+            1	.	exon	6	9	.	.	.
 
         >>> gr["Gene"] = [1, 2, 3]
         >>> gr["function"] = ["a b", "c", "def"]
         >>> gr.to_gff3()
         '1\t.\tgene\t2\t4\t.\t.\t.\tGene=1;function=a b\n1\t.\texon\t4\t6\t.\t.\t.\tGene=2;function=c\n1\t.\texon\t6\t9\t.\t.\t.\tGene=3;function=def\n'
 
-        # How the file would look
-        1	.	gene	2	4	.	.	.	Gene=1;function=a b
-        1	.	exon	4	6	.	.	.	Gene=2;function=c
-        1	.	exon	6	9	.	.	.	Gene=3;function=def
+        How the file would look::
+
+            1	.	gene	2	4	.	.	.	Gene=1;function=a b
+            1	.	exon	4	6	.	.	.	Gene=2;function=c
+            1	.	exon	6	9	.	.	.	Gene=3;function=def
 
         >>> gr["phase"] = [0, 2, 1]
         >>> gr["Feature"] = ['mRNA', 'CDS', 'CDS']
@@ -3455,10 +3468,11 @@ class PyRanges(RangeFrame):
         >>> gr.to_gff3()
         '1\t.\tmRNA\t2\t4\t.\t.\t0\tGene=1;function=a b\n1\t.\tCDS\t4\t6\t.\t.\t2\tGene=2;function=c\n1\t.\tCDS\t6\t9\t.\t.\t1\tGene=3;function=def\n'
 
-        # How the file would look
-        1	.	mRNA	2	4	.	.	0	Gene=1;function=a b
-        1	.	CDS	4	6	.	.	2	Gene=2;function=c
-        1	.	CDS	6	9	.	.	1	Gene=3;function=def
+        How the file would look::
+
+            1	.	mRNA	2	4	.	.	0	Gene=1;function=a b
+            1	.	CDS	4	6	.	.	2	Gene=2;function=c
+            1	.	CDS	6	9	.	.	1	Gene=3;function=def
 
         """
         from pyranges.core.out import _to_gff_like
@@ -3476,15 +3490,15 @@ class PyRanges(RangeFrame):
         It contains a fixed amount of columns, indicated below (names before ":").
         For each of these, PyRanges will use the corresponding column (names after ":").
 
-        ``seqname: Chromosome
-        source: Source
-        type: Feature
-        start: Start
-        end: End
-        score: Score
-        strand: Strand
-        frame: Frame
-        attribute: auto-filled``
+        * seqname: Chromosome
+        * source: Source
+        * type: Feature
+        * start: Start
+        * end: End
+        * score: Score
+        * strand: Strand
+        * frame: Frame
+        * attribute: auto-filled
 
         Columns which are not mapped to GTF columns are appended as a field
         in the attribute string (i.e. the last field).
@@ -3497,8 +3511,8 @@ class PyRanges(RangeFrame):
         compression : {'infer', 'gzip', 'bz2', 'zip', 'xz', None}, default "infer"
             Which compression to use. Uses file extension to infer by default.
 
-        Notes
-        -----
+        Note
+        ----
         Nonexisting columns will be added with a '.' to represent the missing values.
 
         See Also
@@ -3513,16 +3527,17 @@ class PyRanges(RangeFrame):
         >>> gr.to_gtf()  # the raw string output
         '1\t.\tgene\t2\t4\t.\t.\t.\t\n1\t.\texon\t4\t6\t.\t.\t.\t\n1\t.\texon\t6\t9\t.\t.\t.\t\n'
 
-        # What the file contents look like:
-        1	.	gene	2	4	.	.	.
-        1	.	exon	4	6	.	.	.
-        1	.	exon	6	9	.	.	.
+        What the file contents look like::
+
+            1	.	gene	2	4	.	.	.
+            1	.	exon	4	6	.	.	.
+            1	.	exon	6	9	.	.	.
 
         >>> gr.Feature = ["GENE", "EXON", "EXON"]
         >>> gr.to_gtf()  # the raw string output
         '1\t.\tGENE\t2\t4\t.\t.\t.\t\n1\t.\tEXON\t4\t6\t.\t.\t.\t\n1\t.\tEXON\t6\t9\t.\t.\t.\t\n'
 
-        The file would look like:
+        The file would look like::
 
             1	.	GENE	2	4	.	.	.
             1	.	EXON	4	6	.	.	.
@@ -3560,6 +3575,10 @@ class PyRanges(RangeFrame):
         pyrle.Rledict
 
             Rle with coverage or other info from the PyRanges.
+
+        """
+        broken_examples = (  # noqa:F841
+            """
 
         Examples
         --------
@@ -3635,8 +3654,9 @@ class PyRanges(RangeFrame):
         # +--------+-----+-------------------+
         # Rle of length 7 containing 2 elements (avg. length 3.5)
         # Rledict object with 2 chromosomes/strand pairs.
-
         """
+        )
+
         if strand is None:
             strand = self.strand_valid
 
@@ -3753,7 +3773,8 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 3 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        # Negative strand intervals are sliced in descending order by default:
+        Negative strand intervals are sliced in descending order by default:
+
         >>> gs = pr.PyRanges({"Chromosome": [1, 1], "Start": [200, 600], "End": [332, 787], "Strand":['+', '-']})
         >>> gs
           index  |      Chromosome    Start      End  Strand
@@ -3872,7 +3893,6 @@ class PyRanges(RangeFrame):
         ----------
         key : str or iterable of str
             Column(s) to return.
-            If an empty list, return only the genome location columns.
 
         preserve_loc_order : bool, default False
             Whether to preserve the order of the genome location columns.
@@ -3884,7 +3904,14 @@ class PyRanges(RangeFrame):
 
             PyRanges with the requested columns.
 
-        >>> gr = pr.PyRanges({"Chromosome": [1], "Start": [895], "Strand": ["+"], "Score": [1], "Score2": [2], "End": [1259]})
+        See Also
+        --------
+        PyRanges.remove_nonloc_columns : remove all columns that are not genome location columns.
+
+        Examples
+        --------
+        >>> gr = pr.PyRanges({"Chromosome": [1], "Start": [895], "Strand": ["+"],
+        ...                   "Score": [1], "Score2": [2], "End": [1259]})
         >>> gr
           index  |      Chromosome    Start  Strand      Score    Score2      End
           int64  |           int64    int64  object      int64     int64    int64
@@ -3893,7 +3920,9 @@ class PyRanges(RangeFrame):
         PyRanges with 1 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 1 strands.
 
-        >>> gr.get_with_loc_columns(["Score2", "Score", "Score2"]) # moves loc columns to the left by default
+        Genomic location columns are moved to the left by default:
+
+        >>> gr.get_with_loc_columns(["Score2", "Score", "Score2"])
           index  |      Chromosome    Start      End  Strand      Score2    Score    Score2
           int64  |           int64    int64    int64  object       int64    int64     int64
         -------  ---  ------------  -------  -------  --------  --------  -------  --------
@@ -3907,14 +3936,6 @@ class PyRanges(RangeFrame):
         -------  ---  ------------  -------  --------  --------  -------  -------
               0  |               1      895  +                2        1     1259
         PyRanges with 1 rows, 6 columns, and 1 index columns.
-        Contains 1 chromosomes and 1 strands.
-
-        >>> gr.get_with_loc_columns([])
-          index  |      Chromosome    Start      End  Strand
-          int64  |           int64    int64    int64  object
-        -------  ---  ------------  -------  -------  --------
-              0  |               1      895     1259  +
-        PyRanges with 1 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 1 strands.
 
         >>> gr.get_with_loc_columns(["Score2", "Score", "Score2"], preserve_loc_order=True)
@@ -4108,7 +4129,8 @@ class PyRanges(RangeFrame):
         PyRanges with 5 rows, 8 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes and 2 strands.
 
-        # intersect the intervals by default
+        The default operation is to intersect the intervals:
+
         >>> j.combine_interval_columns()
           index  |    Chromosome      Start      End  Strand      Chromosome_b    Strand_b
           int64  |    category        int64    int64  category    category        category
@@ -4121,7 +4143,8 @@ class PyRanges(RangeFrame):
         PyRanges with 5 rows, 6 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes and 2 strands.
 
-        # take the union instead
+        Take the union instead:
+
         >>> j.combine_interval_columns('union')
           index  |    Chromosome      Start      End  Strand      Chromosome_b    Strand_b
           int64  |    category        int64    int64  category    category        category
@@ -4134,7 +4157,8 @@ class PyRanges(RangeFrame):
         PyRanges with 5 rows, 6 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes and 2 strands.
 
-        # use a custom function that keeps the start of the first interval and the end of the second
+        Use a custom function that keeps the start of the first interval and the end of the second:
+
         >>> def custom_combine(s1, e1, s2, e2): return (s1, e2)
         >>> j.combine_interval_columns(custom_combine)
           index  |    Chromosome      Start      End  Strand      Chromosome_b    Strand_b
@@ -4234,7 +4258,6 @@ class PyRanges(RangeFrame):
         >>> tmp_handle.close()
 
         >>> seq = gr.get_sequence("temp.fasta")
-
         >>> seq
         0      CAT
         1    ATTAC

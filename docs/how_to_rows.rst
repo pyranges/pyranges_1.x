@@ -254,7 +254,7 @@ PyRanges objects can be sorted (i.e. altering the order of rows) by calling the 
 or the PyRanges method :func:`sort_ranges <pyranges.PyRanges.sort_ranges>`.
 
   >>> import random; random.seed(123)
-  >>> c = pr.example_data.chipseq.get_with_loc_columns([])
+  >>> c = pr.example_data.chipseq.remove_nonloc_columns()
   >>> c['peak'] = [random.randint(0, 100) for _ in range(len(c))] # add a column with random values
   >>> c
   index    |    Chromosome    Start      End        Strand      peak

@@ -12,3 +12,4 @@ These pages explain pyranges functionalities grouped by topic:
    how_to_rows
    how_to_columns
    how_to_sequences
+   how_to_genomic_ops

@@ -94,7 +94,7 @@ def _extend(
     ext: int | None = None,
     ext_3: int | None = None,
     ext_5: int | None = None,
-    **_,
+    **kwargs,
 ) -> DataFrame:
     df = df.copy()
     dtype = df.Start.dtype
@@ -104,19 +104,17 @@ def _extend(
         df.loc[df.Start < 0, START_COL] = 0
         df.End = df.End + ext
     else:
-        if len(strands := df.Strand.drop_duplicates()) > 1:
-            msg = f"Cannot extend intervals with different strands: {strands}"
-            raise ValueError(msg)
-        strand = strands.iloc[0]
+        strand = kwargs.get(BY_ENTRY_IN_KWARGS, {}).get("Strand")
+        strand = strand if strand else FORWARD_STRAND
 
-        if ext_5 and strand == "+":
+        if ext_5 and strand == FORWARD_STRAND:
             df.loc[:, START_COL] -= ext_5
-        elif ext_5 and strand == "-":
+        elif ext_5 and strand == REVERSE_STRAND:
             df.loc[:, END_COL] += ext_5
 
-        if ext_3 and strand == "-":
+        if ext_3 and strand == REVERSE_STRAND:
             df.loc[:, START_COL] -= ext_3
-        elif ext_3 and strand == "+":
+        elif ext_3 and strand == FORWARD_STRAND:
             df.loc[:, END_COL] += ext_3
 
     df = df.astype({START_COL: dtype, END_COL: dtype})
@@ -149,6 +147,7 @@ def _extend_grp(
 
     else:
         strand = kwargs.get(BY_ENTRY_IN_KWARGS, {}).get("Strand")
+        strand = strand if strand else FORWARD_STRAND
 
         if ext_5 and strand == FORWARD_STRAND:
             df.loc[minstarts_pos, START_COL] -= ext_5
