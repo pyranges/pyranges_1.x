@@ -97,10 +97,10 @@ def tile_genome(
 
     gr = mypy_ensure_pyranges(chromsizes).tile(tile_size)
 
-    return (
+    return mypy_ensure_pyranges(
         gr.reset_index(drop=True)
         if full_last_tile
-        else gr.groupby(CHROM_COL).apply(_last_tile, sizes=chromsize_dict).reset_index(drop=True)
+        else gr.groupby(CHROM_COL).apply(_last_tile, sizes=chromsize_dict).reset_index(drop=True),
     )
 
 
