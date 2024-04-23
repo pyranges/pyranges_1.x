@@ -37,16 +37,12 @@ def _spliced_subseq(
 
     strand = kwargs.get(BY_ENTRY_IN_KWARGS, {}).get("Strand")
 
-    # at this point, strand is False if 1. spliced_subsequence was called with strand=False or
-    #                                   2. it was called with strand=None and self is not stranded
+    # at this point, strand is False if 1. spliced_subsequence was called with use_strand=False or
+    #                                   2. it was called with use_strand='auto' and not self.valid_strand
     # or it can be '+' or '-' if:
     #  1. it was input as True to spliced_subsequence and passed  to pyrange_apply_single as True,
     #     which updates it to '-' or '+' before calling _spliced_subseq, or
     #  2. it was called with strand=None and self is stranded
-
-    if strand and not df.strand_valid:
-        msg = "Cannot have strand=True on unstranded pyranges!"
-        raise AssertionError(msg)
 
     df.insert(df.shape[1], TEMP_LENGTH_COL, df.End - df.Start)
     df.insert(df.shape[1], TEMP_INDEX_COL, df.index)

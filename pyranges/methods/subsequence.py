@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 from pyranges.core.names import (
+    BY_ENTRY_IN_KWARGS,
     CHROM_COL,
     END_COL,
     FORWARD_STRAND,
@@ -15,7 +16,6 @@ from pyranges.core.names import (
     TEMP_MAX_COL,
     TEMP_MIN_COL,
     TEMP_START_COL,
-    VALID_GENOMIC_STRAND_TYPE,
 )
 
 if TYPE_CHECKING:
@@ -28,8 +28,7 @@ def _subseq(
     by: list[str],
     start: int = 0,
     end: int | None = None,
-    strand: VALID_GENOMIC_STRAND_TYPE = FORWARD_STRAND,
-    **_,
+    **kwargs,
 ) -> pd.DataFrame:
     if df.empty:
         return df
@@ -42,15 +41,16 @@ def _subseq(
     by_argument_given = bool(by)
     by = by or [TEMP_INDEX_COL]
 
-    # at this point, strand is False if:
-    #   1. subsequence was called with strand=False or
-    #   2. it was called with strand=None and self is not stranded
+    strand = kwargs.get(BY_ENTRY_IN_KWARGS, {}).get("Strand")
+
+    # at this point, strand is False if 1. spliced_subsequence was called with use_strand=False or
+    #                                   2. it was called with use_strand='auto' and not self.valid_strand
     # or it can be '+' or '-' if:
-    #   1. it was input as True to subsequence and passed  to pyrange_apply_single as True,
-    #     which updates it to '-' or '+' before calling _subseq, or
-    #   2. it was called with strand=None and self is stranded
-    strand = FORWARD_STRAND if strand != REVERSE_STRAND else strand
-    # now, unstranded or strand==None cases are treated like all intervals are on the + strand
+    #  1. it was input as True to spliced_subsequence and passed  to pyrange_apply_single as True,
+    #     which updates it to '-' or '+' before calling _spliced_subseq, or
+    #  2. it was called with strand=None and self is stranded
+
+    strand = strand if strand else FORWARD_STRAND
 
     # creating j which holds the boundaries per group
     # j contains one row per group; columns: Start  End (+ by columns); indexed by __i__
