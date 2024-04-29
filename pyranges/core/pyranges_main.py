@@ -92,12 +92,22 @@ class PyRanges(RangeFrame):
 
     Operations between PyRanges align intervals based on their position.
 
+    You can **initialize a PyRanges object like you would a pandas DataFrame**, as long as the resulting DataFrame
+    has the necessary columns (Chromosome, Start, End; Strand is optional).
+    See examples below, and https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html for more information.
 
     Parameters
     ----------
-    You can initialize a PyRanges object like you would a pandas DataFrame, as long as the resulting DataFrame
-    has the necessary columns (Chromosome, Start, End; Strand is optional).
-    See examples below, and https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html for more information.
+    data : dict, pd.DataFrame, or None, default None
+
+    index : Index or array-like
+
+    columns : Index or array-like
+
+    dtyped : type, default None
+
+    copy : bool or None, default None
+
 
     See Also
     --------
@@ -106,11 +116,6 @@ class PyRanges(RangeFrame):
     pyranges.read_gff: read gff-file into PyRanges
     pyranges.read_gtf: read gtf-file into PyRanges
     pyranges.from_string: create PyRanges from multiline string
-
-    Note
-    ----
-    A PyRanges object is represented internally as a dictionary efficiency. The keys are
-    chromosomes or chromosome/strand tuples and the values are pandas pd.DataFrames.
 
     Examples
     --------
