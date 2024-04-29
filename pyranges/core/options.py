@@ -1,6 +1,8 @@
-class PyRangesOptions:
-    """Class to manage PyRanges options. ."""
+# below: Class to manage PyRanges options
+# purposedly not using a docstring to avoid it being included in the docs
 
+
+class PyRangesOptions:
     def __init__(self) -> None:
         self.options_in_use = {
             "max_rows_to_show": (8, "the max number of rows to show in PyRanges repr"),
