@@ -1379,7 +1379,35 @@ class PyRanges(RangeFrame):
         PyRanges with 2 rows, 7 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        >>>
+        >>> f1.join_ranges(f2, report_overlap=True)
+          index  |    Chromosome      Start      End  Name         Start_b    End_b  Name_b      Overlap
+          int64  |    object          int64    int64  object         int64    int64  object        int64
+        -------  ---  ------------  -------  -------  ---------  ---------  -------  --------  ---------
+              2  |    chr1                5        7  interval2          6        7  b                 1
+        PyRanges with 1 rows, 8 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+
+        >>> f1.join_ranges(f2, report_overlap=True)
+          index  |    Chromosome      Start      End  Name         Start_b    End_b  Name_b      Overlap
+          int64  |    object          int64    int64  object         int64    int64  object        int64
+        -------  ---  ------------  -------  -------  ---------  ---------  -------  --------  ---------
+              2  |    chr1                5        7  interval2          6        7  b                 1
+        PyRanges with 1 rows, 8 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        Allowing slack in overlaps may result in 0 or negative Overlap values:
+
+        >>> f1.join_ranges(f2, report_overlap=True, slack=2)
+          index  |    Chromosome      Start      End  Name         Start_b    End_b  Name_b      Overlap
+          int64  |    object          int64    int64  object         int64    int64  object        int64
+        -------  ---  ------------  -------  -------  ---------  ---------  -------  --------  ---------
+              0  |    chr1                3        6  interval1          1        2  a                -1
+              0  |    chr1                3        6  interval1          6        7  b                 0
+              1  |    chr1                8        9  interval3          6        7  b                -1
+              2  |    chr1                5        7  interval2          6        7  b                 1
+        PyRanges with 4 rows, 8 columns, and 1 index columns (with 1 index duplicates).
+        Contains 1 chromosomes.
 
         """
         from pyranges.methods.join import _both_dfs
@@ -1416,6 +1444,9 @@ class PyRanges(RangeFrame):
             gr[START_COL] = gr[TEMP_START_SLACK_COL]
             gr[END_COL] = gr[TEMP_END_SLACK_COL]
             gr = gr.drop_and_return([TEMP_START_SLACK_COL, TEMP_END_SLACK_COL], axis=1)
+
+        if report_overlap:
+            gr["Overlap"] = gr[["End", "End" + suffix]].min(axis=1) - gr[["Start", "Start" + suffix]].max(axis=1)
 
         return gr
 
