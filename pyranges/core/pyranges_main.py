@@ -221,23 +221,22 @@ class PyRanges(RangeFrame):
 
     @property
     def loci(self) -> LociGetter:
-        """Get or set items in pyranges using .loci accessor.
-
-        Note
-        ----
-        In case of a 2-tuple with (val, slice), the method will first check if the val is in
-        the chromosome col, and if so, it will subset on the matching rows. If val is not in
-        the chromosome col it will look in the strand col.
+        """Get or set rows based on genomic location.
 
         Parameters
         ----------
         key
-            Genomic location (one or more of Chromosome, Strand, and Range),
+            Genomic location: one or more of Chromosome, Strand, and Range (i.e. Start:End).
+            When a Range is specified, only rows that overlap with it are returned.
 
         Returns
         -------
         PyRanges
-            PyRanges with rows matching the location.
+            PyRanges view with rows matching the location.
+
+        Note
+        ----
+        When strand is provided but chromosome is not, only valid strand values ('+', '-') are searched for.
 
         Examples
         --------
@@ -294,43 +293,114 @@ class PyRanges(RangeFrame):
         PyRanges with 6 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 1 strands.
 
-        >>> gr2 = pr.PyRanges({"Chromosome": ["chr1", "chr2"], "Start": [1, 2], "End": [4, 5], "Score": [9, 14], "Id": ["a", "b"]})
+        >>> gr.loci["+"]
+          index  |      Chromosome    Start      End  Strand      gene_id          gene_name
+          int64  |        category    int64    int64  category    object           object
+        -------  ---  ------------  -------  -------  ----------  ---------------  -----------
+              0  |               1    11868    14409  +           ENSG00000223972  DDX11L1
+              1  |               1    11868    14409  +           ENSG00000223972  DDX11L1
+              2  |               1    11868    12227  +           ENSG00000223972  DDX11L1
+              3  |               1    12612    12721  +           ENSG00000223972  DDX11L1
+              4  |               1    13220    14409  +           ENSG00000223972  DDX11L1
+        PyRanges with 5 rows, 6 columns, and 1 index columns.
+        Contains 1 chromosomes and 1 strands.
+
+        >>> gr.loci[11000:12000]
+          index  |      Chromosome    Start      End  Strand      gene_id          gene_name
+          int64  |        category    int64    int64  category    object           object
+        -------  ---  ------------  -------  -------  ----------  ---------------  -----------
+              0  |               1    11868    14409  +           ENSG00000223972  DDX11L1
+              1  |               1    11868    14409  +           ENSG00000223972  DDX11L1
+              2  |               1    11868    12227  +           ENSG00000223972  DDX11L1
+        PyRanges with 3 rows, 6 columns, and 1 index columns.
+        Contains 1 chromosomes and 1 strands.
+
+        The Chromosome column is attempted to be converted to the type of the provided key before matching:
+
+        >>> gr.loci["1", 11000:12000]
+          index  |      Chromosome    Start      End  Strand      gene_id          gene_name
+          int64  |        category    int64    int64  category    object           object
+        -------  ---  ------------  -------  -------  ----------  ---------------  -----------
+              0  |               1    11868    14409  +           ENSG00000223972  DDX11L1
+              1  |               1    11868    14409  +           ENSG00000223972  DDX11L1
+              2  |               1    11868    12227  +           ENSG00000223972  DDX11L1
+        PyRanges with 3 rows, 6 columns, and 1 index columns.
+        Contains 1 chromosomes and 1 strands.
+
+        When requesting non-existing chromosome or strand or ranges an empty PyRanges is returned:
+
+        >>> gr.loci["3"]
+        index    |    Chromosome    Start    End      Strand      gene_id    gene_name
+        int64    |    category      int64    int64    category    object     object
+        -------  ---  ------------  -------  -------  ----------  ---------  -----------
+        PyRanges with 0 rows, 6 columns, and 1 index columns.
+        Contains 0 chromosomes and 0 strands.
+
+        >>> gr2 = pr.PyRanges({"Chromosome": ["chr1", "chr2"], "Start": [1, 2], "End": [4, 5],
+        ...                    "Strand": [".", "+"], "Score":[10, 12], "Id":["a", "b"]})
         >>> gr2.loci["chr2"]
-          index  |    Chromosome      Start      End    Score  Id
-          int64  |    object          int64    int64    int64  object
-        -------  ---  ------------  -------  -------  -------  --------
-              1  |    chr2                2        5       14  b
-        PyRanges with 1 rows, 5 columns, and 1 index columns.
-        Contains 1 chromosomes.
+          index  |    Chromosome      Start      End  Strand      Score  Id
+          int64  |    object          int64    int64  object      int64  object
+        -------  ---  ------------  -------  -------  --------  -------  --------
+              1  |    chr2                2        5  +              12  b
+        PyRanges with 1 rows, 6 columns, and 1 index columns.
+        Contains 1 chromosomes and 1 strands.
 
-        >>> gr2.loci["chr2"] = gr2.loci["chr2"].assign(Chromosome="chr1")
+        The loci operator can also be used for assignment, using a same-sized PyRanges:
+
+        >>> gr2.loci["chr2"] = gr2.loci["chr2"].copy().assign(Chromosome="xxx")
         >>> gr2
-          index  |    Chromosome      Start      End    Score  Id
-          int64  |    object          int64    int64    int64  object
-        -------  ---  ------------  -------  -------  -------  --------
-              0  |    chr1                1        4        9  a
-              1  |    chr1                2        5       14  b
-        PyRanges with 2 rows, 5 columns, and 1 index columns.
-        Contains 1 chromosomes.
+          index  |    Chromosome      Start      End  Strand      Score  Id
+          int64  |    object          int64    int64  object      int64  object
+        -------  ---  ------------  -------  -------  --------  -------  --------
+              0  |    chr1                1        4  .              10  a
+              1  |    xxx                 2        5  +              12  b
+        PyRanges with 2 rows, 6 columns, and 1 index columns.
+        Contains 2 chromosomes and 2 strands (including non-genomic strands: .).
 
-        >>> gr2.loci["chr3"]
-        Traceback (most recent call last):
-        ...
-        KeyError: 'Chromosome or strand "chr3" not found in PyRanges.'
+        For more flexible assignment, you can employ Pandas loc using the index of the loci output:
 
-        >>> gr2.loci["chr3", 1:2]
-        Traceback (most recent call last):
-        ...
-        KeyError: 'Chromosome or strand chr3 not found in PyRanges.'
+        >>> c = gr2.loci["chr1"]
+        >>> gr2.loc[c.index, "Score"] = 100
+        >>> gr2
+          index  |    Chromosome      Start      End  Strand      Score  Id
+          int64  |    object          int64    int64  object      int64  object
+        -------  ---  ------------  -------  -------  --------  -------  --------
+              0  |    chr1                1        4  .             100  a
+              1  |    xxx                 2        5  +              12  b
+        PyRanges with 2 rows, 6 columns, and 1 index columns.
+        Contains 2 chromosomes and 2 strands (including non-genomic strands: .).
+
+        When providing only strand, or strand and a slice, only valid genomic strands (i.e. '+', '-') are searched for:
+
+        >>> gr2.loci['+']
+          index  |    Chromosome      Start      End  Strand      Score  Id
+          int64  |    object          int64    int64  object      int64  object
+        -------  ---  ------------  -------  -------  --------  -------  --------
+              1  |    xxx                 2        5  +              12  b
+        PyRanges with 1 rows, 6 columns, and 1 index columns.
+        Contains 1 chromosomes and 1 strands.
+
+        >>> gr2.loci['.']
+        index    |    Chromosome    Start    End      Strand    Score    Id
+        int64    |    object        int64    int64    object    int64    object
+        -------  ---  ------------  -------  -------  --------  -------  --------
+        PyRanges with 0 rows, 6 columns, and 1 index columns.
+        Contains 0 chromosomes and 0 strands.
+
+        Do not try to use loci to access columns: the key is interpreted as a chromosome, resulting in empty output:
+
         >>> gr2.loci["Score"]
-        Traceback (most recent call last):
-        ...
-        KeyError: 'Chromosome or strand "Score" not found in PyRanges.'
+        index    |    Chromosome    Start    End      Strand    Score    Id
+        int64    |    object        int64    int64    object    int64    object
+        -------  ---  ------------  -------  -------  --------  -------  --------
+        PyRanges with 0 rows, 6 columns, and 1 index columns.
+        Contains 0 chromosomes and 0 strands.
 
         >>> gr2.loci[["Score", "Id"]]
         Traceback (most recent call last):
         ...
-        TypeError: The loci accessor does not accept a list. If you meant to retrieve columns, use gr.get_with_loc_columns instead.
+        TypeError: The loci accessor does not accept a list. If you meant to retrieve columns, use get_with_loc_columns instead.
 
         """
         return self._loci

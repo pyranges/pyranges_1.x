@@ -223,18 +223,30 @@ Various syntaxes are accepted, see its API. For example:
   PyRanges with 2 rows, 6 columns, and 1 index columns.
   Contains 1 chromosomes and 1 strands.
 
-  To use this kind of selection in combination with ``loc`` or ``iloc``, you can use the ``index`` attribute:
+  Loci also support assignment. In this case, you must provide a DataFrame with the same shape as the selection:
 
-  >>> sindex=gr2.loci['chr1', '+', 10000:11000].index
-  >>> gr2.loc[sindex, "Score"]=100
+  >>> gr2.loci['chr1', '+', 10000:11000] = gr2.loci['chr1', '+', 10000:11000].copy().assign(Score=100)
+  >>> gr2.loci['chr1', '+', 10000:11000]  # see below that the Score was altered
+    index  |    Chromosome      Start      End  Name        Score  Strand
+    int64  |    category        int64    int64  object      int64  category
+  -------  ---  ------------  -------  -------  --------  -------  ----------
+        1  |    chr1            10073    10272  Input         100  +
+        5  |    chr1            10280    10479  Input         100  +
+  PyRanges with 2 rows, 6 columns, and 1 index columns.
+  Contains 1 chromosomes and 1 strands.
+
+  For more flexible assignment, you can use ``loc`` and provide use the ``index`` attribute of ``loci`` output:
+
+  >>> sindex=gr2.loci['chr1', '+', 16000:17000].index
+  >>> gr2.loc[sindex, "Score"]=150
   >>> gr2
   index    |    Chromosome    Start    End      Name      Score    Strand
   int64    |    category      int64    int64    object    int64    category
   -------  ---  ------------  -------  -------  --------  -------  ----------
   1        |    chr1          10073    10272    Input     100      +
   5        |    chr1          10280    10479    Input     100      +
-  6        |    chr1          16056    16255    Input     1        +
-  7        |    chr1          16064    16263    Input     1        +
+  6        |    chr1          16056    16255    Input     150      +
+  7        |    chr1          16064    16263    Input     150      +
   ...      |    ...           ...      ...      ...       ...      ...
   4        |    chr1          10149    10348    Input     1        -
   3        |    chr1          10082    10281    Input     1        -
@@ -243,8 +255,6 @@ Various syntaxes are accepted, see its API. For example:
   PyRanges with 10 rows, 6 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-  Note that the above syntax works only for PyRanges with numerical indices.
-  You can always call ``reset_index`` to make the index numerical.
 
 
 Sorting PyRanges
