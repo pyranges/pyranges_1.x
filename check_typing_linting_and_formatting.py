@@ -32,6 +32,7 @@ def main() -> int:
         "ruff check": ["ruff", "check", "pyranges"],
         "pyright": ["pyright", "pyranges"],
         "pytest": ["pytest", "--doctest-modules", "pyranges/", "tests/unit/"],
+        "more doctest": ["python", "tests/run_doctest_tutorial_howto.py"],
     }
     if show_checks:
         LOGGER.info("Available checks and tests:")

@@ -14,15 +14,13 @@ def _cluster(
     if df.empty:
         return df
 
-    cdf = df.sort_values(START_COL)
+    ids = annotate_clusters(df[START_COL].to_numpy(), df[END_COL].values, slack=slack)
 
-    ids = annotate_clusters(cdf[START_COL].to_numpy(), cdf[END_COL].values, slack=slack)
-
-    cdf.insert(df.shape[1], cluster_column, ids)
+    df.insert(df.shape[1], cluster_column, ids)
 
     if count_column:
-        _count = cdf.groupby(cluster_column)["Cluster"].count()
+        _count = df.groupby(cluster_column)["Cluster"].count()
         _count.name = count_column
-        cdf = cdf.merge(_count, on=cluster_column)
+        df = df.merge(_count, on=cluster_column)
 
-    return cdf
+    return df

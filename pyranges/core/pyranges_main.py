@@ -234,9 +234,11 @@ class PyRanges(RangeFrame):
         PyRanges
             PyRanges view with rows matching the location.
 
-        Note
+        Warning
         ----
         When strand is provided but chromosome is not, only valid strand values ('+', '-') are searched for.
+        Use the complete .loci[Chromosome, Strand, Range] syntax to search for non-genomic strands.
+        Each item can be None to match all values.
 
         Examples
         --------
@@ -387,6 +389,16 @@ class PyRanges(RangeFrame):
         -------  ---  ------------  -------  -------  --------  -------  --------
         PyRanges with 0 rows, 6 columns, and 1 index columns.
         Contains 0 chromosomes and 0 strands.
+
+        You can use None to match all values, useful to force the non-ambiguous syntax that can match non-genomic strands:
+
+        >>> gr2.loci[None, '.']
+          index  |    Chromosome      Start      End  Strand      Score  Id
+          int64  |    object          int64    int64  object      int64  object
+        -------  ---  ------------  -------  -------  --------  -------  --------
+              0  |    chr1                1        4  .             100  a
+        PyRanges with 1 rows, 6 columns, and 1 index columns.
+        Contains 1 chromosomes and 1 strands (including non-genomic strands: .).
 
         Do not try to use loci to access columns: the key is interpreted as a chromosome, resulting in empty output:
 
@@ -816,17 +828,24 @@ class PyRanges(RangeFrame):
         -------  ---  ------------  -------  -------  -------  ---------  --------
               0  |               1        1        3        1          0         1
               1  |               1        2        3        2          1         1
-              2  |               2        0        4        6          3         1
-              3  |               1        3       10        3          2         2
-              4  |               1        9       12        3          2         2
+              2  |               2        0        4        6          2         1
+              3  |               1        3       10        3          3         2
+              4  |               1        9       12        3          3         2
         PyRanges with 5 rows, 6 columns, and 1 index columns.
         Contains 2 chromosomes.
 
         """
         from pyranges.methods.cluster import _cluster
 
+        if not len(self):
+            # returning empty PyRanges with consistent columns
+            cols_to_add = {cluster_column: None}
+            if count_column:
+                cols_to_add[count_column] = None
+            return mypy_ensure_pyranges(self.copy().assign(**cols_to_add))
+
         strand = validate_and_convert_use_strand(self, use_strand=use_strand)
-        _self = self.copy() if (not strand and self.has_strand) else self
+        _self = mypy_ensure_pyranges(self.sort_values(START_COL))
 
         _by = [match_by] if isinstance(match_by, str) else ([*match_by] if match_by is not None else [])
         gr = _self.apply_single(
@@ -838,8 +857,10 @@ class PyRanges(RangeFrame):
             cluster_column=cluster_column,
             preserve_index=True,
         )
-        gr[cluster_column] = gr.groupby(self.loc_columns + _by + [cluster_column]).ngroup()
-        return mypy_ensure_pyranges(gr.reindex(self.index))
+
+        gr = gr.reindex(self.index)
+        gr[cluster_column] = gr.groupby(self.loc_columns + _by + [cluster_column], sort=False).ngroup()
+        return mypy_ensure_pyranges(gr)
 
     def copy(self, *args, **kwargs) -> "pr.PyRanges":
         """Return a copy of the PyRanges."""
@@ -1936,6 +1957,17 @@ class PyRanges(RangeFrame):
               3  |    chr1               10       11  c
               4  |    chr3                0        1  d
         PyRanges with 2 rows, 4 columns, and 1 index columns.
+        Contains 2 chromosomes.
+
+        >>> gr.overlap(gr2, contained=True, invert=True)
+          index  |    Chromosome      Start      End  ID
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                1        3  A
+              1  |    chr1                1        3  a
+              3  |    chr1               10       11  c
+              4  |    chr3                0        1  d
+        PyRanges with 4 rows, 4 columns, and 1 index columns.
         Contains 2 chromosomes.
 
         >>> gr3 = pr.PyRanges({"Chromosome": 1, "Start": [2, 4], "End": [3, 5], "Strand": ["+", "-"]})
