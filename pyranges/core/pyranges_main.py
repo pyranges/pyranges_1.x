@@ -3547,6 +3547,7 @@ class PyRanges(RangeFrame):
         self,
         path: None = None,
         compression: PANDAS_COMPRESSION_TYPE = None,
+        map_cols: dict | None = None,
     ) -> str | None:
         r"""Write to General Feature Format 3.
 
@@ -3556,16 +3557,16 @@ class PyRanges(RangeFrame):
 
         * seqname: Chromosome
         * source: Source
-        * type: Feature
+        * feature: Feature
         * start: Start
         * end: End
         * score: Score
         * strand: Strand
         * phase: Frame
-        * attribute: autofilled
+        * attribute: auto-filled
 
         Columns which are not mapped to GFF columns are appended as a field
-        in the attribute string (i.e. the last field).
+        in the ``attribute`` string (i.e. the last field).
 
         Parameters
         ----------
@@ -3574,6 +3575,12 @@ class PyRanges(RangeFrame):
 
         compression : {'infer', 'gzip', 'bz2', 'zip', 'xz', None}, default "infer"
             Which compression to use. Uses file extension to infer by default.
+
+        map_cols: dict, default None
+            Override mapping between GTF and PyRanges fields for any number of columns.
+            Format: ``{gtf_column : pyranges_column}``
+            If a mapping is found for the "attribute"` column, it is not auto-filled
+
 
         Note
         ----
@@ -3632,12 +3639,13 @@ class PyRanges(RangeFrame):
         """
         from pyranges.core.out import _to_gff_like
 
-        return _to_gff_like(self, path=path, out_format="gff3", compression=compression)
+        return _to_gff_like(self, path=path, out_format="gff3", compression=compression, map_cols=map_cols)
 
     def to_gtf(
         self,
         path: None = None,
         compression: PANDAS_COMPRESSION_TYPE = None,
+        map_cols: dict | None = None,
     ) -> str | None:
         r"""Write to Gene Transfer Format.
 
@@ -3647,7 +3655,7 @@ class PyRanges(RangeFrame):
 
         * seqname: Chromosome
         * source: Source
-        * type: Feature
+        * feature: Feature
         * start: Start
         * end: End
         * score: Score
@@ -3656,7 +3664,7 @@ class PyRanges(RangeFrame):
         * attribute: auto-filled
 
         Columns which are not mapped to GTF columns are appended as a field
-        in the attribute string (i.e. the last field).
+        in the ``attribute`` string (i.e. the last field).
 
         Parameters
         ----------
@@ -3665,6 +3673,11 @@ class PyRanges(RangeFrame):
 
         compression : {'infer', 'gzip', 'bz2', 'zip', 'xz', None}, default "infer"
             Which compression to use. Uses file extension to infer by default.
+
+        map_cols: dict, default None
+            Override mapping between GTF and PyRanges fields for any number of columns.
+            Format: ``{gtf_column : pyranges_column}``
+            If a mapping is found for the "attribute"` column, it is not auto-filled
 
         Note
         ----
@@ -3701,7 +3714,7 @@ class PyRanges(RangeFrame):
         """
         from pyranges.core.out import _to_gff_like
 
-        return _to_gff_like(self, path=path, out_format="gtf", compression=compression)
+        return _to_gff_like(self, path=path, out_format="gtf", compression=compression, map_cols=map_cols)
 
     def to_rle(
         self,
