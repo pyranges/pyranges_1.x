@@ -32,13 +32,13 @@ You can readily write them using the correspondent methods (see
 Methods to_gff3 and to_gtf have a default mapping of PyRanges columns to GFF/GTF fields.
 All extra ("metadata") columns are put in the last field:
 
-  >>> gr['Label']='something' # bug below; to be updated with to_gtf is fixed
+  >>> gr['Label']='something'
   >>> print(gr.head().to_gtf()) # doctest: +NORMALIZE_WHITESPACE
-  chr8	.	.	28510033	28510057	0	-	.	Name=U0Label=something
-  chr7	.	.	107153364	107153388	0	-	.	Name=U0Label=something
-  chr5	.	.	135821803	135821827	0	-	.	Name=U0Label=something
-  chr14	.	.	19419000	19419024	0	-	.	Name=U0Label=something
-  chr12	.	.	106679762	106679786	0	-	.	Name=U0Label=something
+  chr8	.	.	28510033	28510057	0	-	.	Name "U0"; Label "something";
+  chr7	.	.	107153364	107153388	0	-	.	Name "U0"; Label "something";
+  chr5	.	.	135821803	135821827	0	-	.	Name "U0"; Label "something";
+  chr14	.	.	19419000	19419024	0	-	.	Name "U0"; Label "something";
+  chr12	.	.	106679762	106679786	0	-	.	Name "U0"; Label "something";
 
 Such mapping, as well as which attribute(s) are included as last field, can be altered. See the API for details.
 

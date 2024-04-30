@@ -3547,6 +3547,7 @@ class PyRanges(RangeFrame):
         self,
         path: None = None,
         compression: PANDAS_COMPRESSION_TYPE = None,
+        map_cols: dict | None = None,
     ) -> str | None:
         r"""Write to General Feature Format 3.
 
@@ -3556,16 +3557,16 @@ class PyRanges(RangeFrame):
 
         * seqname: Chromosome
         * source: Source
-        * type: Feature
+        * feature: Feature
         * start: Start
         * end: End
         * score: Score
         * strand: Strand
         * phase: Frame
-        * attribute: autofilled
+        * attribute: auto-filled
 
         Columns which are not mapped to GFF columns are appended as a field
-        in the attribute string (i.e. the last field).
+        in the ``attribute`` string (i.e. the last field).
 
         Parameters
         ----------
@@ -3574,6 +3575,12 @@ class PyRanges(RangeFrame):
 
         compression : {'infer', 'gzip', 'bz2', 'zip', 'xz', None}, default "infer"
             Which compression to use. Uses file extension to infer by default.
+
+        map_cols: dict, default None
+            Override mapping between GTF and PyRanges fields for any number of columns.
+            Format: ``{gtf_column : pyranges_column}``
+            If a mapping is found for the "attribute"` column, it is not auto-filled
+
 
         Note
         ----
@@ -3629,15 +3636,39 @@ class PyRanges(RangeFrame):
             1	.	CDS	4	6	.	.	2	Gene=2;function=c
             1	.	CDS	6	9	.	.	1	Gene=3;function=def
 
+        >>> gr['custom'] = ['AA', 'BB', 'CC']
+        >>> gr
+          index  |      Chromosome    Start      End  Feature       Gene  function      phase  custom
+          int64  |           int64    int64    int64  object       int64  object        int64  object
+        -------  ---  ------------  -------  -------  ---------  -------  ----------  -------  --------
+              0  |               1        1        4  mRNA             1  a b               0  AA
+              1  |               1        3        6  CDS              2  c                 2  BB
+              2  |               1        5        9  CDS              3  def               1  CC
+        PyRanges with 3 rows, 8 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        >>> print(gr.to_gff3(map_cols={"feature": "custom"})) # doctest: +NORMALIZE_WHITESPACE
+        1	.	AA	2	4	.	.	0	Feature=mRNA;Gene=1;function=a b
+        1	.	BB	4	6	.	.	2	Feature=CDS;Gene=2;function=c
+        1	.	CC	6	9	.	.	1	Feature=CDS;Gene=3;function=def
+        <BLANKLINE>
+
+        >>> print(gr.to_gff3(map_cols={"attribute": "custom"})) # doctest: +NORMALIZE_WHITESPACE
+        1	.	mRNA	2	4	.	.	0	AA
+        1	.	CDS	4	6	.	.	2	BB
+        1	.	CDS	6	9	.	.	1	CC
+        <BLANKLINE>
+
         """
         from pyranges.core.out import _to_gff_like
 
-        return _to_gff_like(self, path=path, out_format="gff3", compression=compression)
+        return _to_gff_like(self, path=path, out_format="gff3", compression=compression, map_cols=map_cols)
 
     def to_gtf(
         self,
         path: None = None,
         compression: PANDAS_COMPRESSION_TYPE = None,
+        map_cols: dict | None = None,
     ) -> str | None:
         r"""Write to Gene Transfer Format.
 
@@ -3647,7 +3678,7 @@ class PyRanges(RangeFrame):
 
         * seqname: Chromosome
         * source: Source
-        * type: Feature
+        * feature: Feature
         * start: Start
         * end: End
         * score: Score
@@ -3656,7 +3687,7 @@ class PyRanges(RangeFrame):
         * attribute: auto-filled
 
         Columns which are not mapped to GTF columns are appended as a field
-        in the attribute string (i.e. the last field).
+        in the ``attribute`` string (i.e. the last field).
 
         Parameters
         ----------
@@ -3665,6 +3696,11 @@ class PyRanges(RangeFrame):
 
         compression : {'infer', 'gzip', 'bz2', 'zip', 'xz', None}, default "infer"
             Which compression to use. Uses file extension to infer by default.
+
+        map_cols: dict, default None
+            Override mapping between GTF and PyRanges fields for any number of columns.
+            Format: ``{gtf_column : pyranges_column}``
+            If a mapping is found for the "attribute"` column, it is not auto-filled
 
         Note
         ----
@@ -3698,10 +3734,39 @@ class PyRanges(RangeFrame):
             1	.	EXON	4	6	.	.	.
             1	.	EXON	6	9	.	.	.
 
+        >>> gr["tag"] = [11, 22, 33]
+        >>> gr
+          index  |      Chromosome    Start      End  Feature        tag
+          int64  |           int64    int64    int64  object       int64
+        -------  ---  ------------  -------  -------  ---------  -------
+              0  |               1        1        4  GENE            11
+              1  |               1        3        6  EXON            22
+              2  |               1        5        9  EXON            33
+        PyRanges with 3 rows, 5 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        >>> print(gr.to_gff3()) # doctest: +NORMALIZE_WHITESPACE
+        1	.	GENE	2	4	.	.	.	tag=11
+        1	.	EXON	4	6	.	.	.	tag=22
+        1	.	EXON	6	9	.	.	.	tag=33
+        <BLANKLINE>
+
+        >>> print(gr.to_gff3(map_cols={'seqname':'tag'})) # doctest: +NORMALIZE_WHITESPACE
+        11	.	GENE	2	4	.	.	.	Chromosome=1
+        22	.	EXON	4	6	.	.	.	Chromosome=1
+        33	.	EXON	6	9	.	.	.	Chromosome=1
+        <BLANKLINE>
+
+        >>> print(gr.to_gff3(map_cols={'attribute':'tag'})) # doctest: +NORMALIZE_WHITESPACE
+        1	.	GENE	2	4	.	.	.	11
+        1	.	EXON	4	6	.	.	.	22
+        1	.	EXON	6	9	.	.	.	33
+        <BLANKLINE>
+
         """
         from pyranges.core.out import _to_gff_like
 
-        return _to_gff_like(self, path=path, out_format="gtf", compression=compression)
+        return _to_gff_like(self, path=path, out_format="gtf", compression=compression, map_cols=map_cols)
 
     def to_rle(
         self,

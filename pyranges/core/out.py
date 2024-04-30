@@ -26,9 +26,6 @@ GTF_COLUMNS_TO_PYRANGES = {
 GFF3_COLUMNS_TO_PYRANGES = GTF_COLUMNS_TO_PYRANGES.copy()
 GFF3_COLUMNS_TO_PYRANGES["phase"] = GFF3_COLUMNS_TO_PYRANGES.pop("frame")
 
-PYRANGES_TO_GFF3_COLUMNS = {v: k for k, v in GFF3_COLUMNS_TO_PYRANGES.items()}
-PYRANGES_TO_GTF_COLUMNS = {v: k for k, v in GTF_COLUMNS_TO_PYRANGES.items()}
-
 _ordered_gtf_columns = [
     "seqname",
     "source",
@@ -93,10 +90,12 @@ def _to_gff_like(
     out_format: Literal["gtf", "gff3"],
     path: Path | None = None,
     compression: PANDAS_COMPRESSION_TYPE = None,
+    map_cols: dict | None = None,
 ) -> str | None:
     df = _pyranges_to_gtf_like(
         gr,
         out_format=out_format,
+        map_cols=map_cols,
     )
     return df.to_csv(
         path,
@@ -226,7 +225,7 @@ def _to_bigwig(
 
 
 class AttributeFormatter(Protocol):
-    def __call__(self, colname: str, col: "pd.Series[str]", *, _final_column: bool) -> "pd.Series[str]":
+    def __call__(self, colname: str, col: "pd.Series[str]") -> "pd.Series[str]":
         """Stub to properly annotate forced named args (..., *, ...)."""
         ...
 
@@ -234,54 +233,76 @@ class AttributeFormatter(Protocol):
 def _pyranges_to_gtf_like(
     df: pd.DataFrame,
     out_format: Literal["gtf", "gff3"],
+    map_cols: dict | None = None,
 ) -> pd.DataFrame:
     attribute_formatter: AttributeFormatter
+
     if out_format == "gtf":
         all_columns = _ordered_gtf_columns[:-1]
-        rename_columns = PYRANGES_TO_GTF_COLUMNS
+        # first: gff column to pyranges column
+        rename_columns = GFF3_COLUMNS_TO_PYRANGES.copy()
         attribute_formatter = gtf_formatter
     elif out_format == "gff3":
         all_columns = _ordered_gff3_columns[:-1]
-        rename_columns = PYRANGES_TO_GFF3_COLUMNS
+        # first: gff column to pyranges column
+        rename_columns = GTF_COLUMNS_TO_PYRANGES.copy()
         attribute_formatter = gff3_formatter
     else:
         msg = f"Invalid output format: {out_format}. Must be one of 'gtf' or 'gff3'."
         raise ValueError(msg)
 
+    map_cols = map_cols or {}
+    valid_keys = set(rename_columns) | {"attribute"}
+    invalid_map_cols = set(map_cols) - valid_keys
+    if invalid_map_cols:
+        msg = f"Invalid column mapping: {invalid_map_cols}. Must be one of {set(rename_columns) | {'attribute'}}."
+        raise ValueError(msg)
+
+    rename_columns.update(map_cols)
+    # from here on, rename_columns is: pyranges column to gff column
+    rename_columns = {v: k for k, v in rename_columns.items()}
+
     df = df.rename(columns=rename_columns)
     df.loc[:, "start"] = df.start + 1
 
     columns = list(df.columns)
+
+    # filling missing columns with "."
     outdf = _fill_missing(df, all_columns)
 
-    _rest = set(df.columns) - set(all_columns)
-    rest = sorted(_rest, key=columns.index)
-    rest_df = df[rest].copy()
+    if "attribute" not in map_cols:
+        _rest = set(df.columns) - set(all_columns)
+        rest = sorted(_rest, key=columns.index)
+        rest_df = df[rest].copy()
+        # putting all remaining columns into the attribute column
+        for colname in rest_df.columns:
+            col = pd.Series(rest_df[colname])
+            isnull = col.isna()
+            new_val = attribute_formatter(colname, col)  # type: ignore[call-arg]
 
-    for i, colname in enumerate(rest_df.columns, 1):
-        col = pd.Series(rest_df[colname])
-        isnull = col.isna()
-        col = col.astype(str).str.replace("nan", "")
-        new_val = attribute_formatter(colname, col, _final_column=i == len(rest_df.columns))  # type: ignore[call-arg]
-        rest_df.loc[:, colname] = rest_df[colname].astype(str)
-        rest_df.loc[~isnull, colname] = new_val
-        rest_df.loc[isnull, colname] = ""
+            # not working to convert cat to str:  rest_df.loc[:, colname] = rest_df[colname].astype(str)
+            # so doing this instead:
+            rest_df[colname] = rest_df[colname].astype(str)
+            rest_df.loc[~isnull, colname] = new_val
+            rest_df.loc[isnull, colname] = ""
 
-    attribute = merge_attributes(rest_df, out_format)
-    outdf.insert(outdf.shape[1], "attribute", attribute)
+        attribute = merge_attributes(rest_df, out_format)
+        outdf.insert(outdf.shape[1], column="attribute", value=attribute)
+    else:
+        outdf.insert(outdf.shape[1], column="attribute", value=df["attribute"].copy())
 
     return outdf
 
 
-def gtf_formatter(colname: str, col: "pd.Series[str]", *, _final_column: bool = True) -> "pd.Series[str]":
+def gtf_formatter(colname: str, col: "pd.Series[str]") -> "pd.Series[str]":
     """Format a column as a GTF attribute column."""
-    attribute_template_string = f"{colname}={{col}}"
+    attribute_template_string = f'{colname} "{{col}}"; '
     return col.apply(lambda x: attribute_template_string.format(col=x))
 
 
-def gff3_formatter(colname: str, col: "pd.Series[str]", *, _final_column: bool) -> "pd.Series[str]":
+def gff3_formatter(colname: str, col: "pd.Series[str]") -> "pd.Series[str]":
     """Format a column as a GFF3 attribute column."""
-    attribute_template_string = f"{colname}={{col}}" + ("" if _final_column else ";")
+    attribute_template_string = f"{colname}={{col}};"
     return col.apply(lambda x: attribute_template_string.format(col=x))
 
 
@@ -290,6 +311,5 @@ def merge_attributes(attributes: pd.DataFrame, out_format: Literal["gtf", "gff3"
 
     The final column in gtf/gff is not separated by tabs, but by other separators.
     """
-    if out_format == "gff":
-        return attributes.apply(lambda r: " ".join([v for v in r if v]), axis=1)
-    return attributes.apply(lambda r: "".join([v for v in r if v]), axis=1).str.replace(";$", "", regex=True)
+    regex_to_remove = " $" if out_format == "gtf" else ";$"
+    return attributes.apply(lambda r: "".join([v for v in r if v]), axis=1).str.replace(regex_to_remove, "", regex=True)

@@ -3,7 +3,7 @@ API reference
 ~~~~~~~~~~~~~
 
 #. :doc:`PyRanges objects <./pyranges_objects>` are the main data structure in pyranges
-#. :doc:`The pyranges module <./pyranges_module>` contains other functions, e.g. for reading files of common formats
+#. :doc:`The pyranges module <./pyranges_module>` offer file readers and other utilities
 #. :doc:`Extensions submodules <./pyranges_extensions>` provide additional domain-specific functionalities
 #. :doc:`RangeFrame <./range_frame>` is the parent class of PyRanges, supporting operations on simple intervals
 
@@ -14,3 +14,4 @@ API reference
    pyranges_objects
    pyranges_module
    pyranges_extensions
+   range_frame
