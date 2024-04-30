@@ -244,7 +244,8 @@ Note that this may result in index duplicates, which can be remedied by pandas `
 Data for testing
 ----------------
 
-For testing purposes, pyranges provides some data in ``pr.example_data``. See an overview with:
+For testing purposes, pyranges provides some data in :ref:`pr.example_data <pyranges_example_data>`.
+See an overview with:
 
   >>> pr.example_data
   Available example data:
@@ -259,6 +260,7 @@ For testing purposes, pyranges provides some data in ``pr.example_data``. See an
   example_data.aorta2             : Example ChIP-seq data.
   example_data.ncbi_gff           : Example NCBI GFF data.
   example_data.ncbi_fasta         : Example NCBI fasta.
+  example_data.files              : A dict of basenames to file paths of available data.
 
 You can load the data with this syntax:
 

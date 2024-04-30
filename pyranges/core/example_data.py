@@ -6,6 +6,21 @@ pyranges.random : generate random PyRanges
 
 Examples
 --------
+>>> pr.example_data
+Available example data:
+-----------------------
+example_data.chipseq            : Example ChIP-seq data.
+example_data.chipseq_background : Example ChIP-seq data.
+example_data.chromsizes         : Example chromsizes data (hg19).
+example_data.ensembl_gtf        : Example gtf file from Ensembl.
+example_data.f1                 : Example bed file.
+example_data.f2                 : Example bed file.
+example_data.aorta              : Example ChIP-seq data.
+example_data.aorta2             : Example ChIP-seq data.
+example_data.ncbi_gff           : Example NCBI GFF data.
+example_data.ncbi_fasta         : Example NCBI fasta.
+example_data.files              : A dict of basenames to file paths of available data.
+
 >>> pr.example_data.f1
   index  |    Chromosome      Start      End  Name         Score  Strand
   int64  |    category        int64    int64  object       int64  category
@@ -49,16 +64,19 @@ class ExampleData:
             for name, prop in self.__class__.__dict__.items()
             if isinstance(prop, property) and not name.startswith("_")
         ]
-        max_name_len = max(len(name) for name, _ in items)
+        max_name_len = max(len(name) for name, _ in (*items, ("files", "")))
         for name, prop in items:
             doc_line = prop.fget.__doc__.split("\n")[0] if prop.fget.__doc__ else ""
+            methods_info += f"example_data.{name:<{max_name_len}} : {doc_line}\n"
+        for name in ["files"]:
+            doc_line = self.__class__.__dict__[name].__doc__.strip().split("\n")[0]
             methods_info += f"example_data.{name:<{max_name_len}} : {doc_line}\n"
         return methods_info.strip()
 
     @classmethod  # type: ignore[misc]
     @property
     def files(cls) -> dict[str, Path]:
-        """Return a dict of basenames to full file paths of available example data.
+        """A dict of basenames to file paths of available data.
 
         Examples
         --------

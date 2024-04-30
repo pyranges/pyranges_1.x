@@ -9,6 +9,5 @@ Pyranges includes extensions modules that provide additional domain-specific fun
    :maxdepth: 2
 
    extension_orfs
-   extension_genomicfeatures
    extension_seqs
    extension_stats

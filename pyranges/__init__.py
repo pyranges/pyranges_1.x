@@ -4,7 +4,7 @@
 # a foobar.py file in pyranges/ which just imports the minimal objects to be exposed
 
 from pyranges import orfs, seqs, stats  # noqa: F401
-from pyranges.core.example_data_manager import example_data  # noqa: F401
+from pyranges.core.example_data import example_data  # noqa: F401
 from pyranges.core.multioverlap import count_overlaps  # noqa: F401
 from pyranges.core.options import option_manager as options  # noqa: F401
 from pyranges.core.pyranges_main import PyRanges  # noqa: F401

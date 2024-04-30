@@ -3636,6 +3636,29 @@ class PyRanges(RangeFrame):
             1	.	CDS	4	6	.	.	2	Gene=2;function=c
             1	.	CDS	6	9	.	.	1	Gene=3;function=def
 
+        >>> gr['custom'] = ['AA', 'BB', 'CC']
+        >>> gr
+          index  |      Chromosome    Start      End  Feature       Gene  function      phase  custom
+          int64  |           int64    int64    int64  object       int64  object        int64  object
+        -------  ---  ------------  -------  -------  ---------  -------  ----------  -------  --------
+              0  |               1        1        4  mRNA             1  a b               0  AA
+              1  |               1        3        6  CDS              2  c                 2  BB
+              2  |               1        5        9  CDS              3  def               1  CC
+        PyRanges with 3 rows, 8 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        >>> print(gr.to_gff3(map_cols={"feature": "custom"})) # doctest: +NORMALIZE_WHITESPACE
+        1	.	AA	2	4	.	.	0	Feature=mRNA;Gene=1;function=a b
+        1	.	BB	4	6	.	.	2	Feature=CDS;Gene=2;function=c
+        1	.	CC	6	9	.	.	1	Feature=CDS;Gene=3;function=def
+        <BLANKLINE>
+
+        >>> print(gr.to_gff3(map_cols={"attribute": "custom"})) # doctest: +NORMALIZE_WHITESPACE
+        1	.	mRNA	2	4	.	.	0	AA
+        1	.	CDS	4	6	.	.	2	BB
+        1	.	CDS	6	9	.	.	1	CC
+        <BLANKLINE>
+
         """
         from pyranges.core.out import _to_gff_like
 
@@ -3710,6 +3733,35 @@ class PyRanges(RangeFrame):
             1	.	GENE	2	4	.	.	.
             1	.	EXON	4	6	.	.	.
             1	.	EXON	6	9	.	.	.
+
+        >>> gr["tag"] = [11, 22, 33]
+        >>> gr
+          index  |      Chromosome    Start      End  Feature        tag
+          int64  |           int64    int64    int64  object       int64
+        -------  ---  ------------  -------  -------  ---------  -------
+              0  |               1        1        4  GENE            11
+              1  |               1        3        6  EXON            22
+              2  |               1        5        9  EXON            33
+        PyRanges with 3 rows, 5 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        >>> print(gr.to_gff3()) # doctest: +NORMALIZE_WHITESPACE
+        1	.	GENE	2	4	.	.	.	tag=11
+        1	.	EXON	4	6	.	.	.	tag=22
+        1	.	EXON	6	9	.	.	.	tag=33
+        <BLANKLINE>
+
+        >>> print(gr.to_gff3(map_cols={'seqname':'tag'})) # doctest: +NORMALIZE_WHITESPACE
+        11	.	GENE	2	4	.	.	.	Chromosome=1
+        22	.	EXON	4	6	.	.	.	Chromosome=1
+        33	.	EXON	6	9	.	.	.	Chromosome=1
+        <BLANKLINE>
+
+        >>> print(gr.to_gff3(map_cols={'attribute':'tag'})) # doctest: +NORMALIZE_WHITESPACE
+        1	.	GENE	2	4	.	.	.	11
+        1	.	EXON	4	6	.	.	.	22
+        1	.	EXON	6	9	.	.	.	33
+        <BLANKLINE>
 
         """
         from pyranges.core.out import _to_gff_like

@@ -225,7 +225,7 @@ def _to_bigwig(
 
 
 class AttributeFormatter(Protocol):
-    def __call__(self, colname: str, col: "pd.Series[str]", *, _final_column: bool) -> "pd.Series[str]":
+    def __call__(self, colname: str, col: "pd.Series[str]") -> "pd.Series[str]":
         """Stub to properly annotate forced named args (..., *, ...)."""
         ...
 
