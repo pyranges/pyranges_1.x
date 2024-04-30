@@ -10,6 +10,7 @@ class PyRangesOptions:
                 3,
                 "how many columns listed in PyRanges repr when not all fit the screen width",
             ),
+            "console_width": (None, "console width, affecting PyRanges representation (None for auto)"),
         }
         self.options_default = self.options_in_use.copy()
 
@@ -93,14 +94,15 @@ class PyRangesOptions:
         --------
         >>> import pyranges as pr
         >>> print(pr.options.display_options())
-        max_rows_to_show         : 8 (the max number of rows to show in PyRanges repr)
-        max_column_names_to_show : 3 (how many columns listed in PyRanges repr when not all fit the screen width)
+        max_rows_to_show         :   8 (the max number of rows to show in PyRanges repr)
+        max_column_names_to_show :   3 (how many columns listed in PyRanges repr when not all fit the screen width)
+        console_width            : 120 (console width, affecting PyRanges representation (None for auto))
 
         """
         max_len_k = max(len(k) for k in self.options_in_use)
         max_len_v = max(len(str(v[0])) for v in self.options_in_use.values())
 
-        return "\n".join(f"{k:<{max_len_k}} : {v[0]:>{max_len_v}} ({v[1]})" for k, v in self.options_in_use.items())
+        return "\n".join(f"{k:<{max_len_k}} : {v[0]!s:>{max_len_v}} ({v[1]})" for k, v in self.options_in_use.items())
 
     def __repr__(self) -> str:
         return self.display_options()

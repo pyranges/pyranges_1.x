@@ -6,7 +6,7 @@ import pandas as pd
 
 if typing.TYPE_CHECKING:
     from pyranges import PyRanges
-from pyranges.core.names import CHROM_COL, END_COL, START_COL, STRAND_COL
+from pyranges.core.names import CHROM_COL, END_COL, START_COL, STRAND_COL, VALID_GENOMIC_STRAND_INFO
 from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
 
 # Three types of accessors:
@@ -14,7 +14,7 @@ from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
 # 2. Genomic location
 
 
-LociKeyType = str | int | tuple[str | int, str] | tuple[str | int, slice] | tuple[str | int, str, slice]
+LociKeyType = str | int | slice | tuple[str | int, str] | tuple[str | int, slice] | tuple[str | int, str, slice]
 
 
 @dataclass
@@ -39,12 +39,17 @@ class LociGetter:
             elif is_3_tuple(key):
                 rows = get_chrom_strand_and_range(self.pr, key)
             else:
-                msg = f"Indexing tuple must be of length 2 or 3, but was {len(key)}."
+                msg = f"Indexing tuple for loci must be of length 2 or 3, but was {len(key)}."
                 raise ValueError(msg)
+        elif isinstance(key, slice):
+            rows = _rows_matching_range(self.pr, key)
         elif not isinstance(key, list):
             rows = get_chrom_and_strand(self.pr, key)
         else:
-            msg = "The loci accessor does not accept a list. If you meant to retrieve columns, use gr.get_with_loc_columns instead."
+            msg = (
+                "The loci accessor does not accept a list. If you meant to retrieve columns, use "
+                "get_with_loc_columns instead."
+            )
             raise TypeError(msg)
         return rows
 
@@ -53,23 +58,33 @@ class LociGetter:
         self.pr.loc[rows] = value
 
 
-def _rows_matching_chrom_and_strand(gr: "PyRanges", chrom: str, strand: str) -> "pd.Series[bool]":
-    is_chrom_row = gr[CHROM_COL].astype(type(chrom)) == chrom
-    is_strand_row = gr[STRAND_COL].astype(type(strand)) == strand
-    return is_chrom_row & is_strand_row
+def _rows_matching_chrom(gr: "PyRanges", chrom: str | int | None) -> "pd.Series[bool]":
+    return (gr[CHROM_COL].astype(type(chrom)) == chrom) if chrom is not None else pd.Series(data=True, index=gr.index)
 
 
-def _rows_matching_range(gr: "PyRanges", _range: range) -> "pd.Series[bool]":
+def _rows_matching_strand(gr: "PyRanges", strand: str | None) -> "pd.Series[bool]":
+    return (gr[STRAND_COL] == strand) if strand is not None else pd.Series(data=True, index=gr.index)
+
+
+def _rows_matching_range(gr: "PyRanges", _range: slice | None) -> "pd.Series[bool]":
+    if _range is None:
+        return pd.Series(data=True, index=gr.index)
     start_in_range = gr[START_COL] < (_range.stop if _range.stop is not None else np.inf)
     end_in_range = gr[END_COL] > (_range.start if _range.start is not None else -1)
     return start_in_range & end_in_range
 
 
-def _rows_matching_chrom_and_strand_and_range(gr: "PyRanges", chrom: str, strand: str, _range: range) -> pd.Series:
-    is_chrom_row = gr[CHROM_COL].astype(type(chrom)) == chrom
-    is_strand_row = gr[STRAND_COL].astype(type(strand)) == strand
-    range_rows = _rows_matching_range(gr, _range)
-    return is_chrom_row & is_strand_row & range_rows
+def _rows_matching_chrom_and_strand(gr: "PyRanges", chrom: str | int | None, strand: str | None) -> "pd.Series[bool]":
+    return _rows_matching_chrom(gr, chrom) & _rows_matching_strand(gr, strand)
+
+
+def _rows_matching_chrom_and_strand_and_range(
+    gr: "PyRanges",
+    chrom: str | None | int,
+    strand: str | None,
+    _range: slice | None,
+) -> pd.Series:
+    return _rows_matching_chrom(gr, chrom) & _rows_matching_strand(gr, strand) & _rows_matching_range(gr, _range)
 
 
 def is_3_tuple(key: tuple) -> bool:
@@ -101,14 +116,17 @@ def chrom_and_strand(pr: "PyRanges", key: tuple) -> "pd.Series[bool]":
 def chrom_or_strand_with_slice(pr: "PyRanges", key: tuple) -> "pd.Series[bool]":
     """Get rows matching chromosome or strand and slice."""
     chrom_or_strand, loc = key
-    if chrom_or_strand in (col := pr[CHROM_COL].astype(type(chrom_or_strand))).to_numpy():
-        gr = pr[col == chrom_or_strand]
-        rows = _rows_matching_range(gr, loc)
-    elif pr.strand_valid and chrom_or_strand in (col := pr[STRAND_COL].astype(type(chrom_or_strand))).to_numpy():
-        rows = _rows_matching_range(pr.loc[col == chrom_or_strand], loc)
+
+    # We can get a view with right chromosome, then match range only there, and reindex to original.
+    # Or we can interrogate the whole PyRanges for chromosome and range separately, then combine the boolean Series
+    # I timeit tested random pyranges up to 10^8 rows.
+    # The second was consistently faster, so here it is:
+
+    # in ambyguous cases, we test is strand is + or -, otherwise we assume it's a chromosome
+    if chrom_or_strand in VALID_GENOMIC_STRAND_INFO and pr.has_strand:
+        rows = _rows_matching_strand(pr, chrom_or_strand) & (_rows_matching_range(pr, loc))
     else:
-        msg = f"Chromosome or strand {chrom_or_strand} not found in PyRanges."
-        raise KeyError(msg)
+        rows = _rows_matching_chrom(pr, chrom_or_strand) & (_rows_matching_range(pr, loc))
     return rows
 
 
@@ -121,16 +139,11 @@ def get_chrom_strand_and_range(pr: "PyRanges", key: tuple) -> "pd.Series":
 def get_chrom_and_strand(pr: "PyRanges", key: str | int) -> "pd.Series[bool]":
     """Get rows matching chromosome or strand.
 
-    We do not know whether the key is a chromosome or a strand, so we potentially have to check both.
+    We do not know whether the key is a chromosome or a strand.
+    We determine it's strand only if + or -, chromosome otherwise
     """
-    key_is_chrom = str(key) in (pr[CHROM_COL].astype(str)).to_numpy()
-    key_is_strand = pr.has_strand and str(key) in pr[STRAND_COL].astype(str).to_numpy()
-    if key_is_chrom:
-        chrom_col: "pd.Series[str]" = pr[CHROM_COL]
-        rows = chrom_col == str(key)
-    elif key_is_strand:
-        rows = pr[STRAND_COL] == str(key)
+    if key in VALID_GENOMIC_STRAND_INFO and pr.has_strand:
+        rows = _rows_matching_strand(pr, key)
     else:
-        msg = f'Chromosome or strand "{key}" not found in PyRanges.'
-        raise KeyError(msg)
+        rows = _rows_matching_chrom(pr, key)
     return rows

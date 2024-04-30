@@ -8,7 +8,7 @@ from tabulate import tabulate
 if TYPE_CHECKING:
     import pyranges as pr
 
-TOSTRING_CONSOLE_WIDTH: int | None = None
+from pyranges import options
 
 
 @dataclass
@@ -23,7 +23,7 @@ def console_width(max_total_width: int | None = None) -> int:
     """Return console width."""
     if max_total_width is not None:
         return max_total_width
-    if width := TOSTRING_CONSOLE_WIDTH:
+    if width := options.get_option("console_width"):
         return width
     return shutil.get_terminal_size().columns
 
