@@ -2,9 +2,11 @@
 
 [![Coverage Status](https://img.shields.io/coveralls/github/biocore-ntnu/pyranges.svg)](https://coveralls.io/github/biocore-ntnu/pyranges?branch=master) [![hypothesis tested](graphs/hypothesis-tested-brightgreen.svg)](http://hypothesis.readthedocs.io/) [![PyPI version](https://badge.fury.io/py/pyranges.svg)](https://badge.fury.io/py/pyranges) [![MIT](https://img.shields.io/pypi/l/pyranges.svg?color=green)](https://opensource.org/licenses/MIT) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pyranges.svg) [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/pyranges/README.html)
 
-## Missing:
+## Install
 
-- to_bigwig: needs a rewrite of the pyrle module
+```bash
+pip install pyranges1
+```
 
 ## Introduction
 
@@ -16,7 +18,7 @@ The library is optimized for fast querying and manipulation of genomic annotatio
 
 ## Documentation
 
-The pyranges documentation, including installation instructions, API, tutorial, and how-to-pages, is available at <https://pyranges.readthedocs.io/>
+The pyranges documentation, including installation instructions, API, tutorial, and how-to-pages, will soon become available.
 
 ## Features
 
