@@ -1,2 +1,4 @@
-sphinxcontrib-napoleon
-sphinx-autoapi
+sphinx>=4.0  # Ensure you have a relatively updated version of Sphinx
+sphinx_rtd_theme  # Theme for the HTML output
+sphinxcontrib-napoleon  # If using, although sphinx.ext.napoleon is already included and sufficient
+sphinx-autobuild  # For live reloading during documentation development (optional)
