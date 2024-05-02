@@ -4,18 +4,20 @@
    contain the root `toctree` directive.
 
 
-The PyRanges documentation
+The pyranges documentation
 ==========================
-PyRanges is a Python library specifically designed for efficient and intuitive manipulation of genomics data,
+Pyranges is a Python library specifically designed for efficient and intuitive manipulation of genomics data,
 particularly genomic intervals (like genes, genomic features, or reads).
 The library is optimized for fast querying and manipulation of genomic annotations.
 
-Pyranges is open source, and hosted at github: https://github.com/pyranges/pyranges
+Pyranges is open source, and hosted at github: https://github.com/pyranges/pyranges_1.x/
 
 Pyranges is developed by Endre Bakken Stovner and by
 `Marco Mariotti's lab <https://www.mariottigenomicslab.com/>`_.
 
-
+This documentation refers to the version 1 of pyranges, which introduces a new API and a new data structure
+compared to version 0, soon to be deprecated. Version 0 is still the 'default' pyranges at is available at
+https://github.com/pyranges/pyranges and https://pyranges.readthedocs.io/
 
 
 Citation

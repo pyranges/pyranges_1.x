@@ -2,35 +2,26 @@
 Installation
 ~~~~~~~~~~~~
 
-**MUST BE UPDATED**
+The preferred way to install pyranges is via pip::
 
+    pip install pyranges1
 
-The preferred way to install pyranges is through the bioconda channel::
+The command above will install a minimal version of pyranges.
+Pyranges has several optional dependencies, required for certain functionalities.
 
-    conda install -c bioconda pyranges
+To install all optional dependencies, use::
 
-You can also try pip::
+    pip install pyranges1[all]
 
-    pip install pyranges
+Here you can see the optional dependencies grouped by functionality::
 
-PyRanges has some dependencies that are optional. They need to be manually installed if you require their functionality:
+    # user add-ons: to fetch sequences, read BAM files, parallelize execution ...
+    pip install pyranges1[add-ons]
 
-.. code-block:: none
+    # development: for testing, linting, type checking, generating documentation
+    pip install pyranges1[dev]
 
-    # pyfaidx: fetch sequences from fasta
-    pip install pyfaidx
+    # documentation: for building the documentation
+    pip install pyranges1[docs]
 
-    # ray: multicpu
-    pip install -U ray
-
-    # pybigwig: write bigwigs
-    pip install pybigwig  # or conda install -c bioconda pybigwig
-
-    # bamread: read bam files
-    pip install bamread   # or conda install -c bioconda bamread
-
-    # fisher: fast fisher exact
-    pip install fisher    # or conda install -c bioconda fisher
-
-
-Since these are not required for most  pyranges functionality, they are kept separate to prevent the possibility of the pyranges-install failing due to dependencies that fail installation or conflicting dependencies.
+To inspect the list of dependencies, check the pyproject.toml file in the repository.
