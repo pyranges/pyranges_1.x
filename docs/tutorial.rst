@@ -34,12 +34,12 @@ Getting started
 ~~~~~~~~~~~~~~~
 
 We recommend using `ipython <https://ipython.readthedocs.io/>`_ or `Jupyter <https://jupyter.org/>`_ for this tutorial.
-Besides pyranges and some of its dependencies, we will use optional module (e.g. **pyfaidx**).
-To install all optional dependencies, use:
+Besides pyranges and pandas, we will use optional modules (e.g. **pyfaidx**).
+If you haven't already, install the optional add-ons with:
 
 .. code-block:: shell
 
-      pip install pyranges1_alpha[add-ons]
+      pip install pyranges1[add-ons]
 
 
 Loading and accessing pyranges objects

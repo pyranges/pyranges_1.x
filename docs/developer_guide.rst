@@ -4,7 +4,7 @@ Developer guide
 Pyranges was originally written by Endre Bakken Stovner under supervision of Pål Sætrom.
 It is now mainly developed by Endre Bakken Stovner and by the Comparative Genomics lab of
 Marco Mariotti. It follows the guidelines for open source software, and external contributors
-are welcome. The code is centralized on github, at https://github.com/pyranges/pyranges
+are welcome. The code is centralized on github, at https://github.com/pyranges/pyranges_1.x
 
 Bugs and feature requests can be reported as github issues. You may also contribute by submitting
 your own code edits, either to deal with issues or to add new functionalities. Please discuss new
@@ -13,9 +13,10 @@ which may integrate it in the main repository. Contributions are tracked by gith
 visible.
 
 Below, we sketch a guide to contribute to Pyranges. It assumes familiarity with python and with the
-terminal, and minimal experience with git/github. Before the actual list of steps follow (Task
-sequence), we go over some essential concepts used in the "continuous integration" system in place
+terminal, and minimal experience with git/github. Before the actual list of steps follow (:ref:`Task
+sequence <task_sequence>`), we go over some essential concepts used in the "continuous integration" system in place
 to maintain and evolve Pyranges.
+
 
 
 
@@ -86,11 +87,13 @@ With type annotations, it becomes:
         return a + b
 
 For more detailed guidance on typing in Python, see the
-[official Python documentation](https://docs.python.org/3/library/typing.html).
+`official Python documentation <https://docs.python.org/3/library/typing.html>`_.
 
 We encourage contributions to Pyranges, even if they involve partial typing. If you're new
 to typing or have any questions, feel free to ask for help. We're committed to supporting
 our community in enhancing Pyranges together.
+
+.. _task_sequence:
 
 Task sequence
 ~~~~~~~~~~~~~
@@ -318,7 +321,7 @@ Every now and then, the core development team considers that a new pyranges vers
 released. To do so:
 
 - Update the version number in the pyproject.toml file
-- Find the "Build and upload to PyPI" workflow in the left menu of the github actions at `https://github.com/pyranges/pyranges/actions/ <https://github.com/pyranges/pyranges/actions/>`_
+- Find the "Build and upload to PyPI" workflow in the left menu of the github actions at `https://github.com/pyranges/pyranges_1.x/actions/ <https://github.com/pyranges/pyranges_1.x/actions/>`_
 - Click the "Run workflow" button on the right
 
 Next, check that everything worked correctly, by confirming that a new pyranges installation via
