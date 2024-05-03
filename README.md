@@ -11,7 +11,7 @@ It enables intuitive and highly efficient pipelines for genomic analysis.
 
 ## Version 1.x
 This is version 1.x of pyranges. It is a complete rewrite of the original pyranges library, 
-that will replace the "default" (version 0) sometime in 2024.
+that will replace the current default (version 0) at some point in 2024.
 
 ## Install
 
