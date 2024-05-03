@@ -4,8 +4,6 @@ Writing to disk
 .. contents::
    :local:
    :depth: 2
-   :caption: Contents
-
 
 
 The PyRanges can be written to several formats, namely csv, gtf, gff3 and bigwig.

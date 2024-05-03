@@ -27,7 +27,6 @@ from pyranges.core.names import (
     RANGE_COLS,
     SKIP_IF_EMPTY_LEFT,
     START_COL,
-    STRAND_BEHAVIOR_DEFAULT,
     STRAND_BEHAVIOR_OPPOSITE,
     STRAND_COL,
     TEMP_END_SLACK_COL,
@@ -874,6 +873,8 @@ class PyRanges(RangeFrame):
         match_by: str | list[str] | None = None,
         overlap_col: str = "NumberOverlaps",
         keep_nonoverlapping: bool = True,
+        calculate_coverage: bool = False,
+        coverage_col: str = "CoverageOverlaps",
     ) -> "PyRanges":
         """Count number of overlaps per interval.
 
@@ -898,6 +899,12 @@ class PyRanges(RangeFrame):
         overlap_col : str, default "NumberOverlaps"
             Name of column with overlap counts.
 
+        calculate_coverage : bool, default False
+            Whether to compute the fraction of each interval overlapped by other intervals, added as a new column.
+
+        coverage_col: str = "CoverageOverlaps"
+            If coverage is True, the name of the column with the fraction of overlaps to be added.
+
         Returns
         -------
         PyRanges
@@ -905,7 +912,6 @@ class PyRanges(RangeFrame):
 
         See Also
         --------
-        PyRanges.coverage: find coverage of PyRanges
         pyranges.count_overlaps: count overlaps from multiple PyRanges
 
         Examples
@@ -941,10 +947,43 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
+        >>> f1.count_overlaps(f2, overlap_col="C", calculate_coverage=True, coverage_col="F")
+          index  |    Chromosome      Start      End  Strand              F
+          int64  |    category        int64    int64  category      float64
+        -------  ---  ------------  -------  -------  ----------  ---------
+              0  |    chr1                3        6  +                 0
+              2  |    chr1                8        9  +                 0
+              1  |    chr1                5        7  -                 0.5
+        PyRanges with 3 rows, 5 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        >>> annotation = pr.example_data.ensembl_gtf.get_with_loc_columns(['transcript_id', 'Feature'])
+        >>> reads = pr.random(1000, chromsizes={'1':150000}, strand=False, seed=123)
+        >>> annotation.count_overlaps(reads)
+        index    |    Chromosome    Start    End      Strand      transcript_id    Feature     NumberOverlaps
+        int64    |    category      int64    int64    category    object           category    int64
+        -------  ---  ------------  -------  -------  ----------  ---------------  ----------  ----------------
+        0        |    1             11868    14409    +           nan              gene        20
+        1        |    1             11868    14409    +           ENST00000456328  transcript  20
+        2        |    1             11868    12227    +           ENST00000456328  exon        3
+        3        |    1             12612    12721    +           ENST00000456328  exon        3
+        ...      |    ...           ...      ...      ...         ...              ...         ...
+        7        |    1             120724   133723   -           ENST00000610542  transcript  85
+        8        |    1             133373   133723   -           ENST00000610542  exon        2
+        9        |    1             129054   129223   -           ENST00000610542  exon        1
+        10       |    1             120873   120932   -           ENST00000610542  exon        1
+        PyRanges with 11 rows, 7 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
         """
         from pyranges.methods.coverage import _number_overlapping
 
-        return self.apply_pair(
+        strand_behavior = validate_and_convert_strand_behavior(self, other, strand_behavior)
+        if coverage_col != "CoverageOverlaps" and not calculate_coverage:
+            msg = "coverage_col can only be provided if calculate_coverage is True."
+            raise ValueError(msg)
+
+        result = self.apply_pair(
             other,
             _number_overlapping,
             strand_behavior=strand_behavior,
@@ -954,110 +993,23 @@ class PyRanges(RangeFrame):
             skip_if_empty=not keep_nonoverlapping,
         )
 
-    def coverage(
-        self,
-        other: "PyRanges",
-        strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
-        *,
-        overlap_col: str = "NumberOverlaps",
-        fraction_col: str = "FractionOverlaps",
-        match_by: VALID_BY_TYPES = None,
-        keep_nonoverlapping: bool = True,
-    ) -> "PyRanges":
-        """Count number of overlaps and their fraction per interval.
+        if calculate_coverage:
+            from pyranges.methods.coverage import _coverage
 
-        Count how many intervals in self overlap with those in other.
+            use_strand = use_strand_from_validated_strand_behavior(self, other, strand_behavior)
+            other = other.merge_overlaps(use_strand=use_strand, match_by=match_by, count_col="Count")
 
-        Parameters
-        ----------
-        other: PyRanges
-            Count overlaps from this PyRanges.
-
-        match_by : str or list, default None
-            If provided, only intervals with an equal value in column(s) `match_by` may be considered as overlapping.
-
-        strand_behavior : {"auto", "same", "opposite", "ignore"}, default "auto"
-            Whether to consider overlaps of intervals on the same strand, the opposite or ignore strand
-            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_valid)
-            otherwise ignore the strand information.
-
-        keep_nonoverlapping : bool, default True
-            Keep intervals without overlaps.
-
-        overlap_col : str, default "NumberOverlaps"
-            Name of column with overlap counts.
-
-        fraction_col : str, default "FractionOverlaps"
-            Name of column with fraction of counts.
-
-
-        Returns
-        -------
-        PyRanges
-            PyRanges with a column of overlaps added.
-
-        See Also
-        --------
-        pyranges.count_overlaps: count overlaps from multiple PyRanges
-
-        Examples
-        --------
-        >>> f1 = pr.PyRanges({"Chromosome": [1, 1, 1], "Start": [3, 8, 5],
-        ...                    "End": [6,  9, 7]})
-        >>> f1
-          index  |      Chromosome    Start      End
-          int64  |           int64    int64    int64
-        -------  ---  ------------  -------  -------
-              0  |               1        3        6
-              1  |               1        8        9
-              2  |               1        5        7
-        PyRanges with 3 rows, 3 columns, and 1 index columns.
-        Contains 1 chromosomes.
-
-        >>> f2 = pr.PyRanges({"Chromosome": [1, 1], "Start": [1, 6],
-        ...                    "End": [2, 7]})
-        >>> f2
-          index  |      Chromosome    Start      End
-          int64  |           int64    int64    int64
-        -------  ---  ------------  -------  -------
-              0  |               1        1        2
-              1  |               1        6        7
-        PyRanges with 2 rows, 3 columns, and 1 index columns.
-        Contains 1 chromosomes.
-
-        >>> f1.coverage(f2, overlap_col="C", fraction_col="F")
-          index  |      Chromosome    Start      End        C          F
-          int64  |           int64    int64    int64    int64    float64
-        -------  ---  ------------  -------  -------  -------  ---------
-              0  |               1        3        6        0        0
-              1  |               1        8        9        0        0
-              2  |               1        5        7        1        0.5
-        PyRanges with 3 rows, 5 columns, and 1 index columns.
-        Contains 1 chromosomes.
-
-        """
-        counts = self.count_overlaps(
-            other,
-            keep_nonoverlapping=True,
-            overlap_col=overlap_col,
-            strand_behavior=strand_behavior,
-        )
-
-        strand = strand_behavior != STRAND_BEHAVIOR_DEFAULT
-        other = other.merge_overlaps(use_strand=strand, count_col="Count")
-
-        from pyranges.methods.coverage import _coverage
-
-        return counts.apply_pair(
-            other,
-            _coverage,
-            strand_behavior=strand_behavior,
-            by=match_by,
-            fraction_col=fraction_col,
-            keep_nonoverlapping=keep_nonoverlapping,
-            overlap_col=overlap_col,
-            skip_if_empty=not keep_nonoverlapping,
-        )
+            result = self.copy().apply_pair(
+                other,
+                _coverage,
+                strand_behavior=strand_behavior,
+                by=match_by,
+                fraction_col=coverage_col,
+                keep_nonoverlapping=keep_nonoverlapping,
+                overlap_col=overlap_col,
+                skip_if_empty=not keep_nonoverlapping,
+            )
+        return result
 
     # to do: optimize, doesn't need to split by chromosome, only strand and only if ext_3/5
     def extend(
