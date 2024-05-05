@@ -4,7 +4,6 @@ astroid==3.1.0
 attrs==23.2.0
 Babel==2.14.0
 bamread==0.0.16
-bwread==0.0.5
 cachetools==5.3.3
 certifi==2024.2.2
 chardet==5.2.0

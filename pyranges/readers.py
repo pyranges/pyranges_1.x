@@ -76,6 +76,11 @@ def read_bed(f: Path, /, nrows: int | None = None) -> "PyRanges":
     If you just want to create a PyRanges from a tab-delimited bed-like file,
     use `pr.PyRanges(pandas.read_table(f))` instead.
 
+    Returns
+    -------
+    PyRanges
+
+
     Examples
     --------
     >>> import pyranges as pr
@@ -158,6 +163,11 @@ def read_bam(
         Ignore reads with these flags. Default 1540, which means that either
         the read is unmapped, the read failed vendor or platfrom quality
         checks, or the read is a PCR or optical duplicate.
+
+    Returns
+    -------
+    PyRanges
+
 
     Notes
     -----
@@ -290,9 +300,13 @@ def read_gtf(
     ignore_bad : bool, default False
         Whether to ignore bad lines or raise an error.
 
+
+    Returns
+    -------
+    PyRanges
+
     Note
     ----
-
     The GTF format encodes both Start and End as 1-based included.
     PyRanges encodes intervals as 0-based, Start included and End excluded.
 
@@ -347,7 +361,7 @@ def read_gtf_full(
     duplicate_attr: bool = False,
     ignore_bad: bool = False,
 ) -> "PyRanges":
-    """Read files in the Gene Transfer Format.
+    """Read files in the Gene Transfer Format into a PyRanges, including the annotation column.
 
     Parameters
     ----------
@@ -368,6 +382,10 @@ def read_gtf_full(
 
     ignore_bad : bool, default False
         Whether to ignore bad lines or raise an error.
+
+    Returns
+    -------
+    PyRanges
 
     """
     dtypes = {"Chromosome": "category", "Feature": "category", "Strand": "category"}
@@ -481,6 +499,7 @@ def read_gtf_restricted(f: str | Path, skiprows: int | None, nrows: int | None =
     strand - defined as + (forward) or - (reverse).
     # frame - One of '0', '1' or '2'. '0' indicates that the first base of the feature is the first base of a codon, '1' that the second base is the first base of a codon, and so on..
     attribute - A semicolon-separated list of tag-value pairs, providing additional information about each feature.
+
     """
     dtypes = {"Chromosome": "category", "Feature": "category", "Strand": "category"}
     path = Path(f)
@@ -540,7 +559,7 @@ def read_gff3(
     *,
     full: bool = True,
 ) -> "PyRanges":
-    """Read files in the General Feature Format.
+    """Read files in the General Feature Format into a PyRanges.
 
     Parameters
     ----------
@@ -552,6 +571,10 @@ def read_gff3(
 
     nrows : int, default None
         Number of rows to read. Default None, i.e. all.
+
+    Returns
+    -------
+    PyRanges
 
     Notes
     -----
@@ -602,37 +625,46 @@ def read_gff3(
 
 
 def read_bigwig(f: str | Path) -> "PyRanges":
-    """Read bigwig files into a PyRanges."""
-    try:
-        import pyBigWig  # type: ignore[import]
-    except ModuleNotFoundError:
-        LOGGER.exception(
-            "bwread must be installed to read bigwigs. Use `conda install -c bioconda bwread` or `pip install bwread` to install it.",
-        )
-        sys.exit(1)
-
-    """Read bigwig files.
+    """Read bigwig files into a PyRanges.
 
     Parameters
     ----------
     f : str
-
         Path to bw file.
 
-    as_df : bool, default False
-
-        Whether to return as pandas DataFrame instead of PyRanges.
+    Returns
+    -------
+    PyRanges
 
     Examples
     --------
+    >>> import pyranges as pr
+    >>> path = pr.example_data.files["bigwig.bw"]
+    >>> pr.read_bigwig(path)
+      index  |      Chromosome    Start      End      Value
+      int64  |          object    int64    int64    float64
+    -------  ---  ------------  -------  -------  ---------
+          0  |               1        0        1        0.1
+          1  |               1        1        2        0.2
+          2  |               1        2        3        0.3
+          3  |               1      100      150        1.4
+          4  |               1      150      151        1.5
+          5  |              10      200      300        2
+    PyRanges with 6 rows, 4 columns, and 1 index columns.
+    Contains 2 chromosomes.
 
-    >>> f = pr.get_example_path("bw.bw")
-    >>> gr = pr.read_bigwig(f)
-    >>> gr
+
     """
+    try:
+        import pyBigWig  # type: ignore[import]
+    except ModuleNotFoundError:
+        LOGGER.exception(
+            "pyBigWig must be installed to read bigwigs. Use `pip install pyBigWig` to install it.",
+        )
+        sys.exit(1)
 
     path = Path(f)
-    bw = pyBigWig.open(path)
+    bw = pyBigWig.open(str(path))
 
     size = int(1e5)
     chromosomes = bw.chroms()
@@ -669,4 +701,4 @@ def read_bigwig(f: str | Path) -> "PyRanges":
             },
         )
 
-    return mypy_ensure_pyranges(pd.concat(dfs))
+    return mypy_ensure_pyranges(pd.concat(dfs).reset_index(drop=True))
