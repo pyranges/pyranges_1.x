@@ -37,7 +37,6 @@ pyBigWig==0.3.22
 pyfaidx==0.8.1.1
 Pygments==2.17.2
 pyproject-api==1.6.1
-pyranges
 pyright==1.1.361
 pyrle
 pysam==0.22.1
