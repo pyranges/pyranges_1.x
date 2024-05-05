@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.INFO)
 
-__version__ = importlib.metadata.version("pyranges")
+__version__ = importlib.metadata.version("pyranges1") # note: update when pyranges1 becomes default
 
 
 def version_info() -> None:
