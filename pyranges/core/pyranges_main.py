@@ -1946,7 +1946,7 @@ class PyRanges(RangeFrame):
 
         how = OVERLAP_CONTAINMENT if contained else OVERLAP_FIRST
 
-        return self.apply_pair(
+        result = self.apply_pair(
             other,
             _overlap,
             strand_behavior=strand_behavior,
@@ -1955,6 +1955,8 @@ class PyRanges(RangeFrame):
             skip_if_empty=False if invert else SKIP_IF_EMPTY_LEFT,
             how=how,
         )
+        common_index = self.index.intersection(result.index)
+        return mypy_ensure_pyranges(result.reindex(common_index))
 
     def set_intersect(
         self,
