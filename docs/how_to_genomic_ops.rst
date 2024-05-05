@@ -4,8 +4,6 @@ Operating on coordinates
 .. contents::
    :local:
    :depth: 2
-   :caption: Contents
-
 
 Modifying coordinates
 ---------------------

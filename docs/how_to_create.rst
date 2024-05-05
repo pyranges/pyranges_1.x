@@ -4,7 +4,6 @@ Loading/Creating PyRanges
 .. contents::
    :local:
    :depth: 2
-   :caption: Contents
 
 
 A PyRanges object can be built like a Pandas DataFrame, but genomic location columns (Chromosome, Start, End) are

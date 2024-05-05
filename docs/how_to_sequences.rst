@@ -2,6 +2,10 @@
 Working with sequences
 ~~~~~~~~~~~~~~~~~~~~~~
 
+.. contents::
+   :local:
+   :depth: 2
+
 Fetching sequences per interval
 -------------------------------
 

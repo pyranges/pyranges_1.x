@@ -4,7 +4,6 @@ Rows operations
 .. contents::
    :local:
    :depth: 2
-   :caption: Contents
 
 
 Indexing with iloc, loc

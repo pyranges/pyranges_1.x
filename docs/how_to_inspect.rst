@@ -4,8 +4,6 @@ Inspecting PyRanges
 .. contents::
    :local:
    :depth: 2
-   :caption: Contents
-
 
 String representation
 ---------------------

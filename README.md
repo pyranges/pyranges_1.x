@@ -15,7 +15,7 @@ that will replace the "default" (version 0) sometime in 2024.
 
 ## Install
 
-Minimal installation:
+Pyranges 1.x requires python ≥3.12. Minimal installation: 
 
 ```bash
 pip install pyranges1
