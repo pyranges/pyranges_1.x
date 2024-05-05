@@ -2,6 +2,12 @@
 Installation
 ~~~~~~~~~~~~
 
+Pyranges 1.x requires python ≥ 3.12. If necessary, create a new conda environment::
+
+    conda create -yn pr python
+    conda activate pr
+
+
 The preferred way to install pyranges is via pip::
 
     pip install pyranges1
