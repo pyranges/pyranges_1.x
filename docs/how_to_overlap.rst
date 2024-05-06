@@ -469,27 +469,28 @@ are present in at least one of the PyRanges:
     index  |    Chromosome      Start      End  Strand
     int64  |    object          int64    int64  object
   -------  ---  ------------  -------  -------  --------
-        0  |    chr1                3        8  +
-        1  |    chr1               12       15  +
-        2  |    chr1               19       20  +
-        3  |    chr1               32       37  +
-        4  |    chr1               18       21  -
-        5  |    chr1               23       29  -
-  PyRanges with 6 rows, 4 columns, and 1 index columns.
+        0  |    chr1                3        6  +
+        1  |    chr1                6        8  +
+        2  |    chr1               12       15  +
+        3  |    chr1               19       20  +
+        4  |    chr1               32       37  +
+        5  |    chr1               18       21  -
+        6  |    chr1               23       29  -
+  PyRanges with 7 rows, 4 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
   >>> a2.set_union(b2, strand_behavior='ignore')
     index  |    Chromosome      Start      End
     int64  |    object          int64    int64
   -------  ---  ------------  -------  -------
-        0  |    chr1                3        8
-        1  |    chr1               12       15
-        2  |    chr1               18       21
-        3  |    chr1               23       29
-        4  |    chr1               32       37
-  PyRanges with 5 rows, 3 columns, and 1 index columns.
+        0  |    chr1                3        6
+        1  |    chr1                6        8
+        2  |    chr1               12       15
+        3  |    chr1               18       21
+        4  |    chr1               23       29
+        5  |    chr1               32       37
+  PyRanges with 6 rows, 3 columns, and 1 index columns.
   Contains 1 chromosomes.
-
 
 Interval manipulation operations: intersect, subtract
 -----------------------------------------------------
@@ -813,12 +814,9 @@ All metadata columns are dropped:
   PyRanges with 5 rows, 4 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-While not formally overlapping, **bookended intervals are merged** by
-:func:`merge_overlaps <pyranges.PyRanges.merge_overlaps>`.
-
 As before, both ``slack`` and ``use_strand`` are supported:
 
-  >>> c.merge_overlaps(slack=1)
+  >>> c.merge_overlaps(slack=2)
     index  |    Chromosome      Start      End  Strand
     int64  |    object          int64    int64  object
   -------  ---  ------------  -------  -------  --------
@@ -831,7 +829,7 @@ As before, both ``slack`` and ``use_strand`` are supported:
 
 Note that Strand is not reported when ``use_strand`` is set to False:
 
-  >>> c.merge_overlaps(slack=1, use_strand=False)
+  >>> c.merge_overlaps(slack=2, use_strand=False)
     index  |    Chromosome      Start      End
     int64  |    object          int64    int64
   -------  ---  ------------  -------  -------
@@ -891,8 +889,9 @@ The intervals to return are chosen to maximize the number of intervals in the ou
         0  |    chr1                1        5  +                 0  b
         2  |    chr1               10       14  +                 1  b
         5  |    chr1               20       22  +                 2  c
+        6  |    chr1               24       25  +                 2  a
         7  |    chr1               28       30  +                 2  b
-  PyRanges with 4 rows, 6 columns, and 1 index columns.
+  PyRanges with 5 rows, 6 columns, and 1 index columns.
   Contains 1 chromosomes and 1 strands.
 
 As well as ``match_by``:

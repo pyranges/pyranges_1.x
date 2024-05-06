@@ -792,7 +792,7 @@ class PyRanges(RangeFrame):
             If provided, only intervals with an equal value in column(s) `match_by` may be considered as overlapping.
 
         slack : int, default 0
-            Length by which the criteria of overlap are loosened. If slack is 0, only overlapping intervals are cluster.
+            Length by which the criteria of overlap are loosened.
             A value of 1 clusters also bookended intervals.
             Higher slack values cluster more distant intervals (with a maximum distance of slack-1 between them).
 
@@ -1656,7 +1656,9 @@ class PyRanges(RangeFrame):
             The default "auto" means True if PyRanges has valid strands (see .strand_valid).
 
         slack : int, default 0
-            Consider intervals within a distance of slack to be overlapping.
+            Length by which the criteria of overlap are loosened.
+            A value of 1 implies that bookended intervals are considered overlapping.
+            Higher slack values allow more distant intervals (with a maximum distance of slack-1 between them).
 
         match_by : str or list, default None
             If provided, only intervals with an equal value in column(s) `match_by` may be considered as overlapping.
@@ -2273,9 +2275,22 @@ class PyRanges(RangeFrame):
           index  |    Chromosome      Start      End
           int64  |    object          int64    int64
         -------  ---  ------------  -------  -------
+              0  |    chr1                1        9
+              1  |    chr1                9       10
+              2  |    chr1               10       11
+        PyRanges with 3 rows, 3 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        Merging bookended intervals:
+
+        >>> gr.set_union(gr2).merge_overlaps(slack=1)
+          index  |    Chromosome      Start      End
+          int64  |    object          int64    int64
+        -------  ---  ------------  -------  -------
               0  |    chr1                1       11
         PyRanges with 1 rows, 3 columns, and 1 index columns.
         Contains 1 chromosomes.
+
 
         """
         if self.empty and other.empty:
