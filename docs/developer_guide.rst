@@ -99,7 +99,7 @@ Task sequence
 ~~~~~~~~~~~~~
 
 1. Create and download your own Pyranges fork
-------------------------------------------
+---------------------------------------------
 
 The easiest way to do this is through github. Login into the github website if you aren't already,
 then visit the Pyranges page on github, click "Fork" on the top right. 
@@ -295,7 +295,7 @@ case, google how to set up a github token that you can use.
 
 
 10. Open a pull request
-----------------------
+-----------------------
 
 The easiest way to open a pull request is through the github website. Go to **your**
 Pyranges fork on github, then find the "Contribute" button (near the **<> Code** button). Click
@@ -315,7 +315,7 @@ Pyranges administrators will inspect the pull request, comment it if necessary, 
 
 
 11. Core team only: upload to PyPI
----------------------------------
+----------------------------------
 
 Every now and then, the core development team considers that a new pyranges version should be
 released. To do so:
@@ -346,6 +346,8 @@ property-based tests):
 .. code:: bash
 
     pytest -n 4 tests/property_based
+
+Other useful tools:
 
 * [rg](https://github.com/BurntSushi/ripgrep): ripgrep recursively searches directories for a regex pattern while respecting your gitignore
 * [fd](https://github.com/sharkdp/fd): A simple, fast and user-friendly alternative to 'find'

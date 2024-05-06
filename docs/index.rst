@@ -49,9 +49,8 @@ Documentation outline
    developer_guide
 
 
-Indices and tables
-==================
+Indices
+=======
 
 * :ref:`genindex`
 * :ref:`modindex`
-* :ref:`search`

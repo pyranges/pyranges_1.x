@@ -11,7 +11,6 @@ from pyranges.core.names import (
     STRAND_BEHAVIOR_SAME,
     STRAND_COL,
     STRICT_STRAND_BEHAVIOR_TYPE,
-    TEMP_STRAND_COL,
     USE_STRAND_AUTO,
     VALID_BY_OPTIONS,
     VALID_STRAND_BEHAVIOR_OPTIONS,
@@ -119,17 +118,17 @@ def group_keys_from_validated_strand_behavior(
     """Return group keys based on strand behavior.
 
     If strand_behavior is 'same', return [CHROM_COL, STRAND_COL].
-    If strand_behavior is 'opposite', return [CHROM_COL, TEMP_STRAND_COL].
+    If strand_behavior is 'opposite', return [CHROM_COL, STRAND_COL].
     If strand_behavior is 'ignore', return [CHROM_COL].
 
     In each case, if a by argument is provided, it is appended/extended to the list of group keys.
 
     """
-    strand_cols = (
-        [STRAND_COL]
-        if strand_behavior == STRAND_BEHAVIOR_SAME
-        else ([TEMP_STRAND_COL] if strand_behavior == STRAND_BEHAVIOR_OPPOSITE else [])
-    )
+    if strand_behavior == STRAND_BEHAVIOR_AUTO:
+        msg = "this function must be called with a validated strand_behavior"
+        raise ValueError(msg)
+
+    strand_cols = [STRAND_COL] if strand_behavior in [STRAND_BEHAVIOR_SAME, STRAND_BEHAVIOR_OPPOSITE] else []
 
     return [CHROM_COL, *strand_cols, *arg_to_list(by)]
 

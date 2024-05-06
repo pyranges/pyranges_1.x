@@ -12,10 +12,10 @@ The preferred way to install pyranges is via pip::
 
     pip install pyranges1
 
-The command above will install a minimal version of pyranges.
+The command above will install a **minimal version** of pyranges.
 Pyranges has several optional dependencies, required for certain functionalities.
 
-To install all optional dependencies, use::
+To **install all optional dependencies**, use::
 
     pip install pyranges1[all]
 
