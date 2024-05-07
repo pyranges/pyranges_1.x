@@ -10,8 +10,8 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os
-import sys
+from docutils import nodes, utils
+
 # sys.path.insert(0, os.path.abspath('.'))
 
 # sys.path.insert(0, os.path.abspath('..'))  # Adjust this as necessary
@@ -78,12 +78,16 @@ html_theme = 'sphinx_rtd_theme'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
-from docutils import nodes, utils
+
 
 def monospaced_link(name, rawtext, text, lineno, inliner, options={}, content=[]):
-    url = text.split(' ')[-1]
+    url = text.split(' ')[-1].strip('<>')
+    clickable_text = ' '.join(text.split(' ')[:-1])
     # Create a reference node, which is the docutils node for hyperlinks
-    node = nodes.reference(rawtext, utils.unescape(text.replace(url, '')), refuri=url, **options)
+    unescaped_text = utils.unescape(text)
+
+    node = nodes.reference(rawtext, clickable_text, refuri=url, **options)
+
     # Add a special class to this node
     node['classes'].append('monospaced-link')
     return [node], []
