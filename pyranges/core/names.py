@@ -84,7 +84,7 @@ VALID_JOIN_TYPE = Literal["inner", "left", "outer", "right"]
 VALID_JOIN_OPTIONS = [JOIN_INNER, JOIN_LEFT, JOIN_OUTER, JOIN_RIGHT]
 
 JOIN_SUFFIX = "_b"
-VALID_COMBINE_OPTIONS = Literal["intersect", "union"]
+VALID_COMBINE_OPTIONS = Literal["intersect", "union", "swap"]
 
 NEAREST_ANY_DIRECTION: Final = "any"
 NEAREST_UPSTREAM: Final = "upstream"

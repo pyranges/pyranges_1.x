@@ -4261,12 +4261,13 @@ class PyRanges(RangeFrame):
     ) -> "pr.PyRanges":
         """Use two pairs of columns representing intervals to create a new start and end column.
 
+        The function is designed as post-processing after join_ranges to aggregate the coordinates of the two intervals.
         By default, the new start and end columns will be the intersection of the intervals.
 
         Parameters
         ----------
-        function : {"intersect", "union"} or Callable, default "intersect"
-            How to combine the intervals: "intersect" or "union".
+        function : {"intersect", "union", "swap"} or Callable, default "intersect"
+            How to combine the self and other intervals: "intersect", "union", or "swap"
             If a callable is passed, it should take four Series arguments: start1, end1, start2, end2;
             and return a tuple of two integers: (new_starts, new_ends).
 
@@ -4325,6 +4326,19 @@ class PyRanges(RangeFrame):
         PyRanges with 5 rows, 4 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes and 2 strands.
 
+        >>> j.combine_interval_columns('swap')
+          index  |    Chromosome      Start      End  Strand
+          int64  |    category        int64    int64  category
+        -------  ---  ------------  -------  -------  ----------
+              1  |    chr1            10073    10272  +
+              0  |    chr1             9988    10187  -
+              0  |    chr1            10079    10278  -
+              2  |    chr1             9988    10187  -
+              2  |    chr1            10079    10278  -
+        PyRanges with 5 rows, 4 columns, and 1 index columns (with 2 index duplicates).
+        Contains 1 chromosomes and 2 strands.
+
+
         Use a custom function that keeps the start of the first interval and the end of the second:
 
         >>> def custom_combine(s1, e1, s2, e2): return (s1, e2)
@@ -4341,12 +4355,18 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         """
-        from pyranges.methods.combine_positions import _intersect_interval_columns, _union_interval_columns
+        from pyranges.methods.combine_positions import (
+            _intersect_interval_columns,
+            _swap_interval_columns,
+            _union_interval_columns,
+        )
 
         if function == "intersect":
             function = _intersect_interval_columns
         elif function == "union":
             function = _union_interval_columns
+        elif function == "swap":
+            function = _swap_interval_columns
 
         new_starts, new_ends = function(self[start], self[end], self[start2], self[end2])
 
