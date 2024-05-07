@@ -29,7 +29,7 @@ v0	v1	caveats
 **Get/set syntaxes:**		
  :mslink:`g.COLNAME <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.__getitem__>` 	``g['COLNAME']``	inherited by pandas DataFrame
  :mslink:`g.COLNAME = ...  <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.__setattr__>` 	``g['COLNAME'] = ...``	inherited by pandas DataFrame
- :mslink:`g[ [COL1, COL2] ] <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.__getitem__>` 	:func:`g.get_loc_columns([COL1, COL2]) <pyranges.PyRanges.get_loc_columns>`	old syntax triggers pandas behavior: will only return requested columns
+ :mslink:`g[ [COL1, COL2] ] <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.__getitem__>` 	:func:`g.get_with_loc_columns([COL1, COL2]) <pyranges.PyRanges.get_with_loc_columns>`	old syntax triggers pandas behavior: will only return requested columns
  :mslink:`g[chrom, strand, slice]  <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.__getitem__>` 	:func:`g.loci[chrom, strand, slice] <pyranges.PyRanges.loci>`	flexible syntax
  :mslink:`for k in g: ... <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.__iter__>` 	``REMOVED``	
 **PyRanges methods:**		
