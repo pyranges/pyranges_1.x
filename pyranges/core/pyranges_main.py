@@ -871,6 +871,7 @@ class PyRanges(RangeFrame):
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
         *,
         match_by: str | list[str] | None = None,
+        slack: int = 0,
         overlap_col: str = "NumberOverlaps",
         keep_nonoverlapping: bool = True,
         calculate_coverage: bool = False,
@@ -892,6 +893,9 @@ class PyRanges(RangeFrame):
             Whether to consider overlaps of intervals on the same strand, the opposite or ignore strand
             information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_valid)
             otherwise ignore the strand information.
+
+        slack : int, default 0
+            Temporarily lengthen intervals in self before searching for overlaps.
 
         keep_nonoverlapping : bool, default True
             Keep intervals without overlaps.
@@ -942,19 +946,29 @@ class PyRanges(RangeFrame):
           int64  |    category        int64    int64  category      int64
         -------  ---  ------------  -------  -------  ----------  -------
               0  |    chr1                3        6  +                 0
-              2  |    chr1                8        9  +                 0
               1  |    chr1                5        7  -                 1
+              2  |    chr1                8        9  +                 0
+        PyRanges with 3 rows, 5 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        >>> f1.count_overlaps(f2, overlap_col="Count", slack=1, strand_behavior="ignore")
+          index  |    Chromosome      Start      End  Strand        Count
+          int64  |    category        int64    int64  category      int64
+        -------  ---  ------------  -------  -------  ----------  -------
+              0  |    chr1                3        6  +                 1
+              1  |    chr1                5        7  -                 1
+              2  |    chr1                8        9  +                 0
         PyRanges with 3 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
         >>> f1.count_overlaps(f2, overlap_col="C", calculate_coverage=True, coverage_col="F")
-          index  |    Chromosome      Start      End  Strand              F
-          int64  |    category        int64    int64  category      float64
-        -------  ---  ------------  -------  -------  ----------  ---------
-              0  |    chr1                3        6  +                 0
-              2  |    chr1                8        9  +                 0
-              1  |    chr1                5        7  -                 0.5
-        PyRanges with 3 rows, 5 columns, and 1 index columns.
+          index  |    Chromosome      Start      End  Strand            C          F
+          int64  |    category        int64    int64  category      int64    float64
+        -------  ---  ------------  -------  -------  ----------  -------  ---------
+              0  |    chr1                3        6  +                 0        0
+              1  |    chr1                5        7  -                 1        0.5
+              2  |    chr1                8        9  +                 0        0
+        PyRanges with 3 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
         >>> annotation = pr.example_data.ensembl_gtf.get_with_loc_columns(['transcript_id', 'Feature'])
@@ -983,7 +997,20 @@ class PyRanges(RangeFrame):
             msg = "coverage_col can only be provided if calculate_coverage is True."
             raise ValueError(msg)
 
-        result = self.apply_pair(
+        if slack and calculate_coverage:
+            msg = "calculate_coverage can only be computed with slack=0."
+            raise ValueError(msg)
+
+        if slack:
+            _self = self.copy()
+            _self[TEMP_START_SLACK_COL] = _self.Start
+            _self[TEMP_END_SLACK_COL] = _self.End
+
+            _self = _self.extend(slack, use_strand=False)
+        else:
+            _self = self
+
+        result = _self.apply_pair(
             other,
             _number_overlapping,
             strand_behavior=strand_behavior,
@@ -999,7 +1026,7 @@ class PyRanges(RangeFrame):
             use_strand = use_strand_from_validated_strand_behavior(self, other, strand_behavior)
             other = other.merge_overlaps(use_strand=use_strand, match_by=match_by, count_col="Count")
 
-            result = self.copy().apply_pair(
+            result = result.apply_pair(
                 other,
                 _coverage,
                 strand_behavior=strand_behavior,
@@ -1009,7 +1036,14 @@ class PyRanges(RangeFrame):
                 overlap_col=overlap_col,
                 skip_if_empty=not keep_nonoverlapping,
             )
-        return result
+
+        if slack and len(result) > 0:
+            result[START_COL] = result[TEMP_START_SLACK_COL]
+            result[END_COL] = result[TEMP_END_SLACK_COL]
+            result = result.drop_and_return([TEMP_START_SLACK_COL, TEMP_END_SLACK_COL], axis=1)
+
+        # reindex to original order
+        return mypy_ensure_pyranges(result.reindex(self.index))
 
     # to do: optimize, doesn't need to split by chromosome, only strand and only if ext_3/5
     def extend(
@@ -1270,7 +1304,7 @@ class PyRanges(RangeFrame):
             Report amount of overlap in base pairs.
 
         slack : int, default 0
-            Lengthen intervals in self before joining.
+            Temporarily lengthen intervals in self before joining.
 
         suffix : str or tuple, default "_b"
             Suffix to give overlapping columns in other.
@@ -1465,7 +1499,7 @@ class PyRanges(RangeFrame):
             _self[TEMP_START_SLACK_COL] = _self.Start
             _self[TEMP_END_SLACK_COL] = _self.End
 
-            _self = _self.extend(slack)
+            _self = _self.extend(slack, use_strand=False)
 
         gr: pd.DataFrame | PyRanges = _self.apply_pair(
             other,
