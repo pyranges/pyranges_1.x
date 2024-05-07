@@ -16,8 +16,8 @@ Pyranges is developed by Endre Bakken Stovner and by
 `Marco Mariotti's lab <https://www.mariottigenomicslab.com/>`_.
 
 **This documentation refers to the version 1 of pyranges**, which introduces a new API and a new data structure
-compared to version 0, still the 'default', soon to be deprecated. **Version 0** is available at
-https://github.com/pyranges/pyranges and https://pyranges.readthedocs.io/
+compared to version 0, still the 'default', soon to be deprecated. If you are a pyranges v0 user,
+check :doc:`this guide to migrate to v1 <./migration_guide>`.
 
 
 Citation
@@ -34,6 +34,7 @@ Documentation outline
 #. 🚀 :doc:`The how-to pages <./how_to_pages>`, further below, where functionalities are grouped by topic
 #. 🚀 :doc:`The API reference <./api_reference>`, where all methods are explained in detail
 #. 🚀 :doc:`The developer guide <./developer_guide>`, to follow in order to contribute to PyRanges
+#. 🚀 :doc:`The guide to migrate to v1 <./migration_guide>`, for existing users of pyranges v0
 
 
 
