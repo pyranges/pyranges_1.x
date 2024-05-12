@@ -1599,8 +1599,7 @@ class PyRanges(RangeFrame):
 
         Examples
         --------
-        
-        gr = pr.example_data.f1
+        >>> gr = pr.example_data.f1
         >>> gr
           index  |    Chromosome      Start      End  Name         Score  Strand
           int64  |    category        int64    int64  object       int64  category
@@ -4572,12 +4571,12 @@ class PyRanges(RangeFrame):
           index  |    Chromosome      Start      End  Strand
           int64  |    category        int64    int64  category
         -------  ---  ------------  -------  -------  ----------
-              1  |    chr1            10073    10272  +
               0  |    chr1             9988    10187  -
-              0  |    chr1            10079    10278  -
-              2  |    chr1             9988    10187  -
-              2  |    chr1            10079    10278  -
-        PyRanges with 5 rows, 4 columns, and 1 index columns (with 2 index duplicates).
+              1  |    chr1            10079    10278  -
+              2  |    chr1            10073    10272  +
+              3  |    chr1             9988    10187  -
+              4  |    chr1            10079    10278  -
+        PyRanges with 5 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
 

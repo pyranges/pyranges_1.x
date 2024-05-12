@@ -592,6 +592,7 @@ Arguments ``strand_behavior`` and ``match_by`` are available:
   PyRanges with 7 rows, 5 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
+
   >>> a2.count_overlaps(b2, strand_behavior='ignore', match_by='odd')
     index  |    Chromosome      Start      End  Strand        odd    NumberOverlaps
     int64  |    object          int64    int64  object      int64             int64
@@ -610,17 +611,17 @@ Optionally, argument ``calculate_coverage`` can be set to True to calculate the 
 by intervals in other:
 
   >>> a.count_overlaps(b, strand_behavior='ignore', calculate_coverage=True)
-    index  |    Chromosome      Start      End  Strand      CoverageOverlaps
-    int64  |    object          int64    int64  object               float64
-  -------  ---  ------------  -------  -------  --------  ------------------
-        0  |    chr1                3        6  +                   0
-        1  |    chr1               13       15  +                   0.5
-        2  |    chr1               18       21  -                   0.333333
-        3  |    chr1               23       27  -                   0.5
-        4  |    chr1               28       29  -                   1
-        5  |    chr1               32       37  +                   0.4
-        6  |    chr1               33       36  +                   0.666667
-  PyRanges with 7 rows, 5 columns, and 1 index columns.
+    index  |    Chromosome      Start      End  Strand      NumberOverlaps    CoverageOverlaps
+    int64  |    object          int64    int64  object               int64             float64
+  -------  ---  ------------  -------  -------  --------  ----------------  ------------------
+        0  |    chr1                3        6  +                        0            0
+        1  |    chr1               13       15  +                        1            0.5
+        2  |    chr1               18       21  -                        1            0.333333
+        3  |    chr1               23       27  -                        1            0.5
+        4  |    chr1               28       29  -                        1            1
+        5  |    chr1               32       37  +                        1            0.4
+        6  |    chr1               33       36  +                        1            0.666667
+  PyRanges with 7 rows, 6 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
 Find the closest interval: nearest
