@@ -40,7 +40,7 @@ def test_join_issue_8():
             "Start_b": [731, 821],
             "End_b": [831, 921],
         },
-        index=[3, 3],
+        index=[0, 1],
     )
 
     assert j.equals(expected_result)
@@ -74,6 +74,6 @@ def test_join_issue_8_right():
             "Start_b": [731, 821, 157, 584],
             "End_b": [831, 921, 257, 684],
         },
-        index=[2, 3, 0, 1],
+        index=[0, 1, 2, 3],
     )
     assert j.equals(expected_result)

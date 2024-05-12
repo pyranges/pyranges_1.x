@@ -636,6 +636,10 @@ def read_bigwig(f: str | Path) -> "PyRanges":
     -------
     PyRanges
 
+    Note
+    ----
+    This function requires the library pyBigWig, it can be installed with pip install pyBigWig
+
     Examples
     --------
     >>> import pyranges as pr

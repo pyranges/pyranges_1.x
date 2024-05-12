@@ -13,7 +13,10 @@ def _merge(df: pd.DataFrame, **kwargs) -> pd.DataFrame:
 
     cdf = df.sort_values(START_COL)
 
-    starts, ends, number = find_clusters(cdf.Start.values, cdf.End.values, slack)
+    # important: sorted_nearest interprets slack differently than pyranges
+    # 0 slack in sorted_nearest means that bookended intervals are considered overlapping
+    # together, while in pyranges it means that they are not.
+    starts, ends, number = find_clusters(cdf.Start.values, cdf.End.values, slack - 1)
 
     by_values = df.head(1).squeeze()[by].to_dict()
 

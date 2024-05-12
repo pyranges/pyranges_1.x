@@ -10,7 +10,15 @@ from sorted_nearest import (  # type: ignore[import]
 
 import pyranges.core.empty
 from pyranges import PyRanges
-from pyranges.core.names import END_COL, START_COL
+from pyranges.core.names import (
+    BY_ENTRY_IN_KWARGS,
+    END_COL,
+    FORWARD_STRAND,
+    GENOME_LOC_COLS_WITH_STRAND,
+    REVERSE_STRAND,
+    START_COL,
+    STRAND_COL,
+)
 from pyranges.methods.sort import sort_one_by_one
 
 if TYPE_CHECKING:
@@ -39,7 +47,7 @@ def _insert_distance(df2: pd.DataFrame, dist: "NDArray | int", suffix: str) -> p
 
 
 def _overlapping_for_nearest(df: pd.DataFrame, df2: pd.DataFrame, suffix: str) -> tuple[pd.DataFrame, pd.DataFrame]:
-    nearest_df = pd.DataFrame(columns="Chromosome Start End Strand".split())
+    nearest_df = pd.DataFrame(columns=GENOME_LOC_COLS_WITH_STRAND)
 
     it = NCLS(df2.Start.to_numpy(), df2.End.to_numpy(), df2.index.to_numpy())
 
@@ -103,18 +111,18 @@ def _nearest(df: "DataFrame", df2: "DataFrame", **kwargs) -> pd.DataFrame:
     if df.empty or df2.empty:
         return PyRanges()
 
+    columns_used_for_by = kwargs.get(BY_ENTRY_IN_KWARGS, {}).keys()
     overlap = kwargs["overlap"]
     how = kwargs["how"]
     suffix = kwargs["suffix"]
+    strand = kwargs.get(BY_ENTRY_IN_KWARGS, {}).get(STRAND_COL)
 
     if how == "upstream":
-        strand = df.Strand.iloc[0]
-        how = {"+": "previous", "-": "next"}[strand]
+        how = {FORWARD_STRAND: "previous", REVERSE_STRAND: "next"}[strand]
     elif how == "downstream":
-        strand = df.Strand.iloc[0]
-        how = {"+": "next", "-": "previous"}[strand]
+        how = {FORWARD_STRAND: "next", REVERSE_STRAND: "previous"}[strand]
 
-    df2 = df2.reset_index(drop=True)
+    df2 = df2.drop(columns=columns_used_for_by).reset_index(drop=True)
 
     if overlap:
         nearest_df, df_to_find_nearest_in = _overlapping_for_nearest(df, df2, suffix)
@@ -124,9 +132,13 @@ def _nearest(df: "DataFrame", df2: "DataFrame", **kwargs) -> pd.DataFrame:
 
     df = pyranges.core.empty.empty_df()
     if not df_to_find_nearest_in.empty:
-        df_to_find_nearest_in = sort_one_by_one(df_to_find_nearest_in, "Start", "End")
-        df2 = sort_one_by_one(df2, "Start", "End")
-        df_to_find_nearest_in.index = pd.Index(range(len(df_to_find_nearest_in)))
+        df_to_find_nearest_in = sort_one_by_one(df_to_find_nearest_in, START_COL, END_COL)
+        df2 = sort_one_by_one(df2, START_COL, END_COL)
+
+        # preserving index name
+        original_index_names = df_to_find_nearest_in.index.names
+        index_names = [name if name is not None else f"__index{i}" for i, name in enumerate(original_index_names)]
+        df_to_find_nearest_in = df_to_find_nearest_in.reset_index(names=index_names)
 
         if how == "next":
             r_idx, dist = _next_nonoverlapping(df_to_find_nearest_in.End, df2.Start, df2.index.to_numpy())
@@ -150,9 +162,13 @@ def _nearest(df: "DataFrame", df2: "DataFrame", **kwargs) -> pd.DataFrame:
 
         df = df_to_find_nearest_in.join(df2, rsuffix=suffix)
 
-    if overlap and "df" in locals() and not df.empty and not nearest_df.empty:
+        # restoring index and index names
+        df = df.set_index(index_names)
+        df.index.names = original_index_names
+
+    if overlap and not df.empty and not nearest_df.empty:
         df = pd.concat([nearest_df, df], sort=False)
     elif overlap and not nearest_df.empty:
         df = nearest_df
 
-    return PyRanges(df.drop("Chromosome" + suffix, axis=1))
+    return df

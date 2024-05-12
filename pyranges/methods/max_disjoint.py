@@ -9,7 +9,9 @@ def _max_disjoint(df: pd.DataFrame, **kwargs) -> pd.DataFrame:
     slack = kwargs.get("slack", 0)
 
     cdf = df.sort_values("End")
-
-    idx = max_disjoint(cdf.index.values, cdf.Start.values, cdf.End.values, slack)
+    # important: sorted_nearest interprets slack differently than pyranges
+    # 0 slack in sorted_nearest means that bookended intervals are clustered
+    # together, while in pyranges it means that they are not.
+    idx = max_disjoint(cdf.index.values, cdf.Start.values, cdf.End.values, slack - 1)
 
     return cdf.reindex(idx)

@@ -41,7 +41,7 @@ def _subseq(
     by_argument_given = bool(by)
     by = by or [TEMP_INDEX_COL]
 
-    strand = kwargs.get(BY_ENTRY_IN_KWARGS, {}).get("Strand")
+    strand = kwargs.get(BY_ENTRY_IN_KWARGS, {}).get(STRAND_COL)
 
     # at this point, strand is False if 1. spliced_subsequence was called with use_strand=False or
     #                                   2. it was called with use_strand='auto' and not self.valid_strand

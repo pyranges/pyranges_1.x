@@ -4,7 +4,7 @@ How-to pages
 These pages explain pyranges functionalities grouped by topic:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    how_to_create
    how_to_write
@@ -13,3 +13,4 @@ These pages explain pyranges functionalities grouped by topic:
    how_to_columns
    how_to_sequences
    how_to_genomic_ops
+   how_to_overlap
