@@ -929,6 +929,7 @@ class PyRanges(RangeFrame):
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
         *,
         match_by: str | list[str] | None = None,
+        slack: int = 0,
         overlap_col: str = "NumberOverlaps",
         keep_nonoverlapping: bool = True,
         calculate_coverage: bool = False,
@@ -950,6 +951,9 @@ class PyRanges(RangeFrame):
             Whether to consider overlaps of intervals on the same strand, the opposite or ignore strand
             information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_valid)
             otherwise ignore the strand information.
+
+        slack : int, default 0
+            Temporarily lengthen intervals in self before searching for overlaps.
 
         keep_nonoverlapping : bool, default True
             Keep intervals without overlaps.
@@ -1005,14 +1009,24 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> f1.count_overlaps(f2, overlap_col="C", calculate_coverage=True, coverage_col="F")
-          index  |    Chromosome      Start      End  Strand              F
-          int64  |    category        int64    int64  category      float64
-        -------  ---  ------------  -------  -------  ----------  ---------
-              0  |    chr1                3        6  +                 0
-              1  |    chr1                5        7  -                 0.5
+        >>> f1.count_overlaps(f2, overlap_col="Count", slack=1, strand_behavior="ignore")
+          index  |    Chromosome      Start      End  Strand        Count
+          int64  |    category        int64    int64  category      int64
+        -------  ---  ------------  -------  -------  ----------  -------
+              0  |    chr1                3        6  +                 1
+              1  |    chr1                5        7  -                 1
               2  |    chr1                8        9  +                 0
         PyRanges with 3 rows, 5 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        >>> f1.count_overlaps(f2, overlap_col="C", calculate_coverage=True, coverage_col="F")
+          index  |    Chromosome      Start      End  Strand            C          F
+          int64  |    category        int64    int64  category      int64    float64
+        -------  ---  ------------  -------  -------  ----------  -------  ---------
+              0  |    chr1                3        6  +                 0        0
+              1  |    chr1                5        7  -                 1        0.5
+              2  |    chr1                8        9  +                 0        0
+        PyRanges with 3 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
         >>> annotation = pr.example_data.ensembl_gtf.get_with_loc_columns(['transcript_id', 'Feature'])
@@ -1041,7 +1055,20 @@ class PyRanges(RangeFrame):
             msg = "coverage_col can only be provided with calculate_coverage=True."
             raise ValueError(msg)
 
-        result = self.apply_pair(
+        if slack and calculate_coverage:
+            msg = "calculate_coverage can only be computed with slack=0."
+            raise ValueError(msg)
+
+        if slack:
+            _self = self.copy()
+            _self[TEMP_START_SLACK_COL] = _self.Start
+            _self[TEMP_END_SLACK_COL] = _self.End
+
+            _self = _self.extend(slack, use_strand=False)
+        else:
+            _self = self
+
+        result = _self.apply_pair(
             other,
             _number_overlapping,
             strand_behavior=strand_behavior,
@@ -1057,7 +1084,7 @@ class PyRanges(RangeFrame):
             use_strand = use_strand_from_validated_strand_behavior(self, other, strand_behavior)
             other = other.merge_overlaps(use_strand=use_strand, match_by=match_by, count_col="Count")
 
-            result = self.copy().apply_pair(
+            result = result.apply_pair(
                 other,
                 _coverage,
                 strand_behavior=strand_behavior,
@@ -1067,10 +1094,13 @@ class PyRanges(RangeFrame):
                 overlap_col=overlap_col,
                 skip_if_empty=not keep_nonoverlapping,
             )
+        if slack and len(result) > 0:
+            result[START_COL] = result[TEMP_START_SLACK_COL]
+            result[END_COL] = result[TEMP_END_SLACK_COL]
+            result = result.drop_and_return([TEMP_START_SLACK_COL, TEMP_END_SLACK_COL], axis=1)
 
-        # preserving input order
-        common_index = self.index.intersection(result.index)
-        return mypy_ensure_pyranges(result.reindex(common_index))
+        # reindex to original order
+        return mypy_ensure_pyranges(result.reindex(self.index))
 
     # to do: optimize, doesn't need to split by chromosome, only strand and only if ext_3/5
     def extend(
@@ -1569,7 +1599,8 @@ class PyRanges(RangeFrame):
 
         Examples
         --------
-        >>> gr = pr.example_data.f1
+        
+        gr = pr.example_data.f1
         >>> gr
           index  |    Chromosome      Start      End  Name         Score  Strand
           int64  |    category        int64    int64  object       int64  category
@@ -4472,12 +4503,13 @@ class PyRanges(RangeFrame):
     ) -> "pr.PyRanges":
         """Use two pairs of columns representing intervals to create a new start and end column.
 
+        The function is designed as post-processing after join_ranges to aggregate the coordinates of the two intervals.
         By default, the new start and end columns will be the intersection of the intervals.
 
         Parameters
         ----------
-        function : {"intersect", "union"} or Callable, default "intersect"
-            How to combine the intervals: "intersect" or "union".
+        function : {"intersect", "union", "swap"} or Callable, default "intersect"
+            How to combine the self and other intervals: "intersect", "union", or "swap"
             If a callable is passed, it should take four Series arguments: start1, end1, start2, end2;
             and return a tuple of two integers: (new_starts, new_ends).
 
@@ -4536,6 +4568,19 @@ class PyRanges(RangeFrame):
         PyRanges with 5 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
+        >>> j.combine_interval_columns('swap')
+          index  |    Chromosome      Start      End  Strand
+          int64  |    category        int64    int64  category
+        -------  ---  ------------  -------  -------  ----------
+              1  |    chr1            10073    10272  +
+              0  |    chr1             9988    10187  -
+              0  |    chr1            10079    10278  -
+              2  |    chr1             9988    10187  -
+              2  |    chr1            10079    10278  -
+        PyRanges with 5 rows, 4 columns, and 1 index columns (with 2 index duplicates).
+        Contains 1 chromosomes and 2 strands.
+
+
         Use a custom function that keeps the start of the first interval and the end of the second:
 
         >>> def custom_combine(s1, e1, s2, e2): return (s1, e2)
@@ -4552,12 +4597,18 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         """
-        from pyranges.methods.combine_positions import _intersect_interval_columns, _union_interval_columns
+        from pyranges.methods.combine_positions import (
+            _intersect_interval_columns,
+            _swap_interval_columns,
+            _union_interval_columns,
+        )
 
         if function == "intersect":
             function = _intersect_interval_columns
         elif function == "union":
             function = _union_interval_columns
+        elif function == "swap":
+            function = _swap_interval_columns
 
         new_starts, new_ends = function(self[start], self[end], self[start2], self[end2])
 
