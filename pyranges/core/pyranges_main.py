@@ -661,7 +661,7 @@ class PyRanges(RangeFrame):
 
     def boundaries(
         self,
-        transcript_id: str | list[str] | None = None,
+        transcript_id: VALID_BY_TYPES = None,
         agg: dict[str, str | Callable] | None = None,
     ) -> "PyRanges":
         """Return the boundaries of groups of intervals (e.g. transcripts).
@@ -1108,7 +1108,7 @@ class PyRanges(RangeFrame):
         ext: int | None = None,
         ext_3: int | None = None,
         ext_5: int | None = None,
-        transcript_id: str | list[str] | None = None,
+        transcript_id: VALID_BY_TYPES = None,
         use_strand: VALID_USE_STRAND_TYPE = "auto",
     ) -> "PyRanges":
         """Extend the intervals from the 5' and/or 3' ends.
@@ -1236,7 +1236,7 @@ class PyRanges(RangeFrame):
 
     def five_end(
         self,
-        transcript_id: str | list[str] | None = None,
+        transcript_id: VALID_BY_TYPES = None,
     ) -> "PyRanges":
         """Return the five prime end of intervals.
 
@@ -1749,7 +1749,6 @@ class PyRanges(RangeFrame):
         """Merge overlapping intervals into one.
 
         Returns a PyRanges with superintervals that are the union of overlapping intervals.
-        Bookended intervals are merged by default.
 
         Parameters
         ----------
@@ -3470,7 +3469,7 @@ class PyRanges(RangeFrame):
 
     def three_end(
         self,
-        transcript_id: str | list[str] | None = None,
+        transcript_id: VALID_BY_TYPES = None,
     ) -> "PyRanges":
         """Return the 3'-end.
 
@@ -4619,6 +4618,240 @@ class PyRanges(RangeFrame):
 
         return z.drop_and_return(labels=cols_to_drop, axis="columns")
 
+    def complement(
+        self: "PyRanges",
+        transcript_id: VALID_BY_TYPES = None,
+        *,
+        use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
+        chromsizes: "dict[str | int, int] | PyRanges | None" = None,
+    ) -> "PyRanges":
+        """Return the internal complement of the intervals, i.e. its introns.
+
+        The complement of an interval is the set of intervals that are not covered by the original interval.
+        This function is useful for obtaining the introns of a set of exons, corresponding to the
+        "internal" complement, i.e. excluding the first and last portion of each chromosome not covered by intervals.
+
+        Parameters
+        ----------
+        transcript_id : str or list, default None
+            Column(s) to group by intervals (i.e. exons). If provided, the complement will be calculated for each group.
+
+        use_strand: {"auto", True, False}, default "auto"
+            Whether to return complement separately for intervals on the positive and negative strand.
+            The default "auto" means use strand information if present and valid (see .strand_valid)
+
+        chromsizes : dict or PyRanges or pyfaidx.Fasta
+            If provided, external complement intervals will also be returned, i.e. the intervals corresponding to the
+            beginning of the chromosome up to the first interval and from the last interval to the end of the
+            chromosome. If transcript_id is provided, these are returned for each group.
+            Format of chromsizes: dict or PyRanges describing the lengths of the chromosomes.
+            pyfaidx.Fasta object is also accepted since it conveniently loads chromosome length
+
+
+        Returns
+        -------
+        PyRanges
+            Complement intervals, i.e. introns in the typical use case.
+
+
+        Notes
+        -----
+        * To ensure non-overlap among the input intervals, merge_overlaps is run before the complement is calculated.
+        * Bookended intervals will result in complement intervals returned since they would be of length 0.
+
+
+
+        Examples
+        --------
+        >>> a = pr.PyRanges(dict(Chromosome="chr1", Start=[2, 10, 20, 40], End=[5, 18, 30, 46], ID=['a', 'a', 'b', 'b']))
+        >>> a
+          index  |    Chromosome      Start      End  ID
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                2        5  a
+              1  |    chr1               10       18  a
+              2  |    chr1               20       30  b
+              3  |    chr1               40       46  b
+        PyRanges with 4 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        Using complement to get introns:
+
+        >>> a.complement('ID')
+          index  |    Chromosome      Start      End  ID
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                5       10  a
+              1  |    chr1               30       40  b
+        PyRanges with 2 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        Get complement of the whole set of intervals, without grouping:
+
+        >>> a.complement()
+          index  |    Chromosome      Start      End
+          int64  |    object          int64    int64
+        -------  ---  ------------  -------  -------
+              0  |    chr1                5       10
+              1  |    chr1               18       20
+              2  |    chr1               30       40
+        PyRanges with 3 rows, 3 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        Include external intervals:
+        >>> a.complement(chromsizes={'chr1': 10000})
+          index  |    Chromosome      Start      End
+          int64  |    object          int64    int64
+        -------  ---  ------------  -------  -------
+              0  |    chr1                0        2
+              1  |    chr1                5       10
+              2  |    chr1               18       20
+              3  |    chr1               30       40
+              4  |    chr1               46    10000
+        PyRanges with 5 rows, 3 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        >>> a.complement('ID', chromsizes={'chr1': 10000})
+          index  |    Chromosome      Start      End  ID
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                0        2  a
+              1  |    chr1                5       10  a
+              2  |    chr1               18    10000  a
+              3  |    chr1                0       20  b
+              4  |    chr1               30       40  b
+              5  |    chr1               46    10000  b
+        PyRanges with 6 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        For complement of whole sets of intervals, you can explicitly use_strand or not:
+
+        >>> b = pr.PyRanges(dict(Chromosome="chr1", Start=[1, 10, 20, 40], End=[5, 18, 30, 46],
+        ...                      Strand=['+', '+', '-', '-']))
+        >>> b
+          index  |    Chromosome      Start      End  Strand
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                1        5  +
+              1  |    chr1               10       18  +
+              2  |    chr1               20       30  -
+              3  |    chr1               40       46  -
+        PyRanges with 4 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        >>> b.complement(use_strand=True)  # same as b.complement() because b.strand_valid == True
+          index  |    Chromosome      Start      End  Strand
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                5       10  +
+              1  |    chr1               30       40  -
+        PyRanges with 2 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        >>> b.complement(use_strand=False)
+          index  |    Chromosome      Start      End
+          int64  |    object          int64    int64
+        -------  ---  ------------  -------  -------
+              0  |    chr1                5       10
+              1  |    chr1               18       20
+              2  |    chr1               30       40
+        PyRanges with 3 rows, 3 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        >>> b.complement(use_strand=False, chromsizes={'chr1': 10000})
+          index  |    Chromosome      Start      End
+          int64  |    object          int64    int64
+        -------  ---  ------------  -------  -------
+              0  |    chr1                0        1
+              1  |    chr1                5       10
+              2  |    chr1               18       20
+              3  |    chr1               30       40
+              4  |    chr1               46    10000
+        PyRanges with 5 rows, 3 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        Bookended intervals (indices 0-1 below) and overlapping intervals (2-3) won't return any in-between intervals:
+        >>> c = pr.PyRanges(dict(Chromosome="chr1", Start=[1, 5, 8, 10], End=[5, 7, 14, 16]))
+        >>> c.complement()
+          index  |    Chromosome      Start      End
+          int64  |    object          int64    int64
+        -------  ---  ------------  -------  -------
+              0  |    chr1                7        8
+        PyRanges with 1 rows, 3 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        """
+        use_strand = validate_and_convert_use_strand(self, use_strand)
+        transcript_id = (
+            transcript_id if transcript_id is not None else [CHROM_COL] + ([STRAND_COL] if use_strand else [])
+        )
+
+        include_external = chromsizes is not None
+        if include_external:
+            if isinstance(chromsizes, pd.DataFrame):
+                chromsizes = dict(*zip(chromsizes[CHROM_COL], chromsizes[END_COL], strict=True))
+            elif isinstance(chromsizes, dict):
+                pass
+            else:  # A hack because pyfaidx might not be installed, but we want type checking anyway
+                pyfaidx_chromsizes = cast(dict[str | int, list], chromsizes)
+                chromsizes = {k: len(pyfaidx_chromsizes[k]) for k in pyfaidx_chromsizes.keys()}  # noqa: SIM118
+
+            ## if include external, include a bunch of rows with the Start == chromosome size, End = same +1; for each chromosome
+
+            unique_chroms = self[CHROM_COL].drop_duplicates().to_numpy()
+            # keeping only chromosomes present in self
+            chromsizes = {k: chromsizes[k] for k in chromsizes if k in unique_chroms}
+
+            missing_chroms = {k for k in chromsizes if k not in unique_chroms}
+            # some chromosomes are not found in chromsize, raise error
+            if missing_chroms:
+                msg = (
+                    f"ERROR chromosomes missing from chromsizes provided : {",".join([str(c) for c in missing_chroms])}"
+                )
+                raise ValueError(msg)
+
+            # adding extra interval which are just out of bounds on the right
+            end_bits = pr.PyRanges(
+                {
+                    "Chromosome": list(chromsizes.keys()),
+                    "Start": list(chromsizes.values()),
+                    "End": [x + 1 for x in chromsizes.values()],
+                },
+            )
+
+            # duplicating them just enough times
+            cols = list(set(arg_to_list(transcript_id) + [CHROM_COL] + ([STRAND_COL] if use_strand else [])))
+            end_bits = mypy_ensure_pyranges(end_bits.merge(self[cols].drop_duplicates(), on=[CHROM_COL]))
+
+            _self = pr.concat([self, end_bits])
+
+        else:
+            _self = self
+
+        introns = _self.merge_overlaps(match_by=transcript_id, use_strand=use_strand).sort_ranges(
+            by=transcript_id,
+            use_strand=False,
+        )
+
+        # intron start is exon end shifted
+        fill_value = 0
+        introns[END_COL] = introns.groupby(transcript_id, group_keys=False, observed=True)[END_COL].shift(
+            fill_value=fill_value,
+        )
+
+        # swapping start and end
+        introns[[START_COL, END_COL]] = introns[[END_COL, START_COL]]
+
+        # removing introns resulting from bookended intervals
+        selector = introns.lengths() != 0
+
+        # removing first line of each group
+        if not include_external:
+            selector = selector & (introns.groupby(transcript_id).cumcount() != 0)
+        introns = introns.loc[selector].reset_index(drop=True)
+
+        return mypy_ensure_pyranges(introns)
+
     def get_sequence(
         self: "PyRanges",
         path: Path | None = None,
@@ -4741,8 +4974,9 @@ class PyRanges(RangeFrame):
 
     def get_transcript_sequence(
         self: "PyRanges",
-        transcript_id: str,
+        transcript_id: str | list[str],
         path: Path | None = None,
+        *,
         pyfaidx_fasta: Optional["pyfaidx.Fasta"] = None,
         use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
     ) -> pd.DataFrame:
