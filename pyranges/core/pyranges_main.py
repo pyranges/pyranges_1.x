@@ -684,6 +684,10 @@ class PyRanges(RangeFrame):
         PyRanges
             One interval per group, with the min(Start) and max(End) of the group
 
+        See Also
+        --------
+        PyRanges.complement : return the internal complement of intervals, i.e. its introns.
+
         Examples
         --------
         >>> gr = pr.PyRanges({"Chromosome": [1, 1, 1], "Start": [1, 60, 110], "End": [40, 68, 130],
@@ -3177,6 +3181,7 @@ class PyRanges(RangeFrame):
         See Also
         --------
         PyRanges.overlap : use with invert=True to return all intervals without overlap
+        PyRanges.complement : return the internal complement of intervals, i.e. its introns.
 
         Examples
         --------
@@ -4657,8 +4662,12 @@ class PyRanges(RangeFrame):
         Notes
         -----
         * To ensure non-overlap among the input intervals, merge_overlaps is run before the complement is calculated.
-        * Bookended intervals will result in complement intervals returned since they would be of length 0.
+        * Bookended intervals will result in no complement intervals returned since they would be of length 0.
 
+        See Also
+        --------
+        PyRanges.subtract_ranges : report non-overlapping subintervals
+        PyRanges.boundaries : report the boundaries of groups of intervals (e.g. transcripts/genes)
 
 
         Examples
@@ -4699,6 +4708,7 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes.
 
         Include external intervals:
+
         >>> a.complement(chromsizes={'chr1': 10000})
           index  |    Chromosome      Start      End
           int64  |    object          int64    int64
@@ -4771,6 +4781,7 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes.
 
         Bookended intervals (indices 0-1 below) and overlapping intervals (2-3) won't return any in-between intervals:
+
         >>> c = pr.PyRanges(dict(Chromosome="chr1", Start=[1, 5, 8, 10], End=[5, 7, 14, 16]))
         >>> c.complement()
           index  |    Chromosome      Start      End
