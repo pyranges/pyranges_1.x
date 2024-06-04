@@ -51,7 +51,7 @@ deps =
     pyBigWig
     pyfaidx
     tox
-    ruff
+    ruff == 0.3.0
     pandas-stubs
     types-tabulate
     pytest
