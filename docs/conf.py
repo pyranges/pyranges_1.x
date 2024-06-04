@@ -41,7 +41,7 @@ extensions = [
     "sphinx.ext.autodoc",
     # "autoapi.extension",
     "sphinx.ext.autosummary",
-
+    "sphinx.ext.doctest",
     # "sphinx.ext.doctest"
 ]
 

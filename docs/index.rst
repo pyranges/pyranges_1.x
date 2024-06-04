@@ -48,6 +48,7 @@ Documentation outline
    how_to_pages
    api_reference
    developer_guide
+   migration_guide
 
 
 Indices
