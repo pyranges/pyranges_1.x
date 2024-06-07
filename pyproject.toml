@@ -4,11 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyranges1"
-version = "1.0.1"
+version = "1.0.2"
 description = "GenomicRanges for Python."
 requires-python = ">=3.12.0"
 readme = "README.md"
-authors = [{ name = "Endre Bakken Stovner", email = "endbak@pm.me" }]
+authors = [
+    { name = "Endre Bakken Stovner", email = "endbak@pm.me" },
+    { name = "Marco Mariotti", email = "marco.mariotti@ub.edu" },
+]
 license = { text = "MIT" }
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -27,7 +30,7 @@ dependencies = ["pandas", "ncls>=0.0.63", "tabulate", "sorted_nearest>=0.0.33", 
 add-ons = ["pyrle >= 0.0.39", "bamread", "fisher", "pyfaidx", "pyBigWig", "joblib"]
 dev = ["tox", "ruff == 0.3.0", "pyright", "pandas-stubs", "types-tabulate", "pytest-watcher", "pytest-xdist", "hypothesis>=6.92.1"]
 docs = ["sphinx", "sphinx_rtd_theme", "sphinx-autoapi", "sphinxcontrib-napoleon"]
-all = ["pyranges[add-ons]", "pyranges[dev]", "pyranges[docs]"]
+all = ["pyranges1[add-ons]", "pyranges1[dev]", "pyranges1[docs]"]
 
 [tool.setuptools.packages.find]
 where = ["."]
