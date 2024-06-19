@@ -8,9 +8,9 @@ Operating on coordinates
 Operating on coordinates: cheatsheet
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. image:: images/fig_3a.png
+.. image:: images/cheatsheet_subseq.png
 
-.. image:: images/fig_3b.png
+.. image:: images/cheatsheet_tile.png
 
 Modifying coordinates
 ---------------------

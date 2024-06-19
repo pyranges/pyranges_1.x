@@ -38,7 +38,7 @@ Pyranges offers many efficient methods to detect / process overlaps. We present 
 Overlap-related operations: cheatsheet
 ======================================
 
-.. image:: images/fig_3c.png
+.. image:: images/cheatsheet_overlap.png
 
 Methods for pairs of PyRanges
 =============================
