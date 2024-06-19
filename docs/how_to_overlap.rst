@@ -35,6 +35,10 @@ Pyranges offers many efficient methods to detect / process overlaps. We present 
     pyranges.PyRanges.split
     pyranges.PyRanges.max_disjoint
 
+Overlap-related operations: cheatsheet
+======================================
+
+.. image:: images/fig_3c.png
 
 Methods for pairs of PyRanges
 =============================
