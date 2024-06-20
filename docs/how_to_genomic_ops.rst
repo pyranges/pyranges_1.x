@@ -5,6 +5,13 @@ Operating on coordinates
    :local:
    :depth: 2
 
+Operating on coordinates: cheatsheet
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. image:: images/cheatsheet_subseq.png
+
+.. image:: images/cheatsheet_tile.png
+
 Modifying coordinates
 ---------------------
 Interval coordinates (Start, End) can be directly modified like any Series in dataframes.
