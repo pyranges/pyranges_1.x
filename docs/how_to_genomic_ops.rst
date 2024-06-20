@@ -6,7 +6,7 @@ Operating on coordinates
    :depth: 2
 
 Operating on coordinates: cheatsheet
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------
 
 .. image:: images/cheatsheet_subseq.png
 
