@@ -297,7 +297,7 @@ The function :func:`get_sequence <pyranges.PyRanges.get_sequence>` returns one s
 The ``Sequence`` column is a pandas Series containing strings. We see that the starting codon is ATG in most cases, as expected.
 When we check the length of the sequences, we notice that some are not 3-letter long:
 
-  >>> (first.Sequence.str.len() == 3 ).all()
+  >>> bool( (first.Sequence.str.len() == 3 ).all() )
   False
 
 Let's look at those sequences, using a row selector as before:
@@ -345,7 +345,7 @@ i.e. joining exons together. The sequence is given 5' to 3'.
 ``seq_first`` is not a PyRanges object, but a pandas DataFrame. It has a column for the group (ID) and one for Sequence.
 Here we confirm the sequence length is always 3:
 
-  >>> (seq_first.Sequence.str.len()==3).all()
+  >>> bool( (seq_first.Sequence.str.len()==3).all() )
   True
 
 
