@@ -529,7 +529,7 @@ are modified to return only the actual overlaps:
 Method :func:`subtract_ranges <pyranges.PyRanges.subtract_ranges>` allows to obtain the portions of intervals in self
 that do not overlap any interval in other:
 
-  >>> a2.subtract_ranges(b)
+  >>> a2.subtract_ranges(b).sort_values('Start')
     index  |    Chromosome      Start      End  Strand        odd
     int64  |    object          int64    int64  object      int64
   -------  ---  ------------  -------  -------  --------  -------
@@ -538,13 +538,13 @@ that do not overlap any interval in other:
         2  |    chr1               18       21  -               0
         3  |    chr1               23       25  -               1
         5  |    chr1               32       34  +               0
-        5  |    chr1               36       37  +               0
         6  |    chr1               33       34  +               1
+        5  |    chr1               36       37  +               0
   PyRanges with 7 rows, 5 columns, and 1 index columns (with 1 index duplicates).
   Contains 1 chromosomes and 2 strands.
 
 
-  >>> a2.subtract_ranges(b, strand_behavior='ignore')
+  >>> a2.subtract_ranges(b, strand_behavior='ignore').sort_values('Start')
     index  |    Chromosome      Start      End  Strand        odd
     int64  |    object          int64    int64  object      int64
   -------  ---  ------------  -------  -------  --------  -------
@@ -554,8 +554,8 @@ that do not overlap any interval in other:
         2  |    chr1               20       21  -               0
         3  |    chr1               23       25  -               1
         5  |    chr1               32       34  +               0
-        5  |    chr1               36       37  +               0
         6  |    chr1               33       34  +               1
+        5  |    chr1               36       37  +               0
   PyRanges with 8 rows, 5 columns, and 1 index columns (with 2 index duplicates).
   Contains 1 chromosomes and 2 strands.
 

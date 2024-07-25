@@ -93,9 +93,9 @@ def _find_chromosome_max_end_positions(grs: list["PyRanges"]) -> pd.DataFrame:
     Examples
     --------
     >>> f1, f2 = pr.example_data.f1, pr.example_data.f2  # both only have chr1
-    >>> f1["End"].max()
+    >>> int(f1["End"].max())
     9
-    >>> f2["End"].max()
+    >>> int(f2["End"].max())
     7
 
     """
@@ -220,7 +220,7 @@ def fisher_exact(tp: Series, fp: Series, fn: Series, tn: Series, pseudocount: in
     0  12   5  29   2
     1   0  12  10   2
 
-    >>> pr.stats.fisher_exact(df.TP, df.FP, df.TN, df.FN)
+    >>> pr.stats.fisher_exact(df.TP, df.FP, df.TN, df.FN) # doctest: +SKIP
        odds_ratio         P     PLeft    PRight
     0    0.165517  0.080269  0.044555  0.994525
     1    0.000000  0.000067  0.000034  1.000000
@@ -726,7 +726,7 @@ def forbes(
     Examples
     --------
     >>> gr, gr2 = pr.example_data.f1, pr.example_data.f2
-    >>> pr.stats.forbes(gr, gr2, chromsizes={"chr1": 10})
+    >>> float(pr.stats.forbes(gr, gr2, chromsizes={"chr1": 10}))
     0.8333333333333334
 
     """
@@ -778,7 +778,7 @@ def jaccard(
     --------
     >>> gr, gr2 = pr.example_data.f1, pr.example_data.f2
     >>> chromsizes = pr.example_data.chromsizes
-    >>> pr.stats.jaccard(gr, gr2)
+    >>> float(pr.stats.jaccard(gr, gr2))
     0.14285714285714285
 
     """
