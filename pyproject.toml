@@ -82,7 +82,7 @@ line-length = 120
 select = ["ALL"]
 ignore = [
     "E501", "ANN002", "ANN003", "ANN001", "ANN101", "ANN102", "ANN401", "PLR0913", "PLC0415",
-    "PD901", "D101", "D100", "D107", "CPY", "D105", "D104",
+    "PD901", "D101", "D100", "D107", "CPY", "D105", "D104", "D203", "D211", "D213", "COM812", "ISC001"
 ]
 
 [tool.pytest-watcher]

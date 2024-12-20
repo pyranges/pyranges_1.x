@@ -6,13 +6,11 @@ from pyranges.core import names
 from pyranges.core.example_data import example_data
 from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
 
-Chromsizes = dict[str, int] | dict[tuple[str, str], int]
-
 
 def random(
     n: int = 1000,
     length: int = 100,
-    chromsizes: Chromsizes | None = None,
+    chromsizes: dict[str, int] | pd.DataFrame | None = None,
     seed: int | None = None,
     *,
     strand: bool = True,
@@ -42,22 +40,21 @@ def random(
     index    |    Chromosome    Start      End        Strand
     int64    |    object        int64      int64      object
     -------  ---  ------------  ---------  ---------  --------
-    0        |    chr4          130788360  130788460  +
-    1        |    chr4          36129012   36129112   +
-    2        |    chr4          69733790   69733890   -
-    3        |    chr4          187723767  187723867  -
+    0        |    chr11         25516829   25516929   +
+    1        |    chr11         132583621  132583721  -
+    2        |    chr11         2504795    2504895    +
+    3        |    chr11         23816613   23816713   +
     ...      |    ...           ...        ...        ...
-    996      |    chr21         13544178   13544278   -
-    997      |    chr21         33556472   33556572   +
-    998      |    chr21         31438477   31438577   +
-    999      |    chr21         38433522   38433622   -
+    996      |    chr21         30756250   30756350   -
+    997      |    chr21         22517078   22517178   +
+    998      |    chr21         20605246   20605346   +
+    999      |    chr21         21153142   21153242   -
     PyRanges with 1000 rows, 4 columns, and 1 index columns.
     Contains 24 chromosomes and 2 strands.
 
     """
     rng = np.random.default_rng(seed=seed)
 
-    df: pd.DataFrame
     if chromsizes is None:
         df = example_data.chromsizes
     elif isinstance(chromsizes, dict):
@@ -65,21 +62,37 @@ def random(
     else:
         df = chromsizes
 
+    # Probability of picking each chromosome proportional to its size
     p = df.End / df.End.sum()
 
-    n_per_chrom = pd.Series(rng.choice(df.index, size=n, p=p)).value_counts(sort=False).to_frame()
-    n_per_chrom.insert(1, names.CHROM_COL, df.loc[n_per_chrom.index].Chromosome)
-    n_per_chrom.columns = pd.Index("Count Chromosome".split())
+    # Determine how many intervals per chromosome
+    chosen = rng.choice(df.index, size=n, p=p)
+    n_per_chrom = pd.Series(chosen).value_counts(sort=False).to_frame("Count")
+    n_per_chrom.insert(1, names.CHROM_COL, pd.Series(df.loc[n_per_chrom.index, names.CHROM_COL].values))
 
-    random_dfs = []
-    for _, (count, chrom) in n_per_chrom.iterrows():
-        r = rng.integers(0, df[df.Chromosome == chrom].End - length, size=count)
-        _df = pd.DataFrame({names.CHROM_COL: chrom, names.START_COL: r, "End": r + length})
-        random_dfs.append(_df)
+    # Merge chromosome sizes into n_per_chrom for direct access
+    n_per_chrom = n_per_chrom.merge(df[[names.CHROM_COL, names.END_COL]], on=names.CHROM_COL, how="left")
 
-    random_df = pd.concat(random_dfs)
+    # Extract arrays
+    counts_array = n_per_chrom["Count"].to_numpy()
+    chroms_array = n_per_chrom[names.CHROM_COL].to_numpy()
+    ends_array = n_per_chrom["End"].to_numpy() - length
+
+    # Repeat arrays according to the counts for vectorized generation
+    chroms_repeated = np.repeat(chroms_array, counts_array)
+    ends_repeated = np.repeat(ends_array, counts_array)
+
+    # Generate random starts in [0, ends_repeated)
+    # Using random() gives a uniform [0,1), we scale by ends_repeated
+    random_starts = (rng.random(chroms_repeated.size) * ends_repeated).astype(int)
+
+    # Build final DataFrame
+    random_df = pd.DataFrame(
+        {names.CHROM_COL: chroms_repeated, names.START_COL: random_starts, "End": random_starts + length},
+    )
+
     if strand:
-        s = rng.choice("+ -".split(), size=n)
+        s = rng.choice(["+", "-"], size=n)
         random_df.insert(3, "Strand", s)
 
     return mypy_ensure_pyranges(random_df.reset_index(drop=True))

@@ -1039,14 +1039,14 @@ class PyRanges(RangeFrame):
         index    |    Chromosome    Start    End      Strand      transcript_id    Feature     NumberOverlaps
         int64    |    category      int64    int64    category    object           category    int64
         -------  ---  ------------  -------  -------  ----------  ---------------  ----------  ----------------
-        0        |    1             11868    14409    +           nan              gene        20
-        1        |    1             11868    14409    +           ENST00000456328  transcript  20
+        0        |    1             11868    14409    +           nan              gene        17
+        1        |    1             11868    14409    +           ENST00000456328  transcript  17
         2        |    1             11868    12227    +           ENST00000456328  exon        3
-        3        |    1             12612    12721    +           ENST00000456328  exon        3
+        3        |    1             12612    12721    +           ENST00000456328  exon        1
         ...      |    ...           ...      ...      ...         ...              ...         ...
-        7        |    1             120724   133723   -           ENST00000610542  transcript  85
-        8        |    1             133373   133723   -           ENST00000610542  exon        2
-        9        |    1             129054   129223   -           ENST00000610542  exon        1
+        7        |    1             120724   133723   -           ENST00000610542  transcript  76
+        8        |    1             133373   133723   -           ENST00000610542  exon        1
+        9        |    1             129054   129223   -           ENST00000610542  exon        3
         10       |    1             120873   120932   -           ENST00000610542  exon        1
         PyRanges with 11 rows, 7 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
