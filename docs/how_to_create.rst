@@ -287,10 +287,10 @@ By default, the data refers to the human genome (hg19):
     index  |    Chromosome        Start        End  Strand
     int64  |    object            int64      int64  object
   -------  ---  ------------  ---------  ---------  --------
-        0  |    nan                   0         50  +
-        1  |    chr12         123591431  123591481  -
+        0  |    chr12         108700348  108700398  +
+        1  |    chr1          230144267  230144317  -
         2  |    chr3           54767920   54767970  +
         3  |    chr3          162329749  162329799  +
         4  |    chr3          176218669  176218719  +
   PyRanges with 5 rows, 4 columns, and 1 index columns.
-  Contains 2 chromosomes and 2 strands.
+  Contains 3 chromosomes and 2 strands.

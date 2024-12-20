@@ -1,10 +1,14 @@
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pandas as pd
 
-import pyranges as pr  # noqa: TCH001
 from pyranges.core import names
 from pyranges.core.example_data import example_data
 from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
+
+if TYPE_CHECKING:
+    import pyranges as pr
 
 
 def random(
@@ -36,19 +40,20 @@ def random(
 
     Examples
     --------
+    >>> import pyranges as pr
     >>> pr.random(seed=12345)
     index    |    Chromosome    Start      End        Strand
     int64    |    object        int64      int64      object
     -------  ---  ------------  ---------  ---------  --------
-    0        |    chr11         25516829   25516929   +
-    1        |    chr11         132583621  132583721  -
-    2        |    chr11         2504795    2504895    +
+    0        |    chr4          36129012   36129112   +
+    1        |    chr5          177668498  177668598  -
+    2        |    chr15         1902279    1902379    +
     3        |    chr11         23816613   23816713   +
     ...      |    ...           ...        ...        ...
-    996      |    chr21         30756250   30756350   -
-    997      |    chr21         22517078   22517178   +
-    998      |    chr21         20605246   20605346   +
-    999      |    chr21         21153142   21153242   -
+    996      |    chr2          155410960  155411060  -
+    997      |    chr6          80054552   80054652   +
+    998      |    chrX          66474125   66474225   +
+    999      |    chr7          69941721   69941821   -
     PyRanges with 1000 rows, 4 columns, and 1 index columns.
     Contains 24 chromosomes and 2 strands.
 
@@ -65,34 +70,23 @@ def random(
     # Probability of picking each chromosome proportional to its size
     p = df.End / df.End.sum()
 
-    # Determine how many intervals per chromosome
+    # Pick chromosomes (by picking rows from df)
     chosen = rng.choice(df.index, size=n, p=p)
-    n_per_chrom = pd.Series(chosen).value_counts(sort=False).to_frame("Count")
-    n_per_chrom.insert(1, names.CHROM_COL, pd.Series(df.loc[n_per_chrom.index, names.CHROM_COL].values))
 
-    # Merge chromosome sizes into n_per_chrom for direct access
-    n_per_chrom = n_per_chrom.merge(df[[names.CHROM_COL, names.END_COL]], on=names.CHROM_COL, how="left")
+    # Extract the chosen chromosomes and their lengths
+    chrom_chosen = df.loc[chosen, names.CHROM_COL].to_numpy()
+    end_chosen = df.loc[chosen, names.END_COL].to_numpy() - length
 
-    # Extract arrays
-    counts_array = n_per_chrom["Count"].to_numpy()
-    chroms_array = n_per_chrom[names.CHROM_COL].to_numpy()
-    ends_array = n_per_chrom["End"].to_numpy() - length
+    # Generate random starts, ensuring they don't exceed (End - length)
+    random_starts = (rng.random(n) * end_chosen).astype(int)
 
-    # Repeat arrays according to the counts for vectorized generation
-    chroms_repeated = np.repeat(chroms_array, counts_array)
-    ends_repeated = np.repeat(ends_array, counts_array)
-
-    # Generate random starts in [0, ends_repeated)
-    # Using random() gives a uniform [0,1), we scale by ends_repeated
-    random_starts = (rng.random(chroms_repeated.size) * ends_repeated).astype(int)
-
-    # Build final DataFrame
+    # Construct final DataFrame
     random_df = pd.DataFrame(
-        {names.CHROM_COL: chroms_repeated, names.START_COL: random_starts, "End": random_starts + length},
+        {names.CHROM_COL: chrom_chosen, names.START_COL: random_starts, "End": random_starts + length}
     )
 
     if strand:
         s = rng.choice(["+", "-"], size=n)
-        random_df.insert(3, "Strand", s)
+        random_df["Strand"] = s
 
     return mypy_ensure_pyranges(random_df.reset_index(drop=True))
