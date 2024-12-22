@@ -32,7 +32,7 @@ class PyRangesOptions:
         Examples
         --------
         >>> import pyranges as pr
-        >>> pr.options.set_option('max_rows_to_show', 10)
+        >>> pr.options.set_option('max_rows_to_show', 8)
 
 
         """
