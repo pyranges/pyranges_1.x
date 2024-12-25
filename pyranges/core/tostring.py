@@ -174,19 +174,3 @@ def truncate_data(data: list[list[str]], max_col_width: int | None) -> list[list
                 new_row.append(item_str)
         truncated_data.append(new_row)
     return truncated_data
-
-
-# Define your data
-data = [
-    ["Alice", "Developer", "some very long text that might not fit on the screen", 30],
-    ["Bob", "Manager", "another very long piece of text", 27],
-]
-
-# Define headers
-headers = ["Name", "Occupation", "Description", "Age"]
-
-# Maximum width for any individual column
-max_col_width = 20
-
-# Maximum total width for the display
-max_total_width = 60  # For example, for a terminal width of 60 characters
