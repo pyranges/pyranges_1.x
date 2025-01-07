@@ -1811,31 +1811,33 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         >>> gr.merge_overlaps(count_col="Count")
-          index  |      Chromosome    Start      End  Strand      Count
-          int64  |          object    int64    int64  object      int64
-        -------  ---  ------------  -------  -------  --------  -------
-              0  |               1    11868    14409  +               5
-              1  |               1   110952   111357  -               1
-              2  |               1   112699   112804  -               1
-              3  |               1   120724   133723  -               4
+          index  |      Chromosome    Start      End  Strand        Count
+          int64  |        category    int64    int64  category      int64
+        -------  ---  ------------  -------  -------  ----------  -------
+              0  |               1    11868    14409  +                 5
+              1  |               1   110952   111357  -                 1
+              2  |               1   112699   112804  -                 1
+              3  |               1   120724   133723  -                 4
         PyRanges with 4 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
         >>> gr.merge_overlaps(count_col="Count", match_by="gene_name")
-          index  |      Chromosome    Start      End  Strand    gene_name      Count
-          int64  |          object    int64    int64  object    object         int64
-        -------  ---  ------------  -------  -------  --------  -----------  -------
-              0  |               1    11868    14409  +         DDX11L1            5
-              1  |               1   110952   111357  -         AL627309.1         1
-              2  |               1   112699   112804  -         AL627309.1         1
-              3  |               1   120724   133723  -         AL627309.1         4
+          index  |      Chromosome    Start      End  Strand      gene_name      Count
+          int64  |        category    int64    int64  category    object         int64
+        -------  ---  ------------  -------  -------  ----------  -----------  -------
+              0  |               1    11868    14409  +           DDX11L1            5
+              1  |               1   110952   111357  -           AL627309.1         1
+              2  |               1   112699   112804  -           AL627309.1         1
+              3  |               1   120724   133723  -           AL627309.1         4
         PyRanges with 4 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
         """
         use_strand = validate_and_convert_use_strand(self, use_strand)
+        by = arg_to_list(match_by)
+        by = [*([CHROM_COL] if not use_strand else CHROM_AND_STRAND_COLS), *by]
 
-        return self.apply_single(_merge, by=match_by, use_strand=use_strand, count_col=count_col, slack=slack)
+        return _merge(self, by=by, count_col=count_col, slack=slack)
 
     def nearest(
         self,

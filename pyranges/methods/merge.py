@@ -1,36 +1,46 @@
+from pathlib import Path
+from typing import TYPE_CHECKING
 import pandas as pd
-from sorted_nearest import find_clusters  # type: ignore[import]
+from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
+from ruranges import merge_numpy  # type: ignore[import]
 
-from pyranges.core.names import END_COL, START_COL
+from pyranges.core.names import CHROM_COL, END_COL, START_COL
+
+if TYPE_CHECKING:
+    import pyranges as pr
 
 
-def _merge(df: pd.DataFrame, **kwargs) -> pd.DataFrame:
+def _merge(
+    df: "pr.PyRanges",
+    by: list[str],
+    count_col: str | None = None,
+    slack: int | None = None,
+) -> "pr.PyRanges":
+    from pyranges.core.pyranges_main import PyRanges
+
     if df.empty:
         return df
 
-    slack = kwargs.get("slack", 0)
-    by = kwargs["by"]
+    col_order = [col for col in df if col in by + [START_COL, END_COL]]
 
-    cdf = df.sort_values(START_COL)
+    # _slack = slack or 0
+    chrs = pd.DataFrame(df).groupby(by).ngroup()
 
-    # important: sorted_nearest interprets slack differently than pyranges
-    # 0 slack in sorted_nearest means that bookended intervals are considered overlapping
-    # together, while in pyranges it means that they are not.
-    starts, ends, number = find_clusters(cdf.Start.values, cdf.End.values, slack - 1)
-
-    by_values = df.head(1).squeeze()[by].to_dict()
-
-    cluster_df = pd.DataFrame(
-        {
-            START_COL: starts,
-            END_COL: ends,
-        }
-        | by_values,
+    indices, start, end, counts = merge_numpy(
+        chrs=chrs.values,
+        starts=df.Start.to_numpy(),
+        ends=df.End.to_numpy(),
+        idxs=df.index.to_numpy(),
+        slack=slack,
     )
-    # Sort columns in the original order of the dataframe.
-    cluster_df = cluster_df[[c for c in cdf.columns if c in cluster_df]]
 
-    if kwargs["count_col"]:
-        cluster_df.insert(cluster_df.shape[1], kwargs["count_col"], number)
+    by_subset = df[col_order].loc[indices]
+    by_subset.loc[:, START_COL] = start
+    by_subset.loc[:, END_COL] = end
 
-    return cluster_df
+    outpr = PyRanges(by_subset)
+
+    if count_col:
+        outpr.insert(outpr.shape[1], count_col, counts)
+
+    return mypy_ensure_pyranges(outpr.reset_index(drop=True))
