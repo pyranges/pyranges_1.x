@@ -1,10 +1,14 @@
+from pathlib import Path
 from typing import TYPE_CHECKING
+
+import ruranges
 
 import numpy as np
 import pandas as pd
 from ncls import NCLS  # type: ignore[import]
 
 from pyranges.core.names import (
+    CHROM_COL,
     END_COL,
     OVERLAP_ALL,
     OVERLAP_CONTAINMENT,
@@ -62,23 +66,32 @@ def _overlap(
     df: "RangeFrame",
     df2: "RangeFrame",
     *,
-    how: VALID_OVERLAP_TYPE = "all",
-    invert: bool = False,
-    **_,
+    by: list[str],
+    multiple: VALID_OVERLAP_TYPE = "all",
+    slack: int = 0,
 ) -> pd.DataFrame:
-    if invert:
-        df = _mypy_ensure_rangeframe(df.copy())
-        df.insert(df.shape[1], "__ix__", np.arange(len(df)))
+    Path("deleteme0.txt").write_text(str(df.index.values))
+    combined = pd.concat([df[CHROM_COL], df2[CHROM_COL]], ignore_index=True)
+    factorized, unique_vals = pd.factorize(combined)
 
-    indexes = _overlap_indices(df, df2, how)
+    idx1, _ = ruranges.chromsweep_numpy(
+        factorized[:len(df)],
+        df.Start.values,
+        df.End.values,
+        df.index.values,
+        factorized[len(df):],
+        df2.Start.values,
+        df2.End.values,
+        df2.index.values,
+        slack,
+    )
 
-    _result = df.reindex(indexes)
+    if multiple in ["first", "last"]:
+        Path("deleteme.txt").write_text(str(idx1))
+        idx1 = pd.Series(idx1).drop_duplicates(keep=multiple).values
+        Path("deleteme2.txt").write_text(str(idx1))
 
-    if invert:
-        found_idxs = getattr(_result, "__ix__", [])
-        _result = df[~pd.Series(df.__ix__).isin(found_idxs)]
-        _result = _result.drop("__ix__", axis=1, inplace=False)
-    return _result
+    return df.loc[idx1]
 
 
 def _count_overlaps(

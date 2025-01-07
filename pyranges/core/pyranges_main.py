@@ -2090,8 +2090,8 @@ class PyRanges(RangeFrame):
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                1        3  A
-              0  |    chr1                1        3  A
               1  |    chr1                1        3  a
+              0  |    chr1                1        3  A
               1  |    chr1                1        3  a
               2  |    chr2                4        9  b
         PyRanges with 5 rows, 4 columns, and 1 index columns (with 2 index duplicates).
@@ -2103,8 +2103,8 @@ class PyRanges(RangeFrame):
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                1        3  A
               1  |    chr1                1        3  a
-              2  |    chr1               10       11  c
-              3  |    chr2                4        9  b
+              3  |    chr1               10       11  c
+              2  |    chr2                4        9  b
         PyRanges with 4 rows, 4 columns, and 1 index columns.
         Contains 2 chromosomes.
 
@@ -2158,33 +2158,17 @@ class PyRanges(RangeFrame):
         """
         from pyranges.methods.overlap import _overlap
 
-        _self = self.copy()
-        if slack:
-            _self[TEMP_START_SLACK_COL] = _self.Start
-            _self[TEMP_END_SLACK_COL] = _self.End
-            _self = _self.extend(slack, use_strand=False)
+        strand_behavior = validate_and_convert_strand_behavior(self, other, strand_behavior)
+        default_cols = [CHROM_COL] if strand_behavior else CHROM_AND_STRAND_COLS
+        by = [*default_cols, *arg_to_list(match_by)]
 
-        if contained:
-            if multiple != OVERLAP_ALL:
-                msg = "Can only use contained with multiple='all'"
-                raise ValueError(msg)
-            multiple = OVERLAP_CONTAINMENT
-
-        gr = _self.apply_pair(
+        gr = _overlap(
+            self,
             other,
-            _overlap,
-            strand_behavior=strand_behavior,
-            by=match_by,
-            preserve_order=True,
-            invert=invert,
-            skip_if_empty=False if invert else SKIP_IF_EMPTY_LEFT,
-            how=multiple,
+            by=by,
+            slack=slack,
+            multiple=multiple,
         )
-
-        if slack and len(gr) > 0:
-            gr[START_COL] = gr[TEMP_START_SLACK_COL]
-            gr[END_COL] = gr[TEMP_END_SLACK_COL]
-            gr = gr.drop_and_return([TEMP_START_SLACK_COL, TEMP_END_SLACK_COL], axis=1)
 
         return mypy_ensure_pyranges(gr)
 
