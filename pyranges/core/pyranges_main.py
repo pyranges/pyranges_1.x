@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Optional, cast
 
 import numpy as np
 import pandas as pd
-from natsort import natsort, natsorted  # type: ignore[import]
+from natsort import natsorted  # type: ignore[import]
 
 import pyranges as pr
 from pyranges.core.loci_getter import LociGetter
@@ -22,19 +22,15 @@ from pyranges.core.names import (
     JOIN_SUFFIX,
     NEAREST_DOWNSTREAM,
     NEAREST_UPSTREAM,
-    OVERLAP_ALL,
-    OVERLAP_CONTAINMENT,
     PANDAS_COMPRESSION_TYPE,
     RANGE_COLS,
     REVERSE_STRAND,
-    SKIP_IF_EMPTY_LEFT,
     START_COL,
     STRAND_BEHAVIOR_IGNORE,
     STRAND_BEHAVIOR_OPPOSITE,
     STRAND_COL,
     TEMP_END_SLACK_COL,
     TEMP_ID_COL,
-    TEMP_NAME_COL,
     TEMP_NUM_COL,
     TEMP_START_SLACK_COL,
     TEMP_STRAND_COL,
@@ -62,13 +58,15 @@ from pyranges.core.pyranges_helpers import (
     arg_to_list,
     group_keys_from_validated_strand_behavior,
     mypy_ensure_pyranges,
+    prepare_by_binary,
+    prepare_by_single,
     strand_behavior_from_validated_use_strand,
     use_strand_from_validated_strand_behavior,
     validate_and_convert_strand_behavior,
     validate_and_convert_use_strand,
 )
 from pyranges.core.tostring import tostring
-from pyranges.methods.merge import _merge
+from pyranges.methods.sort import sort_factorize_dict
 from pyranges.range_frame.range_frame import RangeFrame
 from pyranges.range_frame.range_frame_validator import InvalidRangesReason
 
@@ -180,7 +178,7 @@ class PyRanges(RangeFrame):
     def __new__(cls, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame":  # type: ignore[misc]
         """Create a new instance of a PyRanges object."""
         # __new__ is a special static method used for creating and
-        # returning a new instance of a class. It is caladdled before
+        # returning a new instance of a class. It is called before
         # __init__ and is typically used in scenarios requiring
         # control over the creation of new instances
 
@@ -925,6 +923,29 @@ class PyRanges(RangeFrame):
         gr = gr.reindex(self.index)
         gr[cluster_column] = gr.groupby(by_split_groups, sort=False).ngroup()
         return mypy_ensure_pyranges(gr)
+
+    def complement_overlaps(self, other, contained_intervals_only: bool = False) -> "pr.PyRanges":
+        """>>> gr.overlap(gr2, invert=True)
+          index  |    Chromosome      Start      End  ID
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              3  |    chr1               10       11  c
+              4  |    chr3                0        1  d
+        PyRanges with 2 rows, 4 columns, and 1 index columns.
+        Contains 2 chromosomes.
+
+        >>> gr.overlap(gr2, contained_intervals_only=True, invert=True)
+          index  |    Chromosome      Start      End  ID
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                1        3  A
+              1  |    chr1                1        3  a
+              3  |    chr1               10       11  c
+              4  |    chr3                0        1  d
+        PyRanges with 4 rows, 4 columns, and 1 index columns.
+        Contains 2 chromosomes.
+        """
+        raise NotImplementedError  # exists in ruranges
 
     def copy(self, *args, **kwargs) -> "pr.PyRanges":
         """Return a copy of the PyRanges."""
@@ -1833,11 +1854,13 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         """
-        use_strand = validate_and_convert_use_strand(self, use_strand)
-        by = arg_to_list(match_by)
-        by = [*([CHROM_COL] if not use_strand else CHROM_AND_STRAND_COLS), *by]
+        result = super().merge_overlaps(
+            count_col=count_col,
+            match_by=prepare_by_single(self, use_strand=use_strand, match_by=match_by),
+            slack=slack,
+        )
 
-        return _merge(self, by=by, count_col=count_col, slack=slack)
+        return mypy_ensure_pyranges(result)
 
     def nearest(
         self,
@@ -2011,9 +2034,8 @@ class PyRanges(RangeFrame):
         multiple: VALID_OVERLAP_TYPE = "all",
         slack: int = 0,
         *,
-        contained: bool = False,
+        contained_intervals_only: bool = False,
         match_by: VALID_BY_TYPES = None,
-        invert: bool = False,
     ) -> "PyRanges":
         """Return overlapping intervals.
 
@@ -2040,10 +2062,7 @@ class PyRanges(RangeFrame):
             we allow non-overlapping intervals to be considered overlapping if they are within less than slack distance
             e.g. slack=1 reports bookended intervals.
 
-        invert : bool, default False
-            Whether to return the intervals without overlaps.
-
-        contained : bool, default False
+        contained_intervals_only : bool, default False
             Whether to report only intervals that are entirely contained in an interval of 'other'.
 
         match_by : str or list, default None
@@ -2108,33 +2127,13 @@ class PyRanges(RangeFrame):
         PyRanges with 4 rows, 4 columns, and 1 index columns.
         Contains 2 chromosomes.
 
-        >>> gr.overlap(gr2, contained=True)
+        >>> gr.overlap(gr2, contained_intervals_only=True)
           index  |    Chromosome      Start      End  ID
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
               2  |    chr2                4        9  b
         PyRanges with 1 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes.
-
-        >>> gr.overlap(gr2, invert=True)
-          index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
-              3  |    chr1               10       11  c
-              4  |    chr3                0        1  d
-        PyRanges with 2 rows, 4 columns, and 1 index columns.
-        Contains 2 chromosomes.
-
-        >>> gr.overlap(gr2, contained=True, invert=True)
-          index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
-              0  |    chr1                1        3  A
-              1  |    chr1                1        3  a
-              3  |    chr1               10       11  c
-              4  |    chr3                0        1  d
-        PyRanges with 4 rows, 4 columns, and 1 index columns.
-        Contains 2 chromosomes.
 
         >>> gr3 = pr.PyRanges({"Chromosome": 1, "Start": [2, 4], "End": [3, 5], "Strand": ["+", "-"]})
         >>> gr3
@@ -2156,18 +2155,14 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 1 strands.
 
         """
-        from pyranges.methods.overlap import _overlap
+        _other, by = prepare_by_binary(self, other=other, strand_behavior=strand_behavior, match_by=match_by)
 
-        strand_behavior = validate_and_convert_strand_behavior(self, other, strand_behavior)
-        default_cols = [CHROM_COL] if strand_behavior else CHROM_AND_STRAND_COLS
-        by = [*default_cols, *arg_to_list(match_by)]
-
-        gr = _overlap(
-            self,
-            other,
-            by=by,
+        gr = super().overlap(
+            _other,
+            match_by=by,
             slack=slack,
             multiple=multiple,
+            contained_intervals_only=contained_intervals_only,
         )
 
         return mypy_ensure_pyranges(gr)
@@ -2373,12 +2368,10 @@ class PyRanges(RangeFrame):
 
     def sort_ranges(
         self,
-        by: str | Iterable[str] | None = None,
-        use_strand: VALID_USE_STRAND_TYPE = "auto",
+        match_by: VALID_BY_TYPES = None,
         *,
-        sort_descending: str | Iterable[str] | None = None,
-        natsorting: bool = False,
-        reverse: bool = False,
+        natsort: bool = True,
+        use_strand: VALID_USE_STRAND_TYPE = "auto",
     ) -> "PyRanges":
         """Sort PyRanges according to Chromosome, Strand (if present), Start, and End; or by the specified columns.
 
@@ -2436,7 +2429,7 @@ class PyRanges(RangeFrame):
         PyRanges with 8 rows, 5 columns, and 1 index columns.
         Contains 3 chromosomes and 2 strands.
 
-        >>> p.sort_ranges()
+        >>> p.sort_ranges(natsort=False)
           index  |    Chromosome    Strand      Start      End  transcript_id
           int64  |    object        object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
@@ -2453,7 +2446,7 @@ class PyRanges(RangeFrame):
 
         Do not sort negative strand intervals in descending order:
 
-        >>> p.sort_ranges(use_strand=False)
+        >>> p.sort_ranges(use_strand=False, natsort=False)
           index  |    Chromosome    Strand      Start      End  transcript_id
           int64  |    object        object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
@@ -2470,7 +2463,7 @@ class PyRanges(RangeFrame):
 
         Sort chromosomes in natural order:
 
-        >>> p.sort_ranges(natsorting=True)
+        >>> p.sort_ranges()
           index  |    Chromosome    Strand      Start      End  transcript_id
           int64  |    object        object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
@@ -2487,7 +2480,7 @@ class PyRanges(RangeFrame):
 
         Sort by 'transcript_id' before than by columns Start and End (but after Chromosome and Strand):
 
-        >>> p.sort_ranges(by='transcript_id')
+        >>> p.sort_ranges(match_by='transcript_id', natsort=False)
           index  |    Chromosome    Strand      Start      End  transcript_id
           int64  |    object        object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
@@ -2504,7 +2497,8 @@ class PyRanges(RangeFrame):
 
         Sort by 'transcript_id' before than by columns Strand, Start and End:
 
-        >>> p.sort_ranges(by=['transcript_id', 'Strand'])
+        >>> res = p.sort_ranges(natsort=False)
+        >>> res.sort_values("transcript_id", kind="stable")
           index  |    Chromosome    Strand      Start      End  transcript_id
           int64  |    object        object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
@@ -2513,84 +2507,59 @@ class PyRanges(RangeFrame):
               2  |    chr1          -              10       25  t2
               1  |    chr1          +               1       11  t3
               0  |    chr1          +              40       60  t3
+              4  |    chr2          +             300      400  t4
               5  |    chr11         +             140      152  t5
               6  |    chr11         +             160      190  t5
-              4  |    chr2          +             300      400  t4
         PyRanges with 8 rows, 5 columns, and 1 index columns.
         Contains 3 chromosomes and 2 strands.
 
         Same as before, but 'transcript_id' is sorted in descending order:
 
-        >>> p.sort_ranges(by=['transcript_id', 'Strand'], sort_descending='transcript_id')
+        >>> res = p.sort_ranges(natsort=False)
+        >>> res.sort_values("transcript_id", kind="stable", ascending=False)
           index  |    Chromosome    Strand      Start      End  transcript_id
           int64  |    object        object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
+              5  |    chr11         +             140      152  t5
+              6  |    chr11         +             160      190  t5
+              4  |    chr2          +             300      400  t4
               1  |    chr1          +               1       11  t3
               0  |    chr1          +              40       60  t3
               3  |    chr1          -              70       80  t2
               2  |    chr1          -              10       25  t2
               7  |    chr1          +              90      100  t1
-              5  |    chr11         +             140      152  t5
-              6  |    chr11         +             160      190  t5
-              4  |    chr2          +             300      400  t4
         PyRanges with 8 rows, 5 columns, and 1 index columns.
         Contains 3 chromosomes and 2 strands.
 
         """
-        by = arg_to_list(by)
-        sort_descending = (
-            []
-            if sort_descending is None
-            else [sort_descending]
-            if isinstance(sort_descending, str)
-            else list(sort_descending)
-        )
+        by = arg_to_list(match_by)
 
         use_strand = validate_and_convert_use_strand(self, use_strand)
 
-        cols_to_sort_for = (
-            ([CHROM_COL] if CHROM_COL not in by else [])
-            + ([STRAND_COL] if STRAND_COL not in by and STRAND_COL in self.columns else [])
-            + by
-            + ([START_COL] if START_COL not in by else [])
-            + ([END_COL] if END_COL not in by else [])
-        )
+        by = ([CHROM_COL] if STRAND_COL not in self else CHROM_AND_STRAND_COLS) + by
 
-        missing_sort_descending_cols = [col for col in sort_descending if col not in cols_to_sort_for]
-        if missing_sort_descending_cols:
-            msg = "Sort_descending arguments must be among column names used for sorting! Not found: " + ", ".join(
-                missing_sort_descending_cols,
-            )
-            raise ValueError(msg)
-
-        ascending = [col not in sort_descending for col in cols_to_sort_for]
-        if reverse:
-            ascending = [not asc for asc in ascending]
-
-        z = self.copy()
-        if natsorting:
-            natsort_fn = natsort.natsort_keygen()
-            z = z.assign(**{TEMP_NAME_COL: natsort_fn(self[CHROM_COL])})
-            cols_to_sort_for = [c if c != CHROM_COL else TEMP_NAME_COL for c in cols_to_sort_for]
-
-        if not use_strand:
-            z = z.sort_values(cols_to_sort_for, ascending=ascending)
+        if use_strand:
+            self_copy = self.loc[:, by + RANGE_COLS].copy(deep=True)
+            if not isinstance(self_copy, RangeFrame):
+                raise TypeError
+            self_copy.loc[self_copy[STRAND_COL] == REVERSE_STRAND, START_COL] = -self_copy.loc[
+                self_copy[STRAND_COL] == REVERSE_STRAND, START_COL
+            ]
         else:
-            mask = z["Strand"] == "-"
-            initial_starts = z.loc[mask, "Start"].copy()
-            initial_ends = z.loc[mask, "End"].copy()
+            self_copy = self
 
-            # Swapping Start and End for negative strand intervals, and multiplying by -1 to sort in descending order
-            z.loc[mask, "Start"], z.loc[mask, "End"] = (
-                z.loc[mask, "End"].to_numpy() * -1,
-                z.loc[mask, "Start"].to_numpy() * -1,
-            )
-            z = z.sort_values(cols_to_sort_for, ascending=ascending)
+        import ruranges
 
-            # Swapping back
-            z.loc[mask, "Start"], z.loc[mask, "End"] = initial_starts, initial_ends
+        by_sort_order_as_int = sort_factorize_dict(self, by, use_natsort=natsort)
+        idxs = ruranges.sort_intervals_numpy(
+            by_sort_order_as_int,
+            self_copy[START_COL].to_numpy(),
+            self_copy[END_COL].to_numpy(),
+            self_copy.index.to_numpy(),
+        )
+        res = self.loc[idxs]
 
-        return mypy_ensure_pyranges(z.drop(TEMP_NAME_COL, axis=1) if natsorting else z)
+        return mypy_ensure_pyranges(res)
 
     def spliced_subsequence(
         self,

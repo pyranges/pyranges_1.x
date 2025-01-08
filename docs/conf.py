@@ -37,7 +37,7 @@ author = "Endre Bakken Stovner, Marco Mariotti"
 extensions = [
     "sphinx.ext.napoleon",
     # "sphinxcontrib.napoleon",
-    #"autoapi.extension",
+    # "autoapi.extension",
     "sphinx.ext.autodoc",
     # "autoapi.extension",
     "sphinx.ext.autosummary",
@@ -49,8 +49,8 @@ autosummary_generate = True  # Enable summary table generation
 
 
 autodoc_default_options = {
-    'members': True,
-    'imported-members': True,
+    "members": True,
+    "imported-members": True,
     # other options...
 }
 
@@ -60,7 +60,7 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_generated_hidden*']
+exclude_patterns = ["_generated_hidden*"]
 
 master_doc = "index"
 
@@ -69,8 +69,8 @@ master_doc = "index"
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-#html_theme = "alabaster"
-html_theme = 'sphinx_rtd_theme'
+# html_theme = "alabaster"
+html_theme = "sphinx_rtd_theme"
 
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -79,19 +79,19 @@ html_theme = 'sphinx_rtd_theme'
 html_static_path = ["_static"]
 
 
-
 def monospaced_link(name, rawtext, text, lineno, inliner, options={}, content=[]):
-    url = text.split(' ')[-1].strip('<>')
-    clickable_text = ' '.join(text.split(' ')[:-1])
+    url = text.split(" ")[-1].strip("<>")
+    clickable_text = " ".join(text.split(" ")[:-1])
     # Create a reference node, which is the docutils node for hyperlinks
     unescaped_text = utils.unescape(text)
 
     node = nodes.reference(rawtext, clickable_text, refuri=url, **options)
 
     # Add a special class to this node
-    node['classes'].append('monospaced-link')
+    node["classes"].append("monospaced-link")
     return [node], []
 
+
 def setup(app):
-    app.add_role('mslink', monospaced_link)
-    app.add_css_file('custom.css')
+    app.add_role("mslink", monospaced_link)
+    app.add_css_file("custom.css")

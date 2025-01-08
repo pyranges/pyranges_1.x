@@ -1,24 +1,20 @@
-from pathlib import Path
 from typing import TYPE_CHECKING
-
-import ruranges
 
 import numpy as np
 import pandas as pd
+import ruranges
 from ncls import NCLS  # type: ignore[import]
 
 from pyranges.core.names import (
-    CHROM_COL,
     END_COL,
     OVERLAP_ALL,
-    OVERLAP_CONTAINMENT,
     OVERLAP_FIRST,
     OVERLAP_LAST,
     START_COL,
     VALID_OVERLAP_OPTIONS,
     VALID_OVERLAP_TYPE,
 )
-from pyranges.range_frame.range_frame import _mypy_ensure_rangeframe
+from pyranges.core.pyranges_helpers import factorize_multiple
 
 if TYPE_CHECKING:
     import pyranges as pr
@@ -68,30 +64,38 @@ def _overlap(
     *,
     by: list[str],
     multiple: VALID_OVERLAP_TYPE = "all",
+    contained: bool = False,
     slack: int = 0,
 ) -> pd.DataFrame:
-    Path("deleteme0.txt").write_text(str(df.index.values))
-    combined = pd.concat([df[CHROM_COL], df2[CHROM_COL]], ignore_index=True)
-    factorized, unique_vals = pd.factorize(combined)
+    f1, f2 = factorize_multiple(df, df2, by)
 
-    idx1, _ = ruranges.chromsweep_numpy(
-        factorized[:len(df)],
+    idx1, idx2 = ruranges.chromsweep_numpy(
+        f1,
         df.Start.values,
         df.End.values,
         df.index.values,
-        factorized[len(df):],
+        f2,
         df2.Start.values,
         df2.End.values,
         df2.index.values,
         slack,
     )
 
+    idxs = pd.Series(idx1, index=idx2)
     if multiple in ["first", "last"]:
-        Path("deleteme.txt").write_text(str(idx1))
-        idx1 = pd.Series(idx1).drop_duplicates(keep=multiple).values
-        Path("deleteme2.txt").write_text(str(idx1))
+        idxs = idxs.drop_duplicates(keep=multiple)
 
-    return df.loc[idx1]
+    if contained:
+        result = df.loc[idxs.to_numpy()]
+        df2_pos = df2.loc[idxs.index.to_numpy(), [START_COL, END_COL]]
+        result = result[
+            (result[START_COL].to_numpy() >= df2_pos[START_COL].to_numpy())
+            & (result[END_COL].to_numpy() <= df2_pos[END_COL].to_numpy())
+        ]
+    else:
+        result = df.loc[idxs.to_numpy()]
+
+    return result
 
 
 def _count_overlaps(

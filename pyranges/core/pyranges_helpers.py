@@ -2,7 +2,12 @@ import inspect
 import warnings
 from typing import TYPE_CHECKING
 
+import numpy as np
+import pandas as pd
+from numpy import ndarray
+
 from pyranges.core.names import (
+    CHROM_AND_STRAND_COLS,
     CHROM_COL,
     REVERSE_STRAND,
     STRAND_BEHAVIOR_AUTO,
@@ -13,6 +18,7 @@ from pyranges.core.names import (
     STRICT_STRAND_BEHAVIOR_TYPE,
     USE_STRAND_AUTO,
     VALID_BY_OPTIONS,
+    VALID_BY_TYPES,
     VALID_STRAND_BEHAVIOR_OPTIONS,
     VALID_STRAND_BEHAVIOR_TYPE,
     VALID_USE_STRAND_OPTIONS,
@@ -20,9 +26,56 @@ from pyranges.core.names import (
 )
 
 if TYPE_CHECKING:
-    import pandas as pd
-
     from pyranges import PyRanges
+    from pyranges.range_frame.range_frame import RangeFrame
+
+
+def factorize(
+    df: "pd.DataFrame",
+    by: list[str],
+) -> ndarray:
+    if not by:
+        return np.zeros(len(df), dtype=np.int64)
+    return df.groupby(by).ngroup().to_numpy()
+
+
+def factorize_multiple(
+    df: "pd.DataFrame",
+    df2: "pd.DataFrame",
+    by: list[str],
+) -> tuple[ndarray, ndarray]:
+    if not by:
+        return np.zeros(len(df), dtype=np.int64), np.zeros(len(df2), dtype=np.int64)
+    factorized = pd.concat([df[by], df2[by]], ignore_index=True).groupby(by).ngroup().to_numpy()
+    return factorized[: len(df)], factorized[len(df) :]
+
+
+def prepare_by_single(
+    self: "PyRanges",
+    use_strand: VALID_USE_STRAND_TYPE,
+    match_by: VALID_BY_OPTIONS,
+) -> list[str]:
+    use_strand = validate_and_convert_use_strand(self, use_strand)
+    by = arg_to_list(match_by)
+    return [*([CHROM_COL] if not use_strand else CHROM_AND_STRAND_COLS), *by]
+
+
+def prepare_by_binary(
+    self: "PyRanges",
+    other: "PyRanges",
+    strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
+    match_by: VALID_BY_TYPES = None,
+) -> tuple["PyRanges", list[str]]:
+    strand_behavior = validate_and_convert_strand_behavior(self, other, strand_behavior)
+    default_cols = [CHROM_COL] if strand_behavior == STRAND_BEHAVIOR_IGNORE else CHROM_AND_STRAND_COLS
+    by = [*default_cols, *arg_to_list(match_by)]
+
+    if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
+        _other = other
+        _other.loc[:, STRAND_COL] = other[STRAND_COL].replace({"+": "-", "-": "+"})
+    else:
+        _other = other
+    return _other, by
 
 
 def validate_and_convert_use_strand(self: "PyRanges", use_strand: VALID_USE_STRAND_TYPE) -> bool:
@@ -170,6 +223,19 @@ def mypy_ensure_pyranges(df: "pd.DataFrame") -> "PyRanges":
 
     if not isinstance(ret := PyRanges(df), PyRanges):
         msg = "Not a PyRanges"
+        raise TypeError(msg)
+    return ret
+
+
+def mypy_ensure_rangeframe(df: "pd.DataFrame") -> "RangeFrame":
+    """Ensure df is a rangeframe.
+
+    Helps mypy.
+    """
+    from pyranges.range_frame.range_frame import RangeFrame
+
+    if not isinstance(ret := RangeFrame(df), RangeFrame):
+        msg = "Not a RangeFrame"
         raise TypeError(msg)
     return ret
 

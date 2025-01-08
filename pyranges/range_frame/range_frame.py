@@ -3,9 +3,11 @@ from collections.abc import Callable, Iterable
 from typing import Any
 
 import pandas as pd
+import ruranges
 
 from pyranges.core.names import (
     BY_ENTRY_IN_KWARGS,
+    END_COL,
     PRESERVE_INDEX_COLUMN,
     RANGE_COLS,
     SKIP_IF_DF_EMPTY_DEFAULT,
@@ -14,6 +16,7 @@ from pyranges.core.names import (
     SKIP_IF_EMPTY_BOTH,
     SKIP_IF_EMPTY_LEFT,
     SKIP_IF_EMPTY_RIGHT,
+    START_COL,
     VALID_BY_TYPES,
     VALID_OVERLAP_TYPE,
     BinaryOperation,
@@ -21,6 +24,8 @@ from pyranges.core.names import (
 )
 from pyranges.core.pyranges_helpers import arg_to_list
 from pyranges.core.tostring import tostring
+from pyranges.methods.merge import _merge
+from pyranges.methods.sort import sort_factorize_dict
 from pyranges.range_frame.range_frame_validator import InvalidRangesReason
 
 
@@ -68,11 +73,6 @@ class RangeFrame(pd.DataFrame):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-        missing_columns = [c for c in RANGE_COLS if c not in self.columns]
-        if missing_columns:
-            msg = f"Missing required columns: {missing_columns}"
-            raise ValueError(msg)
-
     def __str__(
         self,
         **kwargs: int | None,
@@ -90,11 +90,24 @@ class RangeFrame(pd.DataFrame):
     def __repr__(self, max_col_width: int | None = None, max_total_width: int | None = None) -> str:
         return self.__str__(max_col_width=max_col_width, max_total_width=max_total_width)
 
+    def merge_overlaps(
+        self,
+        *,
+        count_col: str | None = None,
+        match_by: VALID_BY_TYPES = None,
+        slack: int = 0,
+    ) -> "RangeFrame":
+        match_by = arg_to_list(match_by)
+        return _merge(self, by=match_by, count_col=count_col, slack=slack)
+
     def overlap(
         self,
         other: "RangeFrame",
-        how: VALID_OVERLAP_TYPE = "first",
-        by: VALID_BY_TYPES = None,
+        multiple: VALID_OVERLAP_TYPE = "all",
+        slack: int = 0,
+        *,
+        contained_intervals_only: bool = False,
+        match_by: VALID_BY_TYPES = None,
     ) -> "RangeFrame":
         """Find intervals in self overlapping other..
 
@@ -136,35 +149,35 @@ class RangeFrame(pd.DataFrame):
               1  |          2       20  d
         RangeFrame with 2 rows, 3 columns, and 1 index columns.
 
-        >>> r.overlap(r2, how="first")
+        >>> r.overlap(r2, multiple="first")
           index  |      Start      End  Id
           int64  |      int64    int64  object
         -------  ---  -------  -------  --------
               0  |          1        3  a
               1  |          1        3  b
-              2  |          2        5  a
               3  |          2        4  d
+              2  |          2        5  a
         RangeFrame with 4 rows, 3 columns, and 1 index columns.
 
-        >>> r.overlap(r2, how="containment")
+        >>> r.overlap(r2, contained_intervals_only=True)
           index  |      Start      End  Id
           int64  |      int64    int64  object
         -------  ---  -------  -------  --------
-              2  |          2        5  a
               3  |          2        4  d
+              2  |          2        5  a
         RangeFrame with 2 rows, 3 columns, and 1 index columns.
 
-        >>> r.overlap(r2, how="all")
+        >>> r.overlap(r2, multiple="all")
           index  |      Start      End  Id
           int64  |      int64    int64  object
         -------  ---  -------  -------  --------
               0  |          1        3  a
               1  |          1        3  b
-              2  |          2        5  a
               3  |          2        4  d
+              2  |          2        5  a
         RangeFrame with 4 rows, 3 columns, and 1 index columns.
 
-        >>> r.overlap(r2, how="all", by="Id")
+        >>> r.overlap(r2, multiple="all", match_by="Id")
           index  |      Start      End  Id
           int64  |      int64    int64  object
         -------  ---  -------  -------  --------
@@ -174,7 +187,34 @@ class RangeFrame(pd.DataFrame):
         """
         from pyranges.methods.overlap import _overlap
 
-        return self.apply_pair(other, _overlap, how=how, by=by)
+        by = arg_to_list(match_by)
+
+        result = _overlap(
+            self,
+            other,
+            by=by,
+            slack=slack,
+            multiple=multiple,
+            contained=contained_intervals_only,
+        )
+
+        return _mypy_ensure_rangeframe(result)
+
+    def sort_ranges(
+        self: "RangeFrame",
+        match_by: VALID_BY_TYPES = None,
+        *,
+        natsort: bool = True,
+    ):
+        by = arg_to_list(match_by)
+        by_sort_order_as_int = sort_factorize_dict(self, by, use_natsort=natsort)
+        idxs = ruranges.sort_intervals_numpy(
+            by_sort_order_as_int,
+            self[START_COL].to_numpy(),
+            self[END_COL].to_numpy(),
+            self.index.to_numpy(),
+        )
+        return self.loc[idxs]
 
     def apply_single(
         self,

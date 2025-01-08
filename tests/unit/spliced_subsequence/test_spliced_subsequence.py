@@ -16,37 +16,20 @@ def test_spliced_subsequence_use_strand_false():
     result = p.spliced_subsequence(0, 5, use_strand=False, transcript_id="transcript_id")
 
     _expected_result = {
-        "Chromosome":{
-            0:1,
-            2:2,
-            4:3
+        "Chromosome": {0: 1, 2: 2, 4: 3},
+        "Strand": {0: "+", 2: "-", 4: "+"},
+        "Start": {
+            0: 1,
+            2: 10,
+            4: 140,
         },
-        "Strand":{
-            0:"+",
-            2:"-",
-            4:"+"
-        },
-        "Start":{
-            0:1,
-            2:10,
-            4:140,
-        },
-        "End":{
-            0:6,
-            2:15,
-            4:145
-        },
-        "transcript_id":{
-            0:"t1",
-            2:"t2",
-            4:"t3"
-        }
+        "End": {0: 6, 2: 15, 4: 145},
+        "transcript_id": {0: "t1", 2: "t2", 4: "t3"},
     }
     expected_result = pd.DataFrame(_expected_result)
     print(result)
     print(expected_result)
     pd.testing.assert_frame_equal(result, expected_result)
-
 
 
 def test_spliced_subsequence_without_transcript_id():
@@ -63,46 +46,14 @@ def test_spliced_subsequence_without_transcript_id():
     result = p.spliced_subsequence(0, 5, use_strand=False)
 
     _expected_result = {
-        "Chromosome":{
-            0:1,
-            1:1,
-            2:2,
-            3:2,
-            4:3
-        },
-        "Strand":{
-            0:"+",
-            1:"+",
-            2:"-",
-            3:"-",
-            4:"+"
-        },
-        "Start":{
-            0:1,
-            1:40,
-            2:10,
-            3:70,
-            4:140
-        },
-        "End":{
-            0:6,
-            1:45,
-            2:15,
-            3:75,
-            4:145
-        },
-        "transcript_id":{
-            0:"t1",
-            1:"t1",
-            2:"t2",
-            3:"t2",
-            4:"t3"
-        }
+        "Chromosome": {0: 1, 1: 1, 2: 2, 3: 2, 4: 3},
+        "Strand": {0: "+", 1: "+", 2: "-", 3: "-", 4: "+"},
+        "Start": {0: 1, 1: 40, 2: 10, 3: 70, 4: 140},
+        "End": {0: 6, 1: 45, 2: 15, 3: 75, 4: 145},
+        "transcript_id": {0: "t1", 1: "t1", 2: "t2", 3: "t2", 4: "t3"},
     }
-
 
     expected_result = pd.DataFrame(_expected_result)
     print(result)
     print(expected_result)
     pd.testing.assert_frame_equal(result, expected_result)
-

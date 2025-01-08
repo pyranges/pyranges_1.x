@@ -1,33 +1,31 @@
-from pathlib import Path
 from typing import TYPE_CHECKING
-import pandas as pd
-from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
+
 from ruranges import merge_numpy  # type: ignore[import]
 
-from pyranges.core.names import CHROM_COL, END_COL, START_COL
+from pyranges.core.names import END_COL, START_COL
+from pyranges.core.pyranges_helpers import factorize, mypy_ensure_rangeframe
 
 if TYPE_CHECKING:
-    import pyranges as pr
+    from pyranges.range_frame.range_frame import RangeFrame
 
 
 def _merge(
-    df: "pr.PyRanges",
+    df: "RangeFrame",
     by: list[str],
     count_col: str | None = None,
     slack: int | None = None,
-) -> "pr.PyRanges":
-    from pyranges.core.pyranges_main import PyRanges
+) -> "RangeFrame":
+    from pyranges.range_frame.range_frame import RangeFrame
 
     if df.empty:
         return df
 
-    col_order = [col for col in df if col in by + [START_COL, END_COL]]
+    col_order = [col for col in df if col in [*by, START_COL, END_COL]]
 
-    # _slack = slack or 0
-    chrs = pd.DataFrame(df).groupby(by).ngroup()
+    factorized = factorize(df, by)
 
     indices, start, end, counts = merge_numpy(
-        chrs=chrs.values,
+        chrs=factorized,
         starts=df.Start.to_numpy(),
         ends=df.End.to_numpy(),
         idxs=df.index.to_numpy(),
@@ -38,9 +36,9 @@ def _merge(
     by_subset.loc[:, START_COL] = start
     by_subset.loc[:, END_COL] = end
 
-    outpr = PyRanges(by_subset)
+    outpr = RangeFrame(by_subset)
 
     if count_col:
         outpr.insert(outpr.shape[1], count_col, counts)
 
-    return mypy_ensure_pyranges(outpr.reset_index(drop=True))
+    return mypy_ensure_rangeframe(outpr.reset_index(drop=True))
