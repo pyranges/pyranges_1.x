@@ -1,8 +1,9 @@
 import inspect
 from collections.abc import Callable, Iterable
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 import pandas as pd
+from pyranges.methods.complement_overlaps import _complement_overlaps
 import ruranges
 
 from pyranges.core.names import (
@@ -39,8 +40,10 @@ def should_skip_operation(df: pd.DataFrame, *, df2: pd.DataFrame, skip_if_empty:
         return skip_if_empty in {SKIP_IF_EMPTY_RIGHT, SKIP_IF_EMPTY_ANY}
     return False
 
+TRangeFrame = TypeVar("TRangeFrame", bound="RangeFrame")
 
 class RangeFrame(pd.DataFrame):
+
     """Class for range based operations.
 
     A table with Start and End columns. Parent class of PyRanges. Subclass of pandas DataFrame.
@@ -99,6 +102,16 @@ class RangeFrame(pd.DataFrame):
     ) -> "RangeFrame":
         match_by = arg_to_list(match_by)
         return _merge(self, by=match_by, count_col=count_col, slack=slack)
+
+    def complement_overlaps(
+        self: "RangeFrame",
+        other: "RangeFrame",
+        *,
+        match_by: VALID_BY_TYPES = None,
+        slack: int = 0,
+    ) -> "RangeFrame":
+        match_by = arg_to_list(match_by)
+        return _complement_overlaps(self, other, by=match_by, slack=slack)
 
     def overlap(
         self,
