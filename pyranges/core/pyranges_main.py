@@ -665,7 +665,7 @@ class PyRanges(RangeFrame):
     def boundaries(
         self,
         transcript_id: VALID_BY_TYPES = None,
-        agg: dict[str, str | Callable] | None = None,
+        use_strand: VALID_USE_STRAND_TYPE = "auto",
     ) -> "PyRanges":
         """Return the boundaries of groups of intervals (e.g. transcripts).
 
@@ -723,26 +723,18 @@ class PyRanges(RangeFrame):
               0  |               1        1      130
         PyRanges with 1 rows, 3 columns, and 1 index columns.
         Contains 1 chromosomes.
-
-        >>> gr.boundaries("transcript_id", agg={"Length":"sum", "meta": ",".join})
-          index  |      Chromosome    Start      End  transcript_id    meta        Length
-          int64  |           int64    int64    int64  object           object       int64
-        -------  ---  ------------  -------  -------  ---------------  --------  --------
-              0  |               1        1       68  tr1              a,b             47
-              1  |               1      110      130  tr2              c               20
-        PyRanges with 2 rows, 6 columns, and 1 index columns.
-        Contains 1 chromosomes.
-
         """
         from pyranges.methods.boundaries import _bounds
 
-        # may be optimized: no need to split by chromosome/strands
-        return self.apply_single(
-            _bounds,
-            by=arg_to_list(transcript_id),
-            agg=agg,
-            use_strand=self.strand_valid,
+        by = prepare_by_single(
+            self,
+            use_strand=use_strand,
+            match_by=transcript_id,
         )
+        return mypy_ensure_pyranges(_bounds(
+            df=self,
+            by=by,
+        ))
 
     @property
     def chromosomes(self) -> list[str]:

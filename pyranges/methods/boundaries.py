@@ -3,27 +3,34 @@ from typing import TYPE_CHECKING
 import pandas as pd
 
 from pyranges.core.names import CHROM_COL, END_COL, START_COL, STRAND_COL
+from pyranges.core.pyranges_helpers import factorize, mypy_ensure_rangeframe
+from pyranges.range_frame.range_frame import RangeFrame
 
 if TYPE_CHECKING:
     import pyranges as pr
 
 
-def _bounds[T: ("pr.PyRanges", "pd.DataFrame")](df: T, **kwargs) -> pd.DataFrame:
+def _bounds[T: ("pr.PyRanges", "pd.DataFrame")](df: T, by: list[str]) -> pd.DataFrame:
     if df.empty:
         return df
 
-    col_order = list(df.columns)
+    col_order = [c for c in df.columns if c in {START_COL, END_COL} | {*by}]
+    import ruranges
 
-    by = kwargs.get("by")
-    by = [by] if isinstance(by, str) else (by or [])
+    group_ids = factorize(df, by=by)
 
-    agg_dict = agg if (agg := kwargs.get("agg")) else {}
-    agg_dict.update({START_COL: "min", END_COL: "max", CHROM_COL: "first"})
-    if STRAND_COL in df.columns:
-        agg_dict[STRAND_COL] = "first"
+    idxs, starts, ends, counts = ruranges.boundary_numpy(
+        group_ids,
+        df[START_COL].to_numpy(),
+        df[END_COL].to_numpy(),
+        df.index.to_numpy(),
+    )
 
-    res = df.groupby(by, as_index=False).agg(agg_dict)
-    return res.reindex(columns=[c for c in col_order if c in res.columns])
+    ids = df.loc[idxs, by]
+
+    result = RangeFrame({START_COL: starts, END_COL: ends} | {_by: ids[_by] for _by in by})[col_order]
+
+    return mypy_ensure_rangeframe(result.reset_index(drop=True))
 
 
 def _outside_bounds(df: pd.DataFrame, **kwargs) -> pd.DataFrame:
