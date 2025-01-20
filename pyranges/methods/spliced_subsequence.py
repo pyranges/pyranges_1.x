@@ -25,7 +25,6 @@ def _spliced_subseq(
     force_plus_strand: bool = False,
     start: int = 0,
     end: int | None = None,
-    spliced: bool = True,
 ) -> pd.DataFrame:
     if df.empty:
         return df
@@ -41,7 +40,6 @@ def _spliced_subseq(
         start=start,
         end=end,
         force_plus_strand=force_plus_strand,
-        spliced=spliced,
     )
 
     outdf = df.loc[outidx]

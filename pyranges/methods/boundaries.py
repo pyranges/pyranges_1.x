@@ -14,7 +14,8 @@ def _bounds[T: ("pr.PyRanges", "pd.DataFrame")](df: T, by: list[str]) -> pd.Data
     if df.empty:
         return df
 
-    col_order = [c for c in df.columns if c in {START_COL, END_COL} | {*by}]
+    col_order = [*dict.fromkeys([col for col in df if col in [*by, START_COL, END_COL]]).keys()]
+
     import ruranges
 
     group_ids = factorize(df, by=by)

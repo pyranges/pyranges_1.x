@@ -10,6 +10,7 @@ from pyranges.core.names import (
     OVERLAP_ALL,
     OVERLAP_FIRST,
     OVERLAP_LAST,
+    RANGE_COLS,
     START_COL,
     VALID_OVERLAP_OPTIONS,
     VALID_OVERLAP_TYPE,
@@ -118,45 +119,37 @@ def _intersect(
     df: "RangeFrame",
     df2: "RangeFrame",
     *,
-    how: VALID_OVERLAP_TYPE = "all",
-    **_,
+    by: list[str],
+    slack: int = 0,
 ) -> pd.DataFrame:
-    df = df.copy()
-    starts = df.Start.to_numpy()
-    ends = df.End.to_numpy()
-    indexes = df.index.to_numpy()
+    import ruranges
+    f1, f2 = factorize_multiple(df, df2, by)
 
-    in_dtype = df2.Start.dtype
+    idx1, idx2 = ruranges.chromsweep_numpy(
+        f1,
+        df.Start.values,
+        df.End.values,
+        df.index.values,
+        f2,
+        df2.Start.values,
+        df2.End.values,
+        df2.index.values,
+        slack,
+    )
 
-    oncls = NCLS(df2.Start.to_numpy(), df2.End.to_numpy(), df2.index.to_numpy())
-
-    if how == OVERLAP_ALL:
-        _self_indexes, _other_indexes = oncls.all_overlaps_both(starts, ends, indexes)
-    elif how == OVERLAP_CONTAINMENT:
-        _self_indexes, _other_indexes = oncls.all_containments_both(starts, ends, indexes)
-    elif how == OVERLAP_FIRST:
-        _self_indexes, _other_indexes = oncls.first_overlap_both(starts, ends, indexes)
-    elif how == OVERLAP_LAST:
-        _self_indexes, _other_indexes = oncls.last_overlap_both(starts, ends, indexes)
-    else:
-        msg = "Invalid overlap type. Valid types are: first, containment, all, last."
-        raise ValueError(msg)
-
-    df, df2 = df.reindex(_self_indexes), df2.reindex(_other_indexes)
+    rf, rf2 = df.loc[idx1], df2.loc[idx2, RANGE_COLS]
 
     new_starts = pd.Series(
-        np.where(df.Start.to_numpy() > df2.Start.to_numpy(), df.Start, df2.Start),
-        index=df.index,
-        dtype=in_dtype,
+        np.where(rf.Start.to_numpy() > rf2.Start.to_numpy(), rf.Start, rf2.Start),
+        index=rf.index,
     )
 
     new_ends = pd.Series(
-        np.where(df.End.to_numpy() < df2.End.to_numpy(), df.End, df2.End),
-        index=df.index,
-        dtype=in_dtype,
+        np.where(rf.End.to_numpy() < rf2.End.to_numpy(), rf.End, rf2.End),
+        index=rf.index,
     )
 
-    df.loc[:, START_COL] = new_starts
-    df.loc[:, END_COL] = new_ends
+    rf.loc[:, START_COL] = new_starts
+    rf.loc[:, END_COL] = new_ends
 
-    return df
+    return rf

@@ -731,6 +731,9 @@ class PyRanges(RangeFrame):
             use_strand=use_strand,
             match_by=transcript_id,
         )
+
+        by = [*dict.fromkeys(by).keys()]
+
         return mypy_ensure_pyranges(_bounds(
             df=self,
             by=by,
@@ -2682,7 +2685,6 @@ class PyRanges(RangeFrame):
             force_plus_strand=not use_strand,
             start=start,
             end=end,
-            spliced=True,
         )
 
         return mypy_ensure_pyranges(result)
@@ -3101,21 +3103,18 @@ class PyRanges(RangeFrame):
               4  |               3  +             140      155  t3
         PyRanges with 3 rows, 5 columns, and 1 index columns.
         Contains 3 chromosomes and 2 strands.
-
         """
-        from pyranges.methods.spliced_subsequence import _spliced_subseq
-
         by = prepare_by_single(self, use_strand=use_strand, match_by=transcript_id) if transcript_id else []
 
-        result = _spliced_subseq(
-            self,
-            by=by,
-            force_plus_strand=not use_strand,
+        boundaries = self.boundaries(by) if by else self
+        result = boundaries.spliced_subsequence(
+            transcript_id=[],
+            use_strand=use_strand,
             start=start,
             end=end,
         )
 
-        return mypy_ensure_pyranges(result)
+        return mypy_ensure_pyranges(self.intersect(result))
 
     def subtract_ranges(
         self,
@@ -4351,7 +4350,6 @@ class PyRanges(RangeFrame):
         self,
         other: "PyRanges",
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
-        multiple: VALID_OVERLAP_TYPE = "all",
         *,
         match_by: VALID_BY_TYPES = None,
     ) -> "PyRanges":
@@ -4452,20 +4450,15 @@ class PyRanges(RangeFrame):
         # note: argument multiple = 'containment' is formally accepted but omitted in docstring since the result
         # will be always the same as self.overlap(other, contained=True), no intersect is done in that case
 
-        _self = self.copy()
-        _self[TEMP_ID_COL] = np.arange(len(_self))
+        _other, by = prepare_by_binary(self, other, strand_behavior=strand_behavior, match_by=match_by)
 
-        gr = _self.apply_pair(
-            other,
-            _intersect,
-            strand_behavior=strand_behavior,
-            by=match_by,
-            how=multiple,
+        gr = _intersect(
+            self,
+            _other,
+            by=by,
         )
 
-        # preserving order. I can't use the reindex syntax as in other functions because of potential duplicates
-        gr = mypy_ensure_pyranges(gr.sort_values(TEMP_ID_COL))
-        return gr.drop_and_return(TEMP_ID_COL, axis=1)
+        return mypy_ensure_pyranges(gr)
 
     def combine_interval_columns(
         self,
