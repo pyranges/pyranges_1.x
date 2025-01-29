@@ -32,11 +32,12 @@ if TYPE_CHECKING:
 
 def factorize(
     df: "pd.DataFrame",
-    by: list[str],
+    by: VALID_BY_TYPES,
 ) -> ndarray:
     if not by:
         return np.zeros(len(df), dtype=np.int64)
-    return df.groupby(by).ngroup().to_numpy()
+    _by = arg_to_list(by)
+    return df.groupby(_by).ngroup().to_numpy()
 
 
 def factorize_multiple(

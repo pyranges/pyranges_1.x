@@ -780,7 +780,6 @@ class PyRanges(RangeFrame):
         match_by: VALID_BY_TYPES = None,
         slack: int = 0,
         cluster_column: str = "Cluster",
-        count_column: str | None = None,
     ) -> "PyRanges":
         """Give overlapping intervals a common id.
 
@@ -800,9 +799,6 @@ class PyRanges(RangeFrame):
 
         cluster_column:
             Name the cluster column added in output. Default: "Cluster"
-
-        count_column:
-            If a value is provided, add a column of counts with this name.
 
         Returns
         -------
@@ -876,51 +872,14 @@ class PyRanges(RangeFrame):
         PyRanges with 7 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        >>> gr.cluster(slack=3, count_column="Count")
-          index  |      Chromosome    Start      End    Cluster    Count
-          int64  |           int64    int64    int64      int64    int64
-        -------  ---  ------------  -------  -------  ---------  -------
-              0  |               1        5        9          0        2
-              1  |               1        6        8          0        2
-              2  |               1       12       16          1        5
-              3  |               1       16       18          1        5
-              4  |               1       20       23          1        5
-              5  |               1       22       25          1        5
-              6  |               1       24       27          1        5
-        PyRanges with 7 rows, 5 columns, and 1 index columns.
-        Contains 1 chromosomes.
-
         """
-        from pyranges.methods.cluster import _cluster
-
-        if not len(self):
-            # returning empty PyRanges with consistent columns
-            cols_to_add = {cluster_column: 0}
-            if count_column:
-                cols_to_add[count_column] = 0
-            return mypy_ensure_pyranges(self.copy().assign(**cols_to_add))
-
-        _self = mypy_ensure_pyranges(self.sort_values(START_COL))
-
-        use_strand = validate_and_convert_use_strand(_self, use_strand)
-
-        gr = _self.apply_single(
-            _cluster,
-            by=match_by,
-            use_strand=use_strand,
-            slack=slack,
-            count_column=count_column,
+        result = super().cluster(
             cluster_column=cluster_column,
-            preserve_index=True,
+            match_by=prepare_by_single(self, use_strand=use_strand, match_by=match_by),
+            slack=slack,
         )
 
-        by_split_groups = (
-            (CHROM_AND_STRAND_COLS if use_strand else [CHROM_COL]) + arg_to_list(match_by) + [cluster_column]
-        )
-        gr = gr.reindex(self.index)
-        gr[cluster_column] = gr.groupby(by_split_groups, sort=False).ngroup()
-        return mypy_ensure_pyranges(gr)
-
+        return mypy_ensure_pyranges(result)
 
     def copy(self, *args, **kwargs) -> "pr.PyRanges":
         """Return a copy of the PyRanges."""

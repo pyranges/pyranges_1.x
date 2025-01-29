@@ -23,7 +23,7 @@ from pyranges.core.names import (
     BinaryOperation,
     UnaryOperation,
 )
-from pyranges.core.pyranges_helpers import arg_to_list, factorize_multiple
+from pyranges.core.pyranges_helpers import arg_to_list, factorize, factorize_multiple
 from pyranges.core.tostring import tostring
 from pyranges.methods.merge import _merge
 from pyranges.methods.sort import sort_factorize_dict
@@ -102,6 +102,35 @@ class RangeFrame(pd.DataFrame):
     ) -> "RangeFrame":
         match_by = arg_to_list(match_by)
         return _merge(self, by=match_by, count_col=count_col, slack=slack)
+
+
+    # chrs: PyReadonlyArray1<i64>,
+    # starts: PyReadonlyArray1<i64>,
+    # ends: PyReadonlyArray1<i64>,
+    # idxs: PyReadonlyArray1<i64>,
+    # slack: i64,
+
+    def cluster(
+        self,
+        *,
+        match_by: VALID_BY_TYPES = None,
+        cluster_column: str = "Cluster",
+        slack: int = 0,
+    ) -> "RangeFrame":
+        match_by = arg_to_list(match_by)
+
+        factorized = factorize(self, match_by)
+        cluster, idx = ruranges.cluster_numpy(
+            factorized,
+            self[START_COL].to_numpy(),
+            self[END_COL].to_numpy(),
+            self.index.to_numpy(),
+            slack,
+        )
+
+        res = self.loc[idx].copy()
+        res.insert(res.shape[1], cluster_column, cluster)
+        return res
 
     def complement_overlaps(
         self: "RangeFrame",
@@ -247,7 +276,7 @@ class RangeFrame(pd.DataFrame):
             other.index.to_numpy(),
         )
 
-        output = self.loc[idx]
+        output = self.loc[idx].copy()
         output[START_COL], output[END_COL] = start, end
         return output
 
