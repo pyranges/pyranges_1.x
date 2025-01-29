@@ -3222,35 +3222,14 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes.
 
         """
-        from pyranges.methods.subtraction import _subtraction
+        _other, by = prepare_by_binary(self, other=other, strand_behavior=strand_behavior, match_by=match_by)
 
-        strand_behavior = validate_and_convert_strand_behavior(self, other, strand_behavior)
-        use_strand = use_strand_from_validated_strand_behavior(self, other, strand_behavior)
-
-        other_clusters = other.merge_overlaps(use_strand=use_strand, match_by=match_by)
-
-        grpby_ks = group_keys_from_validated_strand_behavior(strand_behavior, match_by)
-
-        gr = self.count_overlaps(
-            other_clusters,
-            strand_behavior=strand_behavior,
-            overlap_col=TEMP_NUM_COL,
-            match_by=grpby_ks,
-        )
-        gr[TEMP_ID_COL] = np.arange(len(gr))
-
-        result = gr.apply_pair(
-            other_clusters,
-            strand_behavior=strand_behavior,
-            function=_subtraction,
-            by=grpby_ks,
-            skip_if_empty=False,
+        gr = super().subtract_ranges(
+            _other,
+            match_by=by,
         )
 
-        return mypy_ensure_pyranges(result.sort_values(TEMP_ID_COL)).drop_and_return(
-            [TEMP_NUM_COL, TEMP_ID_COL],
-            axis=1,
-        )
+        return mypy_ensure_pyranges(gr)
 
     def summary(
         self,

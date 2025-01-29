@@ -23,7 +23,7 @@ from pyranges.core.names import (
     BinaryOperation,
     UnaryOperation,
 )
-from pyranges.core.pyranges_helpers import arg_to_list
+from pyranges.core.pyranges_helpers import arg_to_list, factorize_multiple
 from pyranges.core.tostring import tostring
 from pyranges.methods.merge import _merge
 from pyranges.methods.sort import sort_factorize_dict
@@ -228,6 +228,28 @@ class RangeFrame(pd.DataFrame):
             self.index.to_numpy(),
         )
         return self.loc[idxs]
+
+    def subtract_ranges(
+        self: "RangeFrame",
+        other: "RangeFrame",
+        match_by: VALID_BY_TYPES = None,
+    ) -> "RangeFrame":
+        f1, f2 = factorize_multiple(self, other, match_by)
+
+        idx, start, end = ruranges.subtract_numpy(
+            f1,
+            self[START_COL].to_numpy(),
+            self[END_COL].to_numpy(),
+            self.index.to_numpy(),
+            f2,
+            other[START_COL].to_numpy(),
+            other[END_COL].to_numpy(),
+            other.index.to_numpy(),
+        )
+
+        output = self.loc[idx]
+        output[START_COL], output[END_COL] = start, end
+        return output
 
     def apply_single(
         self,

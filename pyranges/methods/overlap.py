@@ -12,6 +12,7 @@ from pyranges.core.names import (
     OVERLAP_LAST,
     RANGE_COLS,
     START_COL,
+    VALID_BY_TYPES,
     VALID_OVERLAP_OPTIONS,
     VALID_OVERLAP_TYPE,
 )
@@ -63,7 +64,7 @@ def _overlap(
     df: "RangeFrame",
     df2: "RangeFrame",
     *,
-    by: list[str],
+    by: VALID_BY_TYPES,
     multiple: VALID_OVERLAP_TYPE = "all",
     contained: bool = False,
     slack: int = 0,

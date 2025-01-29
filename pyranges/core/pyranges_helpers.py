@@ -42,11 +42,12 @@ def factorize(
 def factorize_multiple(
     df: "pd.DataFrame",
     df2: "pd.DataFrame",
-    by: list[str],
+    by: VALID_BY_TYPES,
 ) -> tuple[ndarray, ndarray]:
     if not by:
         return np.zeros(len(df), dtype=np.int64), np.zeros(len(df2), dtype=np.int64)
-    factorized = pd.concat([df[by], df2[by]], ignore_index=True).groupby(by).ngroup().to_numpy()
+    _by = arg_to_list(by)
+    factorized = pd.concat([df[_by], df2[_by]], ignore_index=True).groupby(_by).ngroup().to_numpy()
     return factorized[: len(df)], factorized[len(df) :]
 
 
