@@ -16,7 +16,7 @@ from pyranges.core.names import (
     VALID_OVERLAP_OPTIONS,
     VALID_OVERLAP_TYPE,
 )
-from pyranges.core.pyranges_helpers import factorize_multiple
+from pyranges.core.pyranges_helpers import factorize_binary
 
 if TYPE_CHECKING:
     import pyranges as pr
@@ -69,7 +69,7 @@ def _overlap(
     contained: bool = False,
     slack: int = 0,
 ) -> pd.DataFrame:
-    f1, f2 = factorize_multiple(df, df2, by)
+    f1, f2 = factorize_binary(df, df2, by)
 
     idx1, idx2 = ruranges.chromsweep_numpy(
         f1,
@@ -124,7 +124,7 @@ def _intersect(
     slack: int = 0,
 ) -> pd.DataFrame:
     import ruranges
-    f1, f2 = factorize_multiple(df, df2, by)
+    f1, f2 = factorize_binary(df, df2, by)
 
     idx1, idx2 = ruranges.chromsweep_numpy(
         f1,

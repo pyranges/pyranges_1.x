@@ -9,6 +9,7 @@ from numpy import ndarray
 from pyranges.core.names import (
     CHROM_AND_STRAND_COLS,
     CHROM_COL,
+    RANGE_COLS,
     REVERSE_STRAND,
     STRAND_BEHAVIOR_AUTO,
     STRAND_BEHAVIOR_IGNORE,
@@ -40,7 +41,7 @@ def factorize(
     return df.groupby(_by).ngroup().to_numpy()
 
 
-def factorize_multiple(
+def factorize_binary(
     df: "pd.DataFrame",
     df2: "pd.DataFrame",
     by: VALID_BY_TYPES,
@@ -73,11 +74,11 @@ def prepare_by_binary(
     by = [*default_cols, *arg_to_list(match_by)]
 
     if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
-        _other = other
+        _other = other.loc[:, [*RANGE_COLS, *by]].copy()
         _other.loc[:, STRAND_COL] = other[STRAND_COL].replace({"+": "-", "-": "+"})
     else:
         _other = other
-    return _other, by
+    return mypy_ensure_pyranges(_other), by
 
 
 def validate_and_convert_use_strand(self: "PyRanges", use_strand: VALID_USE_STRAND_TYPE) -> bool:

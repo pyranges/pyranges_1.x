@@ -23,7 +23,7 @@ from pyranges.core.names import (
     BinaryOperation,
     UnaryOperation,
 )
-from pyranges.core.pyranges_helpers import arg_to_list, factorize, factorize_multiple
+from pyranges.core.pyranges_helpers import arg_to_list, factorize, factorize_binary
 from pyranges.core.tostring import tostring
 from pyranges.methods.merge import _merge
 from pyranges.methods.sort import sort_factorize_dict
@@ -263,7 +263,7 @@ class RangeFrame(pd.DataFrame):
         other: "RangeFrame",
         match_by: VALID_BY_TYPES = None,
     ) -> "RangeFrame":
-        f1, f2 = factorize_multiple(self, other, match_by)
+        f1, f2 = factorize_binary(self, other, match_by)
 
         idx, start, end = ruranges.subtract_numpy(
             f1,
