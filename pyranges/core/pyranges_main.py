@@ -79,7 +79,6 @@ if TYPE_CHECKING:
 __all__ = ["PyRanges"]
 
 
-
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.INFO)
@@ -734,10 +733,12 @@ class PyRanges(RangeFrame):
 
         by = [*dict.fromkeys(by).keys()]
 
-        return mypy_ensure_pyranges(_bounds(
-            df=self,
-            by=by,
-        ))
+        return mypy_ensure_pyranges(
+            _bounds(
+                df=self,
+                by=by,
+            )
+        )
 
     @property
     def chromosomes(self) -> list[str]:
@@ -1796,15 +1797,17 @@ class PyRanges(RangeFrame):
 
         return mypy_ensure_pyranges(result)
 
-    def nearest(
+    def nearest(  # type: ignore[override]
         self,
         other: "PyRanges",
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
         direction: VALID_NEAREST_TYPE = "any",
         *,
+        k: int = 1,
         match_by: VALID_BY_TYPES = None,
         suffix: str = JOIN_SUFFIX,
         exclude_overlaps: bool = False,
+        dist_col="Distance",
     ) -> "PyRanges":
         """Find closest interval.
 
@@ -1867,33 +1870,33 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         >>> f1.nearest(f2)
-          index  |    Chromosome      Start      End  Strand        Start_b    End_b    Distance
-          int64  |    category        int64    int64  category        int64    int64       int64
-        -------  ---  ------------  -------  -------  ----------  ---------  -------  ----------
-              0  |    chr1                3        6  +                   1        2           2
-              1  |    chr1                5        7  -                   6        7           0
-              2  |    chr1                8        9  +                   1        2           7
-        PyRanges with 3 rows, 7 columns, and 1 index columns.
+          index  |    Chromosome      Start      End  Strand      Chromosome_b      Start_b    End_b  Strand_b      Distance
+          int64  |    category        int64    int64  category    object              int64    int64  object           int64
+        -------  ---  ------------  -------  -------  ----------  --------------  ---------  -------  ----------  ----------
+              0  |    chr1                3        6  +           chr1                    1        2  +                    2
+              1  |    chr1                5        7  -           chr1                    6        7  -                    0
+              2  |    chr1                8        9  +           chr1                    1        2  +                    7
+        PyRanges with 3 rows, 9 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
         >>> f1.nearest(f2, strand_behavior='ignore')
-          index  |    Chromosome      Start      End  Strand        Start_b    End_b  Strand_b      Distance
-          int64  |    category        int64    int64  category        int64    int64  object           int64
-        -------  ---  ------------  -------  -------  ----------  ---------  -------  ----------  ----------
-              0  |    chr1                3        6  +                   6        7  -                    1
-              1  |    chr1                5        7  -                   6        7  -                    0
-              2  |    chr1                8        9  +                   6        7  -                    2
-        PyRanges with 3 rows, 8 columns, and 1 index columns.
+          index  |    Chromosome      Start      End  Strand      Chromosome_b      Start_b    End_b  Strand_b      Distance
+          int64  |    category        int64    int64  category    object              int64    int64  object           int64
+        -------  ---  ------------  -------  -------  ----------  --------------  ---------  -------  ----------  ----------
+              0  |    chr1                3        6  +           chr1                    6        7  -                    1
+              1  |    chr1                5        7  -           chr1                    6        7  -                    0
+              2  |    chr1                8        9  +           chr1                    6        7  -                    2
+        PyRanges with 3 rows, 9 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
         >>> f1.nearest(f2, strand_behavior='ignore', exclude_overlaps=True)
-          index  |    Chromosome      Start      End  Strand        Start_b    End_b  Strand_b      Distance
-          int64  |    category        int64    int64  category        int64    int64  object           int64
-        -------  ---  ------------  -------  -------  ----------  ---------  -------  ----------  ----------
-              0  |    chr1                3        6  +                   6        7  -                    1
-              1  |    chr1                5        7  -                   1        2  +                    4
-              2  |    chr1                8        9  +                   6        7  -                    2
-        PyRanges with 3 rows, 8 columns, and 1 index columns.
+          index  |    Chromosome      Start      End  Strand      Chromosome_b      Start_b    End_b  Strand_b      Distance
+          int64  |    category        int64    int64  category    object              int64    int64  object           int64
+        -------  ---  ------------  -------  -------  ----------  --------------  ---------  -------  ----------  ----------
+              0  |    chr1                3        6  +           chr1                    6        7  -                    1
+              1  |    chr1                5        7  -           chr1                    1        2  +                    4
+              2  |    chr1                8        9  +           chr1                    6        7  -                    2
+        PyRanges with 3 rows, 9 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
         >>> f1.nearest(f2, direction='downstream')
@@ -1918,46 +1921,15 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 1 strands.
 
         """
-        from pyranges.methods.nearest import _nearest
-
-        strand_behavior = validate_and_convert_strand_behavior(self, other, strand_behavior)
-        if direction in {NEAREST_UPSTREAM, NEAREST_DOWNSTREAM} and strand_behavior == STRAND_BEHAVIOR_IGNORE:
-            msg = "For upstream or downstream nearest, strands must be valid and strand_behavior cannot be 'ignore'"
-            raise AssertionError(msg)
-
-        if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
-            # swap strands in STRAND_COL, but keep original values in TEMP_STRAND_COL
-            self = mypy_ensure_pyranges(
-                self.assign(**{TEMP_STRAND_COL: self[STRAND_COL]}).assign(
-                    **{
-                        STRAND_COL: self[STRAND_COL].replace(
-                            {FORWARD_STRAND: REVERSE_STRAND, REVERSE_STRAND: FORWARD_STRAND},
-                        ),
-                    },
-                ),
-            )
-            # switch direction
-            if direction == NEAREST_UPSTREAM:
-                direction = NEAREST_DOWNSTREAM
-            elif direction == NEAREST_DOWNSTREAM:
-                direction = NEAREST_UPSTREAM
-
-        res = mypy_ensure_pyranges(
-            self.apply_pair(
-                other,
-                _nearest,
-                strand_behavior=strand_behavior,
-                how=direction,
-                by=match_by,
-                overlap=not exclude_overlaps,
-                suffix=suffix,
-                preserve_order=True,
-            ),
+        _other, by = prepare_by_binary(self, other=other, strand_behavior=strand_behavior, match_by=match_by)
+        res = super().nearest(
+            other=_other,
+            match_by=by,
+            suffix=suffix,
+            exclude_overlaps=exclude_overlaps,
+            k=k,
+            dist_col=dist_col,
         )
-
-        if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
-            # swap back strands in STRAND_COL
-            res = res.drop_and_return(STRAND_COL, axis="columns").rename(columns={TEMP_STRAND_COL: STRAND_COL})
 
         return mypy_ensure_pyranges(res)
 
@@ -2632,11 +2604,15 @@ class PyRanges(RangeFrame):
         """
         from pyranges.methods.spliced_subsequence import _spliced_subseq
 
-        by = prepare_by_single(
-            self,
-            use_strand=use_strand,
-            match_by=transcript_id,
-        ) if transcript_id else []
+        by = (
+            prepare_by_single(
+                self,
+                use_strand=use_strand,
+                match_by=transcript_id,
+            )
+            if transcript_id
+            else []
+        )
 
         result = _spliced_subseq(
             self,
@@ -4818,7 +4794,6 @@ class PyRanges(RangeFrame):
         )
 
         return mypy_ensure_pyranges(result)
-
 
     def get_sequence(
         self: "PyRanges",

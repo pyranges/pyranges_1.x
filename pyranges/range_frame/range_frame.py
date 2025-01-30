@@ -9,6 +9,7 @@ import ruranges
 from pyranges.core.names import (
     BY_ENTRY_IN_KWARGS,
     END_COL,
+    JOIN_SUFFIX,
     PRESERVE_INDEX_COLUMN,
     RANGE_COLS,
     SKIP_IF_DF_EMPTY_DEFAULT,
@@ -40,10 +41,11 @@ def should_skip_operation(df: pd.DataFrame, *, df2: pd.DataFrame, skip_if_empty:
         return skip_if_empty in {SKIP_IF_EMPTY_RIGHT, SKIP_IF_EMPTY_ANY}
     return False
 
+
 TRangeFrame = TypeVar("TRangeFrame", bound="RangeFrame")
 
-class RangeFrame(pd.DataFrame):
 
+class RangeFrame(pd.DataFrame):
     """Class for range based operations.
 
     A table with Start and End columns. Parent class of PyRanges. Subclass of pandas DataFrame.
@@ -103,7 +105,6 @@ class RangeFrame(pd.DataFrame):
         match_by = arg_to_list(match_by)
         return _merge(self, by=match_by, count_col=count_col, slack=slack)
 
-
     # chrs: PyReadonlyArray1<i64>,
     # starts: PyReadonlyArray1<i64>,
     # ends: PyReadonlyArray1<i64>,
@@ -141,6 +142,42 @@ class RangeFrame(pd.DataFrame):
     ) -> "RangeFrame":
         match_by = arg_to_list(match_by)
         return _complement_overlaps(self, other, by=match_by, slack=slack)
+
+    def nearest(
+        self,
+        other: "RangeFrame",
+        *,
+        match_by: VALID_BY_TYPES = None,
+        suffix: str = JOIN_SUFFIX,
+        exclude_overlaps: bool = False,
+        k: int = 1,
+        dist_col="Distance",
+    ) -> "RangeFrame":
+        f1, f2 = factorize_binary(self, other, match_by)
+        idx1, idx2, dist = ruranges.nearest_intervals_numpy(
+            f1,
+            self[START_COL].to_numpy(),
+            self[END_COL].to_numpy(),
+            self.index.to_numpy(),
+            f2,
+            other[START_COL].to_numpy(),
+            other[END_COL].to_numpy(),
+            other.index.to_numpy(),
+            k=k,
+            overlaps=not exclude_overlaps,
+        )
+
+        res = pd.concat(
+            [
+                self.loc[idx1].reset_index(drop=True),
+                pd.DataFrame(other).loc[idx2].add_suffix(suffix).reset_index(drop=True),
+                pd.Series(dist, name=dist_col),
+            ],
+            axis=1,
+        )
+        res.index = idx1
+
+        return _mypy_ensure_rangeframe(res)
 
     def overlap(
         self,

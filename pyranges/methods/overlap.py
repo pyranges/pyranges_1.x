@@ -124,6 +124,7 @@ def _intersect(
     slack: int = 0,
 ) -> pd.DataFrame:
     import ruranges
+
     f1, f2 = factorize_binary(df, df2, by)
 
     idx1, idx2 = ruranges.chromsweep_numpy(
