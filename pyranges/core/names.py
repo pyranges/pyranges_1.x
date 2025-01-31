@@ -76,6 +76,7 @@ VALID_STRAND_BEHAVIOR_OPTIONS = [
     STRAND_BEHAVIOR_IGNORE,
 ]
 
+
 JOIN_OUTER: Final = "outer"
 JOIN_INNER: Final = "inner"
 JOIN_RIGHT: Final = "right"
@@ -96,6 +97,11 @@ VALID_NEAREST_OPTIONS = [
     NEAREST_UPSTREAM,
     None,
 ]
+
+VALID_DIRECTION_TYPE = Literal["any", "forward", "backward"]
+ANY_DIRECTION = Literal["any"]
+FORWARD_DIRECTION = Literal["forward"]
+BACKWARD_DIRECTION = Literal["backward"]
 
 TEMP_INDEX_COL = "__temp_index__"
 TEMP_TYPE_COL = "__temp_type__"

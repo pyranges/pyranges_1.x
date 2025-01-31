@@ -7,6 +7,7 @@ from pyranges.methods.complement_overlaps import _complement_overlaps
 import ruranges
 
 from pyranges.core.names import (
+    ANY_DIRECTION,
     BY_ENTRY_IN_KWARGS,
     END_COL,
     JOIN_SUFFIX,
@@ -20,6 +21,7 @@ from pyranges.core.names import (
     SKIP_IF_EMPTY_RIGHT,
     START_COL,
     VALID_BY_TYPES,
+    VALID_DIRECTION_TYPE,
     VALID_OVERLAP_TYPE,
     BinaryOperation,
     UnaryOperation,
@@ -51,29 +53,29 @@ class RangeFrame(pd.DataFrame):
     A table with Start and End columns. Parent class of PyRanges. Subclass of pandas DataFrame.
     """
 
-    def __new__(cls, *args, **kwargs) -> "RangeFrame | pd.DataFrame":  # type: ignore[misc]
-        """Create a new instance of a PyRanges object."""
-        # __new__ is a special static method used for creating and
-        # returning a new instance of a class. It is called before
-        # __init__ and is typically used in scenarios requiring
-        # control over the creation of new instances
+    # def __new__(cls, *args, **kwargs) -> "RangeFrame | pd.DataFrame":  # type: ignore[misc]
+    #     """Create a new instance of a PyRanges object."""
+    #     # __new__ is a special static method used for creating and
+    #     # returning a new instance of a class. It is called before
+    #     # __init__ and is typically used in scenarios requiring
+    #     # control over the creation of new instances
 
-        if not args:
-            return super().__new__(cls)
-        if not kwargs:
-            return super().__new__(cls)
+    #     if not args:
+    #         return super().__new__(cls)
+    #     if not kwargs:
+    #         return super().__new__(cls)
 
-        df = pd.DataFrame(kwargs.get("data") or (args[0]))
+    #     df = pd.DataFrame(kwargs.get("data") or (args[0]))
 
-        missing_any_required_columns = not set(RANGE_COLS).issubset(df.columns)
-        if missing_any_required_columns:
-            return df
+    #     missing_any_required_columns = not set(RANGE_COLS).issubset(df.columns)
+    #     if missing_any_required_columns:
+    #         return df
 
-        return super().__new__(cls)
+    #     return super().__new__(cls)
 
-    @property
-    def _constructor(self) -> type:
-        return RangeFrame
+    # @property
+    # def _constructor(self) -> type:
+    #     return RangeFrame
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -151,7 +153,8 @@ class RangeFrame(pd.DataFrame):
         suffix: str = JOIN_SUFFIX,
         exclude_overlaps: bool = False,
         k: int = 1,
-        dist_col="Distance",
+        dist_col: str = "Distance",
+        direction: VALID_DIRECTION_TYPE = "any",
     ) -> "RangeFrame":
         f1, f2 = factorize_binary(self, other, match_by)
         idx1, idx2, dist = ruranges.nearest_intervals_numpy(
@@ -165,6 +168,7 @@ class RangeFrame(pd.DataFrame):
             other.index.to_numpy(),
             k=k,
             overlaps=not exclude_overlaps,
+            direction=direction,
         )
 
         res = pd.concat(

@@ -13,13 +13,16 @@ from natsort import natsorted  # type: ignore[import]
 import pyranges as pr
 from pyranges.core.loci_getter import LociGetter
 from pyranges.core.names import (
+    BACKWARD_DIRECTION,
     CHROM_AND_STRAND_COLS,
     CHROM_COL,
     END_COL,
+    FORWARD_DIRECTION,
     FORWARD_STRAND,
     GENOME_LOC_COLS,
     GENOME_LOC_COLS_WITH_STRAND,
     JOIN_SUFFIX,
+    NEAREST_ANY_DIRECTION,
     NEAREST_DOWNSTREAM,
     NEAREST_UPSTREAM,
     PANDAS_COMPRESSION_TYPE,
@@ -60,6 +63,7 @@ from pyranges.core.pyranges_helpers import (
     mypy_ensure_pyranges,
     prepare_by_binary,
     prepare_by_single,
+    split_on_strand,
     strand_behavior_from_validated_use_strand,
     use_strand_from_validated_strand_behavior,
     validate_and_convert_strand_behavior,
@@ -1900,38 +1904,86 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         >>> f1.nearest(f2, direction='downstream')
-          index  |    Chromosome      Start      End  Strand        Start_b    End_b    Distance
-          int64  |    category        int64    int64  category        int64    int64       int64
-        -------  ---  ------------  -------  -------  ----------  ---------  -------  ----------
-              0  |    chr1                3        6  +                  20       22          15
-              1  |    chr1                5        7  -                   6        7           0
-              2  |    chr1                8        9  +                  20       22          12
-        PyRanges with 3 rows, 7 columns, and 1 index columns.
+          index  |    Chromosome      Start      End  Strand      Chromosome_b      Start_b    End_b  Strand_b      Distance
+          int64  |    category        int64    int64  category    object              int64    int64  object           int64
+        -------  ---  ------------  -------  -------  ----------  --------------  ---------  -------  ----------  ----------
+              0  |    chr1                3        6  +           chr1                   20       22  +                   15
+              2  |    chr1                8        9  +           chr1                   20       22  +                   12
+              1  |    chr1                5        7  -           chr1                    6        7  -                    0
+        PyRanges with 3 rows, 9 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
         If an input interval has no suitable nearest interval, these rows are dropped:
 
         >>> f1.nearest(f2, direction='upstream', exclude_overlaps=True)
-          index  |    Chromosome      Start      End  Strand        Start_b      End_b    Distance
-          int64  |    category        int64    int64  category      float64    float64       int64
-        -------  ---  ------------  -------  -------  ----------  ---------  ---------  ----------
-              0  |    chr1                3        6  +                   1          2           2
-              2  |    chr1                8        9  +                   1          2           7
-        PyRanges with 2 rows, 7 columns, and 1 index columns.
+          index  |    Chromosome      Start      End  Strand      Chromosome_b      Start_b    End_b  Strand_b      Distance
+          int64  |    category        int64    int64  category    object              int64    int64  object           int64
+        -------  ---  ------------  -------  -------  ----------  --------------  ---------  -------  ----------  ----------
+              0  |    chr1                3        6  +           chr1                    1        2  +                    2
+              2  |    chr1                8        9  +           chr1                    1        2  +                    7
+        PyRanges with 2 rows, 9 columns, and 1 index columns.
         Contains 1 chromosomes and 1 strands.
 
         """
         _other, by = prepare_by_binary(self, other=other, strand_behavior=strand_behavior, match_by=match_by)
-        res = super().nearest(
-            other=_other,
-            match_by=by,
-            suffix=suffix,
-            exclude_overlaps=exclude_overlaps,
-            k=k,
-            dist_col=dist_col,
-        )
 
-        return mypy_ensure_pyranges(res)
+        if direction == NEAREST_ANY_DIRECTION:
+            res = super().nearest(
+                other=_other,
+                match_by=by,
+                suffix=suffix,
+                exclude_overlaps=exclude_overlaps,
+                k=k,
+                dist_col=dist_col,
+                direction="any"
+            )
+            return mypy_ensure_pyranges(res)
+
+        fwd_self, rev_self = split_on_strand(self)
+        if direction == NEAREST_DOWNSTREAM:
+            res = RangeFrame(fwd_self).nearest(
+                other=_other,
+                match_by=by,
+                suffix=suffix,
+                exclude_overlaps=exclude_overlaps,
+                k=k,
+                dist_col=dist_col,
+                direction="backward"
+            )
+            res2 = RangeFrame(rev_self).nearest(
+                other=_other,
+                match_by=by,
+                suffix=suffix,
+                exclude_overlaps=exclude_overlaps,
+                k=k,
+                dist_col=dist_col,
+                direction="backward"
+            )
+            return mypy_ensure_pyranges(pd.concat([res, res2]))
+
+        if direction == NEAREST_UPSTREAM:
+            res = RangeFrame(fwd_self).nearest(
+                other=RangeFrame(_other),
+                match_by=by,
+                suffix=suffix,
+                exclude_overlaps=exclude_overlaps,
+                k=k,
+                dist_col=dist_col,
+                direction="forward"
+            )
+            res2 = RangeFrame(rev_self).nearest(
+                other=RangeFrame(_other),
+                match_by=by,
+                suffix=suffix,
+                exclude_overlaps=exclude_overlaps,
+                k=k,
+                dist_col=dist_col,
+                direction="forward"
+            )
+            return mypy_ensure_pyranges(pd.concat([res, res2]))
+
+
+
 
     def overlap(  # type: ignore[override]
         self,

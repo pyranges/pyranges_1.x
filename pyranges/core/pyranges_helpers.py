@@ -24,6 +24,8 @@ from pyranges.core.names import (
     VALID_STRAND_BEHAVIOR_TYPE,
     VALID_USE_STRAND_OPTIONS,
     VALID_USE_STRAND_TYPE,
+    FORWARD_STRAND,
+    REVERSE_STRAND,
 )
 
 if TYPE_CHECKING:
@@ -51,6 +53,13 @@ def factorize_binary(
     _by = arg_to_list(by)
     factorized = pd.concat([df[_by], df2[_by]], ignore_index=True).groupby(_by).ngroup().to_numpy()
     return factorized[: len(df)], factorized[len(df) :]
+
+
+def split_on_strand(gr: "PyRanges") -> tuple["PyRanges", "PyRanges"]:
+    return (
+        mypy_ensure_pyranges(gr.query(f"{STRAND_COL} == '{FORWARD_STRAND}'")),
+        mypy_ensure_pyranges(gr.query(f"{STRAND_COL} == '{REVERSE_STRAND}'")),
+    )
 
 
 def prepare_by_single(
