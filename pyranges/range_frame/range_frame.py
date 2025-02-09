@@ -153,33 +153,31 @@ class RangeFrame(pd.DataFrame):
         suffix: str = JOIN_SUFFIX,
         exclude_overlaps: bool = False,
         k: int = 1,
+        unique_k: bool = False,
         dist_col: str = "Distance",
         direction: VALID_DIRECTION_TYPE = "any",
     ) -> "RangeFrame":
         f1, f2 = factorize_binary(self, other, match_by)
-        idx1, idx2, dist = ruranges.nearest_intervals_numpy(
-            f1,
-            self[START_COL].to_numpy(),
-            self[END_COL].to_numpy(),
-            self.index.to_numpy(),
-            f2,
-            other[START_COL].to_numpy(),
-            other[END_COL].to_numpy(),
-            other.index.to_numpy(),
+        idx1, idx2, dist = ruranges.nearest_numpy(
+            chrs=f1,
+            starts=self[START_COL].to_numpy(),
+            ends=self[END_COL].to_numpy(),
+            chrs2=f2,
+            starts2=other[START_COL].to_numpy(),
+            ends2=other[END_COL].to_numpy(),
             k=k,
-            overlaps=not exclude_overlaps,
-            direction=direction,
+            slack=0,
+            include_overlaps=not exclude_overlaps,
         )
 
         res = pd.concat(
             [
-                self.loc[idx1].reset_index(drop=True),
-                pd.DataFrame(other).loc[idx2].add_suffix(suffix).reset_index(drop=True),
+                self.take(idx1),
+                pd.DataFrame(other).take(idx2).add_suffix(suffix).reset_index(drop=True),
                 pd.Series(dist, name=dist_col),
             ],
             axis=1,
         )
-        res.index = idx1
 
         return _mypy_ensure_rangeframe(res)
 

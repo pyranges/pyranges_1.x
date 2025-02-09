@@ -75,11 +75,9 @@ def _overlap(
         f1,
         df.Start.values,
         df.End.values,
-        df.index.values,
         f2,
         df2.Start.values,
         df2.End.values,
-        df2.index.values,
         slack,
     )
 
@@ -88,14 +86,14 @@ def _overlap(
         idxs = idxs.drop_duplicates(keep=multiple)
 
     if contained:
-        result = df.loc[idxs.to_numpy()]
+        result = df.take(idxs.to_numpy())
         df2_pos = df2.loc[idxs.index.to_numpy(), [START_COL, END_COL]]
         result = result[
             (result[START_COL].to_numpy() >= df2_pos[START_COL].to_numpy())
             & (result[END_COL].to_numpy() <= df2_pos[END_COL].to_numpy())
         ]
     else:
-        result = df.loc[idxs.to_numpy()]
+        result = df.take(idxs)
 
     return result
 
