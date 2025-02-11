@@ -1893,6 +1893,19 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 9 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
+        >>> f1.nearest(f2, k=2, strand_behavior='ignore')
+          index  |    Chromosome      Start      End  Strand      Chromosome_b      Start_b    End_b  Strand_b      Distance
+          int64  |    category        int64    int64  category    object              int64    int64  object           int64
+        -------  ---  ------------  -------  -------  ----------  --------------  ---------  -------  ----------  ----------
+              0  |    chr1                3        6  +           chr1                    6        7  -                    1
+              0  |    chr1                3        6  +           chr1                    1        2  +                    2
+              1  |    chr1                5        7  -           chr1                    6        7  -                    0
+              1  |    chr1                5        7  -           chr1                    1        2  +                    4
+              2  |    chr1                8        9  +           chr1                    6        7  -                    2
+              2  |    chr1                8        9  +           chr1                    1        2  +                    7
+        PyRanges with 6 rows, 9 columns, and 1 index columns (with 3 index duplicates).
+        Contains 1 chromosomes and 2 strands.
+
         >>> f1.nearest(f2, strand_behavior='ignore', exclude_overlaps=True)
           index  |    Chromosome      Start      End  Strand      Chromosome_b      Start_b    End_b  Strand_b      Distance
           int64  |    category        int64    int64  category    object              int64    int64  object           int64
