@@ -1935,7 +1935,7 @@ class PyRanges(RangeFrame):
                 exclude_overlaps=exclude_overlaps,
                 k=k,
                 dist_col=dist_col,
-                direction="any"
+                direction="any",
             )
             return mypy_ensure_pyranges(res)
 
@@ -1948,7 +1948,7 @@ class PyRanges(RangeFrame):
                 exclude_overlaps=exclude_overlaps,
                 k=k,
                 dist_col=dist_col,
-                direction="backward"
+                direction="forward",
             )
             res2 = RangeFrame(rev_self).nearest(
                 other=_other,
@@ -1957,11 +1957,9 @@ class PyRanges(RangeFrame):
                 exclude_overlaps=exclude_overlaps,
                 k=k,
                 dist_col=dist_col,
-                direction="backward"
+                direction="forward",
             )
-            return mypy_ensure_pyranges(pd.concat([res, res2]))
-
-        if direction == NEAREST_UPSTREAM:
+        elif direction == NEAREST_UPSTREAM:
             res = RangeFrame(fwd_self).nearest(
                 other=RangeFrame(_other),
                 match_by=by,
@@ -1969,7 +1967,7 @@ class PyRanges(RangeFrame):
                 exclude_overlaps=exclude_overlaps,
                 k=k,
                 dist_col=dist_col,
-                direction="forward"
+                direction="backward",
             )
             res2 = RangeFrame(rev_self).nearest(
                 other=RangeFrame(_other),
@@ -1978,12 +1976,18 @@ class PyRanges(RangeFrame):
                 exclude_overlaps=exclude_overlaps,
                 k=k,
                 dist_col=dist_col,
-                direction="forward"
+                direction="backward",
             )
-            return mypy_ensure_pyranges(pd.concat([res, res2]))
+        else:
+            msg = f"Invalid direction: {direction}"
+            raise ValueError(msg)
 
-
-
+        gr = mypy_ensure_pyranges(
+            pd.concat(
+                [res, res2],
+            )
+        )
+        return gr
 
     def overlap(  # type: ignore[override]
         self,

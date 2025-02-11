@@ -168,16 +168,19 @@ class RangeFrame(pd.DataFrame):
             k=k,
             slack=0,
             include_overlaps=not exclude_overlaps,
+            direction=direction,
         )
 
+        left = self.take(idx1)
         res = pd.concat(
             [
-                self.take(idx1),
+                left.reset_index(drop=True),
                 pd.DataFrame(other).take(idx2).add_suffix(suffix).reset_index(drop=True),
                 pd.Series(dist, name=dist_col),
             ],
             axis=1,
         )
+        res.index = left.index
 
         return _mypy_ensure_rangeframe(res)
 

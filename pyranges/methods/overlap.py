@@ -71,7 +71,7 @@ def _overlap(
 ) -> pd.DataFrame:
     f1, f2 = factorize_binary(df, df2, by)
 
-    idx1, idx2 = ruranges.chromsweep_numpy(
+    idx1 = ruranges.chromsweep_numpy(
         f1,
         df.Start.values,
         df.End.values,
@@ -81,8 +81,8 @@ def _overlap(
         slack,
     )
 
-    idxs = pd.Series(idx1, index=idx2)
     if multiple in ["first", "last"]:
+        idxs = pd.Series(idx1, index=idx2)
         idxs = idxs.drop_duplicates(keep=multiple)
 
     if contained:
@@ -93,7 +93,7 @@ def _overlap(
             & (result[END_COL].to_numpy() <= df2_pos[END_COL].to_numpy())
         ]
     else:
-        result = df.take(idxs)
+        result = df.take(idx1)
 
     return result
 
