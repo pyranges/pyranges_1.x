@@ -8,6 +8,7 @@ from ncls import NCLS  # type: ignore[import]
 from pyranges.core.names import (
     END_COL,
     OVERLAP_ALL,
+    OVERLAP_CONTAINED,
     OVERLAP_FIRST,
     OVERLAP_LAST,
     RANGE_COLS,
@@ -69,9 +70,13 @@ def _overlap(
     contained: bool = False,
     slack: int = 0,
 ) -> pd.DataFrame:
+    if contained and multiple != "all":
+        msg = "Can only find contained intervals for multiple overlaps 'all'." 
+        raise ValueError(msg)
+
     f1, f2 = factorize_binary(df, df2, by)
 
-    idx1 = ruranges.chromsweep_numpy(
+    idx1, _ = ruranges.chromsweep_numpy(
         f1,
         df.Start.values,
         df.End.values,
@@ -79,21 +84,10 @@ def _overlap(
         df2.Start.values,
         df2.End.values,
         slack,
+        overlap_type=OVERLAP_CONTAINED if contained else multiple,
     )
 
-    if multiple in ["first", "last"]:
-        idxs = pd.Series(idx1, index=idx2)
-        idxs = idxs.drop_duplicates(keep=multiple)
-
-    if contained:
-        result = df.take(idxs.to_numpy())
-        df2_pos = df2.loc[idxs.index.to_numpy(), [START_COL, END_COL]]
-        result = result[
-            (result[START_COL].to_numpy() >= df2_pos[START_COL].to_numpy())
-            & (result[END_COL].to_numpy() <= df2_pos[END_COL].to_numpy())
-        ]
-    else:
-        result = df.take(idx1)
+    result = df.take(idx1)
 
     return result
 
@@ -119,6 +113,7 @@ def _intersect(
     df2: "RangeFrame",
     *,
     by: list[str],
+    multiple: VALID_OVERLAP_TYPE = "all",
     slack: int = 0,
 ) -> pd.DataFrame:
     import ruranges
@@ -129,15 +124,14 @@ def _intersect(
         f1,
         df.Start.values,
         df.End.values,
-        df.index.values,
         f2,
         df2.Start.values,
         df2.End.values,
-        df2.index.values,
         slack,
+        overlap_type=multiple,
     )
 
-    rf, rf2 = df.loc[idx1], df2.loc[idx2, RANGE_COLS]
+    rf, rf2 = df.take(idx1), df2.take(idx2).loc[:, RANGE_COLS]
 
     new_starts = pd.Series(
         np.where(rf.Start.to_numpy() > rf2.Start.to_numpy(), rf.Start, rf2.Start),

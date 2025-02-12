@@ -27,11 +27,11 @@ def return_pyranges_if_possible(
 
 
 # Define the Literal type
-VALID_OVERLAP_TYPE = Literal["first", "all", "last"]
+VALID_OVERLAP_TYPE = Literal["first", "all", "last", "contained"]
 
 # Extract the options from the Literal type
 VALID_OVERLAP_OPTIONS = list(get_args(VALID_OVERLAP_TYPE))
-OVERLAP_FIRST, OVERLAP_ALL, OVERLAP_LAST = VALID_OVERLAP_OPTIONS
+OVERLAP_FIRST, OVERLAP_ALL, OVERLAP_LAST, OVERLAP_CONTAINED = VALID_OVERLAP_OPTIONS
 
 BY_ENTRY_IN_KWARGS = "__by__"
 

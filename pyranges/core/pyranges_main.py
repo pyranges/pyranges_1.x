@@ -2070,6 +2070,47 @@ class PyRanges(RangeFrame):
               4  |    chr3                0        1  d
         PyRanges with 5 rows, 4 columns, and 1 index columns.
         Contains 3 chromosomes.
+
+        >>> gr.overlap(gr2, slack=2, multiple="first")
+          index  |    Chromosome      Start      End  ID
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                1        3  A
+              1  |    chr1                1        3  a
+              3  |    chr1               10       11  c
+              2  |    chr2                4        9  b
+        PyRanges with 4 rows, 4 columns, and 1 index columns.
+        Contains 2 chromosomes.
+
+        >>> gr.overlap(gr2, multiple="last")
+          index  |    Chromosome      Start      End  ID
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              3  |    chr1               10       11  c
+              0  |    chr1                1        3  A
+              1  |    chr1                1        3  a
+              2  |    chr2                4        9  b
+        PyRanges with 4 rows, 4 columns, and 1 index columns.
+        Contains 2 chromosomes.
+
+          index  |    Chromosome      Start      End  ID
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                1        3  A
+              1  |    chr1                1        3  a
+              3  |    chr1               10       11  c
+              2  |    chr2                4        9  b
+        PyRanges with 4 rows, 4 columns, and 1 index columns.
+        Contains 2 chromosomes.
+
+        >>> gr.overlap(gr2, contained_intervals_only=True)
+          index  |    Chromosome      Start      End  ID
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              2  |    chr2                4        9  b
+        PyRanges with 1 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
         >>> gr2
           index  |    Chromosome      Start      End
           int64  |    object          int64    int64
@@ -2089,17 +2130,6 @@ class PyRanges(RangeFrame):
               1  |    chr1                1        3  a
               2  |    chr2                4        9  b
         PyRanges with 5 rows, 4 columns, and 1 index columns (with 2 index duplicates).
-        Contains 2 chromosomes.
-
-        >>> gr.overlap(gr2, slack=2, multiple="first")
-          index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
-              0  |    chr1                1        3  A
-              1  |    chr1                1        3  a
-              3  |    chr1               10       11  c
-              2  |    chr2                4        9  b
-        PyRanges with 4 rows, 4 columns, and 1 index columns.
         Contains 2 chromosomes.
 
         >>> gr.overlap(gr2, contained_intervals_only=True)
@@ -2233,14 +2263,8 @@ class PyRanges(RangeFrame):
         use_strand = use_strand_from_validated_strand_behavior(self, other, strand_behavior)
         self_clusters = self.merge_overlaps(use_strand=use_strand and self.has_strand)
         other_clusters = other.merge_overlaps(use_strand=use_strand and other.has_strand)
-        return mypy_ensure_pyranges(
-            self_clusters.apply_pair(
-                other_clusters,
-                _intersect,
-                strand_behavior=strand_behavior,
-                how=multiple,
-            ).reset_index(drop=True),
-        )
+        result = self_clusters.intersect(other_clusters, strand_behavior=strand_behavior)
+        return mypy_ensure_pyranges(result.reset_index(drop=True))
 
     def set_union(self, other: "PyRanges", strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto") -> "PyRanges":
         """Return set-theoretical union.
@@ -4334,6 +4358,7 @@ class PyRanges(RangeFrame):
         other: "PyRanges",
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
         *,
+        multiple: VALID_OVERLAP_TYPE = "all",
         match_by: VALID_BY_TYPES = None,
     ) -> "PyRanges":
         """Return overlapping subintervals.
@@ -4433,12 +4458,18 @@ class PyRanges(RangeFrame):
         # note: argument multiple = 'containment' is formally accepted but omitted in docstring since the result
         # will be always the same as self.overlap(other, contained=True), no intersect is done in that case
 
-        _other, by = prepare_by_binary(self, other, strand_behavior=strand_behavior, match_by=match_by)
+        _other, by = prepare_by_binary(
+            self,
+            other,
+            strand_behavior=strand_behavior,
+            match_by=match_by,
+        )
 
         gr = _intersect(
             self,
             _other,
             by=by,
+            multiple=multiple,
         )
 
         return mypy_ensure_pyranges(gr)

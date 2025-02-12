@@ -153,7 +153,6 @@ class RangeFrame(pd.DataFrame):
         suffix: str = JOIN_SUFFIX,
         exclude_overlaps: bool = False,
         k: int = 1,
-        unique_k: bool = False,
         dist_col: str = "Distance",
         direction: VALID_DIRECTION_TYPE = "any",
     ) -> "RangeFrame":
