@@ -2519,7 +2519,7 @@ class PyRanges(RangeFrame):
             self_copy[START_COL].to_numpy(),
             self_copy[END_COL].to_numpy(),
         )
-        res = self.loc[idxs]
+        res = self.take(idxs)
 
         return mypy_ensure_pyranges(res)
 
