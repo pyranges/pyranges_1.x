@@ -42,7 +42,7 @@ def _spliced_subseq(
         force_plus_strand=force_plus_strand,
     )
 
-    outdf = df.loc[outidx]
+    outdf = df.take(outidx)
     outdf.loc[:, START_COL] = outstarts
     outdf.loc[:, END_COL] = outends
 
