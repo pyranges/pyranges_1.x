@@ -28,11 +28,10 @@ def _merge(
         chrs=factorized,
         starts=df.Start.to_numpy(),
         ends=df.End.to_numpy(),
-        idxs=df.index.to_numpy(),
         slack=slack,
     )
 
-    by_subset = df[col_order].loc[indices]
+    by_subset = df[col_order].take(indices)
     by_subset.loc[:, START_COL] = start
     by_subset.loc[:, END_COL] = end
 

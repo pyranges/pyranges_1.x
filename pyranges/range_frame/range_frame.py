@@ -4,6 +4,7 @@ from typing import Any, Generic, TypeVar
 
 import pandas as pd
 from pyranges.methods.complement_overlaps import _complement_overlaps
+from pyranges.methods.join import _both_dfs
 import ruranges
 
 from pyranges.core.names import (
@@ -21,9 +22,13 @@ from pyranges.core.names import (
     SKIP_IF_EMPTY_RIGHT,
     START_COL,
     VALID_BY_TYPES,
+    VALID_COMBINE_OPTIONS,
     VALID_DIRECTION_TYPE,
+    VALID_JOIN_TYPE,
     VALID_OVERLAP_TYPE,
+    VALID_STRAND_BEHAVIOR_TYPE,
     BinaryOperation,
+    CombineIntervalColumnsOperation,
     UnaryOperation,
 )
 from pyranges.core.pyranges_helpers import arg_to_list, factorize, factorize_binary
@@ -107,11 +112,134 @@ class RangeFrame(pd.DataFrame):
         match_by = arg_to_list(match_by)
         return _merge(self, by=match_by, count_col=count_col, slack=slack)
 
-    # chrs: PyReadonlyArray1<i64>,
-    # starts: PyReadonlyArray1<i64>,
-    # ends: PyReadonlyArray1<i64>,
-    # idxs: PyReadonlyArray1<i64>,
-    # slack: i64,
+    def combine_interval_columns(
+        self,
+        function: VALID_COMBINE_OPTIONS | CombineIntervalColumnsOperation = "intersect",
+        *,
+        start: str = START_COL,
+        end: str = END_COL,
+        start2: str = START_COL + JOIN_SUFFIX,
+        end2: str = END_COL + JOIN_SUFFIX,
+        drop_old_columns: bool = True,
+    ) -> "RangeFrame":
+        """Use two pairs of columns representing intervals to create a new start and end column.
+
+        The function is designed as post-processing after join_ranges to aggregate the coordinates of the two intervals.
+        By default, the new start and end columns will be the intersection of the intervals.
+
+        Parameters
+        ----------
+        function : {"intersect", "union", "swap"} or Callable, default "intersect"
+            How to combine the self and other intervals: "intersect", "union", or "swap"
+            If a callable is passed, it should take four Series arguments: start1, end1, start2, end2;
+            and return a tuple of two integers: (new_starts, new_ends).
+
+        start : str, default "Start"
+            Column name for Start of first interval
+        end : str, default "End"
+            Column name for End of first interval
+        start2 : str, default "Start_b"
+            Column name for Start of second interval
+        end2 : str, default "End_b"
+            Column name for End of second interval
+        drop_old_columns : bool, default True
+            Whether to drop the above mentioned columns.
+
+        Examples
+        --------
+        >>> gr1, gr2 = pr.example_data.aorta.head(3).remove_nonloc_columns(), pr.example_data.aorta2.head(3).remove_nonloc_columns()
+        >>> j = gr1.join_ranges(gr2)
+        >>> j
+          index  |    Chromosome      Start      End  Strand        Start_b    End_b
+          int64  |    category        int64    int64  category        int64    int64
+        -------  ---  ------------  -------  -------  ----------  ---------  -------
+              0  |    chr1             9916    10115  -                9988    10187
+              1  |    chr1             9916    10115  -               10079    10278
+              2  |    chr1             9939    10138  +               10073    10272
+              3  |    chr1             9951    10150  -                9988    10187
+              4  |    chr1             9951    10150  -               10079    10278
+        PyRanges with 5 rows, 6 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        The default operation is to intersect the intervals:
+
+        >>> j.combine_interval_columns()
+          index  |    Chromosome      Start      End  Strand
+          int64  |    category        int64    int64  category
+        -------  ---  ------------  -------  -------  ----------
+              0  |    chr1             9988    10115  -
+              1  |    chr1            10079    10115  -
+              2  |    chr1            10073    10138  +
+              3  |    chr1             9988    10150  -
+              4  |    chr1            10079    10150  -
+        PyRanges with 5 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        Take the union instead:
+
+        >>> j.combine_interval_columns('union')
+          index  |    Chromosome      Start      End  Strand
+          int64  |    category        int64    int64  category
+        -------  ---  ------------  -------  -------  ----------
+              0  |    chr1             9916    10187  -
+              1  |    chr1             9916    10278  -
+              2  |    chr1             9939    10272  +
+              3  |    chr1             9951    10187  -
+              4  |    chr1             9951    10278  -
+        PyRanges with 5 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        >>> j.combine_interval_columns('swap')
+          index  |    Chromosome      Start      End  Strand
+          int64  |    category        int64    int64  category
+        -------  ---  ------------  -------  -------  ----------
+              0  |    chr1             9988    10187  -
+              1  |    chr1            10079    10278  -
+              2  |    chr1            10073    10272  +
+              3  |    chr1             9988    10187  -
+              4  |    chr1            10079    10278  -
+        PyRanges with 5 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+
+        Use a custom function that keeps the start of the first interval and the end of the second:
+
+        >>> def custom_combine(s1, e1, s2, e2): return (s1, e2)
+        >>> j.combine_interval_columns(custom_combine)
+          index  |    Chromosome      Start      End  Strand
+          int64  |    category        int64    int64  category
+        -------  ---  ------------  -------  -------  ----------
+              0  |    chr1             9916    10187  -
+              1  |    chr1             9916    10278  -
+              2  |    chr1             9939    10272  +
+              3  |    chr1             9951    10187  -
+              4  |    chr1             9951    10278  -
+        PyRanges with 5 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        """
+        from pyranges.methods.combine_positions import (
+            _intersect_interval_columns,
+            _swap_interval_columns,
+            _union_interval_columns,
+        )
+
+        if function == "intersect":
+            function = _intersect_interval_columns
+        elif function == "union":
+            function = _union_interval_columns
+        elif function == "swap":
+            function = _swap_interval_columns
+
+        new_starts, new_ends = function(self[start], self[end], self[start2], self[end2])
+
+        z = self.copy()
+        z[START_COL] = new_starts
+        z[END_COL] = new_ends
+
+        cols_to_drop = list({start, end, start2, end2}.difference(RANGE_COLS) if drop_old_columns else {})
+
+        return z.drop_and_return(labels=cols_to_drop, axis="columns")
 
     def cluster(
         self,
@@ -127,13 +255,12 @@ class RangeFrame(pd.DataFrame):
             factorized,
             self[START_COL].to_numpy(),
             self[END_COL].to_numpy(),
-            self.index.to_numpy(),
             slack,
         )
 
-        res = self.loc[idx].copy()
+        res = self.take(idx).copy()
         res.insert(res.shape[1], cluster_column, cluster)
-        return res
+        return _mypy_ensure_rangeframe(res)
 
     def complement_overlaps(
         self: "RangeFrame",
@@ -144,6 +271,36 @@ class RangeFrame(pd.DataFrame):
     ) -> "RangeFrame":
         match_by = arg_to_list(match_by)
         return _complement_overlaps(self, other, by=match_by, slack=slack)
+
+    def join_ranges(
+        self,
+        other: "RangeFrame",
+        *,
+        join_type: VALID_JOIN_TYPE = "inner",
+        multiple: VALID_OVERLAP_TYPE = "all",
+        match_by: VALID_BY_TYPES = None,
+        slack: int = 0,
+        suffix: str = JOIN_SUFFIX,
+        contained_intervals_only: bool = False,
+        report_overlap_column: str | None = None,
+    ) -> "RangeFrame":
+        res = _both_dfs(
+            self,
+            other,
+            by=match_by,
+            slack=slack,
+            multiple=multiple,
+            contained=contained_intervals_only,
+            join_type=join_type,
+            suffix=suffix,
+        )
+
+        if report_overlap_column:
+            res[report_overlap_column] = res[["End", "End" + suffix]].min(axis=1) - res[
+                ["Start", "Start" + suffix]
+            ].max(axis=1)
+
+        return _mypy_ensure_rangeframe(res)
 
     def nearest(
         self,
@@ -295,9 +452,8 @@ class RangeFrame(pd.DataFrame):
             by_sort_order_as_int,
             self[START_COL].to_numpy(),
             self[END_COL].to_numpy(),
-            self.index.to_numpy(),
         )
-        return self.loc[idxs]
+        return self.take(idxs)
 
     def subtract_ranges(
         self: "RangeFrame",
@@ -310,16 +466,14 @@ class RangeFrame(pd.DataFrame):
             f1,
             self[START_COL].to_numpy(),
             self[END_COL].to_numpy(),
-            self.index.to_numpy(),
             f2,
             other[START_COL].to_numpy(),
             other[END_COL].to_numpy(),
-            other.index.to_numpy(),
         )
 
-        output = self.loc[idx].copy()
+        output = self.take(idx).copy()
         output[START_COL], output[END_COL] = start, end
-        return output
+        return _mypy_ensure_rangeframe(output)
 
     def apply_single(
         self,

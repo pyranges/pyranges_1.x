@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 import ruranges
 from ncls import NCLS  # type: ignore[import]
+from numpy.typing import NDArray
+
 
 from pyranges.core.names import (
     END_COL,
@@ -61,6 +63,31 @@ def _overlapping_indices(
     return _overlap_indices(df, df2, how)
 
 
+def _both_idxs(
+    df: "RangeFrame",
+    df2: "RangeFrame",
+    *,
+    by: VALID_BY_TYPES,
+    multiple: VALID_OVERLAP_TYPE = "all",
+    contained: bool = False,
+    slack: int = 0,
+) -> tuple[NDArray[np.int_], NDArray[np.int_]]:
+    f1, f2 = factorize_binary(df, df2, by)
+
+    idx1, idx2 = ruranges.chromsweep_numpy(
+        f1,
+        df.Start.values,
+        df.End.values,
+        f2,
+        df2.Start.values,
+        df2.End.values,
+        slack,
+        overlap_type=multiple,
+        contained=contained,
+    )
+    return idx1, idx2
+
+
 def _overlap(
     df: "RangeFrame",
     df2: "RangeFrame",
@@ -70,21 +97,13 @@ def _overlap(
     contained: bool = False,
     slack: int = 0,
 ) -> pd.DataFrame:
-    if contained and multiple != "all":
-        msg = "Can only find contained intervals for multiple overlaps 'all'." 
-        raise ValueError(msg)
-
-    f1, f2 = factorize_binary(df, df2, by)
-
-    idx1, _ = ruranges.chromsweep_numpy(
-        f1,
-        df.Start.values,
-        df.End.values,
-        f2,
-        df2.Start.values,
-        df2.End.values,
-        slack,
-        overlap_type=OVERLAP_CONTAINED if contained else multiple,
+    idx1, _ = _both_idxs(
+        df=df,
+        df2=df2,
+        by=by,
+        multiple=multiple,
+        contained=contained,
+        slack=slack,
     )
 
     result = df.take(idx1)
@@ -115,6 +134,7 @@ def _intersect(
     by: list[str],
     multiple: VALID_OVERLAP_TYPE = "all",
     slack: int = 0,
+    contained: bool = False,
 ) -> pd.DataFrame:
     import ruranges
 
@@ -129,19 +149,14 @@ def _intersect(
         df2.End.values,
         slack,
         overlap_type=multiple,
+        contained=contained,
     )
 
     rf, rf2 = df.take(idx1), df2.take(idx2).loc[:, RANGE_COLS]
 
-    new_starts = pd.Series(
-        np.where(rf.Start.to_numpy() > rf2.Start.to_numpy(), rf.Start, rf2.Start),
-        index=rf.index,
-    )
+    new_starts = np.where(rf.Start.to_numpy() > rf2.Start.to_numpy(), rf.Start, rf2.Start)
 
-    new_ends = pd.Series(
-        np.where(rf.End.to_numpy() < rf2.End.to_numpy(), rf.End, rf2.End),
-        index=rf.index,
-    )
+    new_ends = np.where(rf.End.to_numpy() < rf2.End.to_numpy(), rf.End, rf2.End)
 
     rf.loc[:, START_COL] = new_starts
     rf.loc[:, END_COL] = new_ends

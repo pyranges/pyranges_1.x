@@ -1,8 +1,13 @@
+from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 from ncls import NCLS  # type: ignore[import]
 
-from pyranges.core.names import BY_ENTRY_IN_KWARGS, VALID_JOIN_TYPE
+from pyranges.core.names import BY_ENTRY_IN_KWARGS, VALID_BY_TYPES, VALID_JOIN_TYPE, VALID_OVERLAP_TYPE
+from pyranges.methods.overlap import _both_idxs
+
+if TYPE_CHECKING:
+    from pyranges.range_frame.range_frame import RangeFrame
 
 
 def _both_indexes(
@@ -22,21 +27,25 @@ def _both_indexes(
 
 
 def _both_dfs(
-    df: pd.DataFrame,
-    df2: pd.DataFrame,
+    df: "RangeFrame",
+    df2: "RangeFrame",
+    *,
+    by: VALID_BY_TYPES = None,
+    multiple: VALID_OVERLAP_TYPE = "all",
+    contained: bool = False,
+    slack: int = 0,
     join_type: VALID_JOIN_TYPE,
     suffix: str,
-    **kwargs,
 ) -> pd.DataFrame:
-    columns_used_for_by = kwargs.get(BY_ENTRY_IN_KWARGS, {}).keys()
-
-    # apply_pair has already matched df and df2, so
-    #  we can drop the columns used for by (Chromosome, maybe Strand, and match_by if provided)
-    df2 = df2.drop(columns=columns_used_for_by)
-
-    _self_indexes, _other_indexes = _both_indexes(df, df2)
+    _self_indexes, _other_indexes = _both_idxs(
+        df=df,
+        df2=df2,
+        by=by,
+        multiple=multiple,
+        contained=contained,
+        slack=slack,
+    )
     expected_columns = [*df.head(0).join(df2.head(0), how="inner", rsuffix=suffix).columns]
-    df2 = pd.DataFrame(df2)
     df2.columns = expected_columns[df.shape[1] :]
     _df = df.reindex(_self_indexes)
     _df.index = pd.Index(np.arange(len(_df)))

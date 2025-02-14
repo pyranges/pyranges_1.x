@@ -24,10 +24,9 @@ def _bounds[T: ("pr.PyRanges", "pd.DataFrame")](df: T, by: list[str]) -> pd.Data
         group_ids,
         df[START_COL].to_numpy(),
         df[END_COL].to_numpy(),
-        df.index.to_numpy(),
     )
 
-    ids = df.loc[idxs, by]
+    ids = df.take(idxs).loc[:, by]
 
     result = RangeFrame({START_COL: starts, END_COL: ends} | {_by: ids[_by] for _by in by})[col_order]
 

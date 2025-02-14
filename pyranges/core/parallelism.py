@@ -57,10 +57,9 @@ def _lengths(df: DataFrame) -> pd.Series:
     return df[END_COL] - df[START_COL]
 
 
-def _tss(df: DataFrame, **kwargs) -> DataFrame:
+def _tss(df: DataFrame, slack: int = 0) -> DataFrame:
     df = df.copy(deep=True)
     dtype = df.dtypes["Start"]
-    slack = kwargs.get("slack", 0)
 
     starts = np.where(df.Strand == "+", df.Start, df.End - 1)
     ends = starts + slack + 1
