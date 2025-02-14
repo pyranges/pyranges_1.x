@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 import ruranges
-from ncls import NCLS  # type: ignore[import]
 from numpy.typing import NDArray
 
 

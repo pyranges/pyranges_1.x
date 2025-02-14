@@ -3409,23 +3409,16 @@ class PyRanges(RangeFrame):
         222      |    1             120900   121000   -           exon        AL627309.1   32
         PyRanges with 223 rows, 7 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
-
-
         """
-        from pyranges.methods.windows import _tiles
 
-        kwargs = {
-            "overlap_column": overlap_column,
-            "tile_size": tile_size,
-        }
 
         # every interval can be processed individually. This may be optimized in the future
-        res = self.apply_single(_tiles, by=None, preserve_index=True, **kwargs)
         return mypy_ensure_pyranges(res)
 
     def three_end(
         self,
         transcript_id: VALID_BY_TYPES = None,
+        slack: int = 0,
     ) -> "PyRanges":
         """Return the 3'-end.
 
@@ -3486,12 +3479,15 @@ class PyRanges(RangeFrame):
         if not (self.has_strand and self.strand_valid):
             msg = f"Need PyRanges with valid strands ({VALID_GENOMIC_STRAND_INFO}) to find 3'."
             raise AssertionError(msg)
-        return (
-            mypy_ensure_pyranges(
-                self.apply_single(function=_tes, by=None, use_strand=True),
-            )
+
+        if not self.strand_valid:
+            msg = f"Need PyRanges with valid strands ({VALID_GENOMIC_STRAND_INFO}) to find 5'."
+            raise AssertionError(msg)
+
+        return mypy_ensure_pyranges(
+            _tes(self, slack=slack)
             if transcript_id is None
-            else self.subsequence(transcript_id=transcript_id, start=-1)
+            else self.subsequence(transcript_id=transcript_id, start=0, end=1)
         )
 
     def to_bed(
@@ -4211,7 +4207,6 @@ class PyRanges(RangeFrame):
         use_strand = validate_and_convert_use_strand(self, use_strand)
 
         # every interval can be processed individually. This may be optimized in the future.
-        df = self.apply_single(_windows, by=None, use_strand=use_strand, preserve_index=True, window_size=window_size)
         return mypy_ensure_pyranges(df)
 
     def remove_nonloc_columns(self) -> "PyRanges":

@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
-from ncls import NCLS  # type: ignore[import]
 
 from pyranges.core.names import BY_ENTRY_IN_KWARGS, VALID_BY_TYPES, VALID_JOIN_TYPE, VALID_OVERLAP_TYPE
 from pyranges.methods.overlap import _both_idxs

@@ -24,7 +24,7 @@ classifiers = [
     "Topic :: Scientific/Engineering"
 ]
 keywords = ["bioinformatics", "genomicranges", "genomics"]
-dependencies = ["pandas", "ncls>=0.0.63", "tabulate", "sorted_nearest>=0.0.33", "natsort"]
+dependencies = ["pandas", "tabulate", "natsort"]
 
 [project.optional-dependencies]
 add-ons = ["pyrle >= 0.0.39", "bamread",  "pyfaidx", "pyBigWig", "joblib"] #"fisher",
