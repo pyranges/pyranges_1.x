@@ -104,7 +104,6 @@ def _overlap(
         contained=contained,
         slack=slack,
     )
-
     result = df.take(idx1)
 
     return result

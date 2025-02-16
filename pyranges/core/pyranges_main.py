@@ -3310,6 +3310,7 @@ class PyRanges(RangeFrame):
         self,
         tile_size: int,
         *,
+        use_strand: bool = False,
         overlap_column: str | None = None,
     ) -> "PyRanges":
         """Return overlapping genomic tiles.
@@ -3380,37 +3381,36 @@ class PyRanges(RangeFrame):
 
         >>> gr.tile(100, overlap_column="TileOverlap")
         index    |    Chromosome    Start    End      Strand      Feature     gene_name    TileOverlap
-        int64    |    category      int64    int64    category    category    object       int64
+        int64    |    category      int64    int64    category    category    object       float64
         -------  ---  ------------  -------  -------  ----------  ----------  -----------  -------------
-        0        |    1             11800    11900    +           gene        DDX11L1      32
-        0        |    1             11900    12000    +           gene        DDX11L1      100
-        0        |    1             12000    12100    +           gene        DDX11L1      100
-        0        |    1             12100    12200    +           gene        DDX11L1      100
+        0        |    1             11800    11900    +           gene        DDX11L1      0.32
+        0        |    1             11900    12000    +           gene        DDX11L1      1.0
+        0        |    1             12000    12100    +           gene        DDX11L1      1.0
+        0        |    1             12100    12200    +           gene        DDX11L1      1.0
         ...      |    ...           ...      ...      ...         ...         ...          ...
-        9        |    1             129100   129200   -           exon        AL627309.1   100
-        9        |    1             129200   129300   -           exon        AL627309.1   23
-        10       |    1             120800   120900   -           exon        AL627309.1   27
-        10       |    1             120900   121000   -           exon        AL627309.1   32
+        9        |    1             129100   129200   -           exon        AL627309.1   1.0
+        9        |    1             129200   129300   -           exon        AL627309.1   0.23
+        10       |    1             120800   120900   -           exon        AL627309.1   0.27
+        10       |    1             120900   121000   -           exon        AL627309.1   0.32
         PyRanges with 223 rows, 7 columns, and 1 index columns (with 212 index duplicates).
         Contains 1 chromosomes and 2 strands.
-
-        >>> gr.tile(100, overlap_column="TileOverlap").reset_index(drop=True)
-        index    |    Chromosome    Start    End      Strand      Feature     gene_name    TileOverlap
-        int64    |    category      int64    int64    category    category    object       int64
-        -------  ---  ------------  -------  -------  ----------  ----------  -----------  -------------
-        0        |    1             11800    11900    +           gene        DDX11L1      32
-        1        |    1             11900    12000    +           gene        DDX11L1      100
-        2        |    1             12000    12100    +           gene        DDX11L1      100
-        3        |    1             12100    12200    +           gene        DDX11L1      100
-        ...      |    ...           ...      ...      ...         ...         ...          ...
-        219      |    1             129100   129200   -           exon        AL627309.1   100
-        220      |    1             129200   129300   -           exon        AL627309.1   23
-        221      |    1             120800   120900   -           exon        AL627309.1   27
-        222      |    1             120900   121000   -           exon        AL627309.1   32
-        PyRanges with 223 rows, 7 columns, and 1 index columns.
-        Contains 1 chromosomes and 2 strands.
         """
+        import ruranges
+        use_strand = validate_and_convert_use_strand(self, use_strand)
 
+        negative_strand = (self[STRAND_COL] == "-").to_numpy() if use_strand else np.zeros(len(self), dtype=bool)
+        indices, starts, ends, overlap_fraction = ruranges.tile_numpy(
+            self[START_COL].to_numpy(),
+            self[END_COL].to_numpy(),
+            negative_strand,
+            tile_size,
+        )
+
+        res = self.take(indices)
+        res.loc[:, START_COL] = starts
+        res.loc[:, END_COL] = ends
+        if overlap_column:
+            res.loc[:, overlap_column] = overlap_fraction
 
         # every interval can be processed individually. This may be optimized in the future
         return mypy_ensure_pyranges(res)
@@ -4143,8 +4143,8 @@ class PyRanges(RangeFrame):
         PyRanges with 2 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> w=gs.window(100)
-        >>> w['lengths']=w.lengths() # add lengths column to see the length of the windows
+        >>> w = gs.window(100)
+        >>> w['lengths'] = w.lengths() # add lengths column to see the length of the windows
         >>> w
           index  |      Chromosome    Start      End  Strand      lengths
           int64  |           int64    int64    int64  object        int64
@@ -4202,9 +4202,21 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         """
-        from pyranges.methods.windows import _windows
+        import ruranges
 
         use_strand = validate_and_convert_use_strand(self, use_strand)
+
+        negative_strand = (self[STRAND_COL] == "-").to_numpy() if use_strand else np.zeros(len(self), dtype=bool)
+        # assert 0, negative_strands
+        idx, starts, ends = ruranges.window_numpy(
+            self[START_COL].to_numpy(),
+            self[END_COL].to_numpy(),
+            negative_strand,
+            window_size,
+        )
+        df = self.take(idx)
+        df.loc[:, START_COL] = starts
+        df.loc[:, END_COL] = ends
 
         # every interval can be processed individually. This may be optimized in the future.
         return mypy_ensure_pyranges(df)
