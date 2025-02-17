@@ -2,6 +2,7 @@ import inspect
 from collections.abc import Callable, Iterable
 from typing import Any, Generic, TypeVar
 
+import numpy as np
 import pandas as pd
 from pyranges.methods.complement_overlaps import _complement_overlaps
 from pyranges.methods.join import _both_dfs
@@ -300,6 +301,8 @@ class RangeFrame(pd.DataFrame):
                 ["Start", "Start" + suffix]
             ].max(axis=1)
 
+        res.index = res.index.astype(np.int64)
+
         return _mypy_ensure_rangeframe(res)
 
     def nearest(
@@ -315,10 +318,10 @@ class RangeFrame(pd.DataFrame):
     ) -> "RangeFrame":
         f1, f2 = factorize_binary(self, other, match_by)
         idx1, idx2, dist = ruranges.nearest_numpy(
-            chrs=f1,
+            chrs=f1.astype(np.uint32),
             starts=self[START_COL].to_numpy(),
             ends=self[END_COL].to_numpy(),
-            chrs2=f2,
+            chrs2=f2.astype(np.uint32),
             starts2=other[START_COL].to_numpy(),
             ends2=other[END_COL].to_numpy(),
             k=k,
@@ -336,7 +339,7 @@ class RangeFrame(pd.DataFrame):
             ],
             axis=1,
         )
-        res.index = left.index
+        res.index = pd.Index(left.index.to_numpy().astype(np.int64))
 
         return _mypy_ensure_rangeframe(res)
 

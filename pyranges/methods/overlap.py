@@ -74,10 +74,10 @@ def _both_idxs(
     f1, f2 = factorize_binary(df, df2, by)
 
     idx1, idx2 = ruranges.chromsweep_numpy(
-        f1,
+        f1.astype(np.uint32),
         df.Start.values,
         df.End.values,
-        f2,
+        f2.astype(np.uint32),
         df2.Start.values,
         df2.End.values,
         slack,
@@ -139,10 +139,10 @@ def _intersect(
     f1, f2 = factorize_binary(df, df2, by)
 
     idx1, idx2 = ruranges.chromsweep_numpy(
-        f1,
+        f1.astype(np.uint32),
         df.Start.values,
         df.End.values,
-        f2,
+        f2.astype(np.uint32),
         df2.Start.values,
         df2.End.values,
         slack,
