@@ -1659,7 +1659,6 @@ class PyRanges(RangeFrame):
 
         """
         use_strand = validate_and_convert_use_strand(self, use_strand)
-        from pyranges.methods.max_disjoint import _max_disjoint
 
         result = super().max_disjoint(
             match_by=prepare_by_single(self, use_strand=use_strand, match_by=match_by),
