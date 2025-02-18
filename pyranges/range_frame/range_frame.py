@@ -305,6 +305,24 @@ class RangeFrame(pd.DataFrame):
 
         return _mypy_ensure_rangeframe(res)
 
+    def max_disjoint(
+        self,
+        *,
+        slack: int = 0,
+        match_by: VALID_BY_TYPES = None,
+    ) -> "RangeFrame":
+        import ruranges
+
+        factorized = factorize(self, match_by)
+
+        idx = ruranges.max_disjoint_numpy(
+            factorized,
+            self[START_COL].to_numpy(),
+            self[END_COL].to_numpy(),
+            slack,
+        )
+        return _mypy_ensure_rangeframe(self.take(idx))
+
     def nearest(
         self,
         other: "RangeFrame",

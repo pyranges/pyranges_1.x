@@ -1661,12 +1661,10 @@ class PyRanges(RangeFrame):
         use_strand = validate_and_convert_use_strand(self, use_strand)
         from pyranges.methods.max_disjoint import _max_disjoint
 
-        result = self.apply_single(_max_disjoint, by=match_by, use_strand=use_strand, preserve_index=True, slack=slack)
-
-        # reordering as the original one
-        common_index = self.index.intersection(result.index)
-        result = result.reindex(common_index)
-
+        result = super().max_disjoint(
+            match_by=prepare_by_single(self, use_strand=use_strand, match_by=match_by),
+            slack=slack,
+        )
         return mypy_ensure_pyranges(result)
 
     def merge_overlaps(
@@ -3112,8 +3110,6 @@ class PyRanges(RangeFrame):
             start=start,
             end=end,
         )
-        assert 0, "Create function to compute three end and five end" 
-
         return mypy_ensure_pyranges(self.intersect(result))
 
     def subtract_ranges(
@@ -3396,6 +3392,7 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
         """
         import ruranges
+
         use_strand = validate_and_convert_use_strand(self, use_strand)
 
         negative_strand = (self[STRAND_COL] == "-").to_numpy() if use_strand else np.zeros(len(self), dtype=bool)
@@ -3483,7 +3480,7 @@ class PyRanges(RangeFrame):
         return mypy_ensure_pyranges(
             _tes(self, slack=slack)
             if transcript_id is None
-            else self.subsequence(transcript_id=transcript_id, start=0, end=1, use_strand=True)
+            else self.subsequence(transcript_id=transcript_id, start=-1, use_strand=True)
         )
 
     def to_bed(
