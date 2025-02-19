@@ -36,4 +36,4 @@ def sort_factorize_dict(df: pd.DataFrame, by: list[str], *, use_natsort=True) ->
     all_as_tuples = list(map(tuple, all_as_tuples))
 
     # Map each tuple to an ID
-    return np.array([combo_to_id[tup] for tup in all_as_tuples], dtype=np.int64)
+    return np.array([combo_to_id[tup] for tup in all_as_tuples], dtype=np.uint32)

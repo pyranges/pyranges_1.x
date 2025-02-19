@@ -113,6 +113,28 @@ class RangeFrame(pd.DataFrame):
         match_by = arg_to_list(match_by)
         return _merge(self, by=match_by, count_col=count_col, slack=slack)
 
+    def count_overlaps(
+        self,
+        other: "RangeFrame",
+        *,
+        match_by: str | list[str] | None = None,
+        slack: int = 0,
+    ) -> "pd.Series":
+
+        f1, f2 = factorize_binary(self, other, match_by)
+        import ruranges
+
+        result = ruranges.count_overlaps_numpy(
+            f1,
+            self[START_COL].to_numpy(),
+            self[END_COL].to_numpy(),
+            f2,
+            other[START_COL].to_numpy(),
+            other[END_COL].to_numpy(),
+            slack=slack,
+        )
+        return result
+
     def combine_interval_columns(
         self,
         function: VALID_COMBINE_OPTIONS | CombineIntervalColumnsOperation = "intersect",
@@ -262,6 +284,7 @@ class RangeFrame(pd.DataFrame):
         res = self.take(idx).copy()
         res.insert(res.shape[1], cluster_column, cluster)
         return _mypy_ensure_rangeframe(res)
+
 
     def complement_overlaps(
         self: "RangeFrame",

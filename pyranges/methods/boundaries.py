@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 import pandas as pd
+import numpy as np
 
 from pyranges.core.names import CHROM_COL, END_COL, START_COL, STRAND_COL
 from pyranges.core.pyranges_helpers import factorize, mypy_ensure_rangeframe
@@ -21,7 +22,7 @@ def _bounds[T: ("pr.PyRanges", "pd.DataFrame")](df: T, by: list[str]) -> pd.Data
     group_ids = factorize(df, by=by)
 
     idxs, starts, ends, counts = ruranges.boundary_numpy(
-        group_ids,
+        group_ids.astype(np.uint32),
         df[START_COL].to_numpy(),
         df[END_COL].to_numpy(),
     )

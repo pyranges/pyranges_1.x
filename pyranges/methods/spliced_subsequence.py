@@ -28,7 +28,7 @@ def _spliced_subseq(
     if df.empty:
         return df
 
-    chrs = factorize(df, by) if by else np.arange(len(df), dtype=np.int64)
+    chrs = factorize(df, by) if by else np.arange(len(df), dtype=np.uint32)
 
     outidx, outstarts, outends = ruranges.spliced_subsequence_numpy(
         chrs,
