@@ -1,28 +1,13 @@
 from typing import TYPE_CHECKING
+
 import numpy as np
 import pandas as pd
 
-from pyranges.core.names import BY_ENTRY_IN_KWARGS, VALID_BY_TYPES, VALID_JOIN_TYPE, VALID_OVERLAP_TYPE
+from pyranges.core.names import VALID_BY_TYPES, VALID_JOIN_TYPE, VALID_OVERLAP_TYPE
 from pyranges.methods.overlap import _both_idxs
 
 if TYPE_CHECKING:
     from pyranges.range_frame.range_frame import RangeFrame
-
-
-def _both_indexes(
-    df: pd.DataFrame,
-    df2: pd.DataFrame,
-) -> tuple[pd.Index, pd.Index]:
-    if df2.empty:
-        return df.index, pd.Index(np.array([], dtype=np.int64))
-
-    starts = df.Start.to_numpy()
-    ends = df.End.to_numpy()
-    indexes = df.index.to_numpy()
-
-    it = NCLS(df2.Start.to_numpy(), df2.End.to_numpy(), df2.index.to_numpy())
-
-    return it.all_overlaps_both(starts, ends, indexes)
 
 
 def _both_dfs(

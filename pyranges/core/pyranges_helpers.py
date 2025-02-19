@@ -9,6 +9,7 @@ from numpy import ndarray
 from pyranges.core.names import (
     CHROM_AND_STRAND_COLS,
     CHROM_COL,
+    FORWARD_STRAND,
     RANGE_COLS,
     REVERSE_STRAND,
     STRAND_BEHAVIOR_AUTO,
@@ -24,8 +25,6 @@ from pyranges.core.names import (
     VALID_STRAND_BEHAVIOR_TYPE,
     VALID_USE_STRAND_OPTIONS,
     VALID_USE_STRAND_TYPE,
-    FORWARD_STRAND,
-    REVERSE_STRAND,
 )
 
 if TYPE_CHECKING:
@@ -37,6 +36,25 @@ def factorize(
     df: "pd.DataFrame",
     by: VALID_BY_TYPES,
 ) -> ndarray:
+    """Factorize a DataFrame based on specified grouping columns.
+
+    This function assigns a unique integer (of type uint32) to each group in the DataFrame,
+    where groups are defined by the columns specified in ``by``. If ``by`` is empty or evaluates
+    to False, an array of zeros is returned.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The input DataFrame containing the data to be factorized.
+    by : VALID_BY_TYPES
+        Column name(s) or criteria used to group the DataFrame. If empty, no grouping is performed.
+
+    Returns
+    -------
+    ndarray
+        A NumPy array of type uint32 containing group labels for each row in the DataFrame.
+
+    """
     if not by:
         return np.zeros(len(df), dtype=np.uint32)
     _by = arg_to_list(by)
@@ -48,6 +66,28 @@ def factorize_binary(
     df2: "pd.DataFrame",
     by: VALID_BY_TYPES,
 ) -> tuple[ndarray, ndarray]:
+    """Factorize two DataFrames simultaneously based on specified grouping columns.
+
+    This function concatenates the specified columns from both DataFrames, assigns consistent group labels
+    across the combined data, and then splits the labels back into two arrays corresponding to each DataFrame.
+    If ``by`` is empty or evaluates to False, arrays of zeros are returned for both DataFrames.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The first DataFrame to be factorized.
+    df2 : pd.DataFrame
+        The second DataFrame to be factorized.
+    by : VALID_BY_TYPES
+        Column name(s) or criteria used to group both DataFrames.
+
+    Returns
+    -------
+    tuple of ndarray
+        A tuple containing two NumPy arrays of type uint32. The first array corresponds to group labels for
+        ``df`` and the second array corresponds to group labels for ``df2``.
+
+    """
     if not by:
         return np.zeros(len(df), dtype=np.uint32), np.zeros(len(df2), dtype=np.uint32)
     _by = arg_to_list(by)
@@ -56,6 +96,23 @@ def factorize_binary(
 
 
 def split_on_strand(gr: "PyRanges") -> tuple["PyRanges", "PyRanges"]:
+    """Split a PyRanges object into forward and reverse strand subsets.
+
+    This function filters the input PyRanges object based on strand information, returning two PyRanges objects:
+    one for the forward strand and another for the reverse strand.
+
+    Parameters
+    ----------
+    gr : PyRanges
+        A PyRanges object containing genomic ranges with strand information.
+
+    Returns
+    -------
+    tuple of PyRanges
+        A tuple containing two PyRanges objects: the first for ranges on the forward strand and the second for ranges
+        on the reverse strand.
+
+    """
     return (
         mypy_ensure_pyranges(gr.query(f"{STRAND_COL} == '{FORWARD_STRAND}'")),
         mypy_ensure_pyranges(gr.query(f"{STRAND_COL} == '{REVERSE_STRAND}'")),
@@ -67,6 +124,27 @@ def prepare_by_single(
     use_strand: VALID_USE_STRAND_TYPE,
     match_by: VALID_BY_OPTIONS,
 ) -> list[str]:
+    """Prepare a list of column names for grouping or matching within a PyRanges object.
+
+    This function determines which columns to use for operations by including the chromosome column by default
+    and adding strand information if indicated by the ``use_strand`` parameter. Additional columns specified in
+    ``match_by`` are appended to this list.
+
+    Parameters
+    ----------
+    self : PyRanges
+        The PyRanges object on which the operation is performed.
+    use_strand : VALID_USE_STRAND_TYPE
+        Indicator determining whether strand information should be included.
+    match_by : VALID_BY_OPTIONS
+        Additional column name(s) to use for grouping or matching.
+
+    Returns
+    -------
+    list of str
+        A list of column names used for grouping or matching.
+
+    """
     use_strand = validate_and_convert_use_strand(self, use_strand)
     by = arg_to_list(match_by)
     return [*([CHROM_COL] if not use_strand else CHROM_AND_STRAND_COLS), *by]
@@ -78,6 +156,30 @@ def prepare_by_binary(
     strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
     match_by: VALID_BY_TYPES = None,
 ) -> tuple["PyRanges", list[str]]:
+    """Prepare a secondary PyRanges object and determine the matching columns for binary operations.
+
+    This function constructs a list of columns for matching (including chromosome and, optionally, strand columns)
+    and may modify the secondary PyRanges object based on the specified strand behavior. For example, if the
+    strand behavior is set to 'opposite', the strand information in the secondary object is inverted.
+
+    Parameters
+    ----------
+    self : PyRanges
+        The primary PyRanges object.
+    other : PyRanges
+        The secondary PyRanges object to be prepared.
+    strand_behavior : VALID_STRAND_BEHAVIOR_TYPE, default "auto"
+        Specifies how strand information should be handled. Options include 'auto', 'ignore', or 'opposite'.
+    match_by : VALID_BY_TYPES, optional
+        Additional column name(s) to include for matching.
+
+    Returns
+    -------
+    tuple
+        A tuple where the first element is the (possibly modified) secondary PyRanges object and the second element
+        is a list of column names used for matching.
+
+    """
     strand_behavior = validate_and_convert_strand_behavior(self, other, strand_behavior)
     default_cols = [CHROM_COL] if strand_behavior == STRAND_BEHAVIOR_IGNORE else CHROM_AND_STRAND_COLS
     by = [*default_cols, *arg_to_list(match_by)]

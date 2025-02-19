@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
-from pyranges.core.names import CHROM_COL, END_COL, START_COL, STRAND_COL
+from pyranges.core.names import CHROM_COL, END_COL, START_COL
 from pyranges.core.pyranges_helpers import factorize, mypy_ensure_rangeframe
 from pyranges.range_frame.range_frame import RangeFrame
 

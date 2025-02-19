@@ -10,8 +10,9 @@ def sort_one_by_one(d: pd.DataFrame, col1: str, col2: str) -> pd.DataFrame:
 
 
 def sort_factorize_dict(df: pd.DataFrame, by: list[str], *, use_natsort=True) -> np.ndarray:
-    """Return a numpy array of group-IDs for each row of df,
-    where the groups are defined by `by` columns and ordered by natsort.
+    """Return a numpy array of group-IDs for each row of df.
+
+    The groups are defined by `by` columns and ordered by natsort.
     """
     # 1. Collect unique combinations of columns `by`.
     #    Each row in `unique_combos` is a unique combination.

@@ -2,9 +2,9 @@
 
 import logging
 import sys
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional, cast
+from typing import TYPE_CHECKING, Optional, cast
 
 import numpy as np
 import pandas as pd
@@ -13,11 +13,9 @@ from natsort import natsorted  # type: ignore[import]
 import pyranges as pr
 from pyranges.core.loci_getter import LociGetter
 from pyranges.core.names import (
-    BACKWARD_DIRECTION,
     CHROM_AND_STRAND_COLS,
     CHROM_COL,
     END_COL,
-    FORWARD_DIRECTION,
     FORWARD_STRAND,
     GENOME_LOC_COLS,
     GENOME_LOC_COLS_WITH_STRAND,
@@ -29,14 +27,8 @@ from pyranges.core.names import (
     RANGE_COLS,
     REVERSE_STRAND,
     START_COL,
-    STRAND_BEHAVIOR_IGNORE,
     STRAND_BEHAVIOR_OPPOSITE,
     STRAND_COL,
-    TEMP_END_SLACK_COL,
-    TEMP_ID_COL,
-    TEMP_NUM_COL,
-    TEMP_START_SLACK_COL,
-    TEMP_STRAND_COL,
     USE_STRAND_DEFAULT,
     VALID_BY_TYPES,
     VALID_COMBINE_OPTIONS,
@@ -46,13 +38,9 @@ from pyranges.core.names import (
     VALID_OVERLAP_TYPE,
     VALID_STRAND_BEHAVIOR_TYPE,
     VALID_USE_STRAND_TYPE,
-    BinaryOperation,
     CombineIntervalColumnsOperation,
-    UnaryOperation,
 )
 from pyranges.core.parallelism import (
-    _extend,
-    _extend_grp,
     _tes,
     _tss,
 )
@@ -60,12 +48,10 @@ from pyranges.core.pyranges_groupby import PyRangesDataFrameGroupBy
 from pyranges.core.pyranges_helpers import (
     arg_to_list,
     factorize,
-    group_keys_from_validated_strand_behavior,
     mypy_ensure_pyranges,
     prepare_by_binary,
     prepare_by_single,
     split_on_strand,
-    strand_behavior_from_validated_use_strand,
     use_strand_from_validated_strand_behavior,
     validate_and_convert_strand_behavior,
     validate_and_convert_use_strand,
@@ -546,126 +532,6 @@ class PyRanges(RangeFrame):
             str_repr = f"{str_repr}\nInvalid ranges:\n{reasons}"
         return str_repr
 
-    def apply_single(
-        self,
-        function: UnaryOperation,
-        by: VALID_BY_TYPES,
-        use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
-        *,
-        preserve_index: bool = False,
-        **kwargs: Any,
-    ) -> "pr.PyRanges":
-        """Apply function to each group of intervals, defined by chromosome and optionally strand.
-
-        Parameters
-        ----------
-        use_strand: {"auto", True, False}, default: "auto"
-            Whether to use strand information when grouping.
-            The default "auto" means True if PyRanges has valid strands (see .strand_valid).
-
-        function : Callable
-            Function that takes a PyRanges and optionally kwargs and returns a PyRanges.
-            The function must accept a **kwargs argument. It may be used to extract useful information:
-            use_strand = kwargs.get("use_strand", False)
-            group = kwargs.get("__by__", {})
-            # e.g. chromosome = group.get("Chromosome", None)
-            # e.g. strand = group.get("Strand", "+")
-
-        by : str or list of str or None
-            Columns - in addition to chromosome and strand - to group by.
-
-        preserve_index: bool
-            Keep the old index. Only valid if the function preserves the index columns.
-
-        kwargs : dict
-            Arguments passed along to the function.
-
-        """
-        use_strand = validate_and_convert_use_strand(self, use_strand=use_strand)
-
-        by = [CHROM_COL] + ([STRAND_COL] if use_strand else []) + arg_to_list(by)
-
-        return mypy_ensure_pyranges(
-            super().apply_single(
-                function=function,
-                by=by,
-                preserve_index=preserve_index,
-                use_strand=use_strand,
-                **kwargs,
-            ),
-        )
-
-    def apply_pair(  # type: ignore[override]
-        self: "PyRanges",
-        other: "PyRanges",
-        function: BinaryOperation,
-        strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
-        by: VALID_BY_TYPES = None,
-        *,
-        preserve_order: bool = False,
-        **kwargs,
-    ) -> "pr.PyRanges":
-        """Apply function to pairs of overlapping intervals, by chromosome and optionally strand.
-
-        Parameters
-        ----------
-        other : PyRanges
-            Second PyRanges to apply function to.
-
-        function : Callable
-            Function that takes two PyRanges  and returns a PyRanges.
-            The function should accept a **kwargs argument, which may be used to extract useful information:
-            group = kwargs.get("__by__", {})
-            # e.g. chromosome = group.get("Chromosome", None)
-            # e.g. strand = group.get("Strand", "+")
-
-        strand_behavior : {"auto", "same", "opposite", "ignore"}, default "auto"
-            Whether to consider overlaps of intervals on the same strand, the opposite or ignore strand
-            information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_valid)
-            otherwise ignore the strand information.
-
-        by : str or list of str or None
-            Additional columns - in addition to chromosome and strand - to group by.
-
-        copy_self : bool, default False
-            Whether to copy the first PyRanges before operations. Use False if copied beforehand.
-
-        preserve_order : bool, default False
-            Preserve the order of the intervals in the first PyRanges in output.
-
-        kwargs : dict
-            Other arguments passed along to the function.
-
-        """
-        strand_behavior = validate_and_convert_strand_behavior(self, other, strand_behavior)
-        by = arg_to_list(by)
-
-        if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
-            # swap strands in STRAND_COL, but keep original values in TEMP_STRAND_COL
-            self = mypy_ensure_pyranges(
-                self.assign(**{TEMP_STRAND_COL: self[STRAND_COL]}).assign(
-                    **{
-                        STRAND_COL: self[STRAND_COL].replace(
-                            {FORWARD_STRAND: REVERSE_STRAND, REVERSE_STRAND: FORWARD_STRAND},
-                        ),
-                    },
-                ),
-            )
-
-        grpby_ks = group_keys_from_validated_strand_behavior(strand_behavior, by=by)
-
-        res = mypy_ensure_pyranges(super().apply_pair(other, function, by=grpby_ks, **kwargs))
-
-        if strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
-            # swap back strands in STRAND_COL
-            res = res.drop_and_return(STRAND_COL, axis="columns").rename(columns={TEMP_STRAND_COL: STRAND_COL})
-
-        if preserve_order:
-            common_index = self.index.intersection(res.index)
-            res = res.loc[common_index]
-
-        return mypy_ensure_pyranges(res)
-
     def boundaries(
         self,
         transcript_id: VALID_BY_TYPES = None,
@@ -685,6 +551,10 @@ class PyRanges(RangeFrame):
             Defines how to aggregate metadata columns. Provided as
             dictionary of column names -> functions, function names or list of such,
             as accepted by the pd.DataFrame.agg method.
+
+        use_strand: {"auto", True, False}, default: "auto"
+            Whether to cluster only intervals on the same strand.
+            The default "auto" means True if PyRanges has valid strands (see .strand_valid).
 
         Returns
         -------
@@ -727,6 +597,7 @@ class PyRanges(RangeFrame):
               0  |               1        1      130
         PyRanges with 1 rows, 3 columns, and 1 index columns.
         Contains 1 chromosomes.
+
         """
         from pyranges.methods.boundaries import _bounds
 
@@ -891,7 +762,7 @@ class PyRanges(RangeFrame):
         """Return a copy of the PyRanges."""
         return mypy_ensure_pyranges(super().copy(*args, **kwargs))
 
-    def count_overlaps( # type: ignore
+    def count_overlaps(  # type: ignore[override]
         self,
         other: "PyRanges",
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
@@ -1001,11 +872,7 @@ class PyRanges(RangeFrame):
         """
         strand_behavior = validate_and_convert_strand_behavior(self, other, strand_behavior)
         _other, by = prepare_by_binary(self, other=other, strand_behavior=strand_behavior, match_by=match_by)
-        return super().count_overlaps(
-            _other,
-            match_by=by,
-            slack=slack
-        )
+        return super().count_overlaps(_other, match_by=by, slack=slack)
 
     # to do: optimize, doesn't need to split by chromosome, only strand and only if ext_3/5
     def extend(
@@ -1086,7 +953,7 @@ class PyRanges(RangeFrame):
         >>> gr.extend(-1)
         Traceback (most recent call last):
         ...
-        ValueError: Some intervals are negative or zero length after applying extend!
+        pyo3_runtime.PanicException: Some intervals are negative or zero length after applying extend!
 
         >>> gr.extend(ext_3=1, ext_5=2)
           index  |    Chromosome      Start      End  Strand
@@ -1116,28 +983,22 @@ class PyRanges(RangeFrame):
 
         use_strand = validate_and_convert_use_strand(self, use_strand) if (ext_3 or ext_5) else False
 
-        return (
-            self.apply_single(
-                _extend,
-                by=None,
-                ext=ext,
-                ext_3=ext_3,
-                ext_5=ext_5,
-                use_strand=use_strand,
-            )
-            if not transcript_id
-            else (
-                self.apply_single(
-                    _extend_grp,
-                    by=None,
-                    ext=ext,
-                    ext_3=ext_3,
-                    ext_5=ext_5,
-                    use_strand=use_strand,
-                    group_by=transcript_id,
-                )
-            )
+        import ruranges
+
+        starts, ends = ruranges.extend_numpy(
+            groups=factorize(self, transcript_id) if transcript_id is not None else None,
+            starts=self[START_COL].to_numpy(),
+            ends=self[END_COL].to_numpy(),
+            negative_strand=(self[STRAND_COL] == REVERSE_STRAND).to_numpy(),
+            ext=ext,
+            ext_3=ext_3,
+            ext_5=ext_5,
         )
+
+        result = self.copy()
+        result.loc[:, START_COL] = starts
+        result.loc[:, END_COL] = ends
+        return mypy_ensure_pyranges(result)
 
     def five_end(
         self,
@@ -1153,6 +1014,9 @@ class PyRanges(RangeFrame):
         transcript_id : str or list of str, default: None
             Optional column name(s). If provided, the five prime end is calculated for each
             group of intervals.
+
+        slack : int, default 0
+            Lengthen (or contract) intervals.
 
         Returns
         -------
@@ -1227,7 +1091,7 @@ class PyRanges(RangeFrame):
         """
         return STRAND_COL in self.columns
 
-    def join_ranges(
+    def join_ranges(  # type: ignore[override]
         self,
         other: "PyRanges",
         *,
@@ -1261,6 +1125,15 @@ class PyRanges(RangeFrame):
             "left" keeps all intervals in self, "right" keeps all intervals in other, "outer" keeps both.
             For types other than "inner", intervals in self without overlaps will have NaN in columns from other,
             and/or vice versa.
+
+        multiple : {"all", "first", "last"}, default "all"
+            What intervals to report when multiple intervals in 'other' overlap with the same interval in self.
+            The default "all" reports all overlapping subintervals, which will have duplicate indices.
+            "first" reports only, for each interval in self, the overlapping subinterval with smallest Start in 'other'
+            "last" reports only the overlapping subinterval with the biggest End in 'other'
+
+        contained_intervals_only : bool, default False
+            Whether to report only intervals that are entirely contained in an interval of 'other'.
 
         match_by : str or list, default None
             If provided, only intervals with an equal value in column(s) `match_by` may be joined.
@@ -1436,8 +1309,8 @@ class PyRanges(RangeFrame):
               2  |    chr1                5        7  interval2  chr1                    6        7  b                 1
         PyRanges with 4 rows, 9 columns, and 1 index columns (with 1 index duplicates).
         Contains 1 chromosomes.
-        """
 
+        """
         _other, by = prepare_by_binary(self, other=other, strand_behavior=strand_behavior, match_by=match_by)
         gr = super().join_ranges(
             other=_other,
@@ -1705,7 +1578,7 @@ class PyRanges(RangeFrame):
         match_by: VALID_BY_TYPES = None,
         suffix: str = JOIN_SUFFIX,
         exclude_overlaps: bool = False,
-        dist_col="Distance",
+        dist_col: str | None = "Distance",
     ) -> "PyRanges":
         """Find closest interval.
 
@@ -1730,8 +1603,14 @@ class PyRanges(RangeFrame):
         match_by : str or list, default None
             If provided, only intervals with an equal value in column(s) `match_by` may be matched.
 
+        k : int, default 1
+            Number of nearest intervals to fetch.
+
         suffix : str, default "_b"
             Suffix to give columns with shared name in other.
+
+        dist_col : str or None
+            Optional column to store the distance in.
 
         Returns
         -------
@@ -1889,12 +1768,11 @@ class PyRanges(RangeFrame):
             msg = f"Invalid direction: {direction}"
             raise ValueError(msg)
 
-        gr = mypy_ensure_pyranges(
+        return mypy_ensure_pyranges(
             pd.concat(
                 [res, res2],
             )
         )
-        return gr
 
     def overlap(  # type: ignore[override]
         self,
@@ -2273,7 +2151,7 @@ class PyRanges(RangeFrame):
 
         Parameters
         ----------
-        by : str or list of str, default None
+        match_by : str or list of str, default None
             If provided, sorting occurs by Chromosome, Strand (if present), *by, Start, and End.
             To prioritize columns differently (e.g. Strand before Chromosome), explicitly provide all columns
             in the desired order as part of the 'by' argument.
@@ -2287,7 +2165,7 @@ class PyRanges(RangeFrame):
             A column name or list of column names to sort in descending order, instead of ascending.
             These may include column names in the 'by' argument, or those implicitly included (e.g. Chromosome).
 
-        natsorting : bool, default False
+        natsort : bool, default False
             Whether to use natural sorting for Chromosome column, so that e.g. chr2 < chr11. Slows down sorting.
 
         reverse : bool, default False
@@ -2736,8 +2614,6 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes.
 
         """
-        from pyranges.methods.split import _split
-
         use_strand = validate_and_convert_use_strand(self, use_strand=use_strand)
         by = prepare_by_single(self, use_strand=use_strand, match_by=match_by)
         groups = factorize(self, by)
@@ -3032,6 +2908,7 @@ class PyRanges(RangeFrame):
               4  |               3  +             140      155  t3
         PyRanges with 3 rows, 5 columns, and 1 index columns.
         Contains 3 chromosomes and 2 strands.
+
         """
         by = prepare_by_single(self, use_strand=use_strand, match_by=transcript_id) if transcript_id else []
 
@@ -3254,6 +3131,10 @@ class PyRanges(RangeFrame):
         overlap_column : str, default None
             Name of column to add with the overlap between each bookended tile.
 
+        use_strand: {"auto", True, False}, default: "auto"
+            Whether negative strand intervals should be windowed in reverse order.
+            The default "auto" means True if PyRanges has valid strands (see .strand_valid).
+
         Returns
         -------
         PyRanges
@@ -3322,6 +3203,7 @@ class PyRanges(RangeFrame):
         10       |    1             120900   121000   -           exon        AL627309.1   0.32
         PyRanges with 223 rows, 7 columns, and 1 index columns (with 212 index duplicates).
         Contains 1 chromosomes and 2 strands.
+
         """
         import ruranges
 
@@ -3359,6 +3241,8 @@ class PyRanges(RangeFrame):
             Optional column name(s). If provided, the three prime end is calculated for each
             group of intervals.
 
+        slack : int, default 0
+            Lengthen (or contract) intervals.
 
         Returns
         -------
@@ -4481,6 +4365,7 @@ class PyRanges(RangeFrame):
               2  |    chr1             9951    10278  -           chr1            -
         PyRanges with 5 rows, 6 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes and 2 strands.
+
         """
         res = super().combine_interval_columns(
             function=function,
@@ -4509,26 +4394,22 @@ class PyRanges(RangeFrame):
 
         Parameters
         ----------
-        transcript_id : str or list, default None
-            Column(s) to group by intervals (i.e. exons). If provided, the complement will be calculated for each group.
-
-        use_strand: {"auto", True, False}, default "auto"
-            Whether to return complement separately for intervals on the positive and negative strand.
-            The default "auto" means use strand information if present and valid (see .strand_valid)
-
-        chromsizes : dict or PyRanges or pyfaidx.Fasta
+        match_by : str or list, optional
+            Column(s) to group intervals (e.g. exons). If provided, the complement will be calculated separately for each group.
+        use_strand : {"auto", True, False}, default "auto"
+            Whether to return complement intervals separately for those on the positive and negative strands.
+            The default "auto" means that strand information is used if present and valid (see .strand_valid).
+        include_first_interval : bool, default False
+            If True, include the external complement interval at the beginning of the chromosome (or group),
+            i.e. the interval from the start of the chromosome up to the first interval.
+        group_sizes_col : str, default CHROM_COL
+            The column name used to match keys in the ``chromsizes`` mapping. This determines the total size
+            of each chromosome (or group) when calculating external complement intervals.
+        chromsizes : dict[str | int, int] or None, optional
             If provided, external complement intervals will also be returned, i.e. the intervals corresponding to the
-            beginning of the chromosome up to the first interval and from the last interval to the end of the
-            chromosome. If transcript_id is provided, these are returned for each group.
-            Format of chromsizes: dict or PyRanges describing the lengths of the chromosomes.
-            pyfaidx.Fasta object is also accepted since it conveniently loads chromosome length
-
-
-        Returns
-        -------
-        PyRanges
-            Complement intervals, i.e. introns in the typical use case.
-
+            beginning of the chromosome up to the first interval and from the last interval to the end of the chromosome.
+            The dictionary should map chromosome (or group) identifiers to their total sizes. A PyRanges or pyfaidx.Fasta
+            object is also accepted since it conveniently loads chromosome lengths.
 
         Notes
         -----
@@ -4688,7 +4569,7 @@ class PyRanges(RangeFrame):
 
         return mypy_ensure_pyranges(result)
 
-    def complement_overlaps( # type: ignore
+    def complement_overlaps(  # type: ignore[override]
         self: "PyRanges",
         other: "PyRanges",
         *,
@@ -4704,7 +4585,10 @@ class PyRanges(RangeFrame):
 
         Parameters
         ----------
-        transcript_id : str or list, default None
+        other : PyRanges
+           PyRanges to find non-overlaps with.
+
+        match_by : str or list, default None
             Column(s) to group by intervals (i.e. exons). If provided, the complement will be calculated for each group.
 
         use_strand: {"auto", True, False}, default "auto"
@@ -4718,6 +4602,10 @@ class PyRanges(RangeFrame):
             Format of chromsizes: dict or PyRanges describing the lengths of the chromosomes.
             pyfaidx.Fasta object is also accepted since it conveniently loads chromosome length
 
+        slack : int, default 0
+            An integer offset that adjusts the overlap threshold when computing the complement intervals.
+            Negative values reduce the required gap between intervals (effectively "shrinking" them), while positive values
+            increase the gap threshold.
 
         Returns
         -------
@@ -4775,6 +4663,7 @@ class PyRanges(RangeFrame):
               2  |    chr1               10       11  c
         PyRanges with 2 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes.
+
         """
         result = super().complement_overlaps(
             other=other,
@@ -5073,8 +4962,6 @@ class PyRanges(RangeFrame):
         Chromosome col had type: int64 while keys were of type: int
 
         """
-        from pyranges.methods.boundaries import _outside_bounds
-
         if isinstance(chromsizes, pd.DataFrame):
             chromsizes = dict(*zip(chromsizes[CHROM_COL], chromsizes[END_COL], strict=True))
         elif isinstance(chromsizes, dict):
@@ -5093,12 +4980,50 @@ Chromosome col had type: {self[CHROM_COL].dtype} while keys were of type: {', '.
             msg = "ERROR chromsizes must be a dictionary, or a PyRanges, or a pyfaidx.Fasta object"
             raise TypeError(msg)
 
-        return self.apply_single(
-            _outside_bounds,
-            by=None,
-            use_strand=False,
-            preserve_index=True,
-            chromsizes=chromsizes,
-            clip=clip,
-            only_right=only_right,
+        try:
+            # Convert keys to int
+            new_map = {int(k): v for k, v in chromsizes.items()}
+        except Exception as e:
+            msg = "chromsizes keys must be convertible to int"
+            raise ValueError(msg) from e
+
+        unique_chroms = sorted(set(self[CHROM_COL]))
+        # Create a mapping: e.g., {"chr1": 0, "chr2": 1, "chrX": 2, ...}
+        mapping = {chrom: i for i, chrom in enumerate(unique_chroms)}
+        # Convert all chromosome values from the data to int
+        new_map = {}
+        for key, length in chromsizes.items():
+            new_key = mapping[key]
+            new_map[new_key] = length
+
+        chrom_ids_arr = np.array([*new_map.keys()], dtype=np.uint32)
+        chrom_lengths_arr = np.array([*new_map.values()], dtype=np.int64)
+
+        import ruranges
+
+        # #[pyo3(signature = (groups, starts, ends, chrom_ids, chrom_length, clip=false, only_right=false))]
+        # pub fn genome_bounds_numpy(
+        #     groups: PyReadonlyArray1<u32>,
+        #     starts: PyReadonlyArray1<i64>,
+        #     ends: PyReadonlyArray1<i64>,
+        #     chrom_ids: PyReadonlyArray1<u32>,
+        #     chrom_length: PyReadonlyArray1<i64>,
+        #     clip: bool,
+        #     only_right: bool,
+        #     py: Python,
+        # ) -> PyResult<(
+        #     Py<PyArray1<usize>>,
+        #     Py<PyArray1<i64>>,
+        #     Py<PyArray1<i64>>
+        # )> {
+        res = ruranges.genome_bounds_numpy(
+            self[CHROM_COL].replace(new_map).to_numpy().astype(np.uint32),
+            self[START_COL].to_numpy(),
+            self[END_COL].to_numpy(),
+            chrom_ids_arr,
+            chrom_lengths_arr,
+            clip,
+            only_right,
         )
+
+        assert 0, res

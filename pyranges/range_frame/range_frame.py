@@ -1,21 +1,16 @@
 import inspect
 from collections.abc import Callable, Iterable
-from typing import Any, Generic, TypeVar
+from typing import Any, TypeVar
 
 import numpy as np
 import pandas as pd
-from pyranges.methods.complement_overlaps import _complement_overlaps
-from pyranges.methods.join import _both_dfs
 import ruranges
 
 from pyranges.core.names import (
-    ANY_DIRECTION,
     BY_ENTRY_IN_KWARGS,
     END_COL,
     JOIN_SUFFIX,
-    PRESERVE_INDEX_COLUMN,
     RANGE_COLS,
-    SKIP_IF_DF_EMPTY_DEFAULT,
     SKIP_IF_DF_EMPTY_TYPE,
     SKIP_IF_EMPTY_ANY,
     SKIP_IF_EMPTY_BOTH,
@@ -27,13 +22,12 @@ from pyranges.core.names import (
     VALID_DIRECTION_TYPE,
     VALID_JOIN_TYPE,
     VALID_OVERLAP_TYPE,
-    VALID_STRAND_BEHAVIOR_TYPE,
-    BinaryOperation,
     CombineIntervalColumnsOperation,
-    UnaryOperation,
 )
 from pyranges.core.pyranges_helpers import arg_to_list, factorize, factorize_binary
 from pyranges.core.tostring import tostring
+from pyranges.methods.complement_overlaps import _complement_overlaps
+from pyranges.methods.join import _both_dfs
 from pyranges.methods.merge import _merge
 from pyranges.methods.sort import sort_factorize_dict
 from pyranges.range_frame.range_frame_validator import InvalidRangesReason
@@ -58,30 +52,6 @@ class RangeFrame(pd.DataFrame):
 
     A table with Start and End columns. Parent class of PyRanges. Subclass of pandas DataFrame.
     """
-
-    # def __new__(cls, *args, **kwargs) -> "RangeFrame | pd.DataFrame":  # type: ignore[misc]
-    #     """Create a new instance of a PyRanges object."""
-    #     # __new__ is a special static method used for creating and
-    #     # returning a new instance of a class. It is called before
-    #     # __init__ and is typically used in scenarios requiring
-    #     # control over the creation of new instances
-
-    #     if not args:
-    #         return super().__new__(cls)
-    #     if not kwargs:
-    #         return super().__new__(cls)
-
-    #     df = pd.DataFrame(kwargs.get("data") or (args[0]))
-
-    #     missing_any_required_columns = not set(RANGE_COLS).issubset(df.columns)
-    #     if missing_any_required_columns:
-    #         return df
-
-    #     return super().__new__(cls)
-
-    # @property
-    # def _constructor(self) -> type:
-    #     return RangeFrame
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -120,11 +90,10 @@ class RangeFrame(pd.DataFrame):
         match_by: str | list[str] | None = None,
         slack: int = 0,
     ) -> "pd.Series":
-
         f1, f2 = factorize_binary(self, other, match_by)
         import ruranges
 
-        result = ruranges.count_overlaps_numpy(
+        return ruranges.count_overlaps_numpy(
             f1,
             self[START_COL].to_numpy(),
             self[END_COL].to_numpy(),
@@ -133,7 +102,6 @@ class RangeFrame(pd.DataFrame):
             other[END_COL].to_numpy(),
             slack=slack,
         )
-        return result
 
     def combine_interval_columns(
         self,
@@ -285,7 +253,6 @@ class RangeFrame(pd.DataFrame):
         res.insert(res.shape[1], cluster_column, cluster)
         return _mypy_ensure_rangeframe(res)
 
-
     def complement_overlaps(
         self: "RangeFrame",
         other: "RangeFrame",
@@ -354,7 +321,7 @@ class RangeFrame(pd.DataFrame):
         suffix: str = JOIN_SUFFIX,
         exclude_overlaps: bool = False,
         k: int = 1,
-        dist_col: str = "Distance",
+        dist_col: str | None = "Distance",
         direction: VALID_DIRECTION_TYPE = "any",
     ) -> "RangeFrame":
         f1, f2 = factorize_binary(self, other, match_by)
@@ -372,15 +339,15 @@ class RangeFrame(pd.DataFrame):
         )
 
         left = self.take(idx1)
-        res = pd.concat(
-            [
-                left.reset_index(drop=True),
-                pd.DataFrame(other).take(idx2).add_suffix(suffix).reset_index(drop=True),
-                pd.Series(dist, name=dist_col),
-            ],
-            axis=1,
-        )
-        res.index = pd.Index(left.index.to_numpy().astype(np.int64))
+        to_concat = [
+            left.reset_index(drop=True),
+            pd.DataFrame(other).take(idx2).add_suffix(suffix).reset_index(drop=True),
+        ]
+        if dist_col is not None:
+            to_concat.append(pd.Series(dist, name=dist_col))
+
+        res = pd.concat(to_concat, axis=1)
+        res.index = pd.Index(left.index.to_numpy())
 
         return _mypy_ensure_rangeframe(res)
 
@@ -518,131 +485,6 @@ class RangeFrame(pd.DataFrame):
         output = self.take(idx).copy()
         output[START_COL], output[END_COL] = start, end
         return _mypy_ensure_rangeframe(output)
-
-    def apply_single(
-        self,
-        function: UnaryOperation,
-        by: VALID_BY_TYPES,
-        *,
-        preserve_index: bool = False,
-        **kwargs: Any,
-    ) -> "RangeFrame":
-        """Call a function on a RangeFrame.
-
-        Parameters
-        ----------
-        function: Callable
-            Function to call.
-
-        by: str or list of str
-            Group by these columns.
-
-        preserve_index: bool
-            Preserve the original index. Only valid if the function returns the index cols.
-
-        kwargs: dict
-            Passed to function.
-
-        """
-        assert_valid_ranges(function, self)
-
-        if not by:
-            return _mypy_ensure_rangeframe(function(self, **kwargs))
-        by = arg_to_list(by)
-
-        f = _with_group_keys_to_kwargs(by)(function)
-        if not preserve_index:
-            return _mypy_ensure_rangeframe(self.groupby(by).apply(f, by=by, **kwargs).reset_index(drop=True))
-
-        result = (
-            self.assign(**{PRESERVE_INDEX_COLUMN: lambda df: df.index})
-            .groupby(by)
-            .apply(
-                f,
-                by=by,
-                **kwargs,
-            )
-            .reset_index(drop=True)
-        )
-        result = result.set_index(PRESERVE_INDEX_COLUMN)
-        if isinstance(self.index, pd.MultiIndex):
-            result.index.names = self.index.names
-        else:
-            result.index.name = self.index.name
-        return _mypy_ensure_rangeframe(result)
-
-    def apply_pair(
-        self,
-        other: "RangeFrame",
-        function: BinaryOperation,
-        by: VALID_BY_TYPES = None,
-        skip_if_empty: SKIP_IF_DF_EMPTY_TYPE = SKIP_IF_DF_EMPTY_DEFAULT,
-        **kwargs,
-    ) -> "RangeFrame":
-        """Call a function on two RangeFrames.
-
-        Parameters
-        ----------
-        other: RangeFrame
-            Other RangeFrame.
-
-        function: Callable
-            Function to call.
-
-        by: str or list of str, default None
-            Group by these columns.
-
-        kwargs: dict
-            Passed to function.
-
-        skip_if_empty:
-            Whether to skip the operations if one of the dataframes is empty for a particular group.
-
-        Examples
-        --------
-        >>> import pyranges as pr
-        >>> r = pr.RangeFrame({"Start": [1, 1, 4, 2], "End": [3, 3, 5, 4], "Id": list("abad")})
-        >>> bad, ok = r, r.copy()
-        >>> bad.loc[0, "Start"] = -1  # make r invalid
-        >>> bad.apply_pair(ok, lambda x, y: x)
-        Traceback (most recent call last):
-        ...
-        ValueError: Cannot perform function on invalid ranges (function was bad.apply_pair(ok, lambda x, y: x)).
-        >>> from pyranges.methods.overlap import _overlap
-        >>> ok.apply_pair(bad, _overlap)
-        Traceback (most recent call last):
-        ...
-        ValueError: Cannot perform function on invalid ranges (function was _overlap).
-
-        """
-        assert_valid_ranges(function, self, other)
-        if by is None:
-            return _mypy_ensure_rangeframe(function(self, df2=other, **kwargs))
-
-        by = arg_to_list(by)
-        results = []
-        empty = RangeFrame(columns=other.columns)
-        others = dict(list(other.groupby(by)))
-
-        for key, _df in self.groupby(by):
-            odf = others.get(key, empty)
-
-            if should_skip_operation(_df, df2=odf, skip_if_empty=skip_if_empty):
-                continue
-            results.append(
-                function(
-                    _mypy_ensure_rangeframe(_df),
-                    df2=_mypy_ensure_rangeframe(odf),
-                    **(
-                        kwargs
-                        | {BY_ENTRY_IN_KWARGS: dict(zip(by, [key] if not isinstance(key, tuple) else key, strict=True))}
-                    ),
-                ),
-            )
-
-        if not results:
-            return _mypy_ensure_rangeframe(RangeFrame(columns=self.columns))
-        return _mypy_ensure_rangeframe(pd.concat(results))
 
     def sort_by_position(self) -> "RangeFrame":
         """Sort by Start and End columns."""

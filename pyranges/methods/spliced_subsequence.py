@@ -1,9 +1,7 @@
 from typing import TYPE_CHECKING
 
-import pandas as pd
 import numpy as np
-
-from pyranges.core.pyranges_helpers import factorize
+import pandas as pd
 import ruranges
 
 from pyranges.core.names import (
@@ -12,6 +10,7 @@ from pyranges.core.names import (
     START_COL,
     STRAND_COL,
 )
+from pyranges.core.pyranges_helpers import factorize
 
 if TYPE_CHECKING:
     import pyranges as pr
