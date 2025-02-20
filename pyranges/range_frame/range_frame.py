@@ -1,5 +1,5 @@
 import inspect
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from typing import Any, TypeVar
 
 import numpy as np
@@ -80,6 +80,30 @@ class RangeFrame(pd.DataFrame):
         match_by: VALID_BY_TYPES = None,
         slack: int = 0,
     ) -> "RangeFrame":
+        """Merge overlapping intervals into one.
+
+        Merge overlapping intervals into a single superinterval by uniting intervals that overlap,
+        optionally allowing a small gap (specified by ``slack``) between intervals to be merged. The resulting
+        RangeFrame will contain the merged intervals, and if ``count_col`` is provided, a column with the counts
+        of merged intervals will be included.
+
+        Parameters
+        ----------
+        count_col : str or None, default None
+            Name of the column to store the count of intervals merged into each superinterval.
+            If None, no count column is added.
+        match_by : str or list, default None
+            Column(s) to group intervals by before merging. Only intervals with equal values in the specified
+            column(s) will be considered as overlapping.
+        slack : int, default 0
+            Allow this many nucleotides between intervals to still consider them overlapping.
+
+        Returns
+        -------
+        RangeFrame
+            A RangeFrame with merged (super) intervals. Metadata columns, index, and order are not necessarily preserved.
+
+        """
         match_by = arg_to_list(match_by)
         return _merge(self, by=match_by, count_col=count_col, slack=slack)
 
@@ -90,6 +114,30 @@ class RangeFrame(pd.DataFrame):
         match_by: str | list[str] | None = None,
         slack: int = 0,
     ) -> "pd.Series":
+        """Count the number of overlaps per interval.
+
+        For each interval in self, count how many intervals in ``other`` overlap with it.
+        The overlap computation is based on the start and end coordinates, with an optional
+        ``slack`` parameter to adjust the overlap threshold by temporarily extending the intervals.
+
+        Parameters
+        ----------
+        other : RangeFrame
+            The RangeFrame whose intervals are compared against those in self for overlap counting.
+        match_by : str or list, default None
+            Column(s) to group intervals by when determining overlaps. Only intervals with equal values in the specified
+            column(s) will be considered as overlapping.
+        slack : int, default 0
+            Temporarily extend intervals in self by this many nucleotides before checking for overlaps,
+            thereby adjusting the overlap threshold.
+
+        Returns
+        -------
+        pd.Series
+            A pandas Series where each element corresponds to the number of overlapping intervals in ``other``
+            for the corresponding interval in self.
+
+        """
         f1, f2 = factorize_binary(self, other, match_by)
         import ruranges
 
@@ -239,6 +287,31 @@ class RangeFrame(pd.DataFrame):
         cluster_column: str = "Cluster",
         slack: int = 0,
     ) -> "RangeFrame":
+        """Give overlapping intervals a common id.
+
+        Parameters
+        ----------
+        match_by : str or list, default None
+            If provided, only intervals with an equal value in column(s) `match_by` may be considered as overlapping.
+
+        slack : int, default 0
+            Length by which the criteria of overlap are loosened.
+            A value of 1 clusters also bookended intervals.
+            Higher slack values cluster more distant intervals (with a maximum distance of slack-1 between them).
+
+        cluster_column:
+            Name the cluster column added in output. Default: "Cluster"
+
+        Returns
+        -------
+        RangeFrame
+            RangeFrame with an ID-column "Cluster" added.
+
+        See Also
+        --------
+        RangeFrame.merge: combine overlapping intervals into one
+
+        """
         match_by = arg_to_list(match_by)
 
         factorized = factorize(self, match_by)
@@ -260,6 +333,94 @@ class RangeFrame(pd.DataFrame):
         match_by: VALID_BY_TYPES = None,
         slack: int = 0,
     ) -> "RangeFrame":
+        """Return the internal complement of the intervals, i.e. its introns.
+
+        The complement of an interval is the set of intervals that are not covered by the original interval.
+        This function is useful for obtaining the introns of a set of exons, corresponding to the
+        "internal" complement, i.e. excluding the first and last portion of each chromosome not covered by intervals.
+
+        Parameters
+        ----------
+        other : PyRanges
+           PyRanges to find non-overlaps with.
+
+        match_by : str or list, default None
+            Column(s) to group by intervals (i.e. exons). If provided, the complement will be calculated for each group.
+
+        use_strand: {"auto", True, False}, default "auto"
+            Whether to return complement separately for intervals on the positive and negative strand.
+            The default "auto" means use strand information if present and valid (see .strand_valid)
+
+        chromsizes : dict or PyRanges or pyfaidx.Fasta
+            If provided, external complement intervals will also be returned, i.e. the intervals corresponding to the
+            beginning of the chromosome up to the first interval and from the last interval to the end of the
+            chromosome. If transcript_id is provided, these are returned for each group.
+            Format of chromsizes: dict or PyRanges describing the lengths of the chromosomes.
+            pyfaidx.Fasta object is also accepted since it conveniently loads chromosome length
+
+        slack : int, default 0
+            An integer offset that adjusts the overlap threshold when computing the complement intervals.
+            Negative values reduce the required gap between intervals (effectively "shrinking" them), while positive values
+            increase the gap threshold.
+
+        Returns
+        -------
+        PyRanges
+            Complement intervals, i.e. introns in the typical use case.
+
+        Notes
+        -----
+        * To ensure non-overlap among the input intervals, merge_overlaps is run before the complement is calculated.
+        * Bookended intervals will result in no complement intervals returned since they would be of length 0.
+
+        See Also
+        --------
+        PyRanges.subtract_ranges : report non-overlapping subintervals
+        PyRanges.boundaries : report the boundaries of groups of intervals (e.g. transcripts/genes)
+
+        Examples
+        --------
+        >>> gr = pr.PyRanges({"Chromosome": ["chr1"] * 3, "Start": [1, 4, 10],
+        ...                    "End": [3, 9, 11], "ID": ["a", "b", "c"]})
+        >>> gr
+          index  |    Chromosome      Start      End  ID
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                1        3  a
+              1  |    chr1                4        9  b
+              2  |    chr1               10       11  c
+        PyRanges with 3 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        >>> gr2 = pr.PyRanges({"Chromosome": ["chr1"] * 3, "Start": [2, 2, 9], "End": [3, 9, 10]})
+        >>> gr2
+          index  |    Chromosome      Start      End
+          int64  |    object          int64    int64
+        -------  ---  ------------  -------  -------
+              0  |    chr1                2        3
+              1  |    chr1                2        9
+              2  |    chr1                9       10
+        PyRanges with 3 rows, 3 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        >>> gr.complement_overlaps(gr2)
+          index  |    Chromosome      Start      End  ID
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              2  |    chr1               10       11  c
+        PyRanges with 1 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        >>> gr.complement_overlaps(gr2, slack=-1)
+          index  |    Chromosome      Start      End  ID
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                1        3  a
+              2  |    chr1               10       11  c
+        PyRanges with 2 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        """
         match_by = arg_to_list(match_by)
         return _complement_overlaps(self, other, by=match_by, slack=slack)
 
@@ -275,6 +436,56 @@ class RangeFrame(pd.DataFrame):
         contained_intervals_only: bool = False,
         report_overlap_column: str | None = None,
     ) -> "RangeFrame":
+        """Join RangeFrame objects based on overlapping intervals.
+
+        Find pairs of overlapping intervals between self and other and combine their attributes.
+        Each row in the output contains columns from both intervals, including their start and end positions.
+        By default, only overlapping intervals are included, but the join_type parameter controls how intervals
+        without overlaps are handled.
+
+        Parameters
+        ----------
+        other : RangeFrame
+            The RangeFrame to join with.
+        join_type : {"inner", "left", "right", "outer"}, default "inner"
+            Specifies how to handle intervals that do not overlap. "inner" returns only overlapping intervals,
+            "left" returns all intervals from self (with missing values for non-overlapping intervals from other),
+            "right" returns all intervals from other, and "outer" returns all intervals from both.
+        multiple : {"all", "first", "last"}, default "all"
+            Determines which overlapping interval(s) to report when multiple intervals in other overlap the same interval in self.
+            "all" reports all overlaps (which may lead to duplicate rows), "first" reports only the overlapping interval with
+            the smallest start in other, and "last" reports only the overlapping interval with the largest end in other.
+        match_by : str or list, default None
+            If provided, only intervals with matching values in the specified column(s) will be joined.
+        slack : int, default 0
+            Temporarily extend intervals in self by this many units on both ends before checking for overlaps.
+        suffix : str, default JOIN_SUFFIX
+            Suffix to append to columns from the other RangeFrame in the output.
+        contained_intervals_only : bool, default False
+            If True, only join intervals from self that are entirely contained within an interval from other.
+        report_overlap_column : str or None, default None
+            If provided, add a column with this name reporting the amount of overlap between joined intervals.
+            The overlap is computed as the minimum of the end positions minus the maximum of the start positions.
+
+        Returns
+        -------
+        RangeFrame
+            A new RangeFrame containing the joined intervals with columns from both input RangeFrames.
+            The indices of the input RangeFrames are not preserved in the output.
+
+        Notes
+        -----
+        Attributes from the other RangeFrame may have their column names modified by appending the specified suffix.
+
+        Examples
+        --------
+        >>> rf1 = RangeFrame({'Start': [3, 8, 5], 'End': [6, 9, 7], 'Name': ['interval1', 'interval3', 'interval2']})
+        >>> rf2 = RangeFrame({'Start': [1, 6], 'End': [2, 7], 'Name': ['a', 'b']})
+        >>> rf1.join_ranges(rf2)
+           Start  End        Name  Start_b  End_b  Name_b
+        0      5    7  interval2        6      7       b
+
+        """
         res = _both_dfs(
             self,
             other,
@@ -301,6 +512,33 @@ class RangeFrame(pd.DataFrame):
         slack: int = 0,
         match_by: VALID_BY_TYPES = None,
     ) -> "RangeFrame":
+        """Find the maximal disjoint set of intervals.
+
+        Returns a subset of the rows in self so that no two intervals overlap, choosing those that
+        maximize the number of intervals in the result.
+
+        Parameters
+        ----------
+        slack : int, default 0
+            Length by which the criteria of overlap are loosened.
+            A value of 1 implies that bookended intervals are considered overlapping.
+            Higher slack values allow more distant intervals (with a maximum distance of slack-1 between them).
+
+        match_by : str or list, default None
+            If provided, only intervals with an equal value in column(s) `match_by` may be considered as overlapping.
+
+        Returns
+        -------
+        RangeFrame
+            RangeFrame with maximal disjoint set of intervals.
+
+        See Also
+        --------
+        RangeFrame.merge_overlaps : merge intervals into non-overlapping superintervals
+        RangeFrame.split : split intervals into non-overlapping subintervals
+        RangeFrame.cluster : annotate overlapping intervals with common ID
+
+        """
         import ruranges
 
         factorized = factorize(self, match_by)
@@ -324,6 +562,44 @@ class RangeFrame(pd.DataFrame):
         dist_col: str | None = "Distance",
         direction: VALID_DIRECTION_TYPE = "any",
     ) -> "RangeFrame":
+        """Find closest interval.
+
+        For each interval in self RangeFrame, the columns of the nearest interval in other RangeFrame are appended.
+
+        Parameters
+        ----------
+        other : RangeFrame
+            RangeFrame to find nearest interval in.
+
+        exclude_overlaps : bool, default True
+            Whether to not report intervals of others that overlap with self as the nearest ones.
+
+        direction : {"any", "forward", "backward"}, default "any", i.e. both directions
+            Whether to only look for nearest in one direction.
+
+        match_by : str or list, default None
+            If provided, only intervals with an equal value in column(s) `match_by` may be matched.
+
+        k : int, default 1
+            Number of nearest intervals to fetch.
+
+        suffix : str, default "_b"
+            Suffix to give columns with shared name in other.
+
+        dist_col : str or None
+            Optional column to store the distance in.
+
+        Returns
+        -------
+        RangeFrame
+
+            A RangeFrame with columns representing nearest interval horizontally appended.
+
+        See Also
+        --------
+        RangeFrame.join_ranges : Has a slack argument to find intervals within a distance.
+
+        """
         f1, f2 = factorize_binary(self, other, match_by)
         idx1, idx2, dist = ruranges.nearest_numpy(
             chrs=f1.astype(np.uint32),
@@ -360,80 +636,42 @@ class RangeFrame(pd.DataFrame):
         contained_intervals_only: bool = False,
         match_by: VALID_BY_TYPES = None,
     ) -> "RangeFrame":
-        """Find intervals in self overlapping other..
+        """Return overlapping intervals.
+
+        Returns the intervals in self which overlap with those in other.
 
         Parameters
         ----------
-        other
-            Other ranges to find overlaps with.
-        how
-            How to find overlaps. "first" finds the first overlap, "containment" finds all overlaps
-            where self is contained in other, and "all" finds all overlaps.
-        by:
-            Grouping columns. If None, all columns are used.
+        other : RangeFrame
+            RangeFrame to find overlaps with.
+
+        multiple : {"all", "first", "last"}, default "all"
+            What intervals to report when multiple intervals in 'other' overlap with the same interval in self.
+            The default "all" reports all overlapping subintervals, which will have duplicate indices.
+            "first" reports only, for each interval in self, the overlapping subinterval with smallest Start in 'other'
+            "last" reports only the overlapping subinterval with the biggest End in 'other'
+
+        slack : int, default 0
+            Intervals in self are temporarily extended by slack on both ends before overlap is calculated, so that
+            we allow non-overlapping intervals to be considered overlapping if they are within less than slack distance
+            e.g. slack=1 reports bookended intervals.
+
+        contained_intervals_only : bool, default False
+            Whether to report only intervals that are entirely contained in an interval of 'other'.
+
+        match_by : str or list, default None
+            If provided, only overlapping intervals with an equal value in column(s) `match_by` are reported.
 
         Returns
         -------
         RangeFrame
-            RangeFrame with overlapping ranges.
 
-        Examples
+            A RangeFrame with overlapping intervals.
+
+        See Also
         --------
-        >>> import pyranges as pr
-        >>> r = pr.RangeFrame({"Start": [1, 1, 2, 2], "End": [3, 3, 5, 4], "Id": list("abad")})
-        >>> r
-          index  |      Start      End  Id
-          int64  |      int64    int64  object
-        -------  ---  -------  -------  --------
-              0  |          1        3  a
-              1  |          1        3  b
-              2  |          2        5  a
-              3  |          2        4  d
-        RangeFrame with 4 rows, 3 columns, and 1 index columns.
-
-        >>> r2 = pr.RangeFrame({"Start": [0, 2], "End": [1, 20], "Id": list("ad")})
-        >>> r2
-          index  |      Start      End  Id
-          int64  |      int64    int64  object
-        -------  ---  -------  -------  --------
-              0  |          0        1  a
-              1  |          2       20  d
-        RangeFrame with 2 rows, 3 columns, and 1 index columns.
-
-        >>> r.overlap(r2, multiple="first")
-          index  |      Start      End  Id
-          int64  |      int64    int64  object
-        -------  ---  -------  -------  --------
-              0  |          1        3  a
-              1  |          1        3  b
-              3  |          2        4  d
-              2  |          2        5  a
-        RangeFrame with 4 rows, 3 columns, and 1 index columns.
-
-        >>> r.overlap(r2, contained_intervals_only=True)
-          index  |      Start      End  Id
-          int64  |      int64    int64  object
-        -------  ---  -------  -------  --------
-              3  |          2        4  d
-              2  |          2        5  a
-        RangeFrame with 2 rows, 3 columns, and 1 index columns.
-
-        >>> r.overlap(r2, multiple="all")
-          index  |      Start      End  Id
-          int64  |      int64    int64  object
-        -------  ---  -------  -------  --------
-              0  |          1        3  a
-              1  |          1        3  b
-              3  |          2        4  d
-              2  |          2        5  a
-        RangeFrame with 4 rows, 3 columns, and 1 index columns.
-
-        >>> r.overlap(r2, multiple="all", match_by="Id")
-          index  |      Start      End  Id
-          int64  |      int64    int64  object
-        -------  ---  -------  -------  --------
-              3  |          2        4  d
-        RangeFrame with 1 rows, 3 columns, and 1 index columns.
+        RangeFrame.intersect : report overlapping subintervals
+        RangeFrame.set_intersect : set-intersect RangeFrame (e.g. merge then intersect)
 
         """
         from pyranges.methods.overlap import _overlap
@@ -456,13 +694,37 @@ class RangeFrame(pd.DataFrame):
         match_by: VALID_BY_TYPES = None,
         *,
         natsort: bool = True,
-    ):
+        sort_rows_reverse_order: Sequence[bool] | None = None,
+    ) -> "RangeFrame":
+        """Sort RangeFrame according to Start, End, and any other columns given.
+
+        For uses not covered by this function, use  DataFrame.sort_values().
+
+        Parameters
+        ----------
+        match_by : str or list of str, default None
+            in the desired order as part of the 'by' argument.
+
+        natsort : bool, default False
+            Whether to use natural sorting for the columns in match_by.
+
+        sort_rows_reverse_order : sequence of bools or None
+            Whether to sort these rows in the reverse order for the starts and ends.
+
+        Returns
+        -------
+        RangeFrame
+
+            Sorted RangeFrame. The index is preserved. Use .reset_index(drop=True) to reset the index.
+
+        """
         by = arg_to_list(match_by)
         by_sort_order_as_int = sort_factorize_dict(self, by, use_natsort=natsort)
         idxs = ruranges.sort_intervals_numpy(
             by_sort_order_as_int,
             self[START_COL].to_numpy(),
             self[END_COL].to_numpy(),
+            sort_reverse_direction=np.array(sort_rows_reverse_order, dtype=bool) if sort_rows_reverse_order else None,
         )
         return self.take(idxs)
 
@@ -471,6 +733,34 @@ class RangeFrame(pd.DataFrame):
         other: "RangeFrame",
         match_by: VALID_BY_TYPES = None,
     ) -> "RangeFrame":
+        """Subtract intervals, i.e. return non-overlapping subintervals.
+
+        Identify intervals in other that overlap with intervals in self; return self with the overlapping parts removed.
+
+        Parameters
+        ----------
+        other:
+            RangeFrame to subtract.
+
+        match_by : str or list, default None
+            If provided, only intervals with an equal value in column(s) `match_by` may be considered as overlapping.
+
+        Returns
+        -------
+        RangeFrame
+            RangeFrame with subintervals from self that do not overlap with any interval in other.
+            Columns and index are preserved.
+
+        Warning
+        -------
+        The returned Pyranges may have index duplicates. Call .reset_index(drop=True) to fix it.
+
+        See Also
+        --------
+        RangeFrame.overlap : use with invert=True to return all intervals without overlap
+        RangeFrame.complement : return the internal complement of intervals, i.e. its introns.
+
+        """
         f1, f2 = factorize_binary(self, other, match_by)
 
         idx, start, end = ruranges.subtract_numpy(

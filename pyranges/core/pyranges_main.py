@@ -24,7 +24,6 @@ from pyranges.core.names import (
     NEAREST_DOWNSTREAM,
     NEAREST_UPSTREAM,
     PANDAS_COMPRESSION_TYPE,
-    RANGE_COLS,
     REVERSE_STRAND,
     START_COL,
     STRAND_BEHAVIOR_OPPOSITE,
@@ -39,10 +38,6 @@ from pyranges.core.names import (
     VALID_STRAND_BEHAVIOR_TYPE,
     VALID_USE_STRAND_TYPE,
     CombineIntervalColumnsOperation,
-)
-from pyranges.core.parallelism import (
-    _tes,
-    _tss,
 )
 from pyranges.core.pyranges_groupby import PyRangesDataFrameGroupBy
 from pyranges.core.pyranges_helpers import (
@@ -951,9 +946,16 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         >>> gr.extend(-1)
-        Traceback (most recent call last):
-        ...
-        pyo3_runtime.PanicException: Some intervals are negative or zero length after applying extend!
+          index  |    Chromosome      Start      End  Strand
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                4        5  +
+              1  |    chr1                9        8  +
+              2  |    chr1                6        6  -
+        PyRanges with 3 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+        Invalid ranges:
+          * 2 intervals are empty or negative length (end <= start). See indexes: 1, 2
 
         >>> gr.extend(ext_3=1, ext_5=2)
           index  |    Chromosome      Start      End  Strand
@@ -1073,7 +1075,7 @@ class PyRanges(RangeFrame):
             raise AssertionError(msg)
 
         return mypy_ensure_pyranges(
-            _tss(self, slack=slack)
+            process_site(self, slack=slack, site="tss")
             if transcript_id is None
             else self.subsequence(transcript_id=transcript_id, start=0, end=1)
         )
@@ -2161,12 +2163,8 @@ class PyRanges(RangeFrame):
             Whether negative strand intervals should be sorted in descending order, meaning 5' to 3'.
             The default "auto" means True if PyRanges has valid strands (see .strand_valid).
 
-        sort_descending : str or list of str, default None
-            A column name or list of column names to sort in descending order, instead of ascending.
-            These may include column names in the 'by' argument, or those implicitly included (e.g. Chromosome).
-
         natsort : bool, default False
-            Whether to use natural sorting for Chromosome column, so that e.g. chr2 < chr11. Slows down sorting.
+            Whether to use natural sorting for Chromosome column, so that e.g. chr2 < chr11.
 
         reverse : bool, default False
             Whether to reverse the sort order.
@@ -2308,23 +2306,14 @@ class PyRanges(RangeFrame):
 
         by = ([CHROM_COL] if STRAND_COL not in self else CHROM_AND_STRAND_COLS) + by
 
-        if use_strand:
-            self_copy = self.loc[:, by + RANGE_COLS].copy(deep=True)
-            if not isinstance(self_copy, RangeFrame):
-                raise TypeError
-            self_copy.loc[self_copy[STRAND_COL] == REVERSE_STRAND, START_COL] = -self_copy.loc[
-                self_copy[STRAND_COL] == REVERSE_STRAND, START_COL
-            ]
-        else:
-            self_copy = self
-
         import ruranges
 
         by_sort_order_as_int = sort_factorize_dict(self, by, use_natsort=natsort)
         idxs = ruranges.sort_intervals_numpy(
             by_sort_order_as_int,
-            self_copy[START_COL].to_numpy(),
-            self_copy[END_COL].to_numpy(),
+            self[START_COL].to_numpy(),
+            self[END_COL].to_numpy(),
+            sort_reverse_direction=None if not use_strand else (self[STRAND_COL] == "-").to_numpy(dtype=bool),
         )
         res = self.take(idxs)
 
@@ -3294,7 +3283,7 @@ class PyRanges(RangeFrame):
             raise AssertionError(msg)
 
         return mypy_ensure_pyranges(
-            _tes(self, slack=slack)
+            process_site(self, slack=slack, site="tes")
             if transcript_id is None
             else self.subsequence(transcript_id=transcript_id, start=-1, use_strand=True)
         )
@@ -4577,40 +4566,31 @@ class PyRanges(RangeFrame):
         slack: int = 0,
         use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
     ) -> "PyRanges":
-        """Return the internal complement of the intervals, i.e. its introns.
+        """Return the internal complement of self with respect to another PyRanges.
 
-        The complement of an interval is the set of intervals that are not covered by the original interval.
-        This function is useful for obtaining the introns of a set of exons, corresponding to the
-        "internal" complement, i.e. excluding the first and last portion of each chromosome not covered by intervals.
+        The complement of an interval is defined as the subinterval(s) in self that are not overlapped by any
+        intervals in other. This function is useful for obtaining regions such as introns by excluding intervals
+        (e.g. exons) that overlap with those in another PyRanges object.
 
         Parameters
         ----------
         other : PyRanges
-           PyRanges to find non-overlaps with.
-
+            A PyRanges object whose intervals are used to determine the overlaps.
         match_by : str or list, default None
-            Column(s) to group by intervals (i.e. exons). If provided, the complement will be calculated for each group.
-
-        use_strand: {"auto", True, False}, default "auto"
-            Whether to return complement separately for intervals on the positive and negative strand.
-            The default "auto" means use strand information if present and valid (see .strand_valid)
-
-        chromsizes : dict or PyRanges or pyfaidx.Fasta
-            If provided, external complement intervals will also be returned, i.e. the intervals corresponding to the
-            beginning of the chromosome up to the first interval and from the last interval to the end of the
-            chromosome. If transcript_id is provided, these are returned for each group.
-            Format of chromsizes: dict or PyRanges describing the lengths of the chromosomes.
-            pyfaidx.Fasta object is also accepted since it conveniently loads chromosome length
-
+            Column(s) to group intervals by (e.g. exons). If provided, the complement will be calculated separately
+            for each group.
         slack : int, default 0
             An integer offset that adjusts the overlap threshold when computing the complement intervals.
             Negative values reduce the required gap between intervals (effectively "shrinking" them), while positive values
             increase the gap threshold.
+        use_strand : {"auto", True, False}, default "auto"
+            Whether to compute the complement separately for intervals on the positive and negative strand.
+            The default "auto" means that strand information is used if present and valid (see .strand_valid).
 
         Returns
         -------
         PyRanges
-            Complement intervals, i.e. introns in the typical use case.
+            A PyRanges object containing the complement intervals (i.e. regions in self that do not overlap with any intervals in other).
 
         Notes
         -----
@@ -4619,34 +4599,15 @@ class PyRanges(RangeFrame):
 
         See Also
         --------
-        PyRanges.subtract_ranges : report non-overlapping subintervals
-        PyRanges.boundaries : report the boundaries of groups of intervals (e.g. transcripts/genes)
+        PyRanges.subtract_ranges : Report non-overlapping subintervals.
+        PyRanges.boundaries : Report the boundaries of groups of intervals (e.g. transcripts/genes).
 
         Examples
         --------
         >>> gr = pr.PyRanges({"Chromosome": ["chr1"] * 3, "Start": [1, 4, 10],
         ...                    "End": [3, 9, 11], "ID": ["a", "b", "c"]})
-        >>> gr
-          index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
-              0  |    chr1                1        3  a
-              1  |    chr1                4        9  b
-              2  |    chr1               10       11  c
-        PyRanges with 3 rows, 4 columns, and 1 index columns.
-        Contains 1 chromosomes.
-
-        >>> gr2 = pr.PyRanges({"Chromosome": ["chr1"] * 3, "Start": [2, 2, 9], "End": [3, 9, 10]})
-        >>> gr2
-          index  |    Chromosome      Start      End
-          int64  |    object          int64    int64
-        -------  ---  ------------  -------  -------
-              0  |    chr1                2        3
-              1  |    chr1                2        9
-              2  |    chr1                9       10
-        PyRanges with 3 rows, 3 columns, and 1 index columns.
-        Contains 1 chromosomes.
-
+        >>> gr2 = pr.PyRanges({"Chromosome": ["chr1"] * 3, "Start": [2, 2, 9],
+        ...                    "End": [3, 9, 10]})
         >>> gr.complement_overlaps(gr2)
           index  |    Chromosome      Start      End  ID
           int64  |    object          int64    int64  object
@@ -5005,3 +4966,39 @@ Chromosome col had type: {self[CHROM_COL].dtype} while keys were of type: {', '.
             res.loc[:, END_COL] = ends
 
         return mypy_ensure_pyranges(res)
+
+
+def process_site(df: "PyRanges", slack: int = 0, site: str = "tss") -> "PyRanges":
+    """Process a DataFrame to update the 'Start' and 'End' positions based on the site type.
+
+    Args:
+    ----
+        df: A DataFrame that contains 'Start', 'End', and 'Strand' columns.
+        slack: An integer value to adjust the positions.
+        site: A string indicating the site type: "tss" or "tes".
+              For "tss": use 'Start' for '+' strand and 'End - 1' for '-' strand.
+              For "tes": use 'End - 1' for '+' strand and 'Start' for '-' strand.
+
+    Returns:
+    -------
+        A new DataFrame with updated 'Start' and 'End' columns.
+
+    """
+    df = df.copy(deep=True)
+    dtype = df.dtypes["Start"]
+
+    if site == "tss":
+        starts = np.where(df.Strand == "+", df.Start, df.End - 1)
+    elif site == "tes":
+        starts = np.where(df.Strand == "+", df.End - 1, df.Start)
+    else:
+        msg = "Invalid site type. Expected 'tss' or 'tes'."
+        raise ValueError(msg)
+
+    ends = starts + slack + 1
+    starts = starts - slack
+    starts = np.where(starts < 0, 0, starts)
+
+    df.loc[:, "Start"] = starts.astype(dtype)
+    df.loc[:, "End"] = ends.astype(dtype)
+    return df

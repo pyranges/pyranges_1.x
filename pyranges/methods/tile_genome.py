@@ -95,7 +95,7 @@ def tile_genome(
     else:
         chromsize_dict = dict(zip(chromsizes[CHROM_COL], chromsizes[END_COL], strict=True))
 
-    gr = mypy_ensure_pyranges(chromsizes).tile(tile_size)
+    gr = mypy_ensure_pyranges(chromsizes).sort_ranges().tile(tile_size)
 
     return mypy_ensure_pyranges(
         gr.reset_index(drop=True)
