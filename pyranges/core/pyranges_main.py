@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Optional, cast
 
 import numpy as np
 import pandas as pd
+import ruranges  # type: ignore[import]
 from natsort import natsorted  # type: ignore[import]
 
 import pyranges as pr
@@ -985,9 +986,7 @@ class PyRanges(RangeFrame):
 
         use_strand = validate_and_convert_use_strand(self, use_strand) if (ext_3 or ext_5) else False
 
-        import ruranges
-
-        starts, ends = ruranges.extend_numpy(
+        starts, ends = ruranges.extend_numpy(  # type: ignore[attr-defined]
             groups=factorize(self, transcript_id) if transcript_id is not None else None,
             starts=self[START_COL].to_numpy(),
             ends=self[END_COL].to_numpy(),
@@ -2138,7 +2137,7 @@ class PyRanges(RangeFrame):
 
         return gr.merge_overlaps(use_strand=use_strand)
 
-    def sort_ranges(
+    def sort_ranges(  # type: ignore[override]
         self,
         match_by: VALID_BY_TYPES = None,
         *,
@@ -2306,10 +2305,8 @@ class PyRanges(RangeFrame):
 
         by = ([CHROM_COL] if STRAND_COL not in self else CHROM_AND_STRAND_COLS) + by
 
-        import ruranges
-
         by_sort_order_as_int = sort_factorize_dict(self, by, use_natsort=natsort)
-        idxs = ruranges.sort_intervals_numpy(
+        idxs = ruranges.sort_intervals_numpy(  # type: ignore[attr-defined]
             by_sort_order_as_int,
             self[START_COL].to_numpy(),
             self[END_COL].to_numpy(),
@@ -2606,9 +2603,8 @@ class PyRanges(RangeFrame):
         use_strand = validate_and_convert_use_strand(self, use_strand=use_strand)
         by = prepare_by_single(self, use_strand=use_strand, match_by=match_by)
         groups = factorize(self, by)
-        import ruranges
 
-        idxs, starts, ends = ruranges.split_numpy(
+        idxs, starts, ends = ruranges.split_numpy(  # type: ignore[attr-defined]
             groups,
             starts=self[START_COL].to_numpy(),
             ends=self[END_COL].to_numpy(),
@@ -2910,7 +2906,7 @@ class PyRanges(RangeFrame):
         )
         return mypy_ensure_pyranges(self.intersect(result))
 
-    def subtract_ranges(
+    def subtract_ranges(  # type: ignore[override]
         self,
         other: "pr.PyRanges",
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
@@ -3194,12 +3190,10 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         """
-        import ruranges
-
         use_strand = validate_and_convert_use_strand(self, use_strand)
 
         negative_strand = (self[STRAND_COL] == "-").to_numpy() if use_strand else np.zeros(len(self), dtype=bool)
-        indices, starts, ends, overlap_fraction = ruranges.tile_numpy(
+        indices, starts, ends, overlap_fraction = ruranges.tile_numpy(  # type: ignore[attr-defined]
             self[START_COL].to_numpy(),
             self[END_COL].to_numpy(),
             negative_strand,
@@ -4000,13 +3994,11 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         """
-        import ruranges
-
         use_strand = validate_and_convert_use_strand(self, use_strand)
 
         negative_strand = (self[STRAND_COL] == "-").to_numpy() if use_strand else np.zeros(len(self), dtype=bool)
         # assert 0, negative_strands
-        idx, starts, ends = ruranges.window_numpy(
+        idx, starts, ends = ruranges.window_numpy(  # type: ignore[attr-defined]
             self[START_COL].to_numpy(),
             self[END_COL].to_numpy(),
             negative_strand,
@@ -4948,9 +4940,8 @@ Chromosome col had type: {self[CHROM_COL].dtype} while keys were of type: {', '.
         chrom_ids_arr = np.array([*new_dict.keys()], dtype=np.uint32)
         chrom_lengths_arr = np.array([*new_dict.values()], dtype=np.int64)
 
-        import ruranges
 
-        idxs, starts, ends = ruranges.genome_bounds_numpy(
+        idxs, starts, ends = ruranges.genome_bounds_numpy(  # type: ignore[attr-defined]
             codes.astype(np.uint32),
             self[START_COL].to_numpy(),
             self[END_COL].to_numpy(),

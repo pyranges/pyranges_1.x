@@ -29,7 +29,7 @@ def _spliced_subseq(
 
     chrs = factorize(df, by) if by else np.arange(len(df), dtype=np.uint32)
 
-    outidx, outstarts, outends = ruranges.spliced_subsequence_numpy(
+    outidx, outstarts, outends = ruranges.spliced_subsequence_numpy(  # type: ignore[attr-defined]
         chrs,
         df[START_COL].to_numpy(),
         df[END_COL].to_numpy(),

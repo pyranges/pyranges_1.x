@@ -29,7 +29,7 @@ def _both_idxs(
 ) -> tuple[NDArray[np.int_], NDArray[np.int_]]:
     f1, f2 = factorize_binary(df, df2, by)
 
-    idx1, idx2 = ruranges.chromsweep_numpy(
+    idx1, idx2 = ruranges.chromsweep_numpy(  # type: ignore[attr-defined]
         f1.astype(np.uint32),
         df.Start.values,
         df.End.values,
@@ -60,7 +60,7 @@ def _overlap(
         contained=contained,
         slack=slack,
     )
-    return df.take(idx1)
+    return df.take(idx1)  # type: ignore[]
 
 
 def _intersect(
@@ -76,7 +76,7 @@ def _intersect(
 
     f1, f2 = factorize_binary(df, df2, by)
 
-    idx1, idx2 = ruranges.chromsweep_numpy(
+    idx1, idx2 = ruranges.chromsweep_numpy(  # type: ignore[attr-defined]
         f1.astype(np.uint32),
         df.Start.values,
         df.End.values,

@@ -29,7 +29,7 @@ def _subseq(
 
     chrs = factorize(df, by)
 
-    outidx, outstarts, outends = ruranges.subsequence_numpy(
+    outidx, outstarts, outends = ruranges.subsequence_numpy(  # type: ignore[attr-defined]
         chrs,
         df[START_COL].to_numpy(),
         df[END_COL].to_numpy(),

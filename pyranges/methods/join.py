@@ -37,7 +37,7 @@ def _both_dfs(
     _df2.index = pd.Index(np.arange(len(_df2)))
     j = _df.join(_df2, how="inner")
     if join_type == "inner":
-        j.index = _self_indexes
+        j.index = pd.Index(_self_indexes)
         return j
 
     if join_type == "left":
