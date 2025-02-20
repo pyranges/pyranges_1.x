@@ -4980,44 +4980,17 @@ Chromosome col had type: {self[CHROM_COL].dtype} while keys were of type: {', '.
             msg = "ERROR chromsizes must be a dictionary, or a PyRanges, or a pyfaidx.Fasta object"
             raise TypeError(msg)
 
-        try:
-            # Convert keys to int
-            new_map = {int(k): v for k, v in chromsizes.items()}
-        except Exception as e:
-            msg = "chromsizes keys must be convertible to int"
-            raise ValueError(msg) from e
-
-        unique_chroms = sorted(set(self[CHROM_COL]))
-        # Create a mapping: e.g., {"chr1": 0, "chr2": 1, "chrX": 2, ...}
-        mapping = {chrom: i for i, chrom in enumerate(unique_chroms)}
-        # Convert all chromosome values from the data to int
-        new_map = {}
-        for key, length in chromsizes.items():
-            new_key = mapping[key]
-            new_map[new_key] = length
-
-        chrom_ids_arr = np.array([*new_map.keys()], dtype=np.uint32)
-        chrom_lengths_arr = np.array([*new_map.values()], dtype=np.int64)
+        chrom_series = self[CHROM_COL]
+        codes, uniques = pd.factorize(chrom_series)
+        mapping = {name: code for code, name in enumerate(uniques)}
+        new_dict = {mapping[k]: v for k, v in chromsizes.items()}
+        chrom_ids_arr = np.array([*new_dict.keys()], dtype=np.uint32)
+        chrom_lengths_arr = np.array([*new_dict.values()], dtype=np.int64)
 
         import ruranges
 
-        # #[pyo3(signature = (groups, starts, ends, chrom_ids, chrom_length, clip=false, only_right=false))]
-        # pub fn genome_bounds_numpy(
-        #     groups: PyReadonlyArray1<u32>,
-        #     starts: PyReadonlyArray1<i64>,
-        #     ends: PyReadonlyArray1<i64>,
-        #     chrom_ids: PyReadonlyArray1<u32>,
-        #     chrom_length: PyReadonlyArray1<i64>,
-        #     clip: bool,
-        #     only_right: bool,
-        #     py: Python,
-        # ) -> PyResult<(
-        #     Py<PyArray1<usize>>,
-        #     Py<PyArray1<i64>>,
-        #     Py<PyArray1<i64>>
-        # )> {
-        res = ruranges.genome_bounds_numpy(
-            self[CHROM_COL].replace(new_map).to_numpy().astype(np.uint32),
+        idxs, starts, ends = ruranges.genome_bounds_numpy(
+            codes.astype(np.uint32),
             self[START_COL].to_numpy(),
             self[END_COL].to_numpy(),
             chrom_ids_arr,
@@ -5026,4 +4999,9 @@ Chromosome col had type: {self[CHROM_COL].dtype} while keys were of type: {', '.
             only_right,
         )
 
-        assert 0, res
+        res = self.take(idxs)
+        if clip:
+            res.loc[:, START_COL] = starts
+            res.loc[:, END_COL] = ends
+
+        return mypy_ensure_pyranges(res)
