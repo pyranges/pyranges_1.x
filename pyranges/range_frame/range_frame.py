@@ -362,6 +362,7 @@ class RangeFrame(pd.DataFrame):
         Notes
         -----
         Attributes from the other RangeFrame may have their column names modified by appending the specified suffix.
+
         """
         res = _both_dfs(
             self,

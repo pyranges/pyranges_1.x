@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Optional
 
-from pyranges.core.names import VALID_OVERLAP_TYPE, VALID_STRAND_BEHAVIOR_TYPE
+from pyranges.core.names import VALID_STRAND_BEHAVIOR_TYPE
 from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
 from pyranges.methods import concat
 
@@ -13,7 +13,6 @@ def count_overlaps(
     features: Optional["PyRanges"] = None,
     strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
     by: list[str] | None = None,
-    how: VALID_OVERLAP_TYPE = "all",
 ) -> "PyRanges":
     """Count overlaps in multiple pyranges.
 
@@ -36,10 +35,6 @@ def count_overlaps(
 
     by : list of str, default None
         Columns to group by.
-
-    how: {"all", "first", "containment"}, default "all"
-        What intervals to report. By default reports all overlapping intervals. "containment"
-        reports intervals where the overlapping is contained within it.
 
     Examples
     --------
@@ -133,6 +128,7 @@ def count_overlaps(
           1  |    chr1               30       40        0        1        1
     PyRanges with 6 rows, 6 columns, and 1 index columns (with 4 index duplicates).
     Contains 1 chromosomes.
+
     """
     concated = concat.concat(grs.values())
     _features = concated.split(between=True) if features is None else features.copy()
