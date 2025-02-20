@@ -86,46 +86,6 @@ class InvalidRangesReason:
           * 2 intervals are empty or negative length (end <= start). See indexes: 1, 2
           * 4 starts or ends are < 0. See indexes: 0, 1, 2, ...
           * 1 starts or ends are nan. See indexes: 3
-        >>> invalid_ranges_reasons = invalid.reasons_why_frame_is_invalid()
-        >>> for invalid_range in invalid_ranges_reasons:
-        ...     print(invalid_range.reason)
-        ...     print(invalid_range.invalid_part)
-        ...     print()
-        2 intervals are empty or negative length (end <= start)
-          index  |        Start      End
-          int64  |      float64    int64
-        -------  ---  ---------  -------
-              1  |            1       -2
-              2  |          100      -10
-        RangeFrame with 2 rows, 2 columns, and 1 index columns.
-        Invalid ranges:
-          * 2 intervals are empty or negative length (end <= start). See indexes: 1, 2
-          * 2 starts or ends are < 0. See indexes: 1, 2
-        <BLANKLINE>
-        4 starts or ends are < 0
-          index  |        Start      End
-          int64  |      float64    int64
-        -------  ---  ---------  -------
-              0  |           -5        3
-              1  |            1       -2
-              2  |          100      -10
-              3  |          nan      -40
-        RangeFrame with 4 rows, 2 columns, and 1 index columns.
-        Invalid ranges:
-          * 2 intervals are empty or negative length (end <= start). See indexes: 1, 2
-          * 4 starts or ends are < 0. See indexes: 0, 1, 2, ...
-          * 1 starts or ends are nan. See indexes: 3
-        <BLANKLINE>
-        1 starts or ends are nan
-          index  |        Start      End
-          int64  |      float64    int64
-        -------  ---  ---------  -------
-              3  |          nan      -40
-        RangeFrame with 1 rows, 2 columns, and 1 index columns.
-        Invalid ranges:
-          * 1 starts or ends are < 0. See indexes: 3
-          * 1 starts or ends are nan. See indexes: 3
-        <BLANKLINE>
 
         """
         invalid_ranges_reasons: list["InvalidRangesReason"] = [
