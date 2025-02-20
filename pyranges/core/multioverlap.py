@@ -107,7 +107,7 @@ def count_overlaps(
     PyRanges with 12 rows, 6 columns, and 1 index columns.
     Contains 1 chromosomes.
 
-    >>> gr = pr.PyRanges({"Chromosome": ["chr1"], "Start": [0], "End": [40]}).tile(10)
+    >>> gr = pr.PyRanges({"Chromosome": ["chr1"] * 2, "Start": [0, 25], "End": [40, 35]}).tile(10)
     >>> gr
       index  |    Chromosome      Start      End
       int64  |    object          int64    int64
@@ -116,35 +116,32 @@ def count_overlaps(
           0  |    chr1               10       20
           0  |    chr1               20       30
           0  |    chr1               30       40
-    PyRanges with 4 rows, 3 columns, and 1 index columns (with 3 index duplicates).
+          1  |    chr1               20       30
+          1  |    chr1               30       40
+    PyRanges with 6 rows, 3 columns, and 1 index columns (with 4 index duplicates).
     Contains 1 chromosomes.
 
     >>> pr.count_overlaps(grs, gr)
       index  |    Chromosome      Start      End        a        b        c
       int64  |    object          int64    int64    int64    int64    int64
     -------  ---  ------------  -------  -------  -------  -------  -------
-          0  |    chr1                0       10        5        5        4
-          0  |    chr1               10       20        5        5        4
-          0  |    chr1               20       30        5        5        4
-          0  |    chr1               30       40        5        5        4
-    PyRanges with 4 rows, 6 columns, and 1 index columns (with 3 index duplicates).
+          0  |    chr1                0       10        1        0        1
+          0  |    chr1               10       20        2        2        2
+          0  |    chr1               20       30        2        2        0
+          0  |    chr1               30       40        0        1        1
+          1  |    chr1               20       30        2        2        0
+          1  |    chr1               30       40        0        1        1
+    PyRanges with 6 rows, 6 columns, and 1 index columns (with 4 index duplicates).
     Contains 1 chromosomes.
-
     """
     concated = concat.concat(grs.values())
-    features = concated.split(between=True) if features is None else features.copy()
-
-    from pyranges.methods.overlap import _count_overlaps
+    _features = concated.split(between=True) if features is None else features.copy()
 
     for name, gr in grs.items():
-        features = features.apply_pair(
+        counts = _features.count_overlaps(
             gr.remove_nonloc_columns(),
-            _count_overlaps,
-            by=by,
+            match_by=by,
             strand_behavior=strand_behavior,
-            how=how,
-            return_indexes=True,
-            skip_if_empty=False,
-            name=name,
         )
-    return mypy_ensure_pyranges(features.astype({k: int for k in grs}))
+        _features.insert(_features.shape[1], name, counts)
+    return mypy_ensure_pyranges(_features.astype({k: int for k in grs}))
