@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyranges1"
-version = "1.0.3"
+version = "1.0.4"
 description = "GenomicRanges for Python."
 requires-python = ">=3.12.0"
 readme = "README.md"
@@ -27,7 +27,7 @@ keywords = ["bioinformatics", "genomicranges", "genomics"]
 dependencies = ["pandas", "tabulate", "natsort"]
 
 [project.optional-dependencies]
-add-ons = ["pyrle >= 0.0.39", "bamread",  "pyfaidx", "pyBigWig", "joblib"] #"fisher",
+add-ons = ["pyrle >= 0.0.39", "bamread",  "pyfaidx", "pyBigWig", "joblib", "ruranges"] #"fisher",
 dev = ["tox", "ruff == 0.3.0", "pyright", "pandas-stubs", "types-tabulate", "pytest-watcher", "pytest-xdist", "hypothesis>=6.92.1"]
 docs = ["sphinx", "sphinx_rtd_theme", "sphinx-autoapi", "sphinxcontrib-napoleon"]
 all = ["pyranges1[add-ons]", "pyranges1[dev]", "pyranges1[docs]"]
@@ -48,12 +48,13 @@ envlist = py312
 
 [testenv]
 deps =
-    pyrle >= 0.0.39
+    pyrle >= 0.0.41
     bamread
     pyBigWig
     pyfaidx
+    ruranges
     tox
-    ruff == 0.3.0
+    ruff == 0.11.0
     pandas-stubs
     types-tabulate
     pytest
@@ -80,7 +81,7 @@ line-length = 120
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
-    "E501", "ANN002", "ANN003", "ANN001", "ANN101", "ANN102", "ANN401", "PLR0913", "PLC0415",
+    "E501", "ANN002", "ANN003", "ANN001", "ANN401", "PLR0913", "PLC0415",
     "PD901", "D101", "D100", "D107", "CPY", "D105", "D104", "D203", "D211", "D213", "COM812", "ISC001"
 ]
 

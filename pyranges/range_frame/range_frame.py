@@ -416,7 +416,6 @@ class RangeFrame(pd.DataFrame):
         RangeFrame.cluster : annotate overlapping intervals with common ID
 
         """
-
         factorized = factorize(self, match_by)
 
         idx = ruranges.max_disjoint_numpy(  # type: ignore[attr-defined]
@@ -657,7 +656,7 @@ class RangeFrame(pd.DataFrame):
         return _mypy_ensure_rangeframe(self.sort_values(RANGE_COLS))
 
     def reasons_why_frame_is_invalid(self) -> list[InvalidRangesReason] | None:  # noqa: D102
-        __doc__ = InvalidRangesReason.is_invalid_ranges_reasons.__doc__  # noqa: A001, F841
+        __doc__ = InvalidRangesReason.is_invalid_ranges_reasons.__doc__  # noqa: F841
 
         return InvalidRangesReason.is_invalid_ranges_reasons(self)
 

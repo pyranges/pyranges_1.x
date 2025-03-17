@@ -262,7 +262,7 @@ def translate(  # noqa: C901
             elif unknown is not None:
                 output.append(unknown)
             else:
-                msg = f"translate ERROR cannot find codon {codon} (pos {pos}-{pos+3}) in genetic_code!"
+                msg = f"translate ERROR cannot find codon {codon} (pos {pos}-{pos + 3}) in genetic_code!"
                 raise ValueError(msg)
         return "".join(output)
 

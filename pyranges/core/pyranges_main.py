@@ -2118,9 +2118,9 @@ class PyRanges(RangeFrame):
 
         strand_behavior = validate_and_convert_strand_behavior(self, other, strand_behavior)
         use_strand = use_strand_from_validated_strand_behavior(self, other, strand_behavior)
-
+        _self = self
         if not use_strand:
-            self = self.remove_strand()
+            _self = _self.remove_strand()
             other = other.remove_strand()
         elif strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
             other = mypy_ensure_pyranges(
@@ -2133,7 +2133,7 @@ class PyRanges(RangeFrame):
                 ),
             )
 
-        gr = pr.concat([self, other])
+        gr = pr.concat([_self, other])
 
         return gr.merge_overlaps(use_strand=use_strand)
 
@@ -4920,13 +4920,13 @@ class PyRanges(RangeFrame):
         elif isinstance(chromsizes, dict):
             pass
         else:  # A hack because pyfaidx might not be installed, but we want type checking anyway
-            pyfaidx_chromsizes = cast(dict[str | int, list], chromsizes)
+            pyfaidx_chromsizes = cast("dict[str | int, list]", chromsizes)
             chromsizes = {k: len(pyfaidx_chromsizes[k]) for k in pyfaidx_chromsizes.keys()}  # noqa: SIM118
 
         if missing_keys := set(self[CHROM_COL]).difference(set(chromsizes.keys())):
             msg = f"""Not all chromosomes were in the chromsize dict. This might mean that their types differed.
 Missing keys: {missing_keys}.
-Chromosome col had type: {self[CHROM_COL].dtype} while keys were of type: {', '.join({type(k).__name__ for k in chromsizes})}"""
+Chromosome col had type: {self[CHROM_COL].dtype} while keys were of type: {", ".join({type(k).__name__ for k in chromsizes})}"""
             raise ValueError(msg)
 
         if not isinstance(chromsizes, dict):
@@ -4939,7 +4939,6 @@ Chromosome col had type: {self[CHROM_COL].dtype} while keys were of type: {', '.
         new_dict = {mapping[k]: v for k, v in chromsizes.items()}
         chrom_ids_arr = np.array([*new_dict.keys()], dtype=np.uint32)
         chrom_lengths_arr = np.array([*new_dict.values()], dtype=np.int64)
-
 
         idxs, starts, ends = ruranges.genome_bounds_numpy(  # type: ignore[attr-defined]
             codes.astype(np.uint32),

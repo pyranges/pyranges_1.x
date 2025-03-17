@@ -7,7 +7,7 @@ from typing import Any, Literal
 import numpy as np
 import pandas as pd
 
-import pyranges as pr  # noqa: TCH001
+import pyranges as pr  # noqa: TC001
 from pyranges.core.names import (
     CHROM_COL,
     END_COL,
