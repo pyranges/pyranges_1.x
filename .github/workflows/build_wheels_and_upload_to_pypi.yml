@@ -1,11 +1,8 @@
 name: Build and upload to PyPI
 
-# Source: https://raw.githubusercontent.com/pypa/cibuildwheel/main/examples/github-deploy.yml
-
 env:
   CIBW_SKIP: "cp36-*"
 
-# Build on every branch push, tag push, and pull request change:
 on:
   workflow_dispatch:
 
@@ -20,16 +17,18 @@ jobs:
       - name: Build SDist and wheel
         run: pipx run build
 
-      - uses: actions/upload-artifact@v3
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
         with:
+          name: wheels
           path: dist/*
 
       - name: Check metadata
         run: pipx run twine check dist/*
 
-      - uses: pypa/gh-action-pypi-publish@v1.5.0
+      - name: Publish package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: ${{ secrets.PYRANGES_1_PYPI_USER }}
           password: ${{ secrets.PYRANGES_1_PYPI_PASSWORD }}
           verbose: true
-          # To test: repository_url: https://test.pypi.org/legacy/
