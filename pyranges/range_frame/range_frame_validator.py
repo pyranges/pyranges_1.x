@@ -88,7 +88,7 @@ class InvalidRangesReason:
           * 1 starts or ends are nan. See indexes: 3
 
         """
-        invalid_ranges_reasons: list["InvalidRangesReason"] = [
+        invalid_ranges_reasons: list[InvalidRangesReason] = [
             invalid_ranges_reason
             for invalid_ranges_reason_class in sorted(InvalidRangesReason.__subclasses__(), key=lambda x: x.__name__)
             if (invalid_ranges_reason := invalid_ranges_reason_class.check_and_possibly_return_invalid_part(df))

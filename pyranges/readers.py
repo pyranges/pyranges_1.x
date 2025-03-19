@@ -98,14 +98,25 @@ def read_bed(f: Path, /, nrows: int | None = None) -> "PyRanges":
     Contains 1 chromosomes and 2 strands.
 
     """
-    columns = (
-        "Chromosome Start End Name Score Strand ThickStart ThickEnd ItemRGB BlockCount BlockSizes BlockStarts".split()
-    )
+    columns = [
+        "Chromosome",
+        "Start",
+        "End",
+        "Name",
+        "Score",
+        "Strand",
+        "ThickStart",
+        "ThickEnd",
+        "ItemRGB",
+        "BlockCount",
+        "BlockSizes",
+        "BlockStarts",
+    ]
     path = Path(f)
     if path.name.endswith(".gz"):
         import gzip
 
-        first_start = gzip.open(path).readline().decode().split()[1]
+        first_start = gzip.open(path).readline().decode().split()[1]  # noqa: SIM115
     else:
         first_start = path.open().readline().split()[1]
 
@@ -234,11 +245,11 @@ def _fetch_gene_transcript_exon_id(attribute: pd.Series, annotation: str | None 
         expand=True,
     )  # .iloc[:, [1, 2, 3]]
 
-    df.columns = pd.Index("gene_id transcript_id exon_number exon_id".split())
+    df.columns = pd.Index(["gene_id", "transcript_id", "exon_number", "exon_id"])
 
     if annotation == "ensembl":
         newdfs = []
-        for c in "gene_id transcript_id exon_id".split():
+        for c in ["gene_id", "transcript_id", "exon_id"]:
             r = df[c].astype(str).str.extract(r"(\d+)").astype(float)
             newdfs.append(r)
 
@@ -255,12 +266,11 @@ def find_first_data_line_index(file_path: Path) -> int:
     try:
         import gzip
 
-        zh = gzip.open(file_path)
-        for i, zl in enumerate(zh):
-            if zl.decode()[0] != "#":
-                first_non_comment = i
-                break
-        zh.close()
+        with gzip.open(file_path) as zh:
+            for i, zl in enumerate(zh):
+                if zl.decode()[0] != "#":
+                    first_non_comment = i
+                    break
     except (OSError, TypeError):  # not a gzipped file, or StringIO
         fh = file_path.open()
         for i, line in enumerate(fh):
@@ -390,7 +400,7 @@ def read_gtf_full(
     """
     dtypes = {"Chromosome": "category", "Feature": "category", "Strand": "category"}
 
-    names = "Chromosome Source Feature Start End Score Strand Frame Attribute".split()
+    names = ["Chromosome", "Source", "Feature", "Start", "End", "Score", "Strand", "Frame", "Attribute"]
     path = Path(f)
 
     df_iter = pd.read_csv(
@@ -440,7 +450,7 @@ def to_rows(anno: pd.Series, *, ignore_bad: bool = False) -> pd.DataFrame:
     line = ""
     try:
         for line in anno:
-            rowdicts.append(dict(parse_kv_fields(line)))  # noqa: PERF401
+            rowdicts.append(dict(parse_kv_fields(line)))
     except ValueError:
         if not ignore_bad:
             LOGGER.exception(
@@ -510,7 +520,7 @@ def read_gtf_restricted(f: str | Path, skiprows: int | None, nrows: int | None =
         comment="#",
         usecols=[0, 2, 3, 4, 5, 6, 8],
         header=None,
-        names="Chromosome Feature Start End Score Strand Attribute".split(),
+        names=["Chromosome", "Feature", "Start", "End", "Score", "Strand", "Attribute"],
         dtype=dtypes,
         chunksize=int(1e5),
         skiprows=skiprows if skiprows is not None else False,
@@ -520,12 +530,12 @@ def read_gtf_restricted(f: str | Path, skiprows: int | None, nrows: int | None =
     dfs = []
     for df in df_iter:
         if sum(df.Score == ".") == len(df):
-            cols_to_concat = "Chromosome Start End Strand Feature".split()
+            cols_to_concat = ["Chromosome", "Start", "End", "Strand", "Feature"]
         else:
-            cols_to_concat = "Chromosome Start End Strand Feature Score".split()
+            cols_to_concat = ["Chromosome", "Start", "End", "Strand", "Feature", "Score"]
 
         extract = _fetch_gene_transcript_exon_id(df.Attribute)
-        extract.columns = pd.Index("gene_id transcript_id exon_number exon_id".split())
+        extract.columns = pd.Index(["gene_id", "transcript_id", "exon_number", "exon_id"])
 
         extract.exon_number = extract.exon_number.astype(float)
 
@@ -595,7 +605,7 @@ def read_gff3(
 
     dtypes = {"Chromosome": "category", "Feature": "category", "Strand": "category"}
 
-    names = "Chromosome Source Feature Start End Score Strand Frame Attribute".split()
+    names = ["Chromosome", "Source", "Feature", "Start", "End", "Score", "Strand", "Frame", "Attribute"]
 
     df_iter = pd.read_csv(
         path,

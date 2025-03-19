@@ -149,7 +149,7 @@ def test_set_union(gr, gr2, strand_behavior) -> None:
 @given(gr=dfs_min(), gr2=dfs_min())  # pylint: disable=no-value-for-parameter
 # @reproduce_failure('4.32.2', b'AXicY2RAA4wQzIgiCAAAgAAF')
 # @reproduce_failure('5.5.4', b'AXicY2RABYyMEAqKGRgAAHMABg==')
-@reproduce_failure('6.126.0', b'AXicY3ROKBJjYHBkhCEGRiCJzAcARwQDfg==')
+@reproduce_failure("6.126.0", b"AXicY3ROKBJjYHBkhCEGRiCJzAcARwQDfg==")
 def test_overlap(gr, gr2, strand_behavior) -> None:
     overlap_command = "bedtools intersect -u {strand} -a {f1} -b {f2}"
 
@@ -281,7 +281,9 @@ overlaps = [True, False]
 
 
 @pytest.mark.bedtools()
-@pytest.mark.parametrize(("nearest_how", "overlap", "strand_behavior"), product(nearest_hows, overlaps, strand_behavior))
+@pytest.mark.parametrize(
+    ("nearest_how", "overlap", "strand_behavior"), product(nearest_hows, overlaps, strand_behavior)
+)
 @settings(
     max_examples=max_examples,
     deadline=deadline,

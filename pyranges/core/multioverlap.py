@@ -140,4 +140,4 @@ def count_overlaps(
             strand_behavior=strand_behavior,
         )
         _features.insert(_features.shape[1], name, counts)
-    return mypy_ensure_pyranges(_features.astype({k: int for k in grs}))
+    return mypy_ensure_pyranges(_features.astype(dict.fromkeys(grs, int)))

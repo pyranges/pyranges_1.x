@@ -322,7 +322,7 @@ def mcc(
                 fp = 0
                 rowdicts.append({"T": lt, "F": lf, "TP": tp, "FP": fp, "TN": tn, "FN": fn, "MCC": 1})
             else:
-                for _strand in "+ -".split():
+                for _strand in ["+", "-"]:
                     tp = t[use_strand].length
                     fn = 0
                     tn = genome_length - tp
@@ -345,7 +345,7 @@ def mcc(
             j = t.join_ranges(f, strand_behavior=strand_behavior)
             tp_gr = j.combine_interval_columns().merge_overlaps(use_strand=use_strand)
             if use_strand:
-                for _strand in "+ -".split():
+                for _strand in ["+", "-"]:
                     tp = tp_gr[_strand].length
                     fp = f[_strand].length - tp
                     fn = t[_strand].length - tp
@@ -672,7 +672,7 @@ def simes(
         columns = list(simes.columns)
         columns.append(columns[0])
         del columns[0]
-        _simes: "PyRanges | DataFrame"
+        _simes: PyRanges | DataFrame
         _simes = mypy_ensure_pyranges(simes[columns])
     else:
         _simes = sdf.groupby(by).Simes.min().reset_index()
