@@ -4643,6 +4643,7 @@ class PyRanges(RangeFrame):
         path: Path | None = None,
         pyfaidx_fasta: Optional["pyfaidx.Fasta"] = None,
         use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
+        sequence_column: str = "Sequence",
     ) -> pd.Series:
         r"""Get the sequence of the intervals from a fasta file.
 
@@ -4657,6 +4658,9 @@ class PyRanges(RangeFrame):
         use_strand: {"auto", True, False}, default: "auto"
             If True, intervals on the reverse strand will be reverse complemented.
             The default "auto" means True if PyRanges has valid strands (see .strand_valid).
+
+        sequence_column: str, default "Sequence"
+            What the added column will be called.
 
         Returns
         -------
@@ -4704,7 +4708,7 @@ class PyRanges(RangeFrame):
         >>> _ = tmp_handle.write("GTAATCAT\n")
         >>> tmp_handle.close()
 
-        >>> seq = gr.get_sequence("temp.fasta")
+        >>> seq = gr.get_sequence("temp.fasta", sequence_column="Sequence")
         >>> seq
         0      CAT
         1    ATTAC
@@ -4756,7 +4760,7 @@ class PyRanges(RangeFrame):
             if (seq := _fasta[start:end]) is not None:
                 seqs.append(seq.seq if forward_strand else (-seq).seq)
 
-        return pd.Series(data=seqs, index=self.index, name="Sequence")
+        return pd.Series(data=seqs, index=self.index, name=sequence_column)
 
     def get_transcript_sequence(
         self: "PyRanges",
@@ -4765,6 +4769,7 @@ class PyRanges(RangeFrame):
         *,
         pyfaidx_fasta: Optional["pyfaidx.Fasta"] = None,
         use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
+        sequence_column: str = "Sequence",
     ) -> pd.DataFrame:
         r"""Get the sequence of mRNAs, e.g. joining intervals corresponding to exons of the same transcript.
 
@@ -4782,6 +4787,9 @@ class PyRanges(RangeFrame):
         use_strand: {"auto", True, False}, default: "auto"
             If True, intervals on the reverse strand will be reverse complemented.
             The default "auto" means True if PyRanges has valid strands (see .strand_valid).
+
+        sequence_column: str, default "Sequence"
+            What the added column will be called.
 
         Returns
         -------
@@ -4828,9 +4836,9 @@ class PyRanges(RangeFrame):
 
         With use_strand=False, all intervals are treated as if on the forward strand:
 
-        >>> seq2 = gr.get_transcript_sequence(path="temp.fasta", transcript_id='transcript', use_strand=False)
+        >>> seq2 = gr.get_transcript_sequence(path="temp.fasta", transcript_id='transcript', use_strand=False, sequence_column="Seq2")
         >>> seq2
-          transcript Sequence
+          transcript     Seq2
         0         t1     AAAC
         1         t2  GGGATTT
         2         t4     GGGA
@@ -4848,9 +4856,9 @@ class PyRanges(RangeFrame):
         gr = self.sort_ranges(use_strand=use_strand)
 
         seq = gr.get_sequence(path=path, pyfaidx_fasta=pyfaidx_fasta, use_strand=use_strand)
-        gr["Sequence"] = seq.to_numpy()
+        gr[sequence_column] = seq.to_numpy()
 
-        return gr.groupby(transcript_id, as_index=False).agg({"Sequence": "".join})
+        return gr.groupby(transcript_id, as_index=False).agg({sequence_column: "".join})
 
     def genome_bounds(
         self: "PyRanges",
