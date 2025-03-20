@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyranges1"
-version = "1.0.6"
+version = "1.0.7"
 description = "GenomicRanges for Python."
 requires-python = ">=3.12.0"
 readme = "README.md"
@@ -41,12 +41,15 @@ inputs = ['pyranges']
 [project.urls]
 Homepage="http://github.com/pyranges/pyranges_1.x"
 
-[tool.tox]  # TODO: replace with regular non-legacy entry when supported
+[tool.tox]  # Legacy tox configuration (to be replaced with native tox.ini when supported)
 legacy_tox_ini = """
 [tox]
-envlist = py312
+envlist = py312, py313
 
 [testenv]
+basepython =
+    py312: python3.12
+    py313: python3.13
 deps =
     pyrle >= 0.0.41
     bamread
@@ -61,7 +64,7 @@ deps =
     pyright
     joblib
     hypothesis==6.92.1
-    #fisher
+    # fisher
 commands =
     pytest --doctest-modules pyranges
     pytest tests/unit
