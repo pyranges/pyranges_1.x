@@ -22,6 +22,7 @@ jobs:
       matrix:
         py:
           - "3.12"
+          - "3.13"
         os:
           - ubuntu-latest
           # - macos-latest
