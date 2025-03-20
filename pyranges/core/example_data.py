@@ -19,7 +19,7 @@ example_data.aorta              : Example ChIP-seq data.
 example_data.aorta2             : Example ChIP-seq data.
 example_data.ncbi_gff           : Example NCBI GFF data.
 example_data.ncbi_fasta         : Example NCBI fasta.
-example_data.files              : A dict of basenames to file paths of available data.
+example_data.files              : Return a dict of basenames to file paths of available data.
 
 >>> pr.example_data.f1
   index  |    Chromosome      Start      End  Name         Score  Strand
@@ -40,7 +40,7 @@ import tempfile
 import typing
 from importlib.resources import files
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import pyranges as pr
 
@@ -52,6 +52,17 @@ if typing.TYPE_CHECKING:
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.INFO)
+
+
+# Define a custom class property decorator
+class ClassProperty:
+    def __init__(self, fget: Any) -> None:
+        self.fget = fget
+        # Propagate the docstring from the getter function
+        self.__doc__ = fget.__doc__
+
+    def __get__(self, instance: Any | None, owner: type[Any]) -> Any:
+        return self.fget(owner)
 
 
 class ExampleData:
@@ -73,10 +84,9 @@ class ExampleData:
             methods_info += f"example_data.{name:<{max_name_len}} : {doc_line}\n"
         return methods_info.strip()
 
-    @classmethod  # type: ignore[misc]
-    @property
-    def files(cls) -> dict[str, Path]:
-        """A dict of basenames to file paths of available data.
+    @ClassProperty
+    def files(self) -> dict[str, Path]:
+        """Return a dict of basenames to file paths of available data.
 
         Examples
         --------
@@ -87,6 +97,16 @@ class ExampleData:
         """
         if ExampleData._files:
             return ExampleData._files
+
+        paths = []
+        for f in files("pyranges").joinpath("data").iterdir():
+            if not isinstance(f, Path):
+                msg = f"Expected Path, got {type(f)}"
+                raise TypeError(msg)
+            if "__" not in f.name:
+                paths.append(f)
+        ExampleData._files = {f.name: Path(f) for f in paths}
+        return ExampleData._files
 
         paths = []
         for f in files("pyranges").joinpath("data").iterdir():
