@@ -24,12 +24,20 @@ from pyranges.core.names import (
     VALID_OVERLAP_TYPE,
     CombineIntervalColumnsOperation,
 )
-from pyranges.core.pyranges_helpers import arg_to_list, factorize, factorize_binary
+from pyranges.core.pyranges_helpers import (
+    arg_to_list,
+    check_and_return_common_type_4,
+    factorize,
+    factorize_binary,
+)
 from pyranges.core.tostring import tostring
 from pyranges.methods.complement_overlaps import _complement_overlaps
+from pyranges.methods.count_overlaps import _count_overlaps
 from pyranges.methods.join import _both_dfs
 from pyranges.methods.merge import _merge
+from pyranges.methods.merge_cluster import _cluster
 from pyranges.methods.sort import sort_factorize_dict
+from pyranges.methods.subtract import _subtract
 from pyranges.range_frame.range_frame_validator import InvalidRangesReason
 
 
@@ -138,15 +146,10 @@ class RangeFrame(pd.DataFrame):
             for the corresponding interval in self.
 
         """
-        f1, f2 = factorize_binary(self, other, match_by)
-
-        return ruranges.count_overlaps_numpy(  # type: ignore[attr-defined]
-            f1,
-            self[START_COL].to_numpy(),
-            self[END_COL].to_numpy(),
-            f2,
-            other[START_COL].to_numpy(),
-            other[END_COL].to_numpy(),
+        return _count_overlaps(
+            self,
+            other,
+            by=arg_to_list(match_by),
             slack=slack,
         )
 
@@ -240,17 +243,12 @@ class RangeFrame(pd.DataFrame):
 
         """
         match_by = arg_to_list(match_by)
-
-        factorized = factorize(self, match_by)
-        cluster, idx = ruranges.cluster_numpy(  # type: ignore[attr-defined]
-            factorized,
-            self[START_COL].to_numpy(),
-            self[END_COL].to_numpy(),
-            slack,
+        res = _cluster(
+            self,
+            by=match_by,
+            cluster_column=cluster_column,
+            slack=slack,
         )
-
-        res = self.take(idx).copy()
-        res.insert(res.shape[1], cluster_column, cluster)
         return _mypy_ensure_rangeframe(res)
 
     def complement_overlaps(
@@ -420,8 +418,8 @@ class RangeFrame(pd.DataFrame):
 
         idx = ruranges.max_disjoint_numpy(  # type: ignore[attr-defined]
             factorized,
-            self[START_COL].to_numpy(),
-            self[END_COL].to_numpy(),
+            self[START_COL].astype(np.int64).to_numpy(),
+            self[END_COL].astype(np.int64).to_numpy(),
             slack,
         )
         return _mypy_ensure_rangeframe(self.take(idx))
@@ -476,13 +474,20 @@ class RangeFrame(pd.DataFrame):
 
         """
         f1, f2 = factorize_binary(self, other, match_by)
+
+        starts = self[START_COL].to_numpy()
+        ends = self[END_COL].to_numpy()
+        starts2 = other[START_COL].to_numpy()
+        ends2 = other[END_COL].to_numpy()
+        _dtype = check_and_return_common_type_4(starts, ends, starts2, ends2)
+
         idx1, idx2, dist = ruranges.nearest_numpy(  # type: ignore[attr-defined]
             chrs=f1.astype(np.uint32),
-            starts=self[START_COL].to_numpy(),
-            ends=self[END_COL].to_numpy(),
+            starts=starts.astype(np.int64),
+            ends=ends.astype(np.int64),
             chrs2=f2.astype(np.uint32),
-            starts2=other[START_COL].to_numpy(),
-            ends2=other[END_COL].to_numpy(),
+            starts2=starts2.astype(np.int64),
+            ends2=ends2.astype(np.int64),
             k=k,
             slack=0,
             include_overlaps=not exclude_overlaps,
@@ -597,8 +602,8 @@ class RangeFrame(pd.DataFrame):
         by_sort_order_as_int = sort_factorize_dict(self, by, use_natsort=natsort)
         idxs = ruranges.sort_intervals_numpy(  # type: ignore[attr-defined]
             by_sort_order_as_int,
-            self[START_COL].to_numpy(),
-            self[END_COL].to_numpy(),
+            self[START_COL].astype(np.int64).to_numpy(),
+            self[END_COL].astype(np.int64).to_numpy(),
             sort_reverse_direction=np.array(sort_rows_reverse_order, dtype=bool) if sort_rows_reverse_order else None,
         )
         return _mypy_ensure_rangeframe(self.take(idxs))
@@ -636,20 +641,11 @@ class RangeFrame(pd.DataFrame):
         RangeFrame.complement : return the internal complement of intervals, i.e. its introns.
 
         """
-        f1, f2 = factorize_binary(self, other, match_by)
-
-        idx, start, end = ruranges.subtract_numpy(  # type: ignore[attr-defined]
-            f1,
-            self[START_COL].to_numpy(),
-            self[END_COL].to_numpy(),
-            f2,
-            other[START_COL].to_numpy(),
-            other[END_COL].to_numpy(),
+        return _subtract(
+            self,
+            other,
+            by=arg_to_list(match_by),
         )
-
-        output = self.take(idx).copy()
-        output[START_COL], output[END_COL] = start, end
-        return _mypy_ensure_rangeframe(output)
 
     def sort_by_position(self) -> "RangeFrame":
         """Sort by Start and End columns."""

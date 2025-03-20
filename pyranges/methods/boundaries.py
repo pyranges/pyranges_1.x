@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from pyranges.core.names import CHROM_COL, END_COL, START_COL
-from pyranges.core.pyranges_helpers import factorize, mypy_ensure_rangeframe
+from pyranges.core.pyranges_helpers import check_and_return_common_type_2, factorize, mypy_ensure_rangeframe
 from pyranges.range_frame.range_frame import RangeFrame
 
 if TYPE_CHECKING:
@@ -21,15 +21,21 @@ def _bounds[T: ("pr.PyRanges", "pd.DataFrame")](df: T, by: list[str]) -> pd.Data
 
     group_ids = factorize(df, by=by)
 
+    starts = df[START_COL].to_numpy()
+    ends = df[END_COL].to_numpy()
+    _dtype = check_and_return_common_type_2(starts, ends)
+
     idxs, starts, ends, counts = ruranges.boundary_numpy(  # type: ignore[attr-defined]
         group_ids.astype(np.uint32),
-        df[START_COL].to_numpy(),
-        df[END_COL].to_numpy(),
+        starts.astype(np.int64),
+        ends.astype(np.int64),
     )
 
     ids = df.take(idxs).loc[:, by]
 
-    result = RangeFrame({START_COL: starts, END_COL: ends} | {_by: ids[_by] for _by in by})[col_order]
+    result = RangeFrame(
+        {START_COL: starts.astype(_dtype), END_COL: ends.astype(_dtype)} | {_by: ids[_by] for _by in by}
+    )[col_order]
 
     return mypy_ensure_rangeframe(result.reset_index(drop=True))
 

@@ -10,7 +10,7 @@ from pyranges.core.names import (
     START_COL,
     STRAND_COL,
 )
-from pyranges.core.pyranges_helpers import factorize
+from pyranges.core.pyranges_helpers import check_and_return_common_type_2, factorize
 
 if TYPE_CHECKING:
     import pyranges as pr
@@ -29,10 +29,14 @@ def _spliced_subseq(
 
     chrs = factorize(df, by) if by else np.arange(len(df), dtype=np.uint32)
 
+    starts = df[START_COL].to_numpy()
+    ends = df[END_COL].to_numpy()
+    _dtype = check_and_return_common_type_2(starts, ends)
+
     outidx, outstarts, outends = ruranges.spliced_subsequence_numpy(  # type: ignore[attr-defined]
         chrs,
-        df[START_COL].to_numpy(),
-        df[END_COL].to_numpy(),
+        starts.astype(np.int64),
+        ends.astype(np.int64),
         (df[STRAND_COL] == FORWARD_STRAND).to_numpy()
         if (STRAND_COL in df and not force_plus_strand)
         else np.ones(len(df), dtype=bool),
@@ -42,7 +46,7 @@ def _spliced_subseq(
     )
 
     outdf = df.take(outidx)
-    outdf.loc[:, START_COL] = outstarts
-    outdf.loc[:, END_COL] = outends
+    outdf.loc[:, START_COL] = outstarts.astype(_dtype)
+    outdf.loc[:, END_COL] = outends.astype(_dtype)
 
     return outdf

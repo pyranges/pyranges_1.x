@@ -367,3 +367,99 @@ def arg_to_list(by: VALID_BY_OPTIONS) -> list[str]:
 def contains_negative_strand(self: "PyRanges") -> bool:
     """Return True if negative strand is present."""
     return self.has_strand and REVERSE_STRAND in self[STRAND_COL].to_numpy()
+
+
+def check_min_max_with_slack(
+    starts: np.ndarray | list,
+    ends: np.ndarray | list,
+    slack: float,
+    old_dtype: np.dtype | type,
+) -> None:
+    """Check whether the min of `starts` minus `slack` and the max of `ends` plus `slack` both fit into the range of `old_dtype`.
+
+    Returns:
+        True if both bounds fit, False otherwise.
+
+    """
+    # Convert old_dtype to a NumPy dtype object
+    target_dtype = np.dtype(old_dtype)
+
+    # Convert starts/ends to arrays (in case they're Python lists)
+    arr_starts = np.asarray(starts)
+    arr_ends = np.asarray(ends)
+
+    # Compute "adjusted" bounds
+    adjusted_min = arr_starts.min() - slack
+    adjusted_max = arr_ends.max() + slack
+
+    # Depending on whether it's an integer or floating dtype, get the min/max
+    if target_dtype.kind == "i":
+        dtype_info = np.iinfo(target_dtype)
+    elif target_dtype.kind == "f":
+        dtype_info = np.finfo(target_dtype)
+    else:
+        # Complex, object, etc. - no range check
+        msg = f"Range check not implemented for dtype {target_dtype}."
+        raise TypeError(msg)
+
+    # Check if the adjusted min is too small
+    if adjusted_min < dtype_info.min:
+        msg = (
+            f"Adjusted min ({adjusted_min}) is below the minimum "
+            f"{dtype_info.min} for dtype {target_dtype}. "
+            "Please use a smaller slack to avoid an out of bounds error."
+        )
+        raise ValueError(msg)
+
+    # Check if the adjusted max is too large
+    if adjusted_max > dtype_info.max:
+        msg = (
+            f"Adjusted max ({adjusted_max}) is above the maximum "
+            f"{dtype_info.max} for dtype {target_dtype}. "
+            "Please use a smaller slack to avoid an out of bounds error."
+        )
+        raise ValueError(msg)
+
+
+def check_and_return_common_type_2(starts: np.ndarray | list, ends: np.ndarray | list) -> np.dtype | type:
+    """Check that `starts` and `ends` share the same type/dtype.
+
+    If they do not, prints only the mismatching types and raises a TypeError.
+    """
+    starts_type = _get_type_info(starts)
+    ends_type = _get_type_info(ends)
+
+    if starts_type != ends_type:
+        msg = "`starts` and `ends` do not share the same type/dtype."
+        raise TypeError(msg)
+
+    return starts_type
+
+
+def check_and_return_common_type_4(
+    start1: np.ndarray | list, end1: np.ndarray | list, start2: np.ndarray | list, end2: np.ndarray | list
+) -> np.dtype | type:
+    """Check that start1, end1, start2, and end2 all share the same type/dtype.
+
+    If they do not, prints only the mismatching types and raises a TypeError.
+    """
+    s1_type = _get_type_info(start1)
+    e1_type = _get_type_info(end1)
+    s2_type = _get_type_info(start2)
+    e2_type = _get_type_info(end2)
+
+    types_found = {s1_type, e1_type, s2_type, e2_type}
+    if len(types_found) != 1:
+        msg = "start1, end1, start2, end2 do not share the same type/dtype."
+        raise TypeError(msg)
+
+    return types_found.pop()
+
+
+def _get_type_info(x: np.ndarray | list) -> np.dtype | type:
+    if isinstance(x, np.ndarray):
+        return x.dtype
+    if not x:
+        msg = "Cannot determine type from an empty list."
+        raise ValueError(msg)
+    return type(x[0])

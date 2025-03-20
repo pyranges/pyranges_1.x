@@ -43,6 +43,7 @@ from pyranges.core.names import (
 from pyranges.core.pyranges_groupby import PyRangesDataFrameGroupBy
 from pyranges.core.pyranges_helpers import (
     arg_to_list,
+    check_and_return_common_type_2,
     factorize,
     mypy_ensure_pyranges,
     prepare_by_binary,
@@ -998,10 +999,14 @@ class PyRanges(RangeFrame):
 
         use_strand = validate_and_convert_use_strand(self, use_strand) if (ext_3 or ext_5) else False
 
+        starts = self[START_COL].to_numpy()
+        ends = self[END_COL].to_numpy()
+        _dtype = check_and_return_common_type_2(starts, ends)
+
         starts, ends = ruranges.extend_numpy(  # type: ignore[attr-defined]
             groups=factorize(self, transcript_id) if transcript_id is not None else None,
-            starts=self[START_COL].to_numpy(),
-            ends=self[END_COL].to_numpy(),
+            starts=starts.astype(np.int64),
+            ends=ends.astype(np.int64),
             negative_strand=(self[STRAND_COL] == REVERSE_STRAND).to_numpy(),
             ext=ext,
             ext_3=ext_3,
@@ -1009,8 +1014,8 @@ class PyRanges(RangeFrame):
         )
 
         result = self.copy()
-        result.loc[:, START_COL] = starts
-        result.loc[:, END_COL] = ends
+        result.loc[:, START_COL] = starts.astype(_dtype)
+        result.loc[:, END_COL] = ends.astype(_dtype)
         return mypy_ensure_pyranges(result)
 
     def five_end(
@@ -2320,8 +2325,8 @@ class PyRanges(RangeFrame):
         by_sort_order_as_int = sort_factorize_dict(self, by, use_natsort=natsort)
         idxs = ruranges.sort_intervals_numpy(  # type: ignore[attr-defined]
             by_sort_order_as_int,
-            self[START_COL].to_numpy(),
-            self[END_COL].to_numpy(),
+            self[START_COL].astype(np.int64).to_numpy(),
+            self[END_COL].astype(np.int64).to_numpy(),
             sort_reverse_direction=None if not use_strand else (self[STRAND_COL] == "-").to_numpy(dtype=bool),
         )
         res = self.take(idxs)
@@ -2616,10 +2621,13 @@ class PyRanges(RangeFrame):
         by = prepare_by_single(self, use_strand=use_strand, match_by=match_by)
         groups = factorize(self, by)
 
+        starts = self[START_COL].to_numpy()
+        ends = self[END_COL].to_numpy()
+        _dtype = check_and_return_common_type_2(starts, ends)
         idxs, starts, ends = ruranges.split_numpy(  # type: ignore[attr-defined]
             groups,
-            starts=self[START_COL].to_numpy(),
-            ends=self[END_COL].to_numpy(),
+            starts=starts.astype(np.int64),
+            ends=ends.astype(np.int64),
             slack=0,
             between=between,
         )
@@ -2631,8 +2639,8 @@ class PyRanges(RangeFrame):
         if not use_strand:
             res = res.remove_strand()
 
-        res.loc[:, START_COL] = starts
-        res.loc[:, END_COL] = ends
+        res.loc[:, START_COL] = starts.astype(_dtype)
+        res.loc[:, END_COL] = ends.astype(_dtype)
 
         return mypy_ensure_pyranges(res)
 
@@ -3205,16 +3213,20 @@ class PyRanges(RangeFrame):
         use_strand = validate_and_convert_use_strand(self, use_strand)
 
         negative_strand = (self[STRAND_COL] == "-").to_numpy() if use_strand else np.zeros(len(self), dtype=bool)
+
+        starts = self[START_COL].to_numpy()
+        ends = self[END_COL].to_numpy()
+        _dtype = check_and_return_common_type_2(starts, ends)
         indices, starts, ends, overlap_fraction = ruranges.tile_numpy(  # type: ignore[attr-defined]
-            self[START_COL].to_numpy(),
-            self[END_COL].to_numpy(),
+            self[START_COL].astype(np.int64).to_numpy(),
+            self[END_COL].astype(np.int64).to_numpy(),
             negative_strand,
             tile_size,
         )
 
         res = self.take(indices)
-        res.loc[:, START_COL] = starts
-        res.loc[:, END_COL] = ends
+        res.loc[:, START_COL] = starts.astype(_dtype)
+        res.loc[:, END_COL] = ends.astype(_dtype)
         if overlap_column:
             res.loc[:, overlap_column] = overlap_fraction
 
@@ -4009,16 +4021,19 @@ class PyRanges(RangeFrame):
         use_strand = validate_and_convert_use_strand(self, use_strand)
 
         negative_strand = (self[STRAND_COL] == "-").to_numpy() if use_strand else np.zeros(len(self), dtype=bool)
-        # assert 0, negative_strands
+
+        starts = self[START_COL].to_numpy()
+        ends = self[END_COL].to_numpy()
+        _dtype = check_and_return_common_type_2(starts, ends)
         idx, starts, ends = ruranges.window_numpy(  # type: ignore[attr-defined]
-            self[START_COL].to_numpy(),
-            self[END_COL].to_numpy(),
+            self[START_COL].astype(np.int64).to_numpy(),
+            self[END_COL].astype(np.int64).to_numpy(),
             negative_strand,
             window_size,
         )
         df = self.take(idx)
-        df.loc[:, START_COL] = starts
-        df.loc[:, END_COL] = ends
+        df.loc[:, START_COL] = starts.astype(_dtype)
+        df.loc[:, END_COL] = ends.astype(_dtype)
 
         # every interval can be processed individually. This may be optimized in the future.
         return mypy_ensure_pyranges(df)
@@ -4960,10 +4975,13 @@ Chromosome col had type: {self[CHROM_COL].dtype} while keys were of type: {", ".
         chrom_ids_arr = np.array([*new_dict.keys()], dtype=np.uint32)
         chrom_lengths_arr = np.array([*new_dict.values()], dtype=np.int64)
 
+        starts = self[START_COL].to_numpy()
+        ends = self[END_COL].to_numpy()
+        _dtype = check_and_return_common_type_2(starts, ends)
         idxs, starts, ends = ruranges.genome_bounds_numpy(  # type: ignore[attr-defined]
             codes.astype(np.uint32),
-            self[START_COL].to_numpy(),
-            self[END_COL].to_numpy(),
+            self[START_COL].astype(np.int64).to_numpy(),
+            self[END_COL].astype(np.int64).to_numpy(),
             chrom_ids_arr,
             chrom_lengths_arr,
             clip,
@@ -4972,8 +4990,8 @@ Chromosome col had type: {self[CHROM_COL].dtype} while keys were of type: {", ".
 
         res = self.take(idxs)
         if clip:
-            res.loc[:, START_COL] = starts
-            res.loc[:, END_COL] = ends
+            res.loc[:, START_COL] = starts.astype(_dtype)
+            res.loc[:, END_COL] = ends.astype(_dtype)
 
         return mypy_ensure_pyranges(res)
 

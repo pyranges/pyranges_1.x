@@ -11,11 +11,11 @@ def set_max_console_width() -> None:
     pyranges.options.options_default["console_width"] = (120, pyranges.options.options_in_use["console_width"][1])
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser) -> None:
     parser.addoption("--derandomize", action="store_true", default=False, help="Derandomize Hypothesis tests")
 
 
-def pytest_configure(config):
+def pytest_configure(config) -> None:
     if config.getoption("--derandomize"):
         settings.register_profile("derandomize", derandomize=True)
         settings.load_profile("derandomize")
