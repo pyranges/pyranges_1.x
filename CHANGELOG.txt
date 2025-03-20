@@ -1,3 +1,7 @@
+# 0.1.5 (20.03.25)
+- Fix bug where count_overlaps returned series not pyranges
+- Add rust backend as non-optional dependency
+
 # 0.1.4 (17-18.03.25)
 Rust backend
 
