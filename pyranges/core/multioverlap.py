@@ -134,7 +134,7 @@ def count_overlaps(
     _features = concated.split(between=True) if features is None else features.copy()
 
     for name, gr in grs.items():
-        counts = _features.count_overlaps(
+        counts = _features._count_overlaps(  # noqa: SLF001
             gr.remove_nonloc_columns(),
             match_by=by,
             strand_behavior=strand_behavior,

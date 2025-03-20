@@ -2,12 +2,11 @@ import logging
 import sys
 import warnings
 from collections.abc import Iterable
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import pandas as pd
 
-import pyranges as pr  # noqa: TC001
 from pyranges.core.names import (
     CHROM_COL,
     END_COL,
@@ -21,6 +20,9 @@ from pyranges.core.names import (
     TEMP_LENGTH_COL,
 )
 from pyranges.core.pyranges_helpers import arg_to_list, mypy_ensure_pyranges
+
+if TYPE_CHECKING:
+    import pyranges as pr
 
 ## Joan Pallares started this function
 #  Marco Mariotti later optimized it, made it independent from pyranges
@@ -64,6 +66,7 @@ def calculate_frame(p: "pr.PyRanges", transcript_id: str | list[str], frame_col:
 
     Examples
     --------
+    >>> import pyranges as pr
     >>> p = pr.PyRanges({"Chromosome": [1,1,1,2,2],
     ...                   "Strand": ["+","+","+","-","-"],
     ...                   "Start": [1,31,52,101,201],
@@ -189,6 +192,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
 
     Examples
     --------
+    >>> import pyranges as pr
     >>> p = pr.PyRanges({"Chromosome": ['seq1'], "Start":[20], "End":[29], "Strand" : ["+"]})
     >>> p
       index  |    Chromosome      Start      End  Strand

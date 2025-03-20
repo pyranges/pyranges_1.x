@@ -758,6 +758,18 @@ class PyRanges(RangeFrame):
         """Return a copy of the PyRanges."""
         return mypy_ensure_pyranges(super().copy(*args, **kwargs))
 
+    def _count_overlaps(
+        self,
+        other: "PyRanges",
+        strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
+        *,
+        match_by: str | list[str] | None = None,
+        slack: int = 0,
+    ) -> pd.Series:
+        strand_behavior = validate_and_convert_strand_behavior(self, other, strand_behavior)
+        _other, by = prepare_by_binary(self, other=other, strand_behavior=strand_behavior, match_by=match_by)
+        return super().count_overlaps(_other, match_by=by, slack=slack)
+
     def count_overlaps(  # type: ignore[override]
         self,
         other: "PyRanges",
@@ -765,7 +777,8 @@ class PyRanges(RangeFrame):
         *,
         match_by: str | list[str] | None = None,
         slack: int = 0,
-    ) -> "pd.Series":
+        overlap_col: str = "Count",
+    ) -> "PyRanges":
         """Count number of overlaps per interval.
 
         For each interval in self, report how many intervals in 'other' overlap with it.
@@ -824,8 +837,7 @@ class PyRanges(RangeFrame):
         PyRanges with 2 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> f1.loc[:, "Count"] = f1.count_overlaps(f2)
-        >>> f1
+        >>> f1.count_overlaps(f2)
           index  |    Chromosome      Start      End  Strand         Count
           int64  |    category        int64    int64  category      uint32
         -------  ---  ------------  -------  -------  ----------  --------
@@ -835,8 +847,7 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> f1.loc[:, "Count"] = f1.count_overlaps(f2, slack=1, strand_behavior="ignore")
-        >>> f1
+        >>> f1.count_overlaps(f2, slack=1, strand_behavior="ignore")
           index  |    Chromosome      Start      End  Strand         Count
           int64  |    category        int64    int64  category      uint32
         -------  ---  ------------  -------  -------  ----------  --------
@@ -848,8 +859,7 @@ class PyRanges(RangeFrame):
 
         >>> annotation = pr.example_data.ensembl_gtf.get_with_loc_columns(['transcript_id', 'Feature'])
         >>> reads = pr.random(1000, chromsizes={'1':150000}, strand=False, seed=123)
-        >>> annotation.loc[:, "NumberOverlaps"] = annotation.count_overlaps(reads)
-        >>> annotation
+        >>> annotation.count_overlaps(reads, overlap_col="NumberOverlaps")
         index    |    Chromosome    Start    End      Strand      transcript_id    Feature     NumberOverlaps
         int64    |    category      int64    int64    category    object           category    uint32
         -------  ---  ------------  -------  -------  ----------  ---------------  ----------  ----------------
@@ -866,9 +876,11 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         """
-        strand_behavior = validate_and_convert_strand_behavior(self, other, strand_behavior)
-        _other, by = prepare_by_binary(self, other=other, strand_behavior=strand_behavior, match_by=match_by)
-        return super().count_overlaps(_other, match_by=by, slack=slack)
+        _self = self.copy()
+        _self.loc[:, overlap_col] = _self._count_overlaps(  # noqa: SLF001
+            other, strand_behavior=strand_behavior, match_by=match_by, slack=slack
+        )
+        return _self
 
     # to do: optimize, doesn't need to split by chromosome, only strand and only if ext_3/5
     def extend(
