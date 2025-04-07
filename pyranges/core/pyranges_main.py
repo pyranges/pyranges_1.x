@@ -802,7 +802,7 @@ class PyRanges(RangeFrame):
         keep_nonoverlapping : bool, default True
             Keep intervals without overlaps.
 
-        overlap_col : str, default "NumberOverlaps"
+        overlap_col : str, default "Count"
             Name of column with overlap counts.
 
         Returns
