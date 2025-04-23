@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Optional, cast
 
 import numpy as np
 import pandas as pd
-import ruranges  # type: ignore[import]
 from natsort import natsorted  # type: ignore[import]
 
 import pyranges as pr

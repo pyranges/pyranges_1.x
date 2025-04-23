@@ -4,7 +4,6 @@ from typing import Any, TypeVar
 
 import numpy as np
 import pandas as pd
-import ruranges
 
 from pyranges.core.names import (
     BY_ENTRY_IN_KWARGS,

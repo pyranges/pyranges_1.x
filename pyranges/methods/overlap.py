@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-import ruranges
 from numpy.typing import NDArray
 
 from pyranges.core.names import (
@@ -28,17 +27,30 @@ def _both_idxs(
     slack: int = 0,
 ) -> tuple[NDArray[np.int_], NDArray[np.int_]]:
     f1, f2 = factorize_binary(df, df2, by)
+# def overlaps(
+#     *,
+#     starts: NDArray[RangeInt],
+#     ends: NDArray[RangeInt],
+#     starts2: NDArray[RangeInt],
+#     ends2: NDArray[RangeInt],
+#     groups: NDArray[GroupIdInt] | None = None,
+#     groups2: NDArray[GroupIdInt] | None = None,
+#     multiple: Literal["first", "all", "last", "contained"] = "all",
+#     contained: bool = False,
+#     slack: int = 0,
+# ) -> tuple[GroupIdInt, GroupIdInt]:
 
-    idx1, idx2 = ruranges.chromsweep_numpy(  # type: ignore[attr-defined]
-        f1.astype(np.uint32),
-        df.Start.values,
-        df.End.values,
-        f2.astype(np.uint32),
-        df2.Start.values,
-        df2.End.values,
-        slack,
-        overlap_type=multiple,
+    import ruranges
+    idx1, idx2 = ruranges.overlaps(  # type: ignore[attr-defined]
+        groups=f1,
+        starts=df.Start.to_numpy(),
+        ends=df.End.to_numpy(),
+        groups2=f2,
+        starts2=df2.Start.to_numpy(),
+        ends2=df2.End.to_numpy(),
+        multiple=multiple,
         contained=contained,
+        slack=slack,
     )
     return idx1, idx2
 

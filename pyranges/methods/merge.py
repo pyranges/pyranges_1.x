@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING
 
-from ruranges import merge_numpy  # type: ignore[import]
 
 from pyranges.core.names import END_COL, START_COL
 from pyranges.core.pyranges_helpers import factorize, mypy_ensure_rangeframe
@@ -15,6 +14,7 @@ def _merge(
     count_col: str | None = None,
     slack: int | None = None,
 ) -> "RangeFrame":
+    from ruranges import merge_numpy  # type: ignore[import]
     from pyranges.range_frame.range_frame import RangeFrame
 
     if df.empty:

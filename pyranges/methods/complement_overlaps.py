@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING
 
-from ruranges import complement_overlaps_numpy  # type: ignore[import]
 
 from pyranges.core.pyranges_helpers import factorize_binary, mypy_ensure_rangeframe
 
@@ -14,6 +13,7 @@ def _complement_overlaps(
     by: list[str],
     slack: int | None = None,
 ) -> "RangeFrame":
+    from ruranges import complement_overlaps_numpy  # type: ignore[import]
     if df.empty:
         return df
 

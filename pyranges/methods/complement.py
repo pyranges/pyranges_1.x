@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-from ruranges import complement_numpy  # type: ignore[import]
 
 from pyranges.core.names import CHROM_COL, END_COL, START_COL
 from pyranges.core.pyranges_helpers import mypy_ensure_rangeframe
@@ -21,6 +20,7 @@ def _complement(
     include_first_interval: bool = False,
 ) -> "RangeFrame":
     from pyranges.range_frame.range_frame import RangeFrame
+    from ruranges import complement_numpy  # type: ignore[import]
 
     if df.empty:
         return df
