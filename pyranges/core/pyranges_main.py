@@ -4006,15 +4006,16 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         """
+        import ruranges
         use_strand = validate_and_convert_use_strand(self, use_strand)
 
         negative_strand = (self[STRAND_COL] == "-").to_numpy() if use_strand else np.zeros(len(self), dtype=bool)
         # assert 0, negative_strands
-        idx, starts, ends = ruranges.window_numpy(  # type: ignore[attr-defined]
-            self[START_COL].to_numpy(),
-            self[END_COL].to_numpy(),
-            negative_strand,
-            window_size,
+        idx, starts, ends = ruranges.window(  # type: ignore[attr-defined]
+            starts=self[START_COL].to_numpy(),
+            ends=self[END_COL].to_numpy(),
+            negative_strand=negative_strand,
+            window_size=window_size,
         )
         df = self.take(idx)
         df.loc[:, START_COL] = starts
