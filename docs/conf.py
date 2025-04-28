@@ -79,11 +79,15 @@ html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 
 
-def monospaced_link(name, rawtext, text, lineno, inliner, options={}, content=[]):
+def monospaced_link(name, rawtext, text, lineno, inliner, options=None, content=None):
+    if content is None:
+        content = []
+    if options is None:
+        options = {}
     url = text.split(" ")[-1].strip("<>")
     clickable_text = " ".join(text.split(" ")[:-1])
     # Create a reference node, which is the docutils node for hyperlinks
-    unescaped_text = utils.unescape(text)
+    utils.unescape(text)
 
     node = nodes.reference(rawtext, clickable_text, refuri=url, **options)
 
@@ -92,6 +96,6 @@ def monospaced_link(name, rawtext, text, lineno, inliner, options={}, content=[]
     return [node], []
 
 
-def setup(app):
+def setup(app) -> None:
     app.add_role("mslink", monospaced_link)
     app.add_css_file("custom.css")

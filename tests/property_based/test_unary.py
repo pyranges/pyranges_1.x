@@ -34,7 +34,7 @@ from tests.property_based.hypothesis_helper import (
 merge_command = "bedtools merge -o first,count -c 6,1 {} -i <(sort -k1,1 -k2,2n {})"
 
 
-@pytest.mark.bedtools()
+@pytest.mark.bedtools
 @pytest.mark.parametrize("strand", [True, False])
 @settings(
     max_examples=max_examples,
@@ -45,29 +45,24 @@ merge_command = "bedtools merge -o first,count -c 6,1 {} -i <(sort -k1,1 -k2,2n 
 def test_merge(gr, strand) -> None:
     bedtools_strand = {True: "-s", False: ""}[strand]
 
-    print(gr)
 
     with tempfile.TemporaryDirectory() as temp_dir:
         f1 = f"{temp_dir}/f1.bed"
         gr.df.to_csv(f1, sep="\t", header=False, index=False)
 
         cmd = merge_command.format(bedtools_strand, f1)
-        print(cmd)
 
         # ignoring bandit security warning. All strings created by test suite
         result = subprocess.check_output(cmd, shell=True, executable="/bin/bash").decode()  # nosec  # nosec
 
-        print("result" * 10)
-        print(result)
 
         if not strand:
-            print("if not " * 10)
             bedtools_df = pd.read_csv(
                 StringIO(result),
                 sep="\t",
                 header=None,
                 usecols=[0, 1, 2, 4],
-                names="Chromosome Start End Count".split(),
+                names=["Chromosome", "Start", "End", "Count"],
                 dtype={"Chromosome": "category"},
             )
         else:
@@ -75,25 +70,23 @@ def test_merge(gr, strand) -> None:
                 StringIO(result),
                 sep="\t",
                 header=None,
-                names="Chromosome Start End Strand Count".split(),
+                names=["Chromosome", "Start", "End", "Strand", "Count"],
                 dtype={"Chromosome": "category"},
             )
 
-    print("bedtools_df\n", bedtools_df)
     result = gr.merge_overlaps(use_strand=strand)
-    print("result\n", result.df)
 
     if not bedtools_df.empty:
         # need to sort because bedtools sometimes gives the result in non-natsorted chromosome order!
         if result.strand_valid:
             assert_df_equal(
-                result.df.sort_values("Chromosome Start Strand".split()),
-                bedtools_df.sort_values("Chromosome Start Strand".split()),
+                result.df.sort_values(["Chromosome", "Start", "Strand"]),
+                bedtools_df.sort_values(["Chromosome", "Start", "Strand"]),
             )
         else:
             assert_df_equal(
-                result.df.sort_values("Chromosome Start".split()),
-                bedtools_df.sort_values("Chromosome Start".split()),
+                result.df.sort_values(["Chromosome", "Start"]),
+                bedtools_df.sort_values(["Chromosome", "Start"]),
             )
     else:
         assert bedtools_df.empty == result.df.empty
@@ -102,7 +95,7 @@ def test_merge(gr, strand) -> None:
 cluster_command = "bedtools cluster {} -i <(sort -k1,1 -k2,2n {})"
 
 
-@pytest.mark.bedtools()
+@pytest.mark.bedtools
 @pytest.mark.parametrize("strand", [True, False])
 @settings(
     max_examples=max_examples,
@@ -113,14 +106,12 @@ cluster_command = "bedtools cluster {} -i <(sort -k1,1 -k2,2n {})"
 def test_cluster(gr, strand) -> None:
     bedtools_strand = {True: "-s", False: ""}[strand]
 
-    print(gr)
 
     with tempfile.TemporaryDirectory() as temp_dir:
         f1 = f"{temp_dir}/f1.bed"
         gr.df.to_csv(f1, sep="\t", header=False, index=False)
 
         cmd = cluster_command.format(bedtools_strand, f1)
-        print(cmd)
 
         # ignoring bandit security warning. All strings created by test suite
         result = subprocess.check_output(cmd, shell=True, executable="/bin/bash").decode()  # nosec  # nosec
@@ -129,29 +120,24 @@ def test_cluster(gr, strand) -> None:
             StringIO(result),
             sep="\t",
             header=None,
-            names="Chromosome Start End Name Score Strand Cluster".split(),
+            names=["Chromosome", "Start", "End", "Name", "Score", "Strand", "Cluster"],
             dtype={"Chromosome": "category"},
         )
 
-    print("bedtools_df\n", bedtools_df)
 
-    print("gr\n", gr)
     result = gr.cluster(use_strand=strand)
-    print("result\n", result[["Cluster"]])
-    print("result\n", result.df)
 
     if not bedtools_df.empty:
         # need to sort because bedtools sometimes gives the result in non-natsorted chromosome order!
-        sort_values = "Chromosome Start Strand".split() if result.strand_valid else "Chromosome Start".split()
+        sort_values = ["Chromosome", "Start", "Strand"] if result.strand_valid else ["Chromosome", "Start"]
 
         result_df = result.df.sort_values(sort_values)
-        print(bedtools_df)
         bedtools_df = bedtools_df.sort_values(sort_values)
 
         cluster_ids = dict(
             zip(
                 result_df.Cluster.drop_duplicates(),
-                bedtools_df.Cluster.drop_duplicates(),
+                bedtools_df.Cluster.drop_duplicates(), strict=False,
             ),
         )
 
@@ -173,7 +159,6 @@ def test_cluster(gr, strand) -> None:
 @given(gr=dfs_min_with_id())  # pylint: disable=no-value-for-parameter
 def test_cluster_by(gr, strand) -> None:
     result = gr.cluster(use_strand=strand, by="ID").df
-    print(result)
     df = gr.df
 
     groupby = ["Chromosome", "Strand", "ID"] if strand else ["Chromosome", "ID"]
@@ -187,8 +172,6 @@ def test_cluster_by(gr, strand) -> None:
     i = 1
     new_clusters = []
     for c in clusters:
-        print("c")
-        print(c)
         c.Cluster = i
         i += 1
         new_clusters.append(c)
@@ -197,8 +180,6 @@ def test_cluster_by(gr, strand) -> None:
     expected.loc[:, "Cluster"] = expected.Cluster.astype(np.int32)
     # expected = expected.drop_duplicates()
 
-    print(expected)
-    print(result)
 
     assert_df_equal(result.drop("Cluster", axis=1), expected.drop("Cluster", axis=1))
 
@@ -211,7 +192,6 @@ def test_cluster_by(gr, strand) -> None:
 )
 @given(gr=dfs_min_with_id())  # pylint: disable=no-value-for-parameter
 def test_merge_by(gr, strand) -> None:
-    print(gr)
     result = gr.merge_overlaps(by="ID").df.drop("ID", axis=1)
 
     df = gr.df
@@ -222,8 +202,6 @@ def test_merge_by(gr, strand) -> None:
 
     expected = pr.concat([gr.merge_overlaps() for gr in grs]).df
 
-    print(expected)
-    print(result)
 
     assert_df_equal(result, expected)
 
@@ -231,7 +209,7 @@ def test_merge_by(gr, strand) -> None:
 makewindows_command = "bedtools makewindows -w 10 -b <(sort -k1,1 -k2,2n {})"
 
 
-@pytest.mark.bedtools()
+@pytest.mark.bedtools
 @settings(
     max_examples=max_examples,
     print_blob=True,
@@ -246,7 +224,6 @@ def test_windows(gr) -> None:
         gr.df.to_csv(f1, sep="\t", header=False, index=False)
 
         cmd = makewindows_command.format(f1)
-        print(cmd)
 
         # ignoring bandit security warning. All strings created by test suite
         result = subprocess.check_output(cmd, shell=True, executable="/bin/bash").decode()  # nosec  # nosec
@@ -255,14 +232,12 @@ def test_windows(gr) -> None:
             StringIO(result),
             sep="\t",
             header=None,
-            names="Chromosome Start End".split(),
+            names=["Chromosome", "Start", "End"],
             dtype={"Chromosome": "category"},
         )
 
-    print("bedtools_df\n", bedtools_df)
 
-    result = gr.window(10)["Chromosome Start End".split()].remove_strand()
-    print("result\n", result.df)
+    result = gr.window(10)[["Chromosome", "Start", "End"]].remove_strand()
 
     if not bedtools_df.empty:
         assert_df_equal(result.df, bedtools_df)
@@ -312,7 +287,7 @@ def test_getitem(selector) -> None:
         raise Exception(msg)
 
 
-@pytest.mark.bedtools()
+@pytest.mark.bedtools
 @settings(
     max_examples=max_examples,
     deadline=deadline,
@@ -321,7 +296,6 @@ def test_getitem(selector) -> None:
 )
 @given(gr=dfs_min())  # pylint: disable=no-value-for-parameter
 def test_summary(gr) -> None:
-    print(gr.to_example())
     # merely testing that it does not error
     # contents are just (pandas) dataframe.describe()
     gr.summary()

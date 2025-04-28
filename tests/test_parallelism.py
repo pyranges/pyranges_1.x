@@ -1,10 +1,10 @@
-import pytest
 import pandas.testing
+import pytest
 
 import pyranges as pr
 
 
-def test_split_chunks():
+def test_split_chunks() -> None:
     df = pr.example_data.ensembl_gtf.get_with_loc_columns(["gene_id"])
     frame1, frame2 = pr.parallelism.split_df_into_chunks_without_splitting_groups(df, by=["gene_id"], nb_splits=2)
     assert len({*frame1["gene_id"]}) == 1
@@ -13,7 +13,7 @@ def test_split_chunks():
 
 
 @pytest.mark.slow
-def test_split_chunks_many():
+def test_split_chunks_many() -> None:
     gr = pr.PyRanges(
         {"Chromosome": ["chr1"] * 1000, "Start": range(1000), "End": range(1, 1001), "GeneId": [*range(100)] * 10}
     )
@@ -27,7 +27,7 @@ def test_split_chunks_many():
 
 
 @pytest.mark.slow
-def test_run_in_parallel():
+def test_run_in_parallel() -> None:
     df = pr.example_data.ensembl_gtf.get_with_loc_columns(["gene_id"])
     dfs = [gdf for _, gdf in df.groupby("gene_id")]
     res = pr.parallelism.run_in_parallel(
@@ -36,6 +36,4 @@ def test_run_in_parallel():
         nb_cpu=2,
     ).reset_index(drop=True)
     expected_result = df.merge_overlaps(by="gene_id", count_col="Counts")
-    print(res)
-    print(expected_result)
     pandas.testing.assert_frame_equal(res, expected_result)

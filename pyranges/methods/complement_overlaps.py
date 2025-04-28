@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING
 
-
 from pyranges.core.pyranges_helpers import factorize_binary, mypy_ensure_rangeframe
 
 if TYPE_CHECKING:

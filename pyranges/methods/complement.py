@@ -19,8 +19,9 @@ def _complement(
     chromsizes: "dict[str | int, int] | None" = None,
     include_first_interval: bool = False,
 ) -> "RangeFrame":
-    from pyranges.range_frame.range_frame import RangeFrame
     from ruranges import complement_numpy  # type: ignore[import]
+
+    from pyranges.range_frame.range_frame import RangeFrame
 
     if df.empty:
         return df

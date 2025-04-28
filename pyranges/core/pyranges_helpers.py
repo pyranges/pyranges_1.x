@@ -56,7 +56,7 @@ def factorize(
 
     """
     if not by:
-        return np.zeros(len(df), dtype=np.uint32)
+        return np.zeros(len(df), dtype=np.uint8)
     _by = arg_to_list(by)
     return df.groupby(_by).ngroup().to_numpy().astype(np.uint32)
 
@@ -89,7 +89,7 @@ def factorize_binary(
 
     """
     if not by:
-        return np.zeros(len(df), dtype=np.uint32), np.zeros(len(df2), dtype=np.uint32)
+        return np.zeros(len(df), dtype=np.uint8), np.zeros(len(df2), dtype=np.uint8)
     _by = arg_to_list(by)
     factorized = pd.concat([df[_by], df2[_by]], ignore_index=True).groupby(_by).ngroup().astype(np.uint32).to_numpy()
     return factorized[: len(df)], factorized[len(df) :]

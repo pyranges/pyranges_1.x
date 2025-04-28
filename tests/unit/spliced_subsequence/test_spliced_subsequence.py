@@ -1,8 +1,9 @@
 import pandas as pd
+
 import pyranges as pr
 
 
-def test_spliced_subsequence_use_strand_false():
+def test_spliced_subsequence_use_strand_false() -> None:
     p = pr.PyRanges(
         {
             "Chromosome": [1, 1, 2, 2, 3],
@@ -27,12 +28,10 @@ def test_spliced_subsequence_use_strand_false():
         "transcript_id": {0: "t1", 2: "t2", 4: "t3"},
     }
     expected_result = pd.DataFrame(_expected_result)
-    print(result)
-    print(expected_result)
     pd.testing.assert_frame_equal(result, expected_result)
 
 
-def test_spliced_subsequence_without_transcript_id():
+def test_spliced_subsequence_without_transcript_id() -> None:
     p = pr.PyRanges(
         {
             "Chromosome": [1, 1, 2, 2, 3],
@@ -54,6 +53,4 @@ def test_spliced_subsequence_without_transcript_id():
     }
 
     expected_result = pd.DataFrame(_expected_result)
-    print(result)
-    print(expected_result)
     pd.testing.assert_frame_equal(result, expected_result)

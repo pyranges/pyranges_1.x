@@ -474,12 +474,13 @@ class RangeFrame(pd.DataFrame):
         RangeFrame.join_ranges : Has a slack argument to find intervals within a distance.
 
         """
+        import ruranges
         f1, f2 = factorize_binary(self, other, match_by)
-        idx1, idx2, dist = ruranges.nearest_numpy(  # type: ignore[attr-defined]
-            chrs=f1.astype(np.uint32),
+        idx1, idx2, dist = ruranges.nearest(  # type: ignore[attr-defined]
+            groups=f1,
             starts=self[START_COL].to_numpy(),
             ends=self[END_COL].to_numpy(),
-            chrs2=f2.astype(np.uint32),
+            groups2=f2,
             starts2=other[START_COL].to_numpy(),
             ends2=other[END_COL].to_numpy(),
             k=k,

@@ -4,7 +4,6 @@ import pyranges as pr
 
 
 def assert_equal_length_before_after(gr1, gr2) -> None:
-    print("in test")
     l1 = len(gr1)
     l2 = len(gr2)
     c = pr.concat([gr1, gr2])

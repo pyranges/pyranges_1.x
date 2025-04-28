@@ -1,5 +1,6 @@
-import pyranges as pr
 from numpy import nan
+
+import pyranges as pr
 
 
 def test_join_issue_4_right() -> None:
@@ -13,7 +14,7 @@ def test_join_issue_4_right() -> None:
     query_regions.join_ranges(signal_data)
 
 
-def test_join_issue_8():
+def test_join_issue_8() -> None:
     gd = {
         "Chromosome": ["chr1", "chr1", "chr1", "chr1"],
         "Start": [157, 584, 731, 821],
@@ -48,7 +49,7 @@ def test_join_issue_8():
     assert j.reset_index(drop=True).equals(expected_result)
 
 
-def test_join_issue_8_right():
+def test_join_issue_8_right() -> None:
     gd = {
         "Chromosome": ["chr1", "chr1", "chr1", "chr1"],
         "Start": [157, 584, 731, 821],
@@ -80,6 +81,4 @@ def test_join_issue_8_right():
         },
         index=[0, 1, 2, 3],
     )
-    print(j)
-    print(expected_result)
     assert j.reset_index(drop=True).equals(expected_result)
