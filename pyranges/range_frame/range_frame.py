@@ -417,13 +417,14 @@ class RangeFrame(pd.DataFrame):
         RangeFrame.cluster : annotate overlapping intervals with common ID
 
         """
+        import ruranges
         factorized = factorize(self, match_by)
 
-        idx = ruranges.max_disjoint_numpy(  # type: ignore[attr-defined]
-            factorized,
-            self[START_COL].to_numpy(),
-            self[END_COL].to_numpy(),
-            slack,
+        idx = ruranges.max_disjoint(  # type: ignore[attr-defined]
+            starts=self[START_COL].to_numpy(),
+            ends=self[END_COL].to_numpy(),
+            groups=factorized,
+            slack=slack,
         )
         return _mypy_ensure_rangeframe(self.take(idx))
 
