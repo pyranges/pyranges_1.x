@@ -137,15 +137,16 @@ class RangeFrame(pd.DataFrame):
             for the corresponding interval in self.
 
         """
+        import ruranges
         f1, f2 = factorize_binary(self, other, match_by)
 
-        return ruranges.count_overlaps_numpy(  # type: ignore[attr-defined]
-            f1,
+        return ruranges.count_overlaps(  # type: ignore[attr-defined]
             self[START_COL].to_numpy(),
             self[END_COL].to_numpy(),
-            f2,
             other[START_COL].to_numpy(),
             other[END_COL].to_numpy(),
+            f1,
+            f2,
             slack=slack,
         )
 
@@ -593,9 +594,10 @@ class RangeFrame(pd.DataFrame):
             Sorted RangeFrame. The index is preserved. Use .reset_index(drop=True) to reset the index.
 
         """
+        import ruranges
         by = arg_to_list(match_by)
         by_sort_order_as_int = sort_factorize_dict(self, by, use_natsort=natsort)
-        idxs = ruranges.sort_intervals_numpy(  # type: ignore[attr-defined]
+        idxs = ruranges.sort_intervals(  # type: ignore[attr-defined]
             by_sort_order_as_int,
             self[START_COL].to_numpy(),
             self[END_COL].to_numpy(),
@@ -636,15 +638,16 @@ class RangeFrame(pd.DataFrame):
         RangeFrame.complement : return the internal complement of intervals, i.e. its introns.
 
         """
+        import ruranges
         f1, f2 = factorize_binary(self, other, match_by)
 
-        idx, start, end = ruranges.subtract_numpy(  # type: ignore[attr-defined]
-            f1,
+        idx, start, end = ruranges.subtract(  # type: ignore[attr-defined]
             self[START_COL].to_numpy(),
             self[END_COL].to_numpy(),
-            f2,
             other[START_COL].to_numpy(),
             other[END_COL].to_numpy(),
+            f1,
+            f2,
         )
 
         output = self.take(idx).copy()

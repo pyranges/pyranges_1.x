@@ -2310,6 +2310,7 @@ class PyRanges(RangeFrame):
         Contains 3 chromosomes and 2 strands.
 
         """
+        import ruranges
         by = arg_to_list(match_by)
 
         use_strand = validate_and_convert_use_strand(self, use_strand)
@@ -2317,10 +2318,10 @@ class PyRanges(RangeFrame):
         by = ([CHROM_COL] if STRAND_COL not in self else CHROM_AND_STRAND_COLS) + by
 
         by_sort_order_as_int = sort_factorize_dict(self, by, use_natsort=natsort)
-        idxs = ruranges.sort_intervals_numpy(  # type: ignore[attr-defined]
-            by_sort_order_as_int,
+        idxs = ruranges.sort_intervals(  # type: ignore[attr-defined]
             self[START_COL].to_numpy(),
             self[END_COL].to_numpy(),
+            by_sort_order_as_int,
             sort_reverse_direction=None if not use_strand else (self[STRAND_COL] == "-").to_numpy(dtype=bool),
         )
         res = self.take(idxs)
