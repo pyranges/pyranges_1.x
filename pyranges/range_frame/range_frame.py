@@ -239,13 +239,14 @@ class RangeFrame(pd.DataFrame):
         RangeFrame.merge: combine overlapping intervals into one
 
         """
+        import ruranges
         match_by = arg_to_list(match_by)
 
         factorized = factorize(self, match_by)
-        cluster, idx = ruranges.cluster_numpy(  # type: ignore[attr-defined]
-            factorized,
+        cluster, idx = ruranges.cluster(  # type: ignore[attr-defined]
             self[START_COL].to_numpy(),
             self[END_COL].to_numpy(),
+            factorized,
             slack,
         )
 
