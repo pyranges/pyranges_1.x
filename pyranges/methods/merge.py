@@ -13,7 +13,7 @@ def _merge(
     count_col: str | None = None,
     slack: int | None = None,
 ) -> "RangeFrame":
-    from ruranges import merge_numpy  # type: ignore[import]
+    import ruranges
 
     from pyranges.range_frame.range_frame import RangeFrame
 
@@ -24,8 +24,8 @@ def _merge(
 
     factorized = factorize(df, by)
 
-    indices, start, end, counts = merge_numpy(
-        chrs=factorized,
+    indices, start, end, counts = ruranges.merge(
+        groups=factorized,
         starts=df.Start.to_numpy(),
         ends=df.End.to_numpy(),
         slack=slack,
