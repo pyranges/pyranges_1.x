@@ -86,18 +86,13 @@ def _intersect(
 ) -> pd.DataFrame:
     import ruranges
 
-    f1, f2 = factorize_binary(df, df2, by)
-
-    idx1, idx2 = ruranges.chromsweep_numpy(  # type: ignore[attr-defined]
-        f1.astype(np.uint32),
-        df.Start.values,
-        df.End.values,
-        f2.astype(np.uint32),
-        df2.Start.values,
-        df2.End.values,
-        slack,
-        overlap_type=multiple,
+    idx1, idx2 = _both_idxs(
+        df=df,
+        df2=df2,
+        by=by,
+        multiple=multiple,
         contained=contained,
+        slack=slack,
     )
 
     rf, rf2 = df.take(idx1), df2.take(idx2).loc[:, RANGE_COLS]

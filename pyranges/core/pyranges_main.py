@@ -998,8 +998,10 @@ class PyRanges(RangeFrame):
 
         use_strand = validate_and_convert_use_strand(self, use_strand) if (ext_3 or ext_5) else False
 
+        groups = factorize(self, transcript_id) if transcript_id is not None else np.arange(len(self), dtype=np.uint32)
+
         starts, ends = ruranges.extend(  # type: ignore[attr-defined]
-            groups=factorize(self, transcript_id) if transcript_id is not None else None,
+            groups=groups, # type: ignore
             starts=self[START_COL].to_numpy(),
             ends=self[END_COL].to_numpy(),
             negative_strand=(self[STRAND_COL] == REVERSE_STRAND).to_numpy(),
