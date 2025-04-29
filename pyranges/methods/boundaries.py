@@ -21,10 +21,10 @@ def _bounds[T: ("pr.PyRanges", "pd.DataFrame")](df: T, by: list[str]) -> pd.Data
 
     group_ids = factorize(df, by=by)
 
-    idxs, starts, ends, counts = ruranges.boundary_numpy(  # type: ignore[attr-defined]
-        group_ids.astype(np.uint32),
-        df[START_COL].to_numpy(),
-        df[END_COL].to_numpy(),
+    idxs, starts, ends, _counts = ruranges.boundary(  # type: ignore[attr-defined]
+        groups=group_ids.astype(np.uint32),
+        starts=df[START_COL].to_numpy(),
+        ends=df[END_COL].to_numpy(),
     )
 
     ids = df.take(idxs).loc[:, by]
