@@ -4934,50 +4934,66 @@ class PyRanges(RangeFrame):
         >>> gr.genome_bounds(chromsizes)
         Traceback (most recent call last):
         ...
-        ValueError: Not all chromosomes were in the chromsize dict. This might mean that their types differed.
+        ValueError: Not all chromosomes were in the chromsize dict.
         Missing keys: {3}.
-        Chromosome col had type: int64 while keys were of type: int
 
         """
+        import ruranges
+
+        # 1. normalise `chromsizes` to a plain dict
         if isinstance(chromsizes, pd.DataFrame):
-            chromsizes = dict(*zip(chromsizes[CHROM_COL], chromsizes[END_COL], strict=True))
-        elif isinstance(chromsizes, dict):
-            pass
-        else:  # A hack because pyfaidx might not be installed, but we want type checking anyway
-            pyfaidx_chromsizes = cast("dict[str | int, list]", chromsizes)
-            chromsizes = {k: len(pyfaidx_chromsizes[k]) for k in pyfaidx_chromsizes.keys()}  # noqa: SIM118
+            chromsizes = dict(zip(chromsizes[CHROM_COL],
+                                  chromsizes[END_COL],
+                                  strict=True))
+        elif not isinstance(chromsizes, dict):
+            # fall-back for pyfaidx.Fasta etc.
+            faidx = cast("dict[str | int, list]", chromsizes)
+            chromsizes = {k: len(faidx[k]) for k in faidx}
 
-        if missing_keys := set(self[CHROM_COL]).difference(set(chromsizes.keys())):
-            msg = f"""Not all chromosomes were in the chromsize dict. This might mean that their types differed.
-Missing keys: {missing_keys}.
-Chromosome col had type: {self[CHROM_COL].dtype} while keys were of type: {", ".join({type(k).__name__ for k in chromsizes})}"""
-            raise ValueError(msg)
+        # 2. make sure every chromosome in the PyRanges is present
+        if missing := set(self[CHROM_COL]) - chromsizes.keys():
+            raise ValueError(
+                "Not all chromosomes were in the chromsize dict.\n"
+                f"Missing keys: {missing}."
+            )
 
-        if not isinstance(chromsizes, dict):
-            msg = "ERROR chromsizes must be a dictionary, or a PyRanges, or a pyfaidx.Fasta object"
-            raise TypeError(msg)
+        # ------------------------------------------------------------------
+        # 3. Build the *row*-aligned length vector in three simple steps
+        # ------------------------------------------------------------------
+        chrom_series: pd.Series = self[CHROM_COL]
 
-        chrom_series = self[CHROM_COL]
-        codes, uniques = pd.factorize(chrom_series)
-        mapping = {name: code for code, name in enumerate(uniques)}
-        new_dict = {mapping[k]: v for k, v in chromsizes.items()}
-        chrom_ids_arr = np.array([*new_dict.keys()], dtype=np.uint32)
-        chrom_lengths_arr = np.array([*new_dict.values()], dtype=np.int64)
+        # a) factorise once – we still want `codes` so Rust can group cheaply
+        codes, uniques = pd.factorize(chrom_series, sort=False)
+        codes = codes.astype(np.uint32)
 
-        idxs, starts, ends = ruranges.genome_bounds_numpy(  # type: ignore[attr-defined]
-            codes.astype(np.uint32),
-            self[START_COL].to_numpy(),
-            self[END_COL].to_numpy(),
-            chrom_ids_arr,
-            chrom_lengths_arr,
-            clip,
-            only_right,
+        # b) look up the length for each *unique* chromosome just once
+        #    -> shape (n_unique,)
+        lengths_per_code = np.fromiter(
+            (chromsizes[u] for u in uniques),
+            dtype=np.int64,
+            count=len(uniques),
         )
 
+        # c) broadcast to the original row order -> shape (n_rows,)
+        chrom_lengths_vec = lengths_per_code[codes]
+
+        # ------------------------------------------------------------------
+        # 4. Call the Rust routine (no more `chrom_ids` argument!)
+        # ------------------------------------------------------------------
+        idxs, starts, ends = ruranges.genome_bounds(      # type: ignore[attr-defined]
+            groups=codes,                                 # same as before
+            starts=self[START_COL].to_numpy(),
+            ends=self[END_COL].to_numpy(),
+            chrom_length=chrom_lengths_vec,              # **row-aligned!**
+            clip=clip,
+            only_right=only_right,
+        )
+
+        # 5. build the result PyRanges exactly as before
         res = self.take(idxs)
         if clip:
             res.loc[:, START_COL] = starts
-            res.loc[:, END_COL] = ends
+            res.loc[:, END_COL]  = ends
 
         return mypy_ensure_pyranges(res)
 
