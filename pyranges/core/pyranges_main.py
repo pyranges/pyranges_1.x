@@ -2613,12 +2613,13 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes.
 
         """
+        import ruranges
         use_strand = validate_and_convert_use_strand(self, use_strand=use_strand)
         by = prepare_by_single(self, use_strand=use_strand, match_by=match_by)
         groups = factorize(self, by)
 
-        idxs, starts, ends = ruranges.split_numpy(  # type: ignore[attr-defined]
-            groups,
+        idxs, starts, ends = ruranges.split(
+            groups=groups,
             starts=self[START_COL].to_numpy(),
             ends=self[END_COL].to_numpy(),
             slack=0,
