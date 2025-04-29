@@ -991,13 +991,14 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         """
+        import ruranges
         if ext is not None == (ext_3 is not None or ext_5 is not None):
             msg = "Must use at least one and not both of ext and ext3 or ext5."
             raise ValueError(msg)
 
         use_strand = validate_and_convert_use_strand(self, use_strand) if (ext_3 or ext_5) else False
 
-        starts, ends = ruranges.extend_numpy(  # type: ignore[attr-defined]
+        starts, ends = ruranges.extend(  # type: ignore[attr-defined]
             groups=factorize(self, transcript_id) if transcript_id is not None else None,
             starts=self[START_COL].to_numpy(),
             ends=self[END_COL].to_numpy(),
@@ -3202,14 +3203,15 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         """
+        import ruranges
         use_strand = validate_and_convert_use_strand(self, use_strand)
 
         negative_strand = (self[STRAND_COL] == "-").to_numpy() if use_strand else np.zeros(len(self), dtype=bool)
-        indices, starts, ends, overlap_fraction = ruranges.tile_numpy(  # type: ignore[attr-defined]
-            self[START_COL].to_numpy(),
-            self[END_COL].to_numpy(),
-            negative_strand,
-            tile_size,
+        indices, starts, ends, overlap_fraction = ruranges.tile(  # type: ignore[attr-defined]
+            starts=self[START_COL].to_numpy(),
+            ends=self[END_COL].to_numpy(),
+            negative_strand=negative_strand,
+            tile_size=tile_size,
         )
 
         res = self.take(indices)
