@@ -465,6 +465,8 @@ class PyRanges(RangeFrame):
 
         >>> pr.options.get_option('max_rows_to_show')
         8
+        >>> pr.options.get_option('console_width')
+        120
 
         >>> gr2 = gr.copy()
         >>> gr2.loc[:, "Strand"] = ["+", "-", "X"]

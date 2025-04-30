@@ -33,8 +33,6 @@ class PyRangesOptions:
         --------
         >>> import pyranges as pr
         >>> pr.options.set_option('max_rows_to_show', 8)
-
-
         """
         if name in self.options_in_use:
             self.options_in_use[name] = (value, self.options_in_use[name][1])
@@ -80,9 +78,16 @@ class PyRangesOptions:
         >>> pr.options.get_option('max_rows_to_show')
         10
 
+        >>> pr.options.set_option('console_width', 120)
+        >>> pr.options.get_option('console_width')
+        120
+
         >>> pr.options.reset_options()
         >>> pr.options.get_option('max_rows_to_show')
         8
+        >>> pr.options.get_option('console_width')
+
+        >>> pr.options.set_option('console_width', 120)
 
         """
         self.options_in_use = self.options_default.copy()
@@ -92,6 +97,8 @@ class PyRangesOptions:
 
         Examples
         --------
+        # In the below, the console width has been set to 120 so that the doctests will return the same result no matter
+        # the console width.
         >>> import pyranges as pr
         >>> print(pr.options.display_options())
         max_rows_to_show         :   8 (the max number of rows to show in PyRanges repr)
