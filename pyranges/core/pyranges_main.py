@@ -4147,6 +4147,84 @@ class PyRanges(RangeFrame):
 
         return mypy_ensure_pyranges(super().__getitem__(cols_to_include_genome_loc_correct_order))
 
+    def group_cumsum(
+        self,
+        *,
+        match_by: VALID_BY_TYPES = None,
+        use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
+        cumsum_start_column: str | None = None,
+        cumsum_end_column: str | None = None,
+    ) -> "PyRanges":
+        """
+        Strand-aware cumulative length of every interval *within each chromosome-
+        level group*.
+
+        For every chromosome (and, if supplied, every unique combination in
+        *match_by*) the intervals are walked 5′→3′ **on their own strand**.
+        Two new columns are added:
+
+        * ``cumsum_start_column`` – running total **before** the interval
+        * ``cumsum_end_column``   – running total **after**  the interval
+
+        Parameters
+        ----------
+        match_by : str or list, default *None*
+            Additional column(s) that must match for two intervals to share a
+            cumulative coordinate space.  When *None* all intervals on the same
+            chromosome are cumulated together.
+        cumsum_start_column, cumsum_end_column : str | None, default None
+            Names of the columns added to the returned frame. If None is given,
+            Start and End is used.
+
+        Returns
+        -------
+        PyRanges
+            Copy of *self* with the two cumulative-length columns appended.
+
+        Examples
+        --------
+        >>> gr = pr.example_data.ensembl_gtf.get_with_loc_columns(["Feature", "gene_name"])
+        >>> gr = gr[gr.Feature == "exon"]
+        >>> gr.group_cumsum(match_by="gene_name")
+          index  |      Chromosome    Start      End  Strand      Feature     gene_name
+          int64  |        category    int64    int64  category    category    object
+        -------  ---  ------------  -------  -------  ----------  ----------  -----------
+              8  |               1        0      350  -           exon        AL627309.1
+              9  |               1      350      519  -           exon        AL627309.1
+             10  |               1      519      578  -           exon        AL627309.1
+              5  |               1      578      683  -           exon        AL627309.1
+              6  |               1      683     1088  -           exon        AL627309.1
+              2  |               1        0      359  +           exon        DDX11L1
+              3  |               1      359      468  +           exon        DDX11L1
+              4  |               1      468     1657  +           exon        DDX11L1
+        PyRanges with 8 rows, 6 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+        """
+        import ruranges                             # local import reduces start-up time
+
+        strand = validate_and_convert_use_strand(self, use_strand)
+        match_by = arg_to_list(match_by)
+        group_ids = factorize(self, match_by)
+
+        forward = (self[STRAND_COL] == FORWARD_STRAND).to_numpy() if strand else np.ones(self.shape[0], dtype=np.bool_)
+
+        idx, cumsum_start, cumsum_end = ruranges.group_cumsum(   # type: ignore[attr-defined]
+            starts=self[START_COL].to_numpy(),
+            ends=self[END_COL].to_numpy(),
+            groups=group_ids,
+            negative_strand=forward,
+        )
+
+        res = self.take(idx).copy()
+        if cumsum_start_column is None:
+          res.loc[:,START_COL] = cumsum_start
+          res.loc[:,END_COL] = cumsum_end
+        else:
+          res.insert(res.shape[1], cumsum_start_column, cumsum_start)
+          res.insert(res.shape[1], cumsum_end_column, cumsum_end)
+
+        return mypy_ensure_pyranges(res)
+
     def intersect(  # type: ignore[override]
         self,
         other: "PyRanges",
