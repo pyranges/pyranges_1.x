@@ -195,7 +195,6 @@ def test_coverage(gr, gr2, strand_behavior) -> None:
 
     result = gr.coverage(gr2, strand_behavior=strand_behavior)
 
-
     # assert len(result) > 0
     assert np.all(bedtools_df.NumberOverlaps.values == result.NumberOverlaps.values)
     np.testing.assert_allclose(bedtools_df.FractionOverlaps, result.FractionOverlaps, atol=1e-5)
@@ -258,7 +257,6 @@ def test_subtraction(gr, gr2, strand_behavior) -> None:
 
     result = gr.range_subtract(gr2, strand_behavior=strand_behavior)
 
-
     compare_results(bedtools_df, result)
 
 
@@ -295,7 +293,6 @@ def test_nearest(gr, gr2, nearest_how, overlap, strand_behavior) -> None:
     bedtools_df = bedtools_df.drop("Chromosome2", axis=1)
 
     result = gr.nearest(gr2, strand_behavior=strand_behavior, overlap=overlap, how=nearest_how)
-
 
     compare_results_nearest(bedtools_df, result)
 
@@ -339,7 +336,21 @@ def test_join(gr, gr2, strand_behavior) -> None:
         StringIO(bedtools_result),
         header=None,
         sep="\t",
-        names=["Chromosome", "Start", "End", "Name", "Score", "Strand", "Chromosome_b", "Start_b", "End_b", "Name_b", "Score_b", "Strand_b", "Overlap"],
+        names=[
+            "Chromosome",
+            "Start",
+            "End",
+            "Name",
+            "Score",
+            "Strand",
+            "Chromosome_b",
+            "Start_b",
+            "End_b",
+            "Name_b",
+            "Score_b",
+            "Strand_b",
+            "Overlap",
+        ],
         dtype={"Chromosome": "category", "Strand": "category"},
     ).drop(["Chromosome_b", "Overlap"], axis=1)
 
@@ -363,7 +374,6 @@ def test_reldist(gr, gr2) -> None:
 
     bedtools_result = run_bedtools(reldist_command, gr, gr2, False)
     bedtools_result = pd.read_csv(StringIO(bedtools_result), sep="\t")
-
 
     gr.stats.relative_distance(gr2)
 

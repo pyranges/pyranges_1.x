@@ -26,22 +26,11 @@ def _both_idxs(
     contained: bool = False,
     slack: int = 0,
 ) -> tuple[NDArray[np.int_], NDArray[np.int_]]:
-    f1, f2 = factorize_binary(df, df2, by)
-# def overlaps(
-#     *,
-#     starts: NDArray[RangeInt],
-#     ends: NDArray[RangeInt],
-#     starts2: NDArray[RangeInt],
-#     ends2: NDArray[RangeInt],
-#     groups: NDArray[GroupIdInt] | None = None,
-#     groups2: NDArray[GroupIdInt] | None = None,
-#     multiple: Literal["first", "all", "last", "contained"] = "all",
-#     contained: bool = False,
-#     slack: int = 0,
-# ) -> tuple[GroupIdInt, GroupIdInt]:
-
     import ruranges
-    idx1, idx2 = ruranges.overlaps(  # type: ignore[attr-defined]
+
+    f1, f2 = factorize_binary(df, df2, by)
+
+    idx1, idx2 = ruranges.overlaps(
         groups=f1,
         starts=df.Start.to_numpy(),
         ends=df.End.to_numpy(),
@@ -84,8 +73,6 @@ def _intersect(
     slack: int = 0,
     contained: bool = False,
 ) -> pd.DataFrame:
-    import ruranges
-
     idx1, idx2 = _both_idxs(
         df=df,
         df2=df2,
@@ -95,7 +82,7 @@ def _intersect(
         slack=slack,
     )
 
-    rf, rf2 = df.take(idx1), df2.take(idx2).loc[:, RANGE_COLS]
+    rf, rf2 = df.take(idx1), df2.take(idx2).loc[:, RANGE_COLS]  # type: ignore[arg-type]
 
     new_starts = np.where(rf.Start.to_numpy() > rf2.Start.to_numpy(), rf.Start, rf2.Start)
 

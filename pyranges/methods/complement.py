@@ -44,12 +44,12 @@ def _complement(
         starts=df.Start.to_numpy(),
         ends=df.End.to_numpy(),
         slack=slack,
-        chrom_len_ids=chrom_len_ids,
+        chrom_len_ids=chrom_len_ids,  # type: ignore[arg-type]
         chrom_lens=chrom_lens,
         include_first_interval=include_first_interval,
     )
 
-    ids = df.take(idxs)
+    ids = df.take(idxs)  # type: ignore[arg-type]
 
     result = RangeFrame({CHROM_COL: chrs, START_COL: start, END_COL: end} | {_by: ids[_by] for _by in by})[col_order]
 

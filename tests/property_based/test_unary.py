@@ -45,7 +45,6 @@ merge_command = "bedtools merge -o first,count -c 6,1 {} -i <(sort -k1,1 -k2,2n 
 def test_merge(gr, strand) -> None:
     bedtools_strand = {True: "-s", False: ""}[strand]
 
-
     with tempfile.TemporaryDirectory() as temp_dir:
         f1 = f"{temp_dir}/f1.bed"
         gr.df.to_csv(f1, sep="\t", header=False, index=False)
@@ -54,7 +53,6 @@ def test_merge(gr, strand) -> None:
 
         # ignoring bandit security warning. All strings created by test suite
         result = subprocess.check_output(cmd, shell=True, executable="/bin/bash").decode()  # nosec  # nosec
-
 
         if not strand:
             bedtools_df = pd.read_csv(
@@ -106,7 +104,6 @@ cluster_command = "bedtools cluster {} -i <(sort -k1,1 -k2,2n {})"
 def test_cluster(gr, strand) -> None:
     bedtools_strand = {True: "-s", False: ""}[strand]
 
-
     with tempfile.TemporaryDirectory() as temp_dir:
         f1 = f"{temp_dir}/f1.bed"
         gr.df.to_csv(f1, sep="\t", header=False, index=False)
@@ -124,7 +121,6 @@ def test_cluster(gr, strand) -> None:
             dtype={"Chromosome": "category"},
         )
 
-
     result = gr.cluster(use_strand=strand)
 
     if not bedtools_df.empty:
@@ -137,7 +133,8 @@ def test_cluster(gr, strand) -> None:
         cluster_ids = dict(
             zip(
                 result_df.Cluster.drop_duplicates(),
-                bedtools_df.Cluster.drop_duplicates(), strict=False,
+                bedtools_df.Cluster.drop_duplicates(),
+                strict=False,
             ),
         )
 
@@ -180,7 +177,6 @@ def test_cluster_by(gr, strand) -> None:
     expected.loc[:, "Cluster"] = expected.Cluster.astype(np.int32)
     # expected = expected.drop_duplicates()
 
-
     assert_df_equal(result.drop("Cluster", axis=1), expected.drop("Cluster", axis=1))
 
 
@@ -201,7 +197,6 @@ def test_merge_by(gr, strand) -> None:
         grs.append(pr.PyRanges(gdf))
 
     expected = pr.concat([gr.merge_overlaps() for gr in grs]).df
-
 
     assert_df_equal(result, expected)
 
@@ -235,7 +230,6 @@ def test_windows(gr) -> None:
             names=["Chromosome", "Start", "End"],
             dtype={"Chromosome": "category"},
         )
-
 
     result = gr.window(10)[["Chromosome", "Start", "End"]].remove_strand()
 

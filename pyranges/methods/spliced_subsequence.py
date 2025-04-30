@@ -24,13 +24,14 @@ def _spliced_subseq(
     end: int | None = None,
 ) -> pd.DataFrame:
     import ruranges
+
     if df.empty:
         return df
 
     chrs = factorize(df, by) if by else np.arange(len(df), dtype=np.uint32)
 
-    outidx, outstarts, outends = ruranges.spliced_subsequence(  # type: ignore[attr-defined]
-        groups=chrs,
+    outidx, outstarts, outends = ruranges.spliced_subsequence(
+        groups=chrs,  # type: ignore[arg-type]
         starts=df[START_COL].to_numpy(),
         ends=df[END_COL].to_numpy(),
         strand_flags=(df[STRAND_COL] == FORWARD_STRAND).to_numpy()
@@ -41,7 +42,7 @@ def _spliced_subseq(
         force_plus_strand=force_plus_strand,
     )
 
-    outdf = df.take(outidx)
+    outdf = df.take(outidx)  # type: ignore[arg-type]
     outdf.loc[:, START_COL] = outstarts
     outdf.loc[:, END_COL] = outends
 

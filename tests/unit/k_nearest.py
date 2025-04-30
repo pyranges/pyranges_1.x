@@ -70,14 +70,12 @@ def test_k_nearest_different(result_k_nearest_different, result_k_nearest_differ
     k = [3, 2, 1]
     r = gr.k_nearest(gr2, ties="different", k=k).df
 
-
     pd.testing.assert_frame_equal(r, result_k_nearest_different)
 
     ks = [1, 2, 3, 4, 2]
     r2 = gr2.k_nearest(gr, ties="different", k=ks).df
 
     # gr2.k = ks
-
 
     pd.testing.assert_frame_equal(r2, result_k_nearest_different2)
 
@@ -170,7 +168,6 @@ def test_k_nearest_last(result_k_nearest_last, result_k_nearest_last2, gr, gr2) 
     # print(gr2)
     k = [3, 2, 1]
     r = gr.k_nearest(gr2, ties="last", k=k).df
-
 
     pd.testing.assert_frame_equal(r, result_k_nearest_last)
 

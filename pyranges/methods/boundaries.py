@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING
 
-import numpy as np
 import pandas as pd
 
 from pyranges.core.names import CHROM_COL, END_COL, START_COL
@@ -27,7 +26,7 @@ def _bounds[T: ("pr.PyRanges", "pd.DataFrame")](df: T, by: list[str]) -> pd.Data
         ends=df[END_COL].to_numpy(),
     )
 
-    ids = df.take(idxs).loc[:, by]
+    ids = df.take(idxs).loc[:, by]  # type: ignore[arg-type]
 
     result = RangeFrame({START_COL: starts, END_COL: ends} | {_by: ids[_by] for _by in by})[col_order]
 

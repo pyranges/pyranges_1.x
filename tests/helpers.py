@@ -2,7 +2,6 @@ import pandas as pd
 
 
 def assert_df_equal(df1, df2) -> None:
-
     # df1.loc[:, "Start"] = df1.Start.astype(np.int64)
     # df2.loc[:, "Start"] = df1.Start.astype(np.int64)
     # df1.loc[:, "End"] = df1.End.astype(np.int64)
@@ -32,11 +31,9 @@ def assert_df_equal(df1, df2) -> None:
     df1.Chromosome = df1.Chromosome.astype("object")
     df2.Chromosome = df2.Chromosome.astype("object")
 
-
     # print("dtypes Strand\n", "1",  df1.Strand.dtype, "2", df2.Strand.dtype)
     # print("dtypes Strand\n", df1.Strand.dtype == df2.Strand.dtype)
     # print("dtypes equal\n", df1.dtypes == df2.dtypes)
-
 
     pd.testing.assert_frame_equal(df1, df2)
 

@@ -13,19 +13,20 @@ def _complement_overlaps(
     slack: int | None = None,
 ) -> "RangeFrame":
     import ruranges
+
     if df.empty:
         return df
 
     factorized, factorized2 = factorize_binary(df, df2, by)
 
     indices = ruranges.complement_overlaps(
-        groups=factorized,
+        groups=factorized,  # type: ignore[arg-type]
         starts=df.Start.to_numpy(),
         ends=df.End.to_numpy(),
-        groups2=factorized2,
+        groups2=factorized2,  # type: ignore[arg-type]
         starts2=df2.Start.to_numpy(),
         ends2=df2.End.to_numpy(),
-        slack=slack,
+        slack=slack or 0,
     )
 
-    return mypy_ensure_rangeframe(df.take(indices))
+    return mypy_ensure_rangeframe(df.take(indices))  # type: ignore[arg-type]

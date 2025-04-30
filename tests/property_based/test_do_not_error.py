@@ -47,7 +47,6 @@ strandedness_chain = list(product(["same", "opposite"], strandedness)) + list(pr
 # @reproduce_failure('5.5.4', b'AXicY2QAAUYGKGBkxM9nAAABEAAJ') # test_three_in_a_row[strandedness_chain45-method_chain45]
 # @reproduce_failure('5.5.4', b'AXicY2RAA4xIJDY+AAC2AAY=') # test_three_in_a_row[strandedness_chain24-method_chain24]
 def test_three_in_a_row(gr, gr2, gr3, strandedness_chain, method_chain) -> None:
-
     s1, s2 = strandedness_chain
     f1, f2 = method_chain
 

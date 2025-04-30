@@ -994,6 +994,7 @@ class PyRanges(RangeFrame):
 
         """
         import ruranges
+
         if ext is not None == (ext_3 is not None or ext_5 is not None):
             msg = "Must use at least one and not both of ext and ext3 or ext5."
             raise ValueError(msg)
@@ -1002,8 +1003,8 @@ class PyRanges(RangeFrame):
 
         groups = factorize(self, transcript_id) if transcript_id is not None else np.arange(len(self), dtype=np.uint32)
 
-        starts, ends = ruranges.extend(  # type: ignore[attr-defined]
-            groups=groups, # type: ignore
+        starts, ends = ruranges.extend(
+            groups=groups,  # type: ignore[arg-type]
             starts=self[START_COL].to_numpy(),
             ends=self[END_COL].to_numpy(),
             negative_strand=(self[STRAND_COL] == REVERSE_STRAND).to_numpy(),
@@ -2316,6 +2317,7 @@ class PyRanges(RangeFrame):
 
         """
         import ruranges
+
         by = arg_to_list(match_by)
 
         use_strand = validate_and_convert_use_strand(self, use_strand)
@@ -2329,7 +2331,7 @@ class PyRanges(RangeFrame):
             by_sort_order_as_int,
             sort_reverse_direction=None if not use_strand else (self[STRAND_COL] == "-").to_numpy(dtype=bool),
         )
-        res = self.take(idxs)
+        res = self.take(idxs)  # type: ignore[arg-type]
 
         return mypy_ensure_pyranges(res)
 
@@ -2618,6 +2620,7 @@ class PyRanges(RangeFrame):
 
         """
         import ruranges
+
         use_strand = validate_and_convert_use_strand(self, use_strand=use_strand)
         by = prepare_by_single(self, use_strand=use_strand, match_by=match_by)
         groups = factorize(self, by)
@@ -2630,7 +2633,7 @@ class PyRanges(RangeFrame):
             between=between,
         )
 
-        res = mypy_ensure_pyranges(self.take(idxs).reset_index(drop=True))
+        res = mypy_ensure_pyranges(self.take(idxs).reset_index(drop=True))  # type: ignore[arg-type]
         if between:
             res = res.remove_nonloc_columns()
 
@@ -3209,6 +3212,7 @@ class PyRanges(RangeFrame):
 
         """
         import ruranges
+
         use_strand = validate_and_convert_use_strand(self, use_strand)
 
         negative_strand = (self[STRAND_COL] == "-").to_numpy() if use_strand else np.zeros(len(self), dtype=bool)
@@ -3219,7 +3223,7 @@ class PyRanges(RangeFrame):
             tile_size=tile_size,
         )
 
-        res = self.take(indices)
+        res = self.take(indices)  # type: ignore[arg-type]
         res.loc[:, START_COL] = starts
         res.loc[:, END_COL] = ends
         if overlap_column:
@@ -4014,6 +4018,7 @@ class PyRanges(RangeFrame):
 
         """
         import ruranges
+
         use_strand = validate_and_convert_use_strand(self, use_strand)
 
         negative_strand = (self[STRAND_COL] == "-").to_numpy() if use_strand else np.zeros(len(self), dtype=bool)
@@ -4024,7 +4029,7 @@ class PyRanges(RangeFrame):
             negative_strand=negative_strand,
             window_size=window_size,
         )
-        df = self.take(idx)
+        df = self.take(idx)  # type: ignore[arg-type]
         df.loc[:, START_COL] = starts
         df.loc[:, END_COL] = ends
 
@@ -4944,60 +4949,43 @@ class PyRanges(RangeFrame):
         """
         import ruranges
 
-        # 1. normalise `chromsizes` to a plain dict
         if isinstance(chromsizes, pd.DataFrame):
-            chromsizes = dict(zip(chromsizes[CHROM_COL],
-                                  chromsizes[END_COL],
-                                  strict=True))
+            chromsizes = dict(zip(chromsizes[CHROM_COL], chromsizes[END_COL], strict=True))
         elif not isinstance(chromsizes, dict):
             # fall-back for pyfaidx.Fasta etc.
             faidx = cast("dict[str | int, list]", chromsizes)
             chromsizes = {k: len(faidx[k]) for k in faidx}
 
-        # 2. make sure every chromosome in the PyRanges is present
         if missing := set(self[CHROM_COL]) - chromsizes.keys():
-            raise ValueError(
-                "Not all chromosomes were in the chromsize dict.\n"
-                f"Missing keys: {missing}."
-            )
+            msg = f"Not all chromosomes were in the chromsize dict.\nMissing keys: {missing}."
+            raise ValueError(msg)
 
-        # ------------------------------------------------------------------
-        # 3. Build the *row*-aligned length vector in three simple steps
-        # ------------------------------------------------------------------
         chrom_series: pd.Series = self[CHROM_COL]
 
-        # a) factorise once – we still want `codes` so Rust can group cheaply
         codes, uniques = pd.factorize(chrom_series, sort=False)
         codes = codes.astype(np.uint32)
 
-        # b) look up the length for each *unique* chromosome just once
-        #    -> shape (n_unique,)
         lengths_per_code = np.fromiter(
             (chromsizes[u] for u in uniques),
             dtype=np.int64,
             count=len(uniques),
         )
 
-        # c) broadcast to the original row order -> shape (n_rows,)
         chrom_lengths_vec = lengths_per_code[codes]
 
-        # ------------------------------------------------------------------
-        # 4. Call the Rust routine (no more `chrom_ids` argument!)
-        # ------------------------------------------------------------------
-        idxs, starts, ends = ruranges.genome_bounds(      # type: ignore[attr-defined]
-            groups=codes,                                 # same as before
+        idxs, starts, ends = ruranges.genome_bounds(
+            groups=codes,  # type: ignore[arg-type]
             starts=self[START_COL].to_numpy(),
             ends=self[END_COL].to_numpy(),
-            chrom_length=chrom_lengths_vec,              # **row-aligned!**
+            chrom_length=chrom_lengths_vec,  # **row-aligned!**
             clip=clip,
             only_right=only_right,
         )
 
-        # 5. build the result PyRanges exactly as before
-        res = self.take(idxs)
+        res = self.take(idxs)  # type: ignore[arg-type]
         if clip:
             res.loc[:, START_COL] = starts
-            res.loc[:, END_COL]  = ends
+            res.loc[:, END_COL] = ends
 
         return mypy_ensure_pyranges(res)
 

@@ -33,6 +33,7 @@ class PyRangesOptions:
         --------
         >>> import pyranges as pr
         >>> pr.options.set_option('max_rows_to_show', 8)
+
         """
         if name in self.options_in_use:
             self.options_in_use[name] = (value, self.options_in_use[name][1])
