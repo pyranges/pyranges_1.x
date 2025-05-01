@@ -31,9 +31,9 @@ def _both_dfs(
     )
     expected_columns = [*df.head(0).join(df2.head(0), how="inner", rsuffix=suffix).columns]
     df2.columns = expected_columns[df.shape[1] :]
-    _df = df.reindex(_self_indexes)
+    _df = df.take(_self_indexes)
     _df.index = pd.Index(np.arange(len(_df)))
-    _df2 = pd.DataFrame(df2).reindex(_other_indexes)
+    _df2 = pd.DataFrame(df2).take(_other_indexes)
     _df2.index = pd.Index(np.arange(len(_df2)))
     j = _df.join(_df2, how="inner")
     if join_type == "inner":

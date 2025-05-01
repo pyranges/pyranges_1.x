@@ -53,6 +53,7 @@ from pyranges.core.pyranges_helpers import (
 )
 from pyranges.core.tostring import tostring
 from pyranges.methods.complement import _complement
+from pyranges.methods.map_to_global import map_to_global
 from pyranges.methods.sort import sort_factorize_dict
 from pyranges.range_frame.range_frame import RangeFrame
 from pyranges.range_frame.range_frame_validator import InvalidRangesReason
@@ -1420,6 +1421,127 @@ class PyRanges(RangeFrame):
 
         """
         return self.End - self.Start
+
+    def map_to_global(
+        self,
+        gr: "PyRanges",
+        global_on: str,
+        *,
+        local_on: str = "Chromosome",
+        use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
+    ) -> "PyRanges":
+        """Map intervals from a *local* reference frame (e.g. transcript) to
+        *global* coordinates (e.g. genomic)
+
+        The self PyRanges object is *local* in the sense that its
+        ``Chromosome`` column stores an **identifier** (e.g. a
+        transcript ID), so that its interval coordinates are expressed
+        relative to that identifier.
+        The *global* object *gr* supplies the absolute genomic coordinates
+        of every interval group (e.g. transcripts, potentially with multiple
+        exons). The function returns the self intervals in the reference
+        system of the global object.
+
+        The strand of returned intervals is the product of the strand of
+        the corresponding local and global intervals (e.g. +/- => -)
+
+        Unused rows in *gr* (identifiers never referenced by ``self``) are ignored.
+
+        Parameters
+        ----------
+        gr : PyRanges
+            Intervals in global reference system (e.g. transcript annotation
+            in genomic coordinates).
+        gid : str
+            Column in *gr* that holds the identifiers contained in
+            ``self.Chromosome``.
+
+        Returns
+        -------
+        PyRanges
+            Intervals in genomic coordinates, maintaining order, index, and
+            metadata columns of self.
+
+        Warning
+        -------
+        A single local interval will give rise to multiple intervals in output
+        if it overlaps discontinuities (i.e. introns) in global coordinates.
+        This will generate duplicated indices. To avoid them,
+        run pandas dataframe method ``reset_index`` on the output.
+
+        Examples
+        --------
+        >>> gr = pr.PyRanges(pd.DataFrame({
+        ...     "Chromosome": ["chr1","chr1","chr1","chr1"],
+        ...     "Start": [100, 300, 1000, 1100],
+        ...     "End": [200, 400, 1050, 1200],
+        ...     "Strand": ["+","+", "-", "-"],
+        ...     "transcript_id": ["tx1","tx1","tx2","tx2"],
+        ... }))
+        >>> tr = pr.PyRanges(pd.DataFrame({
+        ...     "Chromosome": ["tx1","tx1","tx1","tx2","tx2"],
+        ...     "Start": [0, 120, 160, 0, 100],
+        ...     "End": [80, 140, 170, 20, 130],
+        ...     "Strand": ["-","-", "-", "+", "+"],
+        ...     "label": ["a","b","c","d","e"],
+        ... }))
+        >>> tr.map_to_global(gr, "transcript_id")
+          index  |    Chromosome      Start      End  Strand    label
+          int64  |    object          int64    int64  object    object
+        -------  ---  ------------  -------  -------  --------  --------
+              0  |    chr1              100      180  -         a
+              1  |    chr1              320      340  -         b
+              2  |    chr1              360      370  -         c
+              3  |    chr1             1180     1200  -         d
+              4  |    chr1             1020     1050  -         e
+        PyRanges with 5 rows, 5 columns, and 1 index columns.
+        Contains 1 chromosomes and 1 strands.
+
+        Extra columns are preserved:
+
+        >>> tr.assign(tag=7).map_to_global(gr, "transcript_id").tag.unique()
+        array([7])
+
+        A local interval that spans an exon junction is split; its index is
+        duplicated in the output.
+
+        >>> tr2 = pr.PyRanges(pd.DataFrame({
+        ...     "Chromosome":["tx1","tx2","tx2"],
+        ...     "Start": [90, 80, 50],
+        ...     "End": [110, 120, 120],
+        ...     "Strand": ["+","+", "-"],
+        ...     "label": ["q","w","e"],
+        ... }))
+        >>> tr2.map_to_global(gr, "transcript_id")    # doctest: +ELLIPSIS
+          index  |    Chromosome      Start      End  Strand    label
+          int64  |    object          int64    int64  object    object
+        -------  ---  ------------  -------  -------  --------  --------
+              0  |    chr1              190      200  +         q
+              0  |    chr1              300      310  +         q
+              1  |    chr1             1100     1120  -         w
+              1  |    chr1             1030     1050  -         w
+              2  |    chr1             1100     1150  +         e
+              2  |    chr1             1030     1050  +         e
+        PyRanges with 6 rows, 5 columns, and 1 index columns (with 3 index duplicates).
+        Contains 1 chromosomes and 2 strands.
+
+        A local interval longer than its transcript is truncated to the
+        portion that fits.
+
+        >>> tr3 = pr.PyRanges(pd.DataFrame({
+        ...     "Chromosome":["tx1"], "Start":[20], "End":[1000], "Strand":["+"]
+        ... }))
+        >>> tr3.map_to_global(gr, "transcript_id")
+          index  |    Chromosome      Start      End  Strand
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1              120      200  +
+              0  |    chr1              300      400  +
+        PyRanges with 2 rows, 4 columns, and 1 index columns (with 1 index duplicates).
+        Contains 1 chromosomes and 1 strands.
+        """
+
+        return map_to_global(local_gr=self, global_gr=gr, global_on=global_on, local_on=local_on, use_strand=use_strand)
 
     def max_disjoint(
         self,
@@ -4200,7 +4322,7 @@ class PyRanges(RangeFrame):
         PyRanges with 8 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
         """
-        import ruranges                             # local import reduces start-up time
+        import ruranges  # local import reduces start-up time
 
         strand = validate_and_convert_use_strand(self, use_strand)
         match_by = arg_to_list(match_by)
@@ -4208,7 +4330,7 @@ class PyRanges(RangeFrame):
 
         forward = (self[STRAND_COL] == FORWARD_STRAND).to_numpy() if strand else np.ones(self.shape[0], dtype=np.bool_)
 
-        idx, cumsum_start, cumsum_end = ruranges.group_cumsum(   # type: ignore[attr-defined]
+        idx, cumsum_start, cumsum_end = ruranges.group_cumsum(  # type: ignore[attr-defined]
             starts=self[START_COL].to_numpy(),
             ends=self[END_COL].to_numpy(),
             groups=group_ids,
@@ -4217,11 +4339,11 @@ class PyRanges(RangeFrame):
 
         res = self.take(idx).copy()
         if cumsum_start_column is None:
-          res.loc[:,START_COL] = cumsum_start
-          res.loc[:,END_COL] = cumsum_end
+            res.loc[:, START_COL] = cumsum_start
+            res.loc[:, END_COL] = cumsum_end
         else:
-          res.insert(res.shape[1], cumsum_start_column, cumsum_start)
-          res.insert(res.shape[1], cumsum_end_column, cumsum_end)
+            res.insert(res.shape[1], cumsum_start_column, cumsum_start)
+            res.insert(res.shape[1], cumsum_end_column, cumsum_end)
 
         return mypy_ensure_pyranges(res)
 
