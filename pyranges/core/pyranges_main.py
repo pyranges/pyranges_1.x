@@ -1482,20 +1482,43 @@ class PyRanges(RangeFrame):
         ...     "Chromosome": ["tx1","tx1","tx1","tx2","tx2"],
         ...     "Start": [0, 120, 160, 0, 100],
         ...     "End": [80, 140, 170, 20, 130],
-        ...     "Strand": ["-","-", "-", "+", "+"],
+        ...     "Strand": ["-","-", "+", "+", "+"],
         ...     "label": ["a","b","c","d","e"],
         ... }))
+        >>> gr
+          index  |    Chromosome      Start      End  Strand    transcript_id
+          int64  |    object          int64    int64  object    object
+        -------  ---  ------------  -------  -------  --------  ---------------
+              0  |    chr1              100      200  +         tx1
+              1  |    chr1              300      400  +         tx1
+              2  |    chr1             1000     1050  -         tx2
+              3  |    chr1             1100     1200  -         tx2
+        PyRanges with 4 rows, 5 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        >>> tr
+          index  |    Chromosome      Start      End  Strand    label
+          int64  |    object          int64    int64  object    object
+        -------  ---  ------------  -------  -------  --------  --------
+              0  |    tx1                 0       80  -         a
+              1  |    tx1               120      140  -         b
+              2  |    tx1               160      170  +         c
+              3  |    tx2                 0       20  +         d
+              4  |    tx2               100      130  +         e
+        PyRanges with 5 rows, 5 columns, and 1 index columns.
+        Contains 2 chromosomes and 2 strands.
+
         >>> tr.map_to_global(gr, "transcript_id")
           index  |    Chromosome      Start      End  Strand    label
           int64  |    object          int64    int64  object    object
         -------  ---  ------------  -------  -------  --------  --------
               0  |    chr1              100      180  -         a
               1  |    chr1              320      340  -         b
-              2  |    chr1              360      370  -         c
+              2  |    chr1              360      370  +         c
               3  |    chr1             1180     1200  -         d
               4  |    chr1             1020     1050  -         e
         PyRanges with 5 rows, 5 columns, and 1 index columns.
-        Contains 1 chromosomes and 1 strands.
+        Contains 1 chromosomes and 2 strands.
 
         Extra columns are preserved:
 
