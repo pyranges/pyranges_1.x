@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-import ruranges
 from numpy.typing import NDArray
 
 from pyranges.core.names import (
@@ -27,18 +26,20 @@ def _both_idxs(
     contained: bool = False,
     slack: int = 0,
 ) -> tuple[NDArray[np.int_], NDArray[np.int_]]:
+    import ruranges
+
     f1, f2 = factorize_binary(df, df2, by)
 
-    idx1, idx2 = ruranges.chromsweep_numpy(  # type: ignore[attr-defined]
-        f1.astype(np.uint32),
-        df.Start.values,
-        df.End.values,
-        f2.astype(np.uint32),
-        df2.Start.values,
-        df2.End.values,
-        slack,
-        overlap_type=multiple,
+    idx1, idx2 = ruranges.overlaps(
+        groups=f1,
+        starts=df.Start.to_numpy(),
+        ends=df.End.to_numpy(),
+        groups2=f2,
+        starts2=df2.Start.to_numpy(),
+        ends2=df2.End.to_numpy(),
+        multiple=multiple,
         contained=contained,
+        slack=slack,
     )
     return idx1, idx2
 
@@ -72,23 +73,16 @@ def _intersect(
     slack: int = 0,
     contained: bool = False,
 ) -> pd.DataFrame:
-    import ruranges
-
-    f1, f2 = factorize_binary(df, df2, by)
-
-    idx1, idx2 = ruranges.chromsweep_numpy(  # type: ignore[attr-defined]
-        f1.astype(np.uint32),
-        df.Start.values,
-        df.End.values,
-        f2.astype(np.uint32),
-        df2.Start.values,
-        df2.End.values,
-        slack,
-        overlap_type=multiple,
+    idx1, idx2 = _both_idxs(
+        df=df,
+        df2=df2,
+        by=by,
+        multiple=multiple,
         contained=contained,
+        slack=slack,
     )
 
-    rf, rf2 = df.take(idx1), df2.take(idx2).loc[:, RANGE_COLS]
+    rf, rf2 = df.take(idx1), df2.take(idx2).loc[:, RANGE_COLS]  # type: ignore[arg-type]
 
     new_starts = np.where(rf.Start.to_numpy() > rf2.Start.to_numpy(), rf.Start, rf2.Start)
 

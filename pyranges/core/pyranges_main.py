@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Optional, cast
 
 import numpy as np
 import pandas as pd
-import ruranges  # type: ignore[import]
 from natsort import natsorted  # type: ignore[import]
 
 import pyranges as pr
@@ -54,6 +53,7 @@ from pyranges.core.pyranges_helpers import (
 )
 from pyranges.core.tostring import tostring
 from pyranges.methods.complement import _complement
+from pyranges.methods.map_to_global import map_to_global
 from pyranges.methods.sort import sort_factorize_dict
 from pyranges.range_frame.range_frame import RangeFrame
 from pyranges.range_frame.range_frame_validator import InvalidRangesReason
@@ -466,6 +466,8 @@ class PyRanges(RangeFrame):
 
         >>> pr.options.get_option('max_rows_to_show')
         8
+        >>> pr.options.get_option('console_width')
+        120
 
         >>> gr2 = gr.copy()
         >>> gr2.loc[:, "Strand"] = ["+", "-", "X"]
@@ -992,14 +994,18 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         """
+        import ruranges
+
         if ext is not None == (ext_3 is not None or ext_5 is not None):
             msg = "Must use at least one and not both of ext and ext3 or ext5."
             raise ValueError(msg)
 
         use_strand = validate_and_convert_use_strand(self, use_strand) if (ext_3 or ext_5) else False
 
-        starts, ends = ruranges.extend_numpy(  # type: ignore[attr-defined]
-            groups=factorize(self, transcript_id) if transcript_id is not None else None,
+        groups = factorize(self, transcript_id) if transcript_id is not None else np.arange(len(self), dtype=np.uint32)
+
+        starts, ends = ruranges.extend(
+            groups=groups,  # type: ignore[arg-type]
             starts=self[START_COL].to_numpy(),
             ends=self[END_COL].to_numpy(),
             negative_strand=(self[STRAND_COL] == REVERSE_STRAND).to_numpy(),
@@ -1415,6 +1421,161 @@ class PyRanges(RangeFrame):
 
         """
         return self.End - self.Start
+
+    def map_to_global(
+        self,
+        gr: "PyRanges",
+        global_on: str,
+        *,
+        local_on: str = "Chromosome",
+        use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
+    ) -> "PyRanges":
+        """Map intervals from a *local* reference frame (e.g. transcript) to *global* coordinates (e.g. genomic).
+
+        The self PyRanges object is *local* in the sense that its
+        ``Chromosome`` column stores an **identifier** (e.g. a
+        transcript ID), so that its interval coordinates are expressed
+        relative to that identifier.
+        The *global* object *gr* supplies the absolute genomic coordinates
+        of every interval group (e.g. transcripts, potentially with multiple
+        exons). The function returns the self intervals in the reference
+        system of the global object.
+
+        The strand of returned intervals is the product of the strand of
+        the corresponding local and global intervals (e.g. +/- => -)
+
+        Unused rows in *gr* (identifiers never referenced by ``self``) are ignored.
+
+        Parameters
+        ----------
+        gr : PyRanges
+            Intervals in global reference system (e.g. transcript annotation
+            in genomic coordinates).
+        global_on : str
+            Column in *gr* that holds the identifiers contained in
+            ``self.Chromosome``.
+        local_on : str, default "Chromosome"
+            Column in `self` that holds the identifier to be lifted. Change this
+            if your identifiers live in a different column.
+        use_strand: {"auto", True, False}, default: "auto"
+            Only map when strands in local and global match.
+            The default "auto" means True if PyRanges has valid strands (see .strand_valid).
+
+        Returns
+        -------
+        PyRanges
+            Intervals in genomic coordinates, maintaining order, index, and
+            metadata columns of self.
+
+        Warning
+        -------
+        A single local interval will give rise to multiple intervals in output
+        if it overlaps discontinuities (i.e. introns) in global coordinates.
+        This will generate duplicated indices. To avoid them,
+        run pandas dataframe method ``reset_index`` on the output.
+
+        Examples
+        --------
+        >>> gr = pr.PyRanges(pd.DataFrame({
+        ...     "Chromosome": ["chr1","chr1","chr1","chr1"],
+        ...     "Start": [100, 300, 1000, 1100],
+        ...     "End": [200, 400, 1050, 1200],
+        ...     "Strand": ["+","+", "-", "-"],
+        ...     "transcript_id": ["tx1","tx1","tx2","tx2"],
+        ... }))
+        >>> tr = pr.PyRanges(pd.DataFrame({
+        ...     "Chromosome": ["tx1","tx1","tx1","tx2","tx2"],
+        ...     "Start": [0, 120, 160, 0, 100],
+        ...     "End": [80, 140, 170, 20, 130],
+        ...     "Strand": ["-","-", "+", "+", "+"],
+        ...     "label": ["a","b","c","d","e"],
+        ... }))
+        >>> gr
+          index  |    Chromosome      Start      End  Strand    transcript_id
+          int64  |    object          int64    int64  object    object
+        -------  ---  ------------  -------  -------  --------  ---------------
+              0  |    chr1              100      200  +         tx1
+              1  |    chr1              300      400  +         tx1
+              2  |    chr1             1000     1050  -         tx2
+              3  |    chr1             1100     1200  -         tx2
+        PyRanges with 4 rows, 5 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        >>> tr
+          index  |    Chromosome      Start      End  Strand    label
+          int64  |    object          int64    int64  object    object
+        -------  ---  ------------  -------  -------  --------  --------
+              0  |    tx1                 0       80  -         a
+              1  |    tx1               120      140  -         b
+              2  |    tx1               160      170  +         c
+              3  |    tx2                 0       20  +         d
+              4  |    tx2               100      130  +         e
+        PyRanges with 5 rows, 5 columns, and 1 index columns.
+        Contains 2 chromosomes and 2 strands.
+
+        >>> tr.map_to_global(gr, "transcript_id")
+          index  |    Chromosome      Start      End  Strand    label
+          int64  |    object          int64    int64  object    object
+        -------  ---  ------------  -------  -------  --------  --------
+              0  |    chr1              100      180  -         a
+              1  |    chr1              320      340  -         b
+              2  |    chr1              360      370  +         c
+              3  |    chr1             1180     1200  -         d
+              4  |    chr1             1020     1050  -         e
+        PyRanges with 5 rows, 5 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        Extra columns are preserved:
+
+        >>> tr.assign(tag=7).map_to_global(gr, "transcript_id").tag.unique()
+        array([7])
+
+        A local interval that spans an exon junction is split; its index is
+        duplicated in the output.
+
+        >>> tr2 = pr.PyRanges(pd.DataFrame({
+        ...     "Chromosome":["tx1","tx2","tx2"],
+        ...     "Start": [90, 80, 50],
+        ...     "End": [110, 120, 120],
+        ...     "Strand": ["+","+", "-"],
+        ...     "label": ["q","w","e"],
+        ... }))
+        >>> tr2.map_to_global(gr, "transcript_id")    # doctest: +ELLIPSIS
+          index  |    Chromosome      Start      End  Strand    label
+          int64  |    object          int64    int64  object    object
+        -------  ---  ------------  -------  -------  --------  --------
+              0  |    chr1              190      200  +         q
+              0  |    chr1              300      310  +         q
+              1  |    chr1             1100     1120  -         w
+              1  |    chr1             1030     1050  -         w
+              2  |    chr1             1100     1150  +         e
+              2  |    chr1             1030     1050  +         e
+        PyRanges with 6 rows, 5 columns, and 1 index columns (with 3 index duplicates).
+        Contains 1 chromosomes and 2 strands.
+
+        A local interval longer than its transcript is truncated to the
+        portion that fits.
+
+        >>> tr3 = pr.PyRanges(pd.DataFrame({
+        ...     "Chromosome":["tx1"], "Start":[20], "End":[1000], "Strand":["+"]
+        ... }))
+        >>> tr3.map_to_global(gr, "transcript_id")
+          index  |    Chromosome      Start      End  Strand
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1              120      200  +
+              0  |    chr1              300      400  +
+        PyRanges with 2 rows, 4 columns, and 1 index columns (with 1 index duplicates).
+        Contains 1 chromosomes and 1 strands.
+
+        """
+        return map_to_global(
+            local_gr=self,
+            global_gr=gr,
+            global_on=global_on,
+            local_on=local_on,
+            use_strand=use_strand and STRAND_COL in self,
+        )
 
     def max_disjoint(
         self,
@@ -2311,6 +2472,8 @@ class PyRanges(RangeFrame):
         Contains 3 chromosomes and 2 strands.
 
         """
+        import ruranges
+
         by = arg_to_list(match_by)
 
         use_strand = validate_and_convert_use_strand(self, use_strand)
@@ -2318,13 +2481,13 @@ class PyRanges(RangeFrame):
         by = ([CHROM_COL] if STRAND_COL not in self else CHROM_AND_STRAND_COLS) + by
 
         by_sort_order_as_int = sort_factorize_dict(self, by, use_natsort=natsort)
-        idxs = ruranges.sort_intervals_numpy(  # type: ignore[attr-defined]
-            by_sort_order_as_int,
+        idxs = ruranges.sort_intervals(  # type: ignore[attr-defined]
             self[START_COL].to_numpy(),
             self[END_COL].to_numpy(),
+            by_sort_order_as_int,
             sort_reverse_direction=None if not use_strand else (self[STRAND_COL] == "-").to_numpy(dtype=bool),
         )
-        res = self.take(idxs)
+        res = self.take(idxs)  # type: ignore[arg-type]
 
         return mypy_ensure_pyranges(res)
 
@@ -2612,19 +2775,21 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes.
 
         """
+        import ruranges
+
         use_strand = validate_and_convert_use_strand(self, use_strand=use_strand)
         by = prepare_by_single(self, use_strand=use_strand, match_by=match_by)
         groups = factorize(self, by)
 
-        idxs, starts, ends = ruranges.split_numpy(  # type: ignore[attr-defined]
-            groups,
+        idxs, starts, ends = ruranges.split(
+            groups=groups,
             starts=self[START_COL].to_numpy(),
             ends=self[END_COL].to_numpy(),
             slack=0,
             between=between,
         )
 
-        res = mypy_ensure_pyranges(self.take(idxs).reset_index(drop=True))
+        res = mypy_ensure_pyranges(self.take(idxs).reset_index(drop=True))  # type: ignore[arg-type]
         if between:
             res = res.remove_nonloc_columns()
 
@@ -3202,17 +3367,19 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         """
+        import ruranges
+
         use_strand = validate_and_convert_use_strand(self, use_strand)
 
         negative_strand = (self[STRAND_COL] == "-").to_numpy() if use_strand else np.zeros(len(self), dtype=bool)
-        indices, starts, ends, overlap_fraction = ruranges.tile_numpy(  # type: ignore[attr-defined]
-            self[START_COL].to_numpy(),
-            self[END_COL].to_numpy(),
-            negative_strand,
-            tile_size,
+        indices, starts, ends, overlap_fraction = ruranges.tile(  # type: ignore[attr-defined]
+            starts=self[START_COL].to_numpy(),
+            ends=self[END_COL].to_numpy(),
+            negative_strand=negative_strand,
+            tile_size=tile_size,
         )
 
-        res = self.take(indices)
+        res = self.take(indices)  # type: ignore[arg-type]
         res.loc[:, START_COL] = starts
         res.loc[:, END_COL] = ends
         if overlap_column:
@@ -4006,17 +4173,19 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         """
+        import ruranges
+
         use_strand = validate_and_convert_use_strand(self, use_strand)
 
         negative_strand = (self[STRAND_COL] == "-").to_numpy() if use_strand else np.zeros(len(self), dtype=bool)
         # assert 0, negative_strands
-        idx, starts, ends = ruranges.window_numpy(  # type: ignore[attr-defined]
-            self[START_COL].to_numpy(),
-            self[END_COL].to_numpy(),
-            negative_strand,
-            window_size,
+        idx, starts, ends = ruranges.window(  # type: ignore[attr-defined]
+            starts=self[START_COL].to_numpy(),
+            ends=self[END_COL].to_numpy(),
+            negative_strand=negative_strand,
+            window_size=window_size,
         )
-        df = self.take(idx)
+        df = self.take(idx)  # type: ignore[arg-type]
         df.loc[:, START_COL] = starts
         df.loc[:, END_COL] = ends
 
@@ -4133,6 +4302,100 @@ class PyRanges(RangeFrame):
             cols_to_include_genome_loc_correct_order = loc_columns + keys
 
         return mypy_ensure_pyranges(super().__getitem__(cols_to_include_genome_loc_correct_order))
+
+    def group_cumsum(
+        self,
+        *,
+        match_by: VALID_BY_TYPES = None,
+        use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
+        cumsum_start_column: str | None = None,
+        cumsum_end_column: str | None = None,
+    ) -> "PyRanges":
+        """Strand-aware cumulative length of every interval *within each chromosome-level group*.
+
+        For every chromosome (and, if supplied, every unique combination in
+        *match_by*) the intervals are walked 5→3 **on their own strand**.
+        Two new columns are added:
+
+        * ``cumsum_start_column`` - running total **before** the interval
+        * ``cumsum_end_column``   - running total **after**  the interval
+
+        Parameters
+        ----------
+        match_by : str or list, default *None*
+            Additional column(s) that must match for two intervals to share a
+            cumulative coordinate space.  When *None* all intervals on the same
+            chromosome are cumulated together.
+        cumsum_start_column, cumsum_end_column : str | None, default None
+            Names of the columns added to the returned frame. If None is given,
+            Start and End is used.
+        use_strand: {"auto", True, False}, default: "auto"
+            Whether negative strand intervals should be sliced in descending order, meaning 5' to 3'.
+            The default "auto" means True if PyRanges has valid strands (see .strand_valid).
+
+        Returns
+        -------
+        PyRanges
+            Copy of *self* with the two cumulative-length columns appended.
+
+        Examples
+        --------
+        >>> gr = pr.example_data.ensembl_gtf.get_with_loc_columns(["Feature", "gene_name"])
+        >>> gr = gr[gr.Feature == "exon"]
+        >>> gr
+          index  |      Chromosome    Start      End  Strand      Feature     gene_name
+          int64  |        category    int64    int64  category    category    object
+        -------  ---  ------------  -------  -------  ----------  ----------  -----------
+              2  |               1    11868    12227  +           exon        DDX11L1
+              3  |               1    12612    12721  +           exon        DDX11L1
+              4  |               1    13220    14409  +           exon        DDX11L1
+              5  |               1   112699   112804  -           exon        AL627309.1
+              6  |               1   110952   111357  -           exon        AL627309.1
+              8  |               1   133373   133723  -           exon        AL627309.1
+              9  |               1   129054   129223  -           exon        AL627309.1
+             10  |               1   120873   120932  -           exon        AL627309.1
+        PyRanges with 8 rows, 6 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+        >>> gr.group_cumsum(match_by="gene_name")
+          index  |      Chromosome    Start      End  Strand      Feature     gene_name
+          int64  |        category    int64    int64  category    category    object
+        -------  ---  ------------  -------  -------  ----------  ----------  -----------
+              8  |               1        0      350  -           exon        AL627309.1
+              9  |               1      350      519  -           exon        AL627309.1
+             10  |               1      519      578  -           exon        AL627309.1
+              5  |               1      578      683  -           exon        AL627309.1
+              6  |               1      683     1088  -           exon        AL627309.1
+              2  |               1        0      359  +           exon        DDX11L1
+              3  |               1      359      468  +           exon        DDX11L1
+              4  |               1      468     1657  +           exon        DDX11L1
+        PyRanges with 8 rows, 6 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        """
+        import ruranges  # local import reduces start-up time
+
+        strand = validate_and_convert_use_strand(self, use_strand)
+        match_by = arg_to_list(match_by)
+        group_ids = factorize(self, match_by)
+
+        forward = (self[STRAND_COL] == FORWARD_STRAND).to_numpy() if strand else np.ones(self.shape[0], dtype=np.bool_)
+
+        idx, cumsum_start, cumsum_end = ruranges.group_cumsum(  # type: ignore[attr-defined]
+            starts=self[START_COL].to_numpy(),
+            ends=self[END_COL].to_numpy(),
+            groups=group_ids,
+            negative_strand=forward,
+        )
+
+        res = self.take(idx).copy()  # type: ignore[arg-type]
+        if cumsum_start_column is None:
+            res.loc[:, START_COL] = cumsum_start
+            res.loc[:, END_COL] = cumsum_end
+        else:
+            res.insert(res.shape[1], cumsum_start_column, cumsum_start)
+            res.insert(res.shape[1], cumsum_end_column, cumsum_end)
+
+        return mypy_ensure_pyranges(res)
 
     def intersect(  # type: ignore[override]
         self,
@@ -4930,47 +5193,46 @@ class PyRanges(RangeFrame):
         >>> gr.genome_bounds(chromsizes)
         Traceback (most recent call last):
         ...
-        ValueError: Not all chromosomes were in the chromsize dict. This might mean that their types differed.
+        ValueError: Not all chromosomes were in the chromsize dict.
         Missing keys: {3}.
-        Chromosome col had type: int64 while keys were of type: int
 
         """
-        if isinstance(chromsizes, pd.DataFrame):
-            chromsizes = dict(*zip(chromsizes[CHROM_COL], chromsizes[END_COL], strict=True))
-        elif isinstance(chromsizes, dict):
-            pass
-        else:  # A hack because pyfaidx might not be installed, but we want type checking anyway
-            pyfaidx_chromsizes = cast("dict[str | int, list]", chromsizes)
-            chromsizes = {k: len(pyfaidx_chromsizes[k]) for k in pyfaidx_chromsizes.keys()}  # noqa: SIM118
+        import ruranges
 
-        if missing_keys := set(self[CHROM_COL]).difference(set(chromsizes.keys())):
-            msg = f"""Not all chromosomes were in the chromsize dict. This might mean that their types differed.
-Missing keys: {missing_keys}.
-Chromosome col had type: {self[CHROM_COL].dtype} while keys were of type: {", ".join({type(k).__name__ for k in chromsizes})}"""
+        if isinstance(chromsizes, pd.DataFrame):
+            chromsizes = dict(zip(chromsizes[CHROM_COL], chromsizes[END_COL], strict=True))
+        elif not isinstance(chromsizes, dict):
+            # fall-back for pyfaidx.Fasta etc.
+            faidx = cast("dict[str | int, list]", chromsizes)
+            chromsizes = {k: len(faidx[k]) for k in faidx}
+
+        if missing := set(self[CHROM_COL]) - chromsizes.keys():
+            msg = f"Not all chromosomes were in the chromsize dict.\nMissing keys: {missing}."
             raise ValueError(msg)
 
-        if not isinstance(chromsizes, dict):
-            msg = "ERROR chromsizes must be a dictionary, or a PyRanges, or a pyfaidx.Fasta object"
-            raise TypeError(msg)
+        chrom_series: pd.Series = self[CHROM_COL]
 
-        chrom_series = self[CHROM_COL]
-        codes, uniques = pd.factorize(chrom_series)
-        mapping = {name: code for code, name in enumerate(uniques)}
-        new_dict = {mapping[k]: v for k, v in chromsizes.items()}
-        chrom_ids_arr = np.array([*new_dict.keys()], dtype=np.uint32)
-        chrom_lengths_arr = np.array([*new_dict.values()], dtype=np.int64)
+        codes, uniques = pd.factorize(chrom_series, sort=False)
+        codes = codes.astype(np.uint32)
 
-        idxs, starts, ends = ruranges.genome_bounds_numpy(  # type: ignore[attr-defined]
-            codes.astype(np.uint32),
-            self[START_COL].to_numpy(),
-            self[END_COL].to_numpy(),
-            chrom_ids_arr,
-            chrom_lengths_arr,
-            clip,
-            only_right,
+        lengths_per_code = np.fromiter(
+            (chromsizes[u] for u in uniques),
+            dtype=np.int64,
+            count=len(uniques),
         )
 
-        res = self.take(idxs)
+        chrom_lengths_vec = lengths_per_code[codes]
+
+        idxs, starts, ends = ruranges.genome_bounds(
+            groups=codes,  # type: ignore[arg-type]
+            starts=self[START_COL].to_numpy(),
+            ends=self[END_COL].to_numpy(),
+            chrom_length=chrom_lengths_vec,  # **row-aligned!**
+            clip=clip,
+            only_right=only_right,
+        )
+
+        res = self.take(idxs)  # type: ignore[arg-type]
         if clip:
             res.loc[:, START_COL] = starts
             res.loc[:, END_COL] = ends

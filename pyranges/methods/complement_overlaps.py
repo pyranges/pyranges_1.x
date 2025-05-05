@@ -1,7 +1,5 @@
 from typing import TYPE_CHECKING
 
-from ruranges import complement_overlaps_numpy  # type: ignore[import]
-
 from pyranges.core.pyranges_helpers import factorize_binary, mypy_ensure_rangeframe
 
 if TYPE_CHECKING:
@@ -14,19 +12,21 @@ def _complement_overlaps(
     by: list[str],
     slack: int | None = None,
 ) -> "RangeFrame":
+    import ruranges
+
     if df.empty:
         return df
 
     factorized, factorized2 = factorize_binary(df, df2, by)
 
-    indices = complement_overlaps_numpy(
-        chrs=factorized,
+    indices = ruranges.complement_overlaps(
+        groups=factorized,  # type: ignore[arg-type]
         starts=df.Start.to_numpy(),
         ends=df.End.to_numpy(),
-        chrs2=factorized2,
+        groups2=factorized2,  # type: ignore[arg-type]
         starts2=df2.Start.to_numpy(),
         ends2=df2.End.to_numpy(),
-        slack=slack,
+        slack=slack or 0,
     )
 
-    return mypy_ensure_rangeframe(df.take(indices))
+    return mypy_ensure_rangeframe(df.take(indices))  # type: ignore[arg-type]

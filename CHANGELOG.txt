@@ -1,3 +1,7 @@
+# 0.1.8 (05.05.25)
+- Dispatch to rust functions on type
+- Add spliced subsequence multiple, cumsum group, and map to global
+
 # 0.1.6 (20.03.25)
 - Make sequence name a variable in get_sequence and get_transcript_sequence
 

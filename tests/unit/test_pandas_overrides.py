@@ -26,7 +26,7 @@ def test_loc_get() -> None:
     assert isinstance(res, pr.PyRanges)
 
 
-@pytest.fixture()
+@pytest.fixture
 def gr():
     return pr.PyRanges(
         {

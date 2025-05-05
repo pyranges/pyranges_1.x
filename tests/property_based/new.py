@@ -21,7 +21,7 @@ lengths = st.integers(min_value=1, max_value=int(1e4))
 
 strands = st.sampled_from(VALID_GENOMIC_STRAND_INFO)
 
-chromosomes = st.sampled_from([f"chr{e!s}" for e in list(range(1, 23)) + "X Y M".split()])
+chromosomes = st.sampled_from([f"chr{e!s}" for e in [*list(range(1, 23)), "X", "Y", "M"]])
 
 
 dfs_zero_length_not_allowed = data_frames(
@@ -79,14 +79,12 @@ def run_bedtools(command, gr, gr2, strand_behavior, nearest_overlap=False, neare
             bedtools_how=bedtools_how,
             ties=ties,
         )
-        print("cmd " * 5)
-        print(cmd)
         # ignoring the below line in bandit as only strings created by
         # the test suite is run here; no user input ever sought
         return subprocess.check_output(cmd, shell=True, executable="/bin/bash").decode()  # nosec  # nosec
 
 
-def assert_equal(result, bedtools_df):
+def assert_equal(result, bedtools_df) -> None:
     if result.empty and bedtools_df.empty:
         return
     result = PyRanges(result).sort_ranges().reset_index(drop=True)
@@ -112,7 +110,7 @@ def test_overlap(gr, gr2, strand_behavior) -> None:
     bedtools_df = pd.read_csv(
         StringIO(bedtools_result),
         header=None,
-        names="Chromosome Start End Name Score Strand".split(),
+        names=["Chromosome", "Start", "End", "Name", "Score", "Strand"],
         sep="\t",
     )
 
@@ -124,7 +122,7 @@ def test_overlap(gr, gr2, strand_behavior) -> None:
     assert_equal(result, bedtools_df)
 
 
-@pytest.mark.bedtools()
+@pytest.mark.bedtools
 @pytest.mark.parametrize("strand_behavior", strand_behavior)
 @settings(
     max_examples=max_examples,
@@ -141,8 +139,8 @@ def test_coverage(gr, gr2, strand_behavior) -> None:
             StringIO(bedtools_result),
             header=None,
             usecols=[0, 1, 2, 3, 4, 5, 6, 9],
-            names="Chromosome Start End Name Score Strand NumberOverlaps FractionOverlaps".split(),
-            dtype={"FractionOverlap": np.float_},
+            names=["Chromosome", "Start", "End", "Name", "Score", "Strand", "NumberOverlaps", "FractionOverlaps"],
+            dtype={"FractionOverlap": np.float64},
             sep="\t",
         )
     )
@@ -176,7 +174,7 @@ def test_set_intersect(gr, gr2, strand_behavior) -> None:
     assert_equal(result, bedtools_df)
 
 
-@pytest.mark.bedtools()
+@pytest.mark.bedtools
 @pytest.mark.parametrize("strand_behavior", STRAND_BEHAVIOR_NO_OPPOSITE)
 @settings(
     max_examples=max_examples,
@@ -246,7 +244,7 @@ def test_subtraction(gr, gr2, strand_behavior) -> None:
     bedtools_df = pd.read_csv(
         StringIO(bedtools_result),
         header=None,
-        names="Chromosome Start End Name Score Strand".split(),
+        names=["Chromosome", "Start", "End", "Name", "Score", "Strand"],
         sep="\t",
     )
 
@@ -258,10 +256,10 @@ def test_subtraction(gr, gr2, strand_behavior) -> None:
 def read_bedtools_result_set_op(bedtools_result, strand_behavior):
     if strand_behavior == "same":
         usecols = [0, 1, 2, 5]
-        names = "Chromosome Start End Strand".split()
+        names = ["Chromosome", "Start", "End", "Strand"]
     elif strand_behavior == "ignore":
         usecols = [0, 1, 2]
-        names = "Chromosome Start End".split()
+        names = ["Chromosome", "Start", "End"]
     else:
         raise ValueError("Invalid strand behavior: " + strand_behavior)
 

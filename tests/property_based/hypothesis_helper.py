@@ -13,7 +13,7 @@ deadline = None
 lengths = st.integers(min_value=1, max_value=int(1e7))
 small_lengths = st.integers(min_value=1, max_value=int(1e4))
 
-strands = st.sampled_from("+ -".split())
+strands = st.sampled_from(["+", "-"])
 single_strand = st.sampled_from(["+"])
 names = st.text("abcdefghijklmnopqrstuvxyz", min_size=1)
 scores = st.integers(min_value=0, max_value=256)
@@ -22,7 +22,7 @@ datatype = st.sampled_from([pd.Series, np.array, list])
 
 feature_data = st.sampled_from(["ensembl_gtf", "gencode_gtf", "ucsc_bed"])
 
-chromosomes = st.sampled_from([f"chr{e!s}" for e in list(range(1, 23)) + "X Y M".split()])
+chromosomes = st.sampled_from([f"chr{e!s}" for e in [*list(range(1, 23)), "X", "Y", "M"]])
 chromosomes_small = st.sampled_from(["chr1"])
 cs = st.one_of(chromosomes, chromosomes_small)
 
@@ -123,7 +123,6 @@ def dfs_min(draw):
     df.insert(3, "Name", "a")
     df.insert(4, "Score", 0)
 
-    print(df)
     return PyRanges(df)
 
 
@@ -236,7 +235,6 @@ def dfs_min_single_chromosome(draw):
 @st.composite
 def genomicfeature(draw):
     dataset_name = draw(feature_data)
-    print("dataset name " * 5, dataset_name)
     dataset = getattr(pr.example_data, dataset_name)()
     dataset = dataset[dataset.Feature.isin(["gene", "transcript", "exon"])]
 

@@ -9,7 +9,7 @@ import pytest
 from hypothesis import (
     HealthCheck,
     given,
-    reproduce_failure,  # noqa: F401
+    reproduce_failure,
     settings,
 )
 
@@ -46,8 +46,6 @@ def run_bedtools(command, gr, gr2, strand_behavior, nearest_overlap=False, neare
             bedtools_how=bedtools_how,
             ties=ties,
         )
-        print("cmd " * 5)
-        print(cmd)
         # ignoring the below line in bandit as only strings created by
         # the test suite is run here; no user input ever sought
         return subprocess.check_output(cmd, shell=True, executable="/bin/bash").decode()  # nosec  # nosec
@@ -56,10 +54,10 @@ def run_bedtools(command, gr, gr2, strand_behavior, nearest_overlap=False, neare
 def read_bedtools_result_set_op(bedtools_result, strand_behavior):
     if strand_behavior:
         usecols = [0, 1, 2, 5]
-        names = "Chromosome Start End Strand".split()
+        names = ["Chromosome", "Start", "End", "Strand"]
     else:
         usecols = [0, 1, 2]
-        names = "Chromosome Start End".split()
+        names = ["Chromosome", "Start", "End"]
 
     return pd.read_csv(
         StringIO(bedtools_result),
@@ -92,15 +90,15 @@ def compare_results_nearest(bedtools_df, result) -> None:
     result = result.df
 
     if len(result) != 0:
-        bedtools_df = bedtools_df.sort_values("Start End Distance".split())
-        result = result.sort_values("Start End Distance".split())
-        result_df = result["Chromosome Start End Strand Distance".split()]
+        bedtools_df = bedtools_df.sort_values(["Start", "End", "Distance"])
+        result = result.sort_values(["Start", "End", "Distance"])
+        result_df = result[["Chromosome", "Start", "End", "Strand", "Distance"]]
         assert_df_equal(result_df, bedtools_df)
     else:
         assert bedtools_df.empty
 
 
-@pytest.mark.bedtools()
+@pytest.mark.bedtools
 @pytest.mark.parametrize("strand_behavior", no_opposite)
 @settings(
     max_examples=max_examples,
@@ -119,7 +117,7 @@ def test_set_intersect(gr, gr2, strand_behavior) -> None:
     compare_results(bedtools_df, result)
 
 
-@pytest.mark.bedtools()
+@pytest.mark.bedtools
 @pytest.mark.parametrize("strand_behavior", no_opposite)
 @settings(
     max_examples=max_examples,
@@ -139,7 +137,7 @@ def test_set_union(gr, gr2, strand_behavior) -> None:
     compare_results(bedtools_df, result)
 
 
-@pytest.mark.bedtools()
+@pytest.mark.bedtools
 @pytest.mark.parametrize("strand_behavior", strand_behavior)
 @settings(
     max_examples=max_examples,
@@ -158,17 +156,16 @@ def test_overlap(gr, gr2, strand_behavior) -> None:
     bedtools_df = pd.read_csv(
         StringIO(bedtools_result),
         header=None,
-        names="Chromosome Start End Name Score Strand".split(),
+        names=["Chromosome", "Start", "End", "Name", "Score", "Strand"],
         sep="\t",
     )
 
     result = gr.overlap(gr2, strand_behavior=strand_behavior)
-    print(result)
 
     compare_results(bedtools_df, result)
 
 
-@pytest.mark.bedtools()
+@pytest.mark.bedtools
 @pytest.mark.parametrize("strand_behavior", strand_behavior)
 @settings(
     max_examples=max_examples,
@@ -183,8 +180,6 @@ def test_overlap(gr, gr2, strand_behavior) -> None:
 # reproduce_failure('4.15.0', b'AXicY2RAAEYGhv9AkhHGgQIAFHQBBQ==')
 # @reproduce_failure('4.15.0', b'AXicY2QAAUYGGGCEYIQAVAgAALUACA==')
 def test_coverage(gr, gr2, strand_behavior) -> None:
-    print(gr.df)
-    print(gr2.df)
     coverage_command = "bedtools coverage {strand} -a {f1} -b {f2}"
 
     bedtools_result = run_bedtools(coverage_command, gr, gr2, strand_behavior)
@@ -193,17 +188,12 @@ def test_coverage(gr, gr2, strand_behavior) -> None:
         StringIO(bedtools_result),
         header=None,
         usecols=[0, 1, 2, 3, 4, 5, 6, 9],
-        names="Chromosome Start End Name Score Strand NumberOverlaps FractionOverlaps".split(),
-        dtype={"FractionOverlap": np.float_},
+        names=["Chromosome", "Start", "End", "Name", "Score", "Strand", "NumberOverlaps", "FractionOverlaps"],
+        dtype={"FractionOverlap": np.float64},
         sep="\t",
     )
 
     result = gr.coverage(gr2, strand_behavior=strand_behavior)
-
-    print("pyranges")
-    print(result.df)
-    print("bedtools")
-    print(bedtools_df)
 
     # assert len(result) > 0
     assert np.all(bedtools_df.NumberOverlaps.values == result.NumberOverlaps.values)
@@ -243,8 +233,8 @@ def test_coverage(gr, gr2, strand_behavior) -> None:
 #     compare_results(bedtools_df, result)
 
 
-@pytest.mark.bedtools()
-@pytest.mark.parametrize("strand_behavior", ["same", "opposite", False])  #
+@pytest.mark.bedtools
+@pytest.mark.parametrize("strand_behavior", ["same", "opposite", False])
 @settings(
     max_examples=max_examples,
     deadline=deadline,
@@ -261,17 +251,11 @@ def test_subtraction(gr, gr2, strand_behavior) -> None:
     bedtools_df = pd.read_csv(
         StringIO(bedtools_result),
         header=None,
-        names="Chromosome Start End Name Score Strand".split(),
+        names=["Chromosome", "Start", "End", "Name", "Score", "Strand"],
         sep="\t",
     )
 
-    print("subtracting" * 50)
     result = gr.range_subtract(gr2, strand_behavior=strand_behavior)
-
-    print("bedtools_result")
-    print(bedtools_df)
-    print("PyRanges result:")
-    print(result)
 
     compare_results(bedtools_df, result)
 
@@ -280,7 +264,7 @@ nearest_hows = [None, "upstream", "downstream"]
 overlaps = [True, False]
 
 
-@pytest.mark.bedtools()
+@pytest.mark.bedtools
 @pytest.mark.parametrize(
     ("nearest_how", "overlap", "strand_behavior"), product(nearest_hows, overlaps, strand_behavior)
 )
@@ -298,7 +282,7 @@ def test_nearest(gr, gr2, nearest_how, overlap, strand_behavior) -> None:
     bedtools_df = pd.read_csv(
         StringIO(bedtools_result),
         header=None,
-        names="Chromosome Start End Strand Chromosome2 Distance".split(),
+        names=["Chromosome", "Start", "End", "Strand", "Chromosome2", "Distance"],
         usecols=[0, 1, 2, 5, 6, 12],
         sep="\t",
     )
@@ -310,15 +294,10 @@ def test_nearest(gr, gr2, nearest_how, overlap, strand_behavior) -> None:
 
     result = gr.nearest(gr2, strand_behavior=strand_behavior, overlap=overlap, how=nearest_how)
 
-    print("bedtools " * 5)
-    print(bedtools_df)
-    print("result " * 5)
-    print(result)
-
     compare_results_nearest(bedtools_df, result)
 
 
-@pytest.mark.bedtools()
+@pytest.mark.bedtools
 @pytest.mark.parametrize("strand_behavior", no_opposite)
 @settings(
     max_examples=max_examples,
@@ -340,7 +319,7 @@ def test_jaccard(gr, gr2, strand_behavior) -> None:
     assert 0 <= result <= 1
 
 
-@pytest.mark.bedtools()
+@pytest.mark.bedtools
 @pytest.mark.parametrize("strand_behavior", strand_behavior)
 @settings(
     max_examples=max_examples,
@@ -357,9 +336,23 @@ def test_join(gr, gr2, strand_behavior) -> None:
         StringIO(bedtools_result),
         header=None,
         sep="\t",
-        names="Chromosome Start End Name Score Strand Chromosome_b Start_b End_b Name_b Score_b Strand_b Overlap".split(),
+        names=[
+            "Chromosome",
+            "Start",
+            "End",
+            "Name",
+            "Score",
+            "Strand",
+            "Chromosome_b",
+            "Start_b",
+            "End_b",
+            "Name_b",
+            "Score_b",
+            "Strand_b",
+            "Overlap",
+        ],
         dtype={"Chromosome": "category", "Strand": "category"},
-    ).drop("Chromosome_b Overlap".split(), axis=1)
+    ).drop(["Chromosome_b", "Overlap"], axis=1)
 
     result = gr.join_ranges(gr2, strand_behavior=strand_behavior)
 
@@ -369,7 +362,7 @@ def test_join(gr, gr2, strand_behavior) -> None:
         assert_df_equal(result.df, bedtools_df)
 
 
-@pytest.mark.bedtools()
+@pytest.mark.bedtools
 @settings(
     max_examples=max_examples,
     deadline=deadline,
@@ -382,12 +375,7 @@ def test_reldist(gr, gr2) -> None:
     bedtools_result = run_bedtools(reldist_command, gr, gr2, False)
     bedtools_result = pd.read_csv(StringIO(bedtools_result), sep="\t")
 
-    print("bedtools_result")
-    print(bedtools_result.reldist)
-
-    result = gr.stats.relative_distance(gr2)
-    print("result")
-    print(result.reldist)
+    gr.stats.relative_distance(gr2)
 
     # bug in bedtools, therefore not testing this properly
     # https://github.com/arq5x/bedtools2/issues/711

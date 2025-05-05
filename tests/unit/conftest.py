@@ -24,12 +24,12 @@ def add_np(doctest_namespace) -> None:
     doctest_namespace["np_seed"] = np.random.seed(0)
 
 
-@pytest.fixture()
+@pytest.fixture
 def names():
-    return "Chromosome  Start  End  Name Score Strand".split()
+    return ["Chromosome", "Start", "End", "Name", "Score", "Strand"]
 
 
-@pytest.fixture()
+@pytest.fixture
 def chip_10(names):
     df = pd.read_csv("tests/unit/chip_10.bed", header=None, names=names, sep="\t")
 
@@ -40,26 +40,26 @@ def chip_10(names):
     return gr
 
 
-@pytest.fixture()
+@pytest.fixture
 def f1(names):
     df = pd.read_csv(
         "tests/unit/f1.bed",
         sep="\t",
         header=None,
-        names="Chromosome  Start  End  Name Score Strand".split(),
+        names=["Chromosome", "Start", "End", "Name", "Score", "Strand"],
     )
 
     return PyRanges(df)
 
 
-@pytest.fixture()
+@pytest.fixture
 def f2(names):
     df = pd.read_csv("tests/unit/f2.bed", sep="\t", header=None, names=names)
 
     return PyRanges(df)
 
 
-@pytest.fixture()
+@pytest.fixture
 def chromsizes():
     from io import StringIO
 

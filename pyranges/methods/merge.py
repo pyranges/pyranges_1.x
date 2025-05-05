@@ -1,7 +1,5 @@
 from typing import TYPE_CHECKING
 
-from ruranges import merge_numpy  # type: ignore[import]
-
 from pyranges.core.names import END_COL, START_COL
 from pyranges.core.pyranges_helpers import factorize, mypy_ensure_rangeframe
 
@@ -15,6 +13,8 @@ def _merge(
     count_col: str | None = None,
     slack: int | None = None,
 ) -> "RangeFrame":
+    import ruranges
+
     from pyranges.range_frame.range_frame import RangeFrame
 
     if df.empty:
@@ -24,14 +24,14 @@ def _merge(
 
     factorized = factorize(df, by)
 
-    indices, start, end, counts = merge_numpy(
-        chrs=factorized,
+    indices, start, end, counts = ruranges.merge(
+        groups=factorized,
         starts=df.Start.to_numpy(),
         ends=df.End.to_numpy(),
-        slack=slack,
+        slack=slack or 0,
     )
 
-    by_subset = df[col_order].take(indices)
+    by_subset = df[col_order].take(indices)  # type: ignore[arg-type]
     by_subset.loc[:, START_COL] = start
     by_subset.loc[:, END_COL] = end
 
