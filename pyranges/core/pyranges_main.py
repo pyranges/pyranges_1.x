@@ -2,7 +2,7 @@
 
 import logging
 import sys
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional, cast
 
@@ -53,6 +53,7 @@ from pyranges.core.pyranges_helpers import (
 )
 from pyranges.core.tostring import tostring
 from pyranges.methods.complement import _complement
+from pyranges.methods.interval_metrics import compute_interval_metrics
 from pyranges.methods.map_to_global import map_to_global
 from pyranges.methods.sort import sort_factorize_dict
 from pyranges.range_frame.range_frame import RangeFrame
@@ -4517,6 +4518,140 @@ class PyRanges(RangeFrame):
         )
 
         return mypy_ensure_pyranges(gr)
+
+    def compute_interval_metrics(
+        self,
+        metrics: str | Iterable[str] | Mapping[str, str] = "fraction",
+        *,
+        start: str = START_COL,
+        end: str = END_COL,
+        start2: str = START_COL + JOIN_SUFFIX,
+        end2: str = END_COL + JOIN_SUFFIX,
+        denom: str = "first",
+    ) -> "pr.PyRanges":
+        """Attach interval-relationship metrics as new columns.
+
+        Parameters
+        ----------
+        metrics
+            One of the following forms:
+              * single string, eg "length"
+              * iterable of strings, eg ["fraction", "jaccard"]
+              * mapping {metric_name -> new_column_name} to rename on the fly
+            Accepted metric names are listed in VALID_METRICS.
+        denom
+            Denominator for the *fraction* metric.  Must be "first", "second" or "union".
+        start, end : str, default START_COL / END_COL
+            Column names holding the first interval coordinates.
+        start2, end2 : str, default START_COL + "_b" / END_COL + "_b"
+            Column names holding the second interval coordinates.
+        denom : {"first", "second", "union"}, default "first"
+            Denominator used by the *fraction* metric.
+
+        Returns
+        -------
+        RangeFrame
+            Copy of self with extra metric columns.
+
+        Metrics
+        -------
+        overlap_length
+            Raw number of overlapping bases.
+
+        fraction
+            Overlap divided by a denominator chosen with *denom*
+            ("first", "second", or "union").
+
+        jaccard
+            Overlap divided by the union length of the two intervals.
+
+        distance
+            Positive gap in bases when intervals do not touch;
+            0 when they overlap or abut.
+
+        overlap
+            Boolean flag - True if at least one base overlaps.
+
+        signed_distance
+            Same as *distance* but signed:
+            negative when the second interval is upstream of the first,
+            positive when downstream, 0 when touching/overlapping.
+
+        midpoint_distance
+            Absolute distance between interval midpoints.
+
+        symmetric_coverage
+            2 * overlap ÷ (length1 + length2).  Ranges from 0 to 1.
+
+        relative_direction
+            For frames that contain "Strand" and "Strand_b":
+            "same" if strands match, "opposite" if they differ,
+            "unknown" if either strand is "." or missing.
+
+        Examples
+        --------
+        >>> import pyranges as pr
+        >>> df = pd.DataFrame(
+        ...     {
+        ...         "Chromosome": ["chr1"] * 5,
+        ...         "Start":      [2, 10, 20, 40, 80],
+        ...         "End":        [8, 12, 25, 45, 85],
+        ...         "Strand":     ["+", "-", "+", "+", "-"],
+        ...         "Start_b":    [5,  9, 23, 60, 70],
+        ...         "End_b":      [7, 20, 30, 70, 75],
+        ...         "Strand_b":   ["+", "+", "-", "-", "+"],
+        ...     }
+        ... )
+        >>> gr = pr.PyRanges(df)
+
+        # length
+        >>> gr.compute_interval_metrics("overlap_length")["overlap_length"].tolist()
+        [2, 2, 2, 0, 0]
+
+        # fraction (overlap / first interval length)
+        >>> gr.compute_interval_metrics("fraction")["fraction"].round(2).tolist()
+        [0.33, 1.0, 0.4, 0.0, 0.0]
+
+        # jaccard
+        >>> gr.compute_interval_metrics("jaccard")["jaccard"].round(2).tolist()
+        [0.33, 0.18, 0.2, 0.0, 0.0]
+
+        # distance (unsigned gap; 0 when overlapping)
+        >>> gr.compute_interval_metrics("distance")["distance"].tolist()
+        [0, 0, 0, 15, 5]
+
+        # overlap flag
+        >>> gr.compute_interval_metrics("overlap")["overlap"].tolist()
+        [True, True, True, False, False]
+
+        # signed_distance
+        >>> gr.compute_interval_metrics("signed_distance")["signed_distance"].tolist()
+        [0, 0, 0, 15, -5]
+
+        # midpoint_distance
+        >>> gr.compute_interval_metrics("midpoint_distance")["midpoint_distance"].tolist()
+        [1.0, 3.5, 4.0, 22.5, 10.0]
+
+        # symmetric_coverage
+        >>> gr.compute_interval_metrics("symmetric_coverage")["symmetric_coverage"].round(2).tolist()
+        [0.5, 0.31, 0.33, 0.0, 0.0]
+
+        # relative_direction (requires strand columns)
+        >>> gr.compute_interval_metrics("relative_direction")["relative_direction"].tolist()
+        ['same', 'opposite', 'opposite', 'opposite', 'opposite']
+
+        """
+        return mypy_ensure_pyranges(
+            compute_interval_metrics(
+                self,
+                metrics=metrics,
+                start=start,
+                end=end,
+                start2=start2,
+                end2=end2,
+                denom=denom,
+            )
+        )
 
     def combine_interval_columns(
         self,

@@ -1,3 +1,6 @@
+# 0.1.9 (05.05.25)
+- Function to compute interval metrics
+
 # 0.1.8 (05.05.25)
 - Dispatch to rust functions on type
 - Add spliced subsequence multiple, cumsum group, and map to global
