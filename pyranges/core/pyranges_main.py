@@ -1430,8 +1430,7 @@ class PyRanges(RangeFrame):
         local_on: str = "Chromosome",
         use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
     ) -> "PyRanges":
-        """Map intervals from a *local* reference frame (e.g. transcript) to
-        *global* coordinates (e.g. genomic)
+        """Map intervals from a *local* reference frame (e.g. transcript) to *global* coordinates (e.g. genomic).
 
         The self PyRanges object is *local* in the sense that its
         ``Chromosome`` column stores an **identifier** (e.g. a
@@ -1452,9 +1451,15 @@ class PyRanges(RangeFrame):
         gr : PyRanges
             Intervals in global reference system (e.g. transcript annotation
             in genomic coordinates).
-        gid : str
+        global_on : str
             Column in *gr* that holds the identifiers contained in
             ``self.Chromosome``.
+        local_on : str, default "Chromosome"
+            Column in `self` that holds the identifier to be lifted. Change this
+            if your identifiers live in a different column.
+        use_strand: {"auto", True, False}, default: "auto"
+            Only map when strands in local and global match.
+            The default "auto" means True if PyRanges has valid strands (see .strand_valid).
 
         Returns
         -------
@@ -1562,9 +1567,15 @@ class PyRanges(RangeFrame):
               0  |    chr1              300      400  +
         PyRanges with 2 rows, 4 columns, and 1 index columns (with 1 index duplicates).
         Contains 1 chromosomes and 1 strands.
-        """
 
-        return map_to_global(local_gr=self, global_gr=gr, global_on=global_on, local_on=local_on, use_strand=use_strand)
+        """
+        return map_to_global(
+            local_gr=self,
+            global_gr=gr,
+            global_on=global_on,
+            local_on=local_on,
+            use_strand=use_strand and STRAND_COL in self,
+        )
 
     def max_disjoint(
         self,
@@ -4300,16 +4311,14 @@ class PyRanges(RangeFrame):
         cumsum_start_column: str | None = None,
         cumsum_end_column: str | None = None,
     ) -> "PyRanges":
-        """
-        Strand-aware cumulative length of every interval *within each chromosome-
-        level group*.
+        """Strand-aware cumulative length of every interval *within each chromosome-level group*.
 
         For every chromosome (and, if supplied, every unique combination in
-        *match_by*) the intervals are walked 5′→3′ **on their own strand**.
+        *match_by*) the intervals are walked 5→3 **on their own strand**.
         Two new columns are added:
 
-        * ``cumsum_start_column`` – running total **before** the interval
-        * ``cumsum_end_column``   – running total **after**  the interval
+        * ``cumsum_start_column`` - running total **before** the interval
+        * ``cumsum_end_column``   - running total **after**  the interval
 
         Parameters
         ----------
@@ -4320,6 +4329,9 @@ class PyRanges(RangeFrame):
         cumsum_start_column, cumsum_end_column : str | None, default None
             Names of the columns added to the returned frame. If None is given,
             Start and End is used.
+        use_strand: {"auto", True, False}, default: "auto"
+            Whether negative strand intervals should be sliced in descending order, meaning 5' to 3'.
+            The default "auto" means True if PyRanges has valid strands (see .strand_valid).
 
         Returns
         -------
@@ -4330,6 +4342,20 @@ class PyRanges(RangeFrame):
         --------
         >>> gr = pr.example_data.ensembl_gtf.get_with_loc_columns(["Feature", "gene_name"])
         >>> gr = gr[gr.Feature == "exon"]
+        >>> gr
+          index  |      Chromosome    Start      End  Strand      Feature     gene_name
+          int64  |        category    int64    int64  category    category    object
+        -------  ---  ------------  -------  -------  ----------  ----------  -----------
+              2  |               1    11868    12227  +           exon        DDX11L1
+              3  |               1    12612    12721  +           exon        DDX11L1
+              4  |               1    13220    14409  +           exon        DDX11L1
+              5  |               1   112699   112804  -           exon        AL627309.1
+              6  |               1   110952   111357  -           exon        AL627309.1
+              8  |               1   133373   133723  -           exon        AL627309.1
+              9  |               1   129054   129223  -           exon        AL627309.1
+             10  |               1   120873   120932  -           exon        AL627309.1
+        PyRanges with 8 rows, 6 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
         >>> gr.group_cumsum(match_by="gene_name")
           index  |      Chromosome    Start      End  Strand      Feature     gene_name
           int64  |        category    int64    int64  category    category    object
@@ -4344,6 +4370,7 @@ class PyRanges(RangeFrame):
               4  |               1      468     1657  +           exon        DDX11L1
         PyRanges with 8 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
+
         """
         import ruranges  # local import reduces start-up time
 
@@ -4360,7 +4387,7 @@ class PyRanges(RangeFrame):
             negative_strand=forward,
         )
 
-        res = self.take(idx).copy()
+        res = self.take(idx).copy()  # type: ignore[arg-type]
         if cumsum_start_column is None:
             res.loc[:, START_COL] = cumsum_start
             res.loc[:, END_COL] = cumsum_end
