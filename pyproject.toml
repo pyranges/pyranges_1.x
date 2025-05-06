@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyranges1"
-version = "1.0.10"
+version = "1.0.11"
 description = "GenomicRanges for Python."
 requires-python = ">=3.12.0"
 readme = "README.md"
@@ -28,7 +28,7 @@ dependencies = ["pandas", "tabulate", "natsort", "ruranges"]
 
 [project.optional-dependencies]
 add-ons = ["pyrle >= 0.0.39", "bamread",  "pyfaidx", "pyBigWig", "joblib"] #"fisher",
-dev = ["tox", "ruff == 0.3.0", "pyright", "pandas-stubs", "types-tabulate", "pytest-watcher", "pytest-xdist", "hypothesis>=6.92.1"]
+dev = ["tox", "ruff == 0.11.0", "pyright", "pandas-stubs", "types-tabulate", "pytest-watcher", "pytest-xdist", "hypothesis>=6.92.1"]
 docs = ["sphinx", "sphinx_rtd_theme", "sphinx-autoapi", "sphinxcontrib-napoleon"]
 cli = ["fire"]
 all = ["pyranges1[add-ons]", "pyranges1[dev]", "pyranges1[docs]", "pyranges1[cli]"]

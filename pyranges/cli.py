@@ -1,23 +1,29 @@
-#!/usr/bin/env python
-
-import sys
 import io
-import pyranges as pr
-import fire
+import sys
 from contextlib import redirect_stdout
+
+import pyranges as pr
+
+try:
+    import fire  # type: ignore[reportMissingImports]
+except ImportError:
+    fire = None
 
 # 1) Available readers (no from_string)
 READERS = {
-    "read_bed":    pr.read_bed,
-    "read_gtf":    pr.read_gtf,
-    "read_gff3":   pr.read_gff3,
-    "read_bam":    pr.read_bam,
+    "read_bed": pr.read_bed,
+    "read_gtf": pr.read_gtf,
+    "read_gff3": pr.read_gff3,
+    "read_bam": pr.read_bam,
     "read_bigwig": pr.read_bigwig,
 }
 
-def show_usage():
+
+def show_usage() -> None:
+    """Display help/usage for the pyranges CLI."""
     prog = "pyranger"
-    print(f"""
+    sys.stdout.write(
+        f"""
 Read sequence interval data into pyranges and apply a chain of methods
 
 Usage:
@@ -30,7 +36,7 @@ Usage:
   • The result replaces the main object in the main
 
 Available readers:
-  {', '.join(READERS)}
+  {", ".join(READERS)}
 
 Examples:
   1. Load only:
@@ -48,31 +54,44 @@ Examples:
 Tip:
   Append `--help` immediately after any reader or method to see its documentation
 
-""".strip())
+""".strip()
+        + "\n",
+    )
 
-def cast_literal(x: str):
-    """Try int, float, bool, else string."""
+
+def cast_literal(x: str) -> str | int | float | bool:
+    """Try int, float, bool, else return the original string."""
     lx = x.lower()
-    if lx in ("true","false"):
+    if lx in ("true", "false"):
         return lx == "true"
     try:
         return int(x)
-    except:
+    except ValueError:
         pass
     try:
         return float(x)
-    except:
+    except ValueError:
         pass
     return x
 
-def main():
+
+def main() -> None:  # noqa: C901,PLR0912,PLR0915
+    """Entry point for the pyranges CLI."""
+    if fire is None:
+        sys.stderr.write(
+            "Error: the CLI entry-point requires the Python package 'fire'.\n"
+            "Please install it with:\n  pip install pyranges1[cli]\n"
+        )
+        sys.exit(1)
+
     args = sys.argv[1:]
-    if not args or args[0] in ("-h","--help"):
+    if not args or args[0] in ("-h", "--help"):
         show_usage()
         sys.exit(0)
 
     # 2) Split on literal commas
-    segments, buf = [], []
+    segments: list[list[str]] = []
+    buf: list[str] = []
     for tok in args:
         if tok == ",":
             if not buf:
@@ -92,10 +111,10 @@ def main():
     reader_fn = READERS[head0]
     reader_args = seg0[1:]
     # help for first reader?
-    if any(a in ("-h","--help") for a in reader_args):
+    if any(a in ("-h", "--help") for a in reader_args):
         fire.Fire(reader_fn, name=head0, command=["--help"])
         sys.exit(0)
-    # invoke reader (suppress Fire’s print)
+    # invoke reader (suppress Fire's print)
     with redirect_stdout(io.StringIO()):
         pr_obj = fire.Fire(reader_fn, command=reader_args)
     registry = {"pr": pr_obj}
@@ -110,7 +129,7 @@ def main():
                 break  # not a reader segment
             reader_fn = READERS[cmd]
             reader_args = seg[1:]
-            if any(a in ("-h","--help") for a in reader_args):
+            if any(a in ("-h", "--help") for a in reader_args):
                 fire.Fire(reader_fn, name=cmd, command=["--help"])
                 sys.exit(0)
             with redirect_stdout(io.StringIO()):
@@ -127,7 +146,7 @@ def main():
         method_args = seg[1:]
 
         # method help?
-        if any(a in ("-h","--help") for a in method_args):
+        if any(a in ("-h", "--help") for a in method_args):
             fn = getattr(primary, head, None)
             if fn is None:
                 sys.exit(f"Error: unknown method '{head}'")
@@ -139,20 +158,20 @@ def main():
             sys.exit(f"Error: unknown method '{head}' on PyRanges")
 
         # parse flags & positionals, substituting any var names
-        pos, flags = [], {}
+        pos: list[object] = []
+        flags: dict[str, object] = {}
         i = 0
         while i < len(method_args):
             tok = method_args[i]
             if tok.startswith("--"):
                 if "=" in tok:
-                    k, v = tok[2:].split("=",1)
+                    k, v = tok[2:].split("=", 1)
                     flags[k] = cast_literal(v)
                     i += 1
                 else:
                     k = tok[2:]
-                    # lookahead for a value
-                    if i+1 < len(method_args) and not method_args[i+1].startswith("--"):
-                        flags[k] = cast_literal(method_args[i+1])
+                    if i + 1 < len(method_args) and not method_args[i + 1].startswith("--"):
+                        flags[k] = cast_literal(method_args[i + 1])
                         i += 2
                     else:
                         flags[k] = True
@@ -169,8 +188,9 @@ def main():
         registry["pr"] = primary  # update pr to the latest
 
     # 6) Print the final result
-    if not primary is None:
-        print(primary)
+    if primary is not None:
+        sys.stdout.write(str(primary) + "\n")
+
 
 if __name__ == "__main__":
     main()
