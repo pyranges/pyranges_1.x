@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyranges1"
-version = "1.0.11"
+version = "1.0.12"
 description = "GenomicRanges for Python."
 requires-python = ">=3.12.0"
 readme = "README.md"
@@ -24,7 +24,7 @@ classifiers = [
     "Topic :: Scientific/Engineering"
 ]
 keywords = ["bioinformatics", "genomicranges", "genomics"]
-dependencies = ["pandas", "tabulate", "natsort", "ruranges"]
+dependencies = ["pandas", "tabulate", "natsort", "ruranges>=0.0.6"]
 
 [project.optional-dependencies]
 add-ons = ["pyrle >= 0.0.39", "bamread",  "pyfaidx", "pyBigWig", "joblib"] #"fisher",

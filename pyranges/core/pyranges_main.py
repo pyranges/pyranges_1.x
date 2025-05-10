@@ -2033,8 +2033,8 @@ class PyRanges(RangeFrame):
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                1        3  A
-              1  |    chr1                1        3  a
               0  |    chr1                1        3  A
+              1  |    chr1                1        3  a
               1  |    chr1                1        3  a
               2  |    chr2                4        9  b
         PyRanges with 5 rows, 4 columns, and 1 index columns (with 2 index duplicates).
@@ -2046,8 +2046,8 @@ class PyRanges(RangeFrame):
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                1        3  A
               1  |    chr1                1        3  a
-              3  |    chr1               10       11  c
               2  |    chr2                4        9  b
+              3  |    chr1               10       11  c
         PyRanges with 4 rows, 4 columns, and 1 index columns.
         Contains 2 chromosomes.
 
@@ -4311,6 +4311,7 @@ class PyRanges(RangeFrame):
         use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
         cumsum_start_column: str | None = None,
         cumsum_end_column: str | None = None,
+        sort: bool = True,
     ) -> "PyRanges":
         """Strand-aware cumulative length of every interval *within each chromosome-level group*.
 
@@ -4333,6 +4334,8 @@ class PyRanges(RangeFrame):
         use_strand: {"auto", True, False}, default: "auto"
             Whether negative strand intervals should be sliced in descending order, meaning 5' to 3'.
             The default "auto" means True if PyRanges has valid strands (see .strand_valid).
+        sort : bool, default True
+            Whether to sort the results by the original row order.
 
         Returns
         -------
@@ -4361,14 +4364,14 @@ class PyRanges(RangeFrame):
           index  |      Chromosome    Start      End  Strand      Feature     gene_name
           int64  |        category    int64    int64  category    category    object
         -------  ---  ------------  -------  -------  ----------  ----------  -----------
-              8  |               1        0      350  -           exon        AL627309.1
-              9  |               1      350      519  -           exon        AL627309.1
-             10  |               1      519      578  -           exon        AL627309.1
-              5  |               1      578      683  -           exon        AL627309.1
-              6  |               1      683     1088  -           exon        AL627309.1
               2  |               1        0      359  +           exon        DDX11L1
               3  |               1      359      468  +           exon        DDX11L1
               4  |               1      468     1657  +           exon        DDX11L1
+              5  |               1      578      683  -           exon        AL627309.1
+              6  |               1      683     1088  -           exon        AL627309.1
+              8  |               1        0      350  -           exon        AL627309.1
+              9  |               1      350      519  -           exon        AL627309.1
+             10  |               1      519      578  -           exon        AL627309.1
         PyRanges with 8 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
@@ -4386,6 +4389,7 @@ class PyRanges(RangeFrame):
             ends=self[END_COL].to_numpy(),
             groups=group_ids,
             negative_strand=forward,
+            sort=sort,
         )
 
         res = self.take(idx).copy()  # type: ignore[arg-type]
@@ -4492,8 +4496,8 @@ class PyRanges(RangeFrame):
           index  |    Chromosome      Start      End  ID
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
-              1  |    chr1               28       30  b
               0  |    chr1                7        9  a
+              1  |    chr1               28       30  b
         PyRanges with 2 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes.
 
@@ -4694,10 +4698,10 @@ class PyRanges(RangeFrame):
           index  |    Chromosome      Start      End  Strand      Chromosome_b      Start_b    End_b  Strand_b
           int64  |    category        int64    int64  category    category            int64    int64  category
         -------  ---  ------------  -------  -------  ----------  --------------  ---------  -------  ----------
-              1  |    chr1             9939    10138  +           chr1                10073    10272  +
               0  |    chr1             9916    10115  -           chr1                 9988    10187  -
-              2  |    chr1             9951    10150  -           chr1                 9988    10187  -
               0  |    chr1             9916    10115  -           chr1                10079    10278  -
+              1  |    chr1             9939    10138  +           chr1                10073    10272  +
+              2  |    chr1             9951    10150  -           chr1                 9988    10187  -
               2  |    chr1             9951    10150  -           chr1                10079    10278  -
         PyRanges with 5 rows, 8 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes and 2 strands.
@@ -4708,10 +4712,10 @@ class PyRanges(RangeFrame):
           index  |    Chromosome      Start      End  Strand      Chromosome_b    Strand_b
           int64  |    category        int64    int64  category    category        category
         -------  ---  ------------  -------  -------  ----------  --------------  ----------
-              1  |    chr1            10073    10138  +           chr1            +
               0  |    chr1             9988    10115  -           chr1            -
-              2  |    chr1             9988    10150  -           chr1            -
               0  |    chr1            10079    10115  -           chr1            -
+              1  |    chr1            10073    10138  +           chr1            +
+              2  |    chr1             9988    10150  -           chr1            -
               2  |    chr1            10079    10150  -           chr1            -
         PyRanges with 5 rows, 6 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes and 2 strands.
@@ -4722,10 +4726,10 @@ class PyRanges(RangeFrame):
           index  |    Chromosome      Start      End  Strand      Chromosome_b    Strand_b
           int64  |    category        int64    int64  category    category        category
         -------  ---  ------------  -------  -------  ----------  --------------  ----------
-              1  |    chr1             9939    10272  +           chr1            +
               0  |    chr1             9916    10187  -           chr1            -
-              2  |    chr1             9951    10187  -           chr1            -
               0  |    chr1             9916    10278  -           chr1            -
+              1  |    chr1             9939    10272  +           chr1            +
+              2  |    chr1             9951    10187  -           chr1            -
               2  |    chr1             9951    10278  -           chr1            -
         PyRanges with 5 rows, 6 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes and 2 strands.
@@ -4734,10 +4738,10 @@ class PyRanges(RangeFrame):
           index  |    Chromosome      Start      End  Strand      Chromosome_b    Strand_b
           int64  |    category        int64    int64  category    category        category
         -------  ---  ------------  -------  -------  ----------  --------------  ----------
-              1  |    chr1            10073    10272  +           chr1            +
               0  |    chr1             9988    10187  -           chr1            -
-              2  |    chr1             9988    10187  -           chr1            -
               0  |    chr1            10079    10278  -           chr1            -
+              1  |    chr1            10073    10272  +           chr1            +
+              2  |    chr1             9988    10187  -           chr1            -
               2  |    chr1            10079    10278  -           chr1            -
         PyRanges with 5 rows, 6 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes and 2 strands.
@@ -4749,10 +4753,10 @@ class PyRanges(RangeFrame):
           index  |    Chromosome      Start      End  Strand      Chromosome_b    Strand_b
           int64  |    category        int64    int64  category    category        category
         -------  ---  ------------  -------  -------  ----------  --------------  ----------
-              1  |    chr1             9939    10272  +           chr1            +
               0  |    chr1             9916    10187  -           chr1            -
-              2  |    chr1             9951    10187  -           chr1            -
               0  |    chr1             9916    10278  -           chr1            -
+              1  |    chr1             9939    10272  +           chr1            +
+              2  |    chr1             9951    10187  -           chr1            -
               2  |    chr1             9951    10278  -           chr1            -
         PyRanges with 5 rows, 6 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes and 2 strands.
