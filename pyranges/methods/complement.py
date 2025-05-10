@@ -31,10 +31,16 @@ def _complement(
     factorized = pd.Series(np.zeros(len(df), dtype=np.uint32)) if not by else df.groupby(by).ngroup().astype(np.uint32)
 
     if chromsizes and chromsizes_col:
-        chrom_lens = df[chromsizes_col].replace(chromsizes)
-        chrom_lens = pd.concat([factorized, chrom_lens], axis=1).drop_duplicates()
-        chrom_len_ids = chrom_lens[0].to_numpy()
-        chrom_lens = chrom_lens[chromsizes_col].to_numpy()
+        group_to_len = (
+            pd.DataFrame(
+                {
+                    "group_id": factorized,
+                    "length": df[chromsizes_col].replace(chromsizes),
+                }
+            )
+        ).drop_duplicates()
+        chrom_len_ids = group_to_len["group_id"].to_numpy(np.uint32)
+        chrom_lens = group_to_len["length"].to_numpy(np.int64)
     else:
         chrom_len_ids = np.array([], dtype=np.uint32)
         chrom_lens = np.array([], dtype=np.int64)

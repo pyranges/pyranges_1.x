@@ -38,6 +38,7 @@ def map_to_global(
         use_strand=use_strand,
         cumsum_start_column=cumsum_start,
         cumsum_end_column=cumsum_end,
+        sort=False,
     )
     ex_df = global_cum.copy()
 
