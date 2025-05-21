@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
@@ -29,6 +29,9 @@ def _complement(
     col_order = [col for col in df if col in [*by, START_COL, END_COL]]
 
     factorized = pd.Series(np.zeros(len(df), dtype=np.uint32)) if not by else df.groupby(by).ngroup().astype(np.uint32)
+    # The Rust kernel must see the *same* dtype that we pass for starts/ends
+    pos_dtype: np.dtype[Any] = df[START_COL].to_numpy(copy=False).dtype
+    grp_dtype: np.dtype[Any] = factorized.to_numpy(copy=False).dtype
 
     if chromsizes and chromsizes_col:
         group_to_len = (
@@ -39,11 +42,11 @@ def _complement(
                 }
             )
         ).drop_duplicates()
-        chrom_len_ids = group_to_len["group_id"].to_numpy(np.uint32)
-        chrom_lens = group_to_len["length"].to_numpy(np.int64)
+        chrom_len_ids = group_to_len["group_id"].to_numpy(grp_dtype)
+        chrom_lens = group_to_len["length"].to_numpy(pos_dtype)
     else:
-        chrom_len_ids = np.array([], dtype=np.uint32)
-        chrom_lens = np.array([], dtype=np.int64)
+        chrom_len_ids = np.array([], dtype=grp_dtype)
+        chrom_lens = np.array([], dtype=pos_dtype)
 
     chrs, start, end, idxs = ruranges.complement(
         groups=factorized.to_numpy(),
