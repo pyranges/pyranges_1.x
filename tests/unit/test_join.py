@@ -38,10 +38,8 @@ def test_join_issue_8() -> None:
             "Start": [795, 795],
             "End": [895, 895],
             "Strand": ["-", "-"],
-            "Chromosome_b": ["chr1", "chr1"],
             "Start_b": [731, 821],
             "End_b": [831, 921],
-            "Strand_b": ["-", "-"],
         },
         index=[0, 1],
     )
@@ -74,10 +72,8 @@ def test_join_issue_8_right() -> None:
             "Start": [795.0, 795.0, nan, nan],
             "End": [895.0, 895.0, nan, nan],
             "Strand": ["-", "-", nan, nan],
-            "Chromosome_b": ["chr1", "chr1", "chr1", "chr1"],
             "Start_b": [731, 821, 157, 584],
             "End_b": [831, 921, 257, 684],
-            "Strand_b": ["-", "-", "-", "-"],
         },
         index=[0, 1, 2, 3],
     )
