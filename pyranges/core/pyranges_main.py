@@ -1183,11 +1183,14 @@ class PyRanges(RangeFrame):
         See Also
         --------
         PyRanges.combine_interval_columns : give joined PyRanges new coordinates
+        PyRanges.compute_interval_metrics : compute overlap metrics in joined PyRanges
 
         Examples
         --------
-        >>> f1 = pr.PyRanges({'Chromosome': ['chr1', 'chr1', 'chr1'], 'Start': [3, 8, 5],
-        ...                   'End': [6, 9, 7], 'Name': ['interval1', 'interval3', 'interval2']})
+        >>> f1 = pr.PyRanges({'Chromosome': ['chr1', 'chr1', 'chr1'],
+        ...                   'Start': [3, 8, 5],
+        ...                   'End': [6, 9, 7],
+        ...                   'Name': ['interval1', 'interval3', 'interval2']})
         >>> f1
           index  |    Chromosome      Start      End  Name
           int64  |    object          int64    int64  object
@@ -1198,8 +1201,10 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        >>> f2 = pr.PyRanges({'Chromosome': ['chr1', 'chr1'], 'Start': [1, 6],
-        ...                    'End': [2, 7], 'Name': ['a', 'b']})
+        >>> f2 = pr.PyRanges({'Chromosome': ['chr1', 'chr1'],
+        ...                   'Start': [1, 6],
+        ...                   'End': [2, 7],
+        ...                   'Name': ['a', 'b']})
         >>> f2
           index  |    Chromosome      Start      End  Name
           int64  |    object          int64    int64  object
@@ -1210,40 +1215,42 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes.
 
         >>> f1.join_ranges(f2)
-          index  |    Chromosome      Start      End  Name       Chromosome_b      Start_b    End_b  Name_b
-          int64  |    object          int64    int64  object     object              int64    int64  object
-        -------  ---  ------------  -------  -------  ---------  --------------  ---------  -------  --------
-              2  |    chr1                5        7  interval2  chr1                    6        7  b
-        PyRanges with 1 rows, 8 columns, and 1 index columns.
+          index  |    Chromosome      Start      End  Name         Start_b    End_b  Name_b
+          int64  |    object          int64    int64  object         int64    int64  object
+        -------  ---  ------------  -------  -------  ---------  ---------  -------  --------
+              2  |    chr1                5        7  interval2          6        7  b
+        PyRanges with 1 rows, 7 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        Note that since some start and end columns are nan, a regular DataFrame is returned.
+        Note that since some start and end columns are NaN, a regular DataFrame is returned.
 
         >>> f1.join_ranges(f2, join_type="left")
-          index  |    Chromosome      Start      End  Name       Chromosome_b      Start_b      End_b  Name_b
-          int64  |    object          int64    int64  object     object            float64    float64  object
-        -------  ---  ------------  -------  -------  ---------  --------------  ---------  ---------  --------
-              2  |    chr1                5        7  interval2  chr1                    6          7  b
-              0  |    chr1                3        6  interval1  nan                   nan        nan  nan
-              1  |    chr1                8        9  interval3  nan                   nan        nan  nan
-        PyRanges with 3 rows, 8 columns, and 1 index columns.
+          index  |    Chromosome      Start      End  Name         Start_b      End_b  Name_b
+          int64  |    object          int64    int64  object       float64    float64  object
+        -------  ---  ------------  -------  -------  ---------  ---------  ---------  --------
+              2  |    chr1                5        7  interval2          6          7  b
+              0  |    chr1                3        6  interval1        nan        nan  nan
+              1  |    chr1                8        9  interval3        nan        nan  nan
+        PyRanges with 3 rows, 7 columns, and 1 index columns.
         Contains 1 chromosomes.
 
         >>> f1.join_ranges(f2, join_type="outer")
-          index  |    Chromosome        Start        End  Name       Chromosome_b      Start_b      End_b  Name_b
-          int64  |    object          float64    float64  object     object            float64    float64  object
-        -------  ---  ------------  ---------  ---------  ---------  --------------  ---------  ---------  --------
-              1  |    chr1                  5          7  interval2  chr1                    6          7  b
-              0  |    chr1                  3          6  interval1  nan                   nan        nan  nan
-              1  |    chr1                  8          9  interval3  nan                   nan        nan  nan
-              0  |    nan                 nan        nan  nan        chr1                    1          2  a
-        PyRanges with 4 rows, 8 columns, and 1 index columns (with 2 index duplicates).
+          index  |    Chromosome        Start        End  Name         Start_b      End_b  Name_b
+          int64  |    object          float64    float64  object       float64    float64  object
+        -------  ---  ------------  ---------  ---------  ---------  ---------  ---------  --------
+              1  |    chr1                  5          7  interval2          6          7  b
+              0  |    chr1                  3          6  interval1        nan        nan  nan
+              1  |    chr1                  8          9  interval3        nan        nan  nan
+              0  |    nan                 nan        nan  nan                1          2  a
+        PyRanges with 4 rows, 7 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes.
         Invalid ranges:
           * 1 starts or ends are nan. See indexes: 0
 
-        >>> gr = pr.PyRanges({"Chromosome": ["chr1", "chr2", "chr1", "chr3"], "Start": [1, 4, 10, 0],
-        ...                   "End": [3, 9, 11, 1], "ID": ["a", "b", "c", "d"]})
+        >>> gr = pr.PyRanges({'Chromosome': ['chr1', 'chr2', 'chr1', 'chr3'],
+        ...                   'Start': [1, 4, 10, 0],
+        ...                   'End': [3, 9, 11, 1],
+        ...                   'ID': ['a', 'b', 'c', 'd']})
         >>> gr
           index  |    Chromosome      Start      End  ID
           int64  |    object          int64    int64  object
@@ -1255,8 +1262,10 @@ class PyRanges(RangeFrame):
         PyRanges with 4 rows, 4 columns, and 1 index columns.
         Contains 3 chromosomes.
 
-        >>> gr2 = pr.PyRanges({"Chromosome": ["chr1", "chr1", "chr1"], "Start": [2, 2, 1], "End": [3, 9, 10],
-        ...                     "ID": ["a", "b", "c"]})
+        >>> gr2 = pr.PyRanges({'Chromosome': ['chr1', 'chr1', 'chr1'],
+        ...                    'Start': [2, 2, 1],
+        ...                    'End': [3, 9, 10],
+        ...                    'ID': ['a', 'b', 'c']})
         >>> gr2
           index  |    Chromosome      Start      End  ID
           int64  |    object          int64    int64  object
@@ -1268,31 +1277,31 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes.
 
         >>> gr.join_ranges(gr2)
-          index  |    Chromosome      Start      End  ID        Chromosome_b      Start_b    End_b  ID_b
-          int64  |    object          int64    int64  object    object              int64    int64  object
-        -------  ---  ------------  -------  -------  --------  --------------  ---------  -------  --------
-              0  |    chr1                1        3  a         chr1                    1       10  c
-              0  |    chr1                1        3  a         chr1                    2        3  a
-              0  |    chr1                1        3  a         chr1                    2        9  b
-        PyRanges with 3 rows, 8 columns, and 1 index columns (with 2 index duplicates).
+          index  |    Chromosome      Start      End  ID          Start_b    End_b  ID_b
+          int64  |    object          int64    int64  object        int64    int64  object
+        -------  ---  ------------  -------  -------  --------  ---------  -------  --------
+              0  |    chr1                1        3  a                 1       10  c
+              0  |    chr1                1        3  a                 2        3  a
+              0  |    chr1                1        3  a                 2        9  b
+        PyRanges with 3 rows, 7 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes.
 
         >>> gr.join_ranges(gr2, match_by="ID")
-          index  |    Chromosome      Start      End  ID        Chromosome_b      Start_b    End_b  ID_b
-          int64  |    object          int64    int64  object    object              int64    int64  object
-        -------  ---  ------------  -------  -------  --------  --------------  ---------  -------  --------
-              0  |    chr1                1        3  a         chr1                    2        3  a
-        PyRanges with 1 rows, 8 columns, and 1 index columns.
+          index  |    Chromosome      Start      End  ID          Start_b    End_b
+          int64  |    object          int64    int64  object        int64    int64
+        -------  ---  ------------  -------  -------  --------  ---------  -------
+              0  |    chr1                1        3  a                 2        3
+        PyRanges with 1 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes.
 
         >>> bad = f1.join_ranges(f2, join_type="right")
         >>> bad
-          index  |    Chromosome        Start        End  Name       Chromosome_b      Start_b    End_b  Name_b
-          int64  |    object          float64    float64  object     object              int64    int64  object
-        -------  ---  ------------  ---------  ---------  ---------  --------------  ---------  -------  --------
-              1  |    chr1                  5          7  interval2  chr1                    6        7  b
-              0  |    nan                 nan        nan  nan        chr1                    1        2  a
-        PyRanges with 2 rows, 8 columns, and 1 index columns.
+          index  |    Chromosome        Start        End  Name         Start_b    End_b  Name_b
+          int64  |    object          float64    float64  object         int64    int64  object
+        -------  ---  ------------  ---------  ---------  ---------  ---------  -------  --------
+              1  |    chr1                  5          7  interval2          6        7  b
+              0  |    nan                 nan        nan  nan                1        2  a
+        PyRanges with 2 rows, 7 columns, and 1 index columns.
         Contains 1 chromosomes.
         Invalid ranges:
           * 1 starts or ends are nan. See indexes: 0
@@ -1300,50 +1309,55 @@ class PyRanges(RangeFrame):
         With slack 1, bookended features are joined (see row 1):
 
         >>> f1.join_ranges(f2, slack=1)
-          index  |    Chromosome      Start      End  Name       Chromosome_b      Start_b    End_b  Name_b
-          int64  |    object          int64    int64  object     object              int64    int64  object
-        -------  ---  ------------  -------  -------  ---------  --------------  ---------  -------  --------
-              0  |    chr1                3        6  interval1  chr1                    6        7  b
-              2  |    chr1                5        7  interval2  chr1                    6        7  b
-        PyRanges with 2 rows, 8 columns, and 1 index columns.
+          index  |    Chromosome      Start      End  Name         Start_b    End_b  Name_b
+          int64  |    object          int64    int64  object         int64    int64  object
+        -------  ---  ------------  -------  -------  ---------  ---------  -------  --------
+              0  |    chr1                3        6  interval1          6        7  b
+              2  |    chr1                5        7  interval2          6        7  b
+        PyRanges with 2 rows, 7 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-
         >>> f1.join_ranges(f2, report_overlap_column="Overlap")
-          index  |    Chromosome      Start      End  Name       Chromosome_b      Start_b    End_b  Name_b      Overlap
-          int64  |    object          int64    int64  object     object              int64    int64  object        int64
-        -------  ---  ------------  -------  -------  ---------  --------------  ---------  -------  --------  ---------
-              2  |    chr1                5        7  interval2  chr1                    6        7  b                 1
-        PyRanges with 1 rows, 9 columns, and 1 index columns.
+          index  |    Chromosome      Start      End  Name         Start_b    End_b  Name_b      Overlap
+          int64  |    object          int64    int64  object         int64    int64  object        int64
+        -------  ---  ------------  -------  -------  ---------  ---------  -------  --------  ---------
+              2  |    chr1                5        7  interval2          6        7  b                 1
+        PyRanges with 1 rows, 8 columns, and 1 index columns.
         Contains 1 chromosomes.
 
         Allowing slack in overlaps may result in 0 or negative Overlap values:
 
         >>> f1.join_ranges(f2, report_overlap_column="Overlap", slack=2)
-          index  |    Chromosome      Start      End  Name       Chromosome_b      Start_b    End_b  Name_b      Overlap
-          int64  |    object          int64    int64  object     object              int64    int64  object        int64
-        -------  ---  ------------  -------  -------  ---------  --------------  ---------  -------  --------  ---------
-              0  |    chr1                3        6  interval1  chr1                    1        2  a                -1
-              0  |    chr1                3        6  interval1  chr1                    6        7  b                 0
-              1  |    chr1                8        9  interval3  chr1                    6        7  b                -1
-              2  |    chr1                5        7  interval2  chr1                    6        7  b                 1
-        PyRanges with 4 rows, 9 columns, and 1 index columns (with 1 index duplicates).
+          index  |    Chromosome      Start      End  Name         Start_b    End_b  Name_b      Overlap
+          int64  |    object          int64    int64  object         int64    int64  object        int64
+        -------  ---  ------------  -------  -------  ---------  ---------  -------  --------  ---------
+              0  |    chr1                3        6  interval1          1        2  a                -1
+              0  |    chr1                3        6  interval1          6        7  b                 0
+              1  |    chr1                8        9  interval3          6        7  b                -1
+              2  |    chr1                5        7  interval2          6        7  b                 1
+        PyRanges with 4 rows, 8 columns, and 1 index columns (with 1 index duplicates).
         Contains 1 chromosomes.
 
         """
         _other, by = prepare_by_binary(self, other=other, strand_behavior=strand_behavior, match_by=match_by)
-        gr = super().join_ranges(
-            other=_other,
-            match_by=by,
-            join_type=join_type,
-            multiple=multiple,
-            contained_intervals_only=contained_intervals_only,
-            slack=slack,
-            suffix=suffix,
-            report_overlap_column=report_overlap_column,
+
+        gr = (
+            super()
+            .join_ranges(
+                other=_other,
+                match_by=by,
+                join_type=join_type,
+                multiple=multiple,
+                contained_intervals_only=contained_intervals_only,
+                slack=slack,
+                suffix=suffix,
+                report_overlap_column=report_overlap_column,
+            )
+            .drop(columns=[col + suffix for col in by])
         )
 
-        return mypy_ensure_pyranges(gr)
+        # ─── Pyright-friendly: gr is never None in practice ────────────────────
+        return mypy_ensure_pyranges(cast("pd.DataFrame", gr))
 
     @property
     def length(self) -> int:
@@ -1953,11 +1967,12 @@ class PyRanges(RangeFrame):
         self,
         other: "PyRanges",
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
-        multiple: VALID_OVERLAP_TYPE = "all",
         slack: int = 0,
         *,
+        multiple: bool = False,
         contained_intervals_only: bool = False,
         match_by: VALID_BY_TYPES = None,
+        invert: bool = False,
     ) -> "PyRanges":
         """Return overlapping intervals.
 
@@ -1973,22 +1988,23 @@ class PyRanges(RangeFrame):
             information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_valid)
             otherwise ignore the strand information.
 
-        multiple : {"all", "first", "last"}, default "all"
-            What intervals to report when multiple intervals in 'other' overlap with the same interval in self.
-            The default "all" reports all overlapping subintervals, which will have duplicate indices.
-            "first" reports only, for each interval in self, the overlapping subinterval with smallest Start in 'other'
-            "last" reports only the overlapping subinterval with the biggest End in 'other'
-
         slack : int, default 0
             Intervals in self are temporarily extended by slack on both ends before overlap is calculated, so that
             we allow non-overlapping intervals to be considered overlapping if they are within less than slack distance
             e.g. slack=1 reports bookended intervals.
+
+        multiple : bool, default False
+            What intervals to report when multiple intervals in 'other' overlap with the same interval in self.
+            If True, each interval is reported once for every overlap, potentially resulting in duplicate indices.
 
         contained_intervals_only : bool, default False
             Whether to report only intervals that are entirely contained in an interval of 'other'.
 
         match_by : str or list, default None
             If provided, only overlapping intervals with an equal value in column(s) `match_by` are reported.
+
+        invert : bool, default False
+            If True, return intervals that do not overlap instead, according to all criteria specified
 
         Returns
         -------
@@ -2033,6 +2049,16 @@ class PyRanges(RangeFrame):
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                1        3  A
+              1  |    chr1                1        3  a
+              2  |    chr2                4        9  b
+        PyRanges with 3 rows, 4 columns, and 1 index columns.
+        Contains 2 chromosomes.
+
+        >>> gr.overlap(gr2, multiple=True)
+          index  |    Chromosome      Start      End  ID
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                1        3  A
               0  |    chr1                1        3  A
               1  |    chr1                1        3  a
               1  |    chr1                1        3  a
@@ -2040,7 +2066,16 @@ class PyRanges(RangeFrame):
         PyRanges with 5 rows, 4 columns, and 1 index columns (with 2 index duplicates).
         Contains 2 chromosomes.
 
-        >>> gr.overlap(gr2, slack=2, multiple="first")
+        >>> gr.overlap(gr2, invert=True)
+          index  |    Chromosome      Start      End  ID
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              3  |    chr1               10       11  c
+              4  |    chr3                0        1  d
+        PyRanges with 2 rows, 4 columns, and 1 index columns.
+        Contains 2 chromosomes.
+
+        >>> gr.overlap(gr2, slack=2)
           index  |    Chromosome      Start      End  ID
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
@@ -2051,15 +2086,13 @@ class PyRanges(RangeFrame):
         PyRanges with 4 rows, 4 columns, and 1 index columns.
         Contains 2 chromosomes.
 
-        >>> gr.overlap(gr2, multiple="last")
+        >>> gr.overlap(gr2, slack=2, invert=True)
           index  |    Chromosome      Start      End  ID
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
-              0  |    chr1                1        3  A
-              1  |    chr1                1        3  a
-              2  |    chr2                4        9  b
-        PyRanges with 3 rows, 4 columns, and 1 index columns.
-        Contains 2 chromosomes.
+              4  |    chr3                0        1  d
+        PyRanges with 1 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes.
 
         >>> gr.overlap(gr2, contained_intervals_only=True)
           index  |    Chromosome      Start      End  ID
@@ -2068,6 +2101,17 @@ class PyRanges(RangeFrame):
               2  |    chr2                4        9  b
         PyRanges with 1 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes.
+
+        >>> gr.overlap(gr2, contained_intervals_only=True, invert=True)
+          index  |    Chromosome      Start      End  ID
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                1        3  A
+              1  |    chr1                1        3  a
+              3  |    chr1               10       11  c
+              4  |    chr3                0        1  d
+        PyRanges with 4 rows, 4 columns, and 1 index columns.
+        Contains 2 chromosomes.
 
         >>> gr.overlap(gr2, contained_intervals_only=True, slack=-2)
           index  |    Chromosome      Start      End  ID
@@ -2078,14 +2122,6 @@ class PyRanges(RangeFrame):
               2  |    chr2                4        9  b
         PyRanges with 3 rows, 4 columns, and 1 index columns.
         Contains 2 chromosomes.
-
-        >>> gr.overlap(gr2, contained_intervals_only=True, multiple="first")
-          index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
-              2  |    chr2                4        9  b
-        PyRanges with 1 rows, 4 columns, and 1 index columns.
-        Contains 1 chromosomes.
 
         >>> gr3 = pr.PyRanges({"Chromosome": 1, "Start": [2, 4], "End": [3, 5], "Strand": ["+", "-"]})
         >>> gr3
@@ -2107,15 +2143,24 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 1 strands.
 
         """
-        _other, by = prepare_by_binary(self, other=other, strand_behavior=strand_behavior, match_by=match_by)
+        multiple_arg: VALID_OVERLAP_TYPE = "all" if multiple else "first"
 
-        gr = super().overlap(
-            _other,
-            match_by=by,
-            slack=slack,
-            multiple=multiple,
-            contained_intervals_only=contained_intervals_only,
-        )
+        _other, by = prepare_by_binary(self, other=other, strand_behavior=strand_behavior, match_by=match_by)
+        if invert and not contained_intervals_only and not slack:
+            # while ruranges complement_overlaps has a slack argument, it does not behave as expected
+            gr = super().complement_overlaps(other=_other, match_by=by)
+        else:
+            gr = super().overlap(
+                _other,
+                match_by=by,
+                slack=slack,
+                multiple=multiple_arg,
+                contained_intervals_only=contained_intervals_only,
+            )
+
+            if invert:
+                # handling rare case not yet implemented in ruranges complement_overlaps: combined invert + (contained_intervals_only | slack)
+                gr = self.loc[~self.index.isin(gr.index)].copy()
 
         return mypy_ensure_pyranges(gr)
 
@@ -4692,73 +4737,91 @@ class PyRanges(RangeFrame):
 
         Examples
         --------
-        >>> gr1, gr2 = pr.example_data.aorta.head(3).remove_nonloc_columns(), pr.example_data.aorta2.head(3).remove_nonloc_columns()
+        >>> gr1 = pr.example_data.aorta.head(3).remove_nonloc_columns()
+        >>> gr1
+          index  |    Chromosome      Start      End  Strand
+          int64  |    category        int64    int64  category
+        -------  ---  ------------  -------  -------  ----------
+              0  |    chr1             9916    10115  -
+              1  |    chr1             9939    10138  +
+              2  |    chr1             9951    10150  -
+        PyRanges with 3 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        >>> gr2 = pr.example_data.aorta2.head(3).remove_nonloc_columns()
+        >>> gr2
+          index  |    Chromosome      Start      End  Strand
+          int64  |    category        int64    int64  category
+        -------  ---  ------------  -------  -------  ----------
+              0  |    chr1             9988    10187  -
+              1  |    chr1            10073    10272  +
+              2  |    chr1            10079    10278  -
+        PyRanges with 3 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
         >>> j = gr1.join_ranges(gr2)
         >>> j
-          index  |    Chromosome      Start      End  Strand      Chromosome_b      Start_b    End_b  Strand_b
-          int64  |    category        int64    int64  category    category            int64    int64  category
-        -------  ---  ------------  -------  -------  ----------  --------------  ---------  -------  ----------
-              0  |    chr1             9916    10115  -           chr1                 9988    10187  -
-              0  |    chr1             9916    10115  -           chr1                10079    10278  -
-              1  |    chr1             9939    10138  +           chr1                10073    10272  +
-              2  |    chr1             9951    10150  -           chr1                 9988    10187  -
-              2  |    chr1             9951    10150  -           chr1                10079    10278  -
-        PyRanges with 5 rows, 8 columns, and 1 index columns (with 2 index duplicates).
-        Contains 1 chromosomes and 2 strands.
-
-        The default operation is to intersect the intervals:
-
-        >>> j.combine_interval_columns()
-          index  |    Chromosome      Start      End  Strand      Chromosome_b    Strand_b
-          int64  |    category        int64    int64  category    category        category
-        -------  ---  ------------  -------  -------  ----------  --------------  ----------
-              0  |    chr1             9988    10115  -           chr1            -
-              0  |    chr1            10079    10115  -           chr1            -
-              1  |    chr1            10073    10138  +           chr1            +
-              2  |    chr1             9988    10150  -           chr1            -
-              2  |    chr1            10079    10150  -           chr1            -
+          index  |    Chromosome      Start      End  Strand        Start_b    End_b
+          int64  |    category        int64    int64  category        int64    int64
+        -------  ---  ------------  -------  -------  ----------  ---------  -------
+              0  |    chr1             9916    10115  -                9988    10187
+              0  |    chr1             9916    10115  -               10079    10278
+              1  |    chr1             9939    10138  +               10073    10272
+              2  |    chr1             9951    10150  -                9988    10187
+              2  |    chr1             9951    10150  -               10079    10278
         PyRanges with 5 rows, 6 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes and 2 strands.
 
-        Take the union instead:
+        Combine the interval coordinates in different ways:
 
-        >>> j.combine_interval_columns('union')
-          index  |    Chromosome      Start      End  Strand      Chromosome_b    Strand_b
-          int64  |    category        int64    int64  category    category        category
-        -------  ---  ------------  -------  -------  ----------  --------------  ----------
-              0  |    chr1             9916    10187  -           chr1            -
-              0  |    chr1             9916    10278  -           chr1            -
-              1  |    chr1             9939    10272  +           chr1            +
-              2  |    chr1             9951    10187  -           chr1            -
-              2  |    chr1             9951    10278  -           chr1            -
-        PyRanges with 5 rows, 6 columns, and 1 index columns (with 2 index duplicates).
+        >>> j.combine_interval_columns()        # default: "intersect"
+          index  |    Chromosome      Start      End  Strand
+          int64  |    category        int64    int64  category
+        -------  ---  ------------  -------  -------  ----------
+              0  |    chr1             9988    10115  -
+              0  |    chr1            10079    10115  -
+              1  |    chr1            10073    10138  +
+              2  |    chr1             9988    10150  -
+              2  |    chr1            10079    10150  -
+        PyRanges with 5 rows, 4 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes and 2 strands.
 
-        >>> j.combine_interval_columns('swap')
-          index  |    Chromosome      Start      End  Strand      Chromosome_b    Strand_b
-          int64  |    category        int64    int64  category    category        category
-        -------  ---  ------------  -------  -------  ----------  --------------  ----------
-              0  |    chr1             9988    10187  -           chr1            -
-              0  |    chr1            10079    10278  -           chr1            -
-              1  |    chr1            10073    10272  +           chr1            +
-              2  |    chr1             9988    10187  -           chr1            -
-              2  |    chr1            10079    10278  -           chr1            -
-        PyRanges with 5 rows, 6 columns, and 1 index columns (with 2 index duplicates).
+        >>> j.combine_interval_columns("union")
+          index  |    Chromosome      Start      End  Strand
+          int64  |    category        int64    int64  category
+        -------  ---  ------------  -------  -------  ----------
+              0  |    chr1             9916    10187  -
+              0  |    chr1             9916    10278  -
+              1  |    chr1             9939    10272  +
+              2  |    chr1             9951    10187  -
+              2  |    chr1             9951    10278  -
+        PyRanges with 5 rows, 4 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes and 2 strands.
 
-        Use a custom function that keeps the start of the first interval and the end of the second:
+        >>> j.combine_interval_columns("swap")
+          index  |    Chromosome      Start      End  Strand
+          int64  |    category        int64    int64  category
+        -------  ---  ------------  -------  -------  ----------
+              0  |    chr1             9988    10187  -
+              0  |    chr1            10079    10278  -
+              1  |    chr1            10073    10272  +
+              2  |    chr1             9988    10187  -
+              2  |    chr1            10079    10278  -
+        PyRanges with 5 rows, 4 columns, and 1 index columns (with 2 index duplicates).
+        Contains 1 chromosomes and 2 strands.
 
-        >>> def custom_combine(s1, e1, s2, e2): return (s1, e2)
+        >>> def custom_combine(s1, e1, s2, e2):   # keep Start from first, End from second
+        ...     return (s1, e2)
         >>> j.combine_interval_columns(custom_combine)
-          index  |    Chromosome      Start      End  Strand      Chromosome_b    Strand_b
-          int64  |    category        int64    int64  category    category        category
-        -------  ---  ------------  -------  -------  ----------  --------------  ----------
-              0  |    chr1             9916    10187  -           chr1            -
-              0  |    chr1             9916    10278  -           chr1            -
-              1  |    chr1             9939    10272  +           chr1            +
-              2  |    chr1             9951    10187  -           chr1            -
-              2  |    chr1             9951    10278  -           chr1            -
-        PyRanges with 5 rows, 6 columns, and 1 index columns (with 2 index duplicates).
+          index  |    Chromosome      Start      End  Strand
+          int64  |    category        int64    int64  category
+        -------  ---  ------------  -------  -------  ----------
+              0  |    chr1             9916    10187  -
+              0  |    chr1             9916    10278  -
+              1  |    chr1             9939    10272  +
+              2  |    chr1             9951    10187  -
+              2  |    chr1             9951    10278  -
+        PyRanges with 5 rows, 4 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes and 2 strands.
 
         """
@@ -4960,82 +5023,6 @@ class PyRanges(RangeFrame):
             chromsizes=chromsizes,
             chromsizes_col=group_sizes_col,
             include_first_interval=include_first_interval,
-        )
-
-        return mypy_ensure_pyranges(result)
-
-    def complement_overlaps(  # type: ignore[override]
-        self: "PyRanges",
-        other: "PyRanges",
-        *,
-        match_by: VALID_BY_TYPES = None,
-        slack: int = 0,
-        use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
-    ) -> "PyRanges":
-        """Return the internal complement of self with respect to another PyRanges.
-
-        The complement of an interval is defined as the subinterval(s) in self that are not overlapped by any
-        intervals in other. This function is useful for obtaining regions such as introns by excluding intervals
-        (e.g. exons) that overlap with those in another PyRanges object.
-
-        Parameters
-        ----------
-        other : PyRanges
-            A PyRanges object whose intervals are used to determine the overlaps.
-        match_by : str or list, default None
-            Column(s) to group intervals by (e.g. exons). If provided, the complement will be calculated separately
-            for each group.
-        slack : int, default 0
-            An integer offset that adjusts the overlap threshold when computing the complement intervals.
-            Negative values reduce the required gap between intervals (effectively "shrinking" them), while positive values
-            increase the gap threshold.
-        use_strand : {"auto", True, False}, default "auto"
-            Whether to compute the complement separately for intervals on the positive and negative strand.
-            The default "auto" means that strand information is used if present and valid (see .strand_valid).
-
-        Returns
-        -------
-        PyRanges
-            A PyRanges object containing the complement intervals (i.e. regions in self that do not overlap with any intervals in other).
-
-        Notes
-        -----
-        * To ensure non-overlap among the input intervals, merge_overlaps is run before the complement is calculated.
-        * Bookended intervals will result in no complement intervals returned since they would be of length 0.
-
-        See Also
-        --------
-        PyRanges.subtract_ranges : Report non-overlapping subintervals.
-        PyRanges.boundaries : Report the boundaries of groups of intervals (e.g. transcripts/genes).
-
-        Examples
-        --------
-        >>> gr = pr.PyRanges({"Chromosome": ["chr1"] * 3, "Start": [1, 4, 10],
-        ...                    "End": [3, 9, 11], "ID": ["a", "b", "c"]})
-        >>> gr2 = pr.PyRanges({"Chromosome": ["chr1"] * 3, "Start": [2, 2, 9],
-        ...                    "End": [3, 9, 10]})
-        >>> gr.complement_overlaps(gr2)
-          index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
-              2  |    chr1               10       11  c
-        PyRanges with 1 rows, 4 columns, and 1 index columns.
-        Contains 1 chromosomes.
-
-        >>> gr.complement_overlaps(gr2, slack=-1)
-          index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
-              0  |    chr1                1        3  a
-              2  |    chr1               10       11  c
-        PyRanges with 2 rows, 4 columns, and 1 index columns.
-        Contains 1 chromosomes.
-
-        """
-        result = super().complement_overlaps(
-            other=other,
-            match_by=prepare_by_single(self, use_strand=use_strand, match_by=match_by),
-            slack=slack,
         )
 
         return mypy_ensure_pyranges(result)
