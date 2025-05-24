@@ -922,8 +922,11 @@ class PyRanges(RangeFrame):
         --------
         PyRanges.subsequence : obtain subsequences of intervals
         PyRanges.spliced_subsequence : obtain subsequences of intervals, providing transcript-level coordinates
+        PyRanges.upstream : return regions upstream of input intervals or transcripts
+        PyRanges.downstream : return regions downstream of input intervals or transcripts
         PyRanges.five_end : return the 5' end of intervals or transcripts
         PyRanges.three_end : return the 3' end of intervals or transcripts
+        PyRanges.extend : return intervals or transcripts extended at one or both ends
 
         Examples
         --------
@@ -1028,6 +1031,7 @@ class PyRanges(RangeFrame):
         """Return the five prime end of intervals.
 
         The five prime end is the start of a forward strand or the end of a reverse strand.
+        All returned intervals have length of 1.
 
         Parameters
         ----------
@@ -1037,6 +1041,12 @@ class PyRanges(RangeFrame):
 
         slack : int, default 0
             Lengthen (or contract) intervals.
+
+        See Also
+        --------
+        PyRanges.upstream : return regions upstream of input intervals or transcripts
+        PyRanges.three_end : return the 3' end of intervals or transcripts
+        PyRanges.extend : return intervals or transcripts extended at one or both ends
 
         Returns
         -------
@@ -3394,9 +3404,10 @@ class PyRanges(RangeFrame):
         transcript_id: VALID_BY_TYPES = None,
         slack: int = 0,
     ) -> "PyRanges":
-        """Return the 3'-end.
+        """Return the three prime end of intervals.
 
-        The 3'-end is the the end of intervals on the forward strand and the start of intervals on the reverse strand.
+        The three prime end is the end of a forward strand or the start of a reverse strand.
+        All returned intervals have length of 1.
 
         Parameters
         ----------
@@ -3414,9 +3425,9 @@ class PyRanges(RangeFrame):
 
         See Also
         --------
-        PyRanges.five_end : return the five prime end
-        PyRanges.subsequence : return subintervals specified in relative genome-based coordinates
-        PyRanges.spliced_subsequence : return subintervals specified in relative mRNA-based coordinates
+        PyRanges.upstream : return regions upstream of input intervals or transcripts
+        PyRanges.five_end : return the 5' end of intervals or transcripts
+        PyRanges.extend : return intervals or transcripts extended at one or both ends
 
         Examples
         --------
@@ -4002,6 +4013,266 @@ class PyRanges(RangeFrame):
             rpm=rpm,
         )
 
+    def upstream(
+        self: "PyRanges",
+        length: int,
+        gap: int = 0,
+        *,
+        transcript_id: VALID_BY_TYPES = None,
+        use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
+    ) -> "PyRanges":
+        r"""Return regions upstream (at the 5' side) of input intervals.
+
+        Parameters
+        ----------
+        length : int
+            Size of the region (bp), **> 0**.
+        gap : int, default 0
+            Distance between region and input intervals; use negative to include some overlap.
+        transcript_id : str or list of str or None
+            Name(s) of column(s) to group intervals. If provided, one region per group is returned.
+        use_strand: {"auto", True, False}, default: "auto"
+            Whether to consider strand; if so, the upstream window of negative intervals is on their right.
+            The default "auto" means True if PyRanges has valid strands (see .strand_valid).
+
+        See Also
+        --------
+        PyRanges.downstream : return regions downstream of input intervals or transcripts
+        PyRanges.five_end : return the 5' end of intervals or transcripts
+        PyRanges.extend : return intervals or transcripts extended at one or both ends
+        PyRanges.spliced_subsequence : obtain subsequences of intervals, providing transcript-level coordinates
+
+        Examples
+        --------
+        >>> a = pr.PyRanges({'Chromosome':['chr1','chr1'],
+        ...                  'Start':[100,200],'End':[120,220],
+        ...                  'Strand':['+','-']})
+        >>> a
+          index  |    Chromosome      Start      End  Strand
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1              100      120  +
+              1  |    chr1              200      220  -
+        PyRanges with 2 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        Default window (10 bp) right at the border:
+
+        >>> a.upstream(10)
+          index  |    Chromosome      Start      End  Strand
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1               90      100  +
+              1  |    chr1              220      230  -
+        PyRanges with 2 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        With a 5 bp gap:
+
+        >>> a.upstream(10, gap=5)
+          index  |    Chromosome      Start      End  Strand
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1               85       95  +
+              1  |    chr1              225      235  -
+        PyRanges with 2 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        With a 5 bp overlap (negative gap):
+
+        >>> a.upstream(10, gap=-5)
+          index  |    Chromosome      Start      End  Strand
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1               95      105  +
+              1  |    chr1              215      225  -
+        PyRanges with 2 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        Transcript-aware example (two 2-exon transcripts):
+
+        >>> ex = pr.PyRanges({'Chromosome':['chr1']*4,
+        ...                   'Start':[0,10,30,50],'End':[5,15,40,60],
+        ...                   'Strand':['+','+','-','-'],
+        ...                   'Tx':['tx1','tx1','tx2','tx2']})
+        >>> ex
+          index  |    Chromosome      Start      End  Strand    Tx
+          int64  |    object          int64    int64  object    object
+        -------  ---  ------------  -------  -------  --------  --------
+              0  |    chr1                0        5  +         tx1
+              1  |    chr1               10       15  +         tx1
+              2  |    chr1               30       40  -         tx2
+              3  |    chr1               50       60  -         tx2
+        PyRanges with 4 rows, 5 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        >>> ex.upstream(5, transcript_id='Tx')
+          index  |    Chromosome      Start      End  Strand    Tx
+          int64  |    object          int64    int64  object    object
+        -------  ---  ------------  -------  -------  --------  --------
+              1  |    chr1               10       15  +         tx1
+              3  |    chr1               60       65  -         tx2
+        PyRanges with 2 rows, 5 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        """
+        if length <= 0:
+            msg = "`length` must be a positive integer."
+            raise ValueError(msg)
+
+        ext_5 = length + gap
+        if ext_5 < 0:
+            msg = "`length + gap` may not be negative."
+            raise ValueError(msg)
+
+        # 1. extend upstream by length+gap
+        ext = self.extend(
+            ext_5=ext_5,
+            ext_3=0,
+            use_strand=use_strand,
+            transcript_id=transcript_id,
+        )
+
+        # 2. keep the first `length` bp of the extension
+        win = ext.spliced_subsequence(
+            start=0,
+            end=length,
+            use_strand=use_strand,
+            transcript_id=transcript_id,
+        )
+
+        return mypy_ensure_pyranges(win)
+
+    def downstream(
+        self: "PyRanges",
+        length: int,
+        gap: int = 0,
+        *,
+        transcript_id: VALID_BY_TYPES = None,
+        use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
+    ) -> "PyRanges":
+        r"""Return regions downstream (at the 5' side) of input intervals.
+
+        Parameters
+        ----------
+        length : int
+            Size of the region (bp), **> 0**.
+        gap : int, default 0
+            Distance between input intervals and region; use negative to include some overlap.
+        transcript_id : str or list of str or None
+            Name(s) of column(s) to group intervals. If provided, one region per group is returned.
+        use_strand: {"auto", True, False}, default: "auto"
+            Whether to consider strand; if so, the downstream window of negative intervals is on their left.
+            The default "auto" means True if PyRanges has valid strands (see .strand_valid).
+
+        See Also
+        --------
+        PyRanges.spliced_subsequence : obtain subsequences of intervals, providing transcript-level coordinates
+        PyRanges.upstream : return regions upstream of input intervals or transcripts
+        PyRanges.three_end : return the 3' end of intervals or transcripts
+        PyRanges.extend : return intervals or transcripts extended at one or both ends
+
+        Examples
+        --------
+        >>> a = pr.PyRanges({'Chromosome':['chr1','chr1'],
+        ...                  'Start':[100,200],'End':[120,220],
+        ...                  'Strand':['+','-']})
+        >>> a
+          index  |    Chromosome      Start      End  Strand
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1              100      120  +
+              1  |    chr1              200      220  -
+        PyRanges with 2 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        Default 10-bp window butt-ended to the feature:
+
+        >>> a.downstream(10)
+          index  |    Chromosome      Start      End  Strand
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1              120      130  +
+              1  |    chr1              190      200  -
+        PyRanges with 2 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        With a 5-bp gap:
+
+        >>> a.downstream(10, gap=5)
+          index  |    Chromosome      Start      End  Strand
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1              125      135  +
+              1  |    chr1              185      195  -
+        PyRanges with 2 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        With a 5-bp overlap:
+
+        >>> a.downstream(10, gap=-5)
+          index  |    Chromosome      Start      End  Strand
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1              115      125  +
+              1  |    chr1              195      205  -
+        PyRanges with 2 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        Transcript-aware (two 2-exon transcripts):
+
+        >>> ex = pr.PyRanges({'Chromosome':['chr1']*4,
+        ...                   'Start':[0,10,30,50],'End':[5,15,40,60],
+        ...                   'Strand':['+','+','-','-'],
+        ...                   'Tx':['tx1','tx1','tx2','tx2']})
+        >>> ex
+          index  |    Chromosome      Start      End  Strand    Tx
+          int64  |    object          int64    int64  object    object
+        -------  ---  ------------  -------  -------  --------  --------
+              0  |    chr1                0        5  +         tx1
+              1  |    chr1               10       15  +         tx1
+              2  |    chr1               30       40  -         tx2
+              3  |    chr1               50       60  -         tx2
+        PyRanges with 4 rows, 5 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        >>> ex.downstream(5, transcript_id='Tx')
+          index  |    Chromosome      Start      End  Strand    Tx
+          int64  |    object          int64    int64  object    object
+        -------  ---  ------------  -------  -------  --------  --------
+              1  |    chr1               15       20  +         tx1
+              2  |    chr1               25       30  -         tx2
+        PyRanges with 2 rows, 5 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        """
+        if length <= 0:
+            msg = "`length` must be a positive integer."
+            raise ValueError(msg)
+
+        ext_3 = length + gap
+        if ext_3 < 0:
+            msg = "`length + gap` may not be negative."
+            raise ValueError(msg)
+
+        # 1. extend downstream by length+gap
+        ext = self.extend(
+            ext_5=0,
+            ext_3=ext_3,
+            use_strand=use_strand,
+            transcript_id=transcript_id,
+        )
+
+        # 2. keep the last `length` bp of the extension
+        win = ext.spliced_subsequence(
+            start=-length,
+            end=None,
+            use_strand=use_strand,
+            transcript_id=transcript_id,
+        )
+
+        return mypy_ensure_pyranges(win)
+
     def remove_strand(self) -> "PyRanges":
         """Return a copy with the Strand column removed.
 
@@ -4010,7 +4281,7 @@ class PyRanges(RangeFrame):
         See Also
         --------
         PyRanges.strand_valid : whether PyRanges has valid strand info
-        PyRanges.remove_strand : remove the Strand column from PyRanges
+        PyRanges.invert_strand : invert plus <-> minus Strand in all intervals
 
         Examples
         --------
@@ -4038,6 +4309,61 @@ class PyRanges(RangeFrame):
         if not self.has_strand:
             return self
         return self.drop_and_return(STRAND_COL, axis=1)
+
+    # ─────────────────────────────────────────────────────────────────────────────
+    def flip_strand(self: "PyRanges") -> "PyRanges":
+        r"""Flip the strand of every interval (+ → - and - → +).
+
+        All other columns remain unchanged.  If the object does not contain a
+        valid *Strand* column (see :pyattr:`.strand_valid`) a
+        :class:`ValueError` is raised.
+
+        Returns
+        -------
+        PyRanges
+            A **new** PyRanges whose *Strand* column is flipped.
+
+        Examples
+        --------
+        >>> gr = pr.PyRanges({'Chromosome': ['chr1', 'chr1'],
+        ...                   'Start': [0, 10], 'End': [5, 15],
+        ...                   'Strand': ['+', '-']})
+        >>> gr
+          index  |    Chromosome      Start      End  Strand
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                0        5  +
+              1  |    chr1               10       15  -
+        PyRanges with 2 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        >>> gr.flip_strand()
+          index  |    Chromosome      Start      End  Strand
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                0        5  -
+              1  |    chr1               10       15  +
+        PyRanges with 2 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        Attempting to flip when strands are missing or invalid:
+
+        >>> pr.PyRanges({'Chromosome': ['chr1'], 'Start': [0], 'End': [5]}).flip_strand()
+        Traceback (most recent call last):
+            ...
+        ValueError: strand column is missing or invalid
+
+        """
+        # ─── ensure strand information is present & valid ─────────────────
+        if not self.strand_valid:
+            _msg = "strand column is missing or invalid"
+            raise ValueError(_msg)
+
+        # ─── flip + and -
+        result = self.copy()
+        result.Strand = result.Strand.map({"+": "-", "-": "+"})
+
+        return mypy_ensure_pyranges(result)
 
     def window(
         self,
