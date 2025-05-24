@@ -2,7 +2,7 @@
 
 ## Introduction
 
-PyRanges is a Python library for efficient and intuitive manipulation of genomics data,
+PyRanges is a Python library with a Rust backend for efficient and intuitive manipulation of genomics data,
 particularly genomic intervals (like genes, genomic features, or reads).
 The library is optimized for fast querying and manipulation of genomic annotations.
 It enables intuitive and highly efficient pipelines for genomic analysis.
@@ -11,7 +11,13 @@ It enables intuitive and highly efficient pipelines for genomic analysis.
 
 ## Version 1.x
 This is version 1.x of pyranges. It is a complete rewrite of the original pyranges library, 
-that will replace the "default" (version 0) sometime in 2024.
+that will replace the "default" (version 0) sometime in 2025. If you are a v0 user, check the migration guide 
+in the documentation.
+
+## Documentation
+
+The pyranges documentation, including installation instructions, API, tutorial, and how-to-pages, is 
+available at https://pyranges1.readthedocs.io/
 
 ## Install
 
@@ -29,10 +35,6 @@ pip install pyranges1[all]
 
 Details at https://pyranges1.readthedocs.io/en/latest/installation.html
 
-## Documentation
-
-The pyranges documentation, including installation instructions, API, tutorial, and how-to-pages, is 
-available at https://pyranges1.readthedocs.io/
 
 ## Features
 
@@ -45,6 +47,8 @@ available at https://pyranges1.readthedocs.io/
 
 Stovner EB, Sætrom P (2020) PyRanges: efficient comparison of genomic intervals in Python. 
 *Bioinformatics 36(3):918-919*  http://dx.doi.org/10.1093/bioinformatics/btz615
+
+Coming soon: a paper for v1!
 
 ## Supporting pyranges
 
