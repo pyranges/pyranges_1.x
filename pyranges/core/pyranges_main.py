@@ -1963,11 +1963,12 @@ class PyRanges(RangeFrame):
         self,
         other: "PyRanges",
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
-        multiple: VALID_OVERLAP_TYPE = "all",
         slack: int = 0,
         *,
+        multiple: bool = False,
         contained_intervals_only: bool = False,
         match_by: VALID_BY_TYPES = None,
+        invert: bool = False,
     ) -> "PyRanges":
         """Return overlapping intervals.
 
@@ -1983,22 +1984,23 @@ class PyRanges(RangeFrame):
             information. The default, "auto", means use "same" if both PyRanges are stranded (see .strand_valid)
             otherwise ignore the strand information.
 
-        multiple : {"all", "first", "last"}, default "all"
-            What intervals to report when multiple intervals in 'other' overlap with the same interval in self.
-            The default "all" reports all overlapping subintervals, which will have duplicate indices.
-            "first" reports only, for each interval in self, the overlapping subinterval with smallest Start in 'other'
-            "last" reports only the overlapping subinterval with the biggest End in 'other'
-
         slack : int, default 0
             Intervals in self are temporarily extended by slack on both ends before overlap is calculated, so that
             we allow non-overlapping intervals to be considered overlapping if they are within less than slack distance
             e.g. slack=1 reports bookended intervals.
+
+        multiple : bool, default False
+            What intervals to report when multiple intervals in 'other' overlap with the same interval in self.
+            If True, each interval is reported once for every overlap, potentially resulting in duplicate indices.
 
         contained_intervals_only : bool, default False
             Whether to report only intervals that are entirely contained in an interval of 'other'.
 
         match_by : str or list, default None
             If provided, only overlapping intervals with an equal value in column(s) `match_by` are reported.
+
+        invert : bool, default False
+            If True, return intervals that do not overlap instead, according to all criteria specified
 
         Returns
         -------
@@ -2043,6 +2045,16 @@ class PyRanges(RangeFrame):
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                1        3  A
+              1  |    chr1                1        3  a
+              2  |    chr2                4        9  b
+        PyRanges with 3 rows, 4 columns, and 1 index columns.
+        Contains 2 chromosomes.
+
+        >>> gr.overlap(gr2, multiple=True)
+          index  |    Chromosome      Start      End  ID
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                1        3  A
               0  |    chr1                1        3  A
               1  |    chr1                1        3  a
               1  |    chr1                1        3  a
@@ -2050,7 +2062,16 @@ class PyRanges(RangeFrame):
         PyRanges with 5 rows, 4 columns, and 1 index columns (with 2 index duplicates).
         Contains 2 chromosomes.
 
-        >>> gr.overlap(gr2, slack=2, multiple="first")
+        >>> gr.overlap(gr2, invert=True)
+          index  |    Chromosome      Start      End  ID
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              3  |    chr1               10       11  c
+              4  |    chr3                0        1  d
+        PyRanges with 2 rows, 4 columns, and 1 index columns.
+        Contains 2 chromosomes.
+
+        >>> gr.overlap(gr2, slack=2)
           index  |    Chromosome      Start      End  ID
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
@@ -2061,15 +2082,13 @@ class PyRanges(RangeFrame):
         PyRanges with 4 rows, 4 columns, and 1 index columns.
         Contains 2 chromosomes.
 
-        >>> gr.overlap(gr2, multiple="last")
+        >>> gr.overlap(gr2, slack=2, invert=True)
           index  |    Chromosome      Start      End  ID
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
-              0  |    chr1                1        3  A
-              1  |    chr1                1        3  a
-              2  |    chr2                4        9  b
-        PyRanges with 3 rows, 4 columns, and 1 index columns.
-        Contains 2 chromosomes.
+              4  |    chr3                0        1  d
+        PyRanges with 1 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes.
 
         >>> gr.overlap(gr2, contained_intervals_only=True)
           index  |    Chromosome      Start      End  ID
@@ -2078,6 +2097,17 @@ class PyRanges(RangeFrame):
               2  |    chr2                4        9  b
         PyRanges with 1 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes.
+
+        >>> gr.overlap(gr2, contained_intervals_only=True, invert=True)
+          index  |    Chromosome      Start      End  ID
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                1        3  A
+              1  |    chr1                1        3  a
+              3  |    chr1               10       11  c
+              4  |    chr3                0        1  d
+        PyRanges with 4 rows, 4 columns, and 1 index columns.
+        Contains 2 chromosomes.
 
         >>> gr.overlap(gr2, contained_intervals_only=True, slack=-2)
           index  |    Chromosome      Start      End  ID
@@ -2088,14 +2118,6 @@ class PyRanges(RangeFrame):
               2  |    chr2                4        9  b
         PyRanges with 3 rows, 4 columns, and 1 index columns.
         Contains 2 chromosomes.
-
-        >>> gr.overlap(gr2, contained_intervals_only=True, multiple="first")
-          index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
-              2  |    chr2                4        9  b
-        PyRanges with 1 rows, 4 columns, and 1 index columns.
-        Contains 1 chromosomes.
 
         >>> gr3 = pr.PyRanges({"Chromosome": 1, "Start": [2, 4], "End": [3, 5], "Strand": ["+", "-"]})
         >>> gr3
@@ -2117,15 +2139,24 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 1 strands.
 
         """
-        _other, by = prepare_by_binary(self, other=other, strand_behavior=strand_behavior, match_by=match_by)
+        multiple_arg: VALID_OVERLAP_TYPE = "all" if multiple else "first"
 
-        gr = super().overlap(
-            _other,
-            match_by=by,
-            slack=slack,
-            multiple=multiple,
-            contained_intervals_only=contained_intervals_only,
-        )
+        _other, by = prepare_by_binary(self, other=other, strand_behavior=strand_behavior, match_by=match_by)
+        if invert and not contained_intervals_only and not slack:
+            # while ruranges complement_overlaps has a slack argument, it does not behave as expected
+            gr = super().complement_overlaps(other=_other, match_by=by)
+        else:
+            gr = super().overlap(
+                _other,
+                match_by=by,
+                slack=slack,
+                multiple=multiple_arg,
+                contained_intervals_only=contained_intervals_only,
+            )
+
+            if invert:
+                # handling rare case not yet implemented in ruranges complement_overlaps: combined invert + (contained_intervals_only | slack)
+                gr = self.loc[~self.index.isin(gr.index)].copy()
 
         return mypy_ensure_pyranges(gr)
 
@@ -5286,82 +5317,6 @@ class PyRanges(RangeFrame):
             chromsizes=chromsizes,
             chromsizes_col=group_sizes_col,
             include_first_interval=include_first_interval,
-        )
-
-        return mypy_ensure_pyranges(result)
-
-    def complement_overlaps(  # type: ignore[override]
-        self: "PyRanges",
-        other: "PyRanges",
-        *,
-        match_by: VALID_BY_TYPES = None,
-        slack: int = 0,
-        use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
-    ) -> "PyRanges":
-        """Return the internal complement of self with respect to another PyRanges.
-
-        The complement of an interval is defined as the subinterval(s) in self that are not overlapped by any
-        intervals in other. This function is useful for obtaining regions such as introns by excluding intervals
-        (e.g. exons) that overlap with those in another PyRanges object.
-
-        Parameters
-        ----------
-        other : PyRanges
-            A PyRanges object whose intervals are used to determine the overlaps.
-        match_by : str or list, default None
-            Column(s) to group intervals by (e.g. exons). If provided, the complement will be calculated separately
-            for each group.
-        slack : int, default 0
-            An integer offset that adjusts the overlap threshold when computing the complement intervals.
-            Negative values reduce the required gap between intervals (effectively "shrinking" them), while positive values
-            increase the gap threshold.
-        use_strand : {"auto", True, False}, default "auto"
-            Whether to compute the complement separately for intervals on the positive and negative strand.
-            The default "auto" means that strand information is used if present and valid (see .strand_valid).
-
-        Returns
-        -------
-        PyRanges
-            A PyRanges object containing the complement intervals (i.e. regions in self that do not overlap with any intervals in other).
-
-        Notes
-        -----
-        * To ensure non-overlap among the input intervals, merge_overlaps is run before the complement is calculated.
-        * Bookended intervals will result in no complement intervals returned since they would be of length 0.
-
-        See Also
-        --------
-        PyRanges.subtract_ranges : Report non-overlapping subintervals.
-        PyRanges.boundaries : Report the boundaries of groups of intervals (e.g. transcripts/genes).
-
-        Examples
-        --------
-        >>> gr = pr.PyRanges({"Chromosome": ["chr1"] * 3, "Start": [1, 4, 10],
-        ...                    "End": [3, 9, 11], "ID": ["a", "b", "c"]})
-        >>> gr2 = pr.PyRanges({"Chromosome": ["chr1"] * 3, "Start": [2, 2, 9],
-        ...                    "End": [3, 9, 10]})
-        >>> gr.complement_overlaps(gr2)
-          index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
-              2  |    chr1               10       11  c
-        PyRanges with 1 rows, 4 columns, and 1 index columns.
-        Contains 1 chromosomes.
-
-        >>> gr.complement_overlaps(gr2, slack=-1)
-          index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
-              0  |    chr1                1        3  a
-              2  |    chr1               10       11  c
-        PyRanges with 2 rows, 4 columns, and 1 index columns.
-        Contains 1 chromosomes.
-
-        """
-        result = super().complement_overlaps(
-            other=other,
-            match_by=prepare_by_single(self, use_strand=use_strand, match_by=match_by),
-            slack=slack,
         )
 
         return mypy_ensure_pyranges(result)
