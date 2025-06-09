@@ -1006,6 +1006,11 @@ class PyRanges(RangeFrame):
 
         use_strand = validate_and_convert_use_strand(self, use_strand) if (ext_3 or ext_5) else False
 
+        if ext is not None:
+            _ext_3, _ext_5 = ext, ext
+        else:
+            _ext_3, _ext_5 = ext_3 or 0, ext_5 or 0
+
         groups = factorize(self, transcript_id) if transcript_id is not None else np.arange(len(self), dtype=np.uint32)
 
         starts, ends = ruranges.extend(
@@ -1013,9 +1018,8 @@ class PyRanges(RangeFrame):
             starts=self[START_COL].to_numpy(),
             ends=self[END_COL].to_numpy(),
             negative_strand=(self[STRAND_COL] == REVERSE_STRAND).to_numpy(),
-            ext=ext,
-            ext_3=ext_3,
-            ext_5=ext_5,
+            ext_3=_ext_3,
+            ext_5=_ext_5,
         )
 
         result = self.copy()
@@ -4155,7 +4159,7 @@ class PyRanges(RangeFrame):
           index  |    Chromosome      Start      End  Strand    Tx
           int64  |    object          int64    int64  object    object
         -------  ---  ------------  -------  -------  --------  --------
-              1  |    chr1               10       15  +         tx1
+              0  |    chr1                0        5  +         tx1
               3  |    chr1               60       65  -         tx2
         PyRanges with 2 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
