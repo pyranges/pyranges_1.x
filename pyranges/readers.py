@@ -1,7 +1,7 @@
 import logging
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Mapping
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from natsort import natsorted  # type: ignore[import]
@@ -9,6 +9,8 @@ from natsort import natsorted  # type: ignore[import]
 from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from pyranges.core.pyranges_main import PyRanges
 
 logging.basicConfig(level=logging.INFO)
