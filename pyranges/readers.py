@@ -513,7 +513,7 @@ def read_gtf_restricted(f: str | Path, skiprows: int | None, nrows: int | None =
     attribute - A semicolon-separated list of tag-value pairs, providing additional information about each feature.
 
     """
-    dtypes = {"Chromosome": "category", "Feature": "category", "Strand": "category"}
+    dtypes: Mapping = {"Chromosome": "category", "Feature": "category", "Strand": "category"}
     path = Path(f)
 
     df_iter = pd.read_csv(
@@ -605,7 +605,7 @@ def read_gff3(
     if not full:
         return read_gtf_restricted(path, _skiprows, nrows=nrows)
 
-    dtypes = {"Chromosome": "category", "Feature": "category", "Strand": "category"}
+    dtypes: Mapping = {"Chromosome": "category", "Feature": "category", "Strand": "category"}
 
     names = ["Chromosome", "Source", "Feature", "Start", "End", "Score", "Strand", "Frame", "Attribute"]
 
