@@ -1,7 +1,7 @@
 import logging
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Mapping
 
 import pandas as pd
 from natsort import natsorted  # type: ignore[import]
@@ -398,7 +398,7 @@ def read_gtf_full(
     PyRanges
 
     """
-    dtypes = {"Chromosome": "category", "Feature": "category", "Strand": "category"}
+    dtypes: Mapping = {"Chromosome": "category", "Feature": "category", "Strand": "category"}
 
     names = ["Chromosome", "Source", "Feature", "Start", "End", "Score", "Strand", "Frame", "Attribute"]
     path = Path(f)

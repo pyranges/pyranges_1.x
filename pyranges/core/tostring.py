@@ -41,7 +41,7 @@ def _get_indices_with_same_name_as_columns(df: "pr.RangeFrame") -> list[str]:
 
     columns = {*df.columns}
     if df.index.name and df.index.name in columns:
-        return [df.index.name]
+        return [str(df.index.name)]
 
     if cols_in_both := columns.intersection(df.index.names):
         return [*cols_in_both]

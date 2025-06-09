@@ -1011,7 +1011,6 @@ class PyRanges(RangeFrame):
         else:
             _ext_3, _ext_5 = ext_3 or 0, ext_5 or 0
 
-
         groups = factorize(self, transcript_id) if transcript_id is not None else np.arange(len(self), dtype=np.uint32)
 
         starts, ends = ruranges.extend(
