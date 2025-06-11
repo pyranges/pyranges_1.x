@@ -2160,21 +2160,16 @@ class PyRanges(RangeFrame):
         multiple_arg: VALID_OVERLAP_TYPE = "all" if multiple else "first"
 
         _other, by = prepare_by_binary(self, other=other, strand_behavior=strand_behavior, match_by=match_by)
-        if invert and not contained_intervals_only and not slack:
-            # while ruranges complement_overlaps has a slack argument, it does not behave as expected
-            gr = super().complement_overlaps(other=_other, match_by=by)
-        else:
-            gr = super().overlap(
-                _other,
-                match_by=by,
-                slack=slack,
-                multiple=multiple_arg,
-                contained_intervals_only=contained_intervals_only,
-            )
+        gr = super().overlap(
+            _other,
+            match_by=by,
+            slack=slack,
+            multiple=multiple_arg,
+            contained_intervals_only=contained_intervals_only,
+        )
 
-            if invert:
-                # handling rare case not yet implemented in ruranges complement_overlaps: combined invert + (contained_intervals_only | slack)
-                gr = self.loc[~self.index.isin(gr.index)].copy()
+        if invert:
+            gr = self.loc[~self.index.isin(gr.index)].copy()
 
         return mypy_ensure_pyranges(gr)
 
