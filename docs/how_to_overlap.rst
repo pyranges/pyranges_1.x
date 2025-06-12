@@ -122,8 +122,8 @@ To get the self intervals **without overlap** in other, use ``invert=True``:
     index  |    Chromosome      Start      End  Strand
     int64  |    object          int64    int64  object
   -------  ---  ------------  -------  -------  --------
-        0  |    chr1                3        6  +
-        2  |    chr1               18       21  -
+	0  |    chr1                3        6  +
+	2  |    chr1               18       21  -
   PyRanges with 2 rows, 4 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
@@ -158,19 +158,16 @@ that are available in many overlap-related methods.
 ``slack`` (default: 0) is used to relax the criteria of overlap.
 A value of 1 will report bookended intervals, previously not considered overlapping:
 
-  >>> a.overlap(b, slack=1)
+  >>> b.overlap(a, slack=1)
     index  |    Chromosome      Start      End  Strand
     int64  |    object          int64    int64  object
   -------  ---  ------------  -------  -------  --------
-        0  |    chr1                3        6  +
-        1  |    chr1               13       15  +
-        3  |    chr1               23       27  -
-        4  |    chr1               28       29  -
-        5  |    chr1               32       37  +
-        6  |    chr1               33       36  +
-  PyRanges with 6 rows, 4 columns, and 1 index columns.
+	0  |    chr1                6        8  +
+	1  |    chr1               12       14  +
+	3  |    chr1               25       29  -
+	4  |    chr1               34       36  +
+  PyRanges with 4 rows, 4 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
-
 
 Analogously, higher values will report  increasingly distant intervals.
 In practice, the self intervals are temporarily extended by the slack amount on both ends before the overlap operation.
@@ -178,16 +175,14 @@ In practice, the self intervals are temporarily extended by the slack amount on 
 ``strand_behavior`` determines how strand is treated.
 The value 'same' results in the intuitive behavior, i.e. two intervals overlap only if on the same strand:
 
-  >>> a.overlap(b, strand_behavior="same")  # the result here is the same as: a.overlap(b)
+  >>> b.overlap(a, strand_behavior="same")  # the result here is the same as: a.overlap(b)
     index  |    Chromosome      Start      End  Strand
     int64  |    object          int64    int64  object
   -------  ---  ------------  -------  -------  --------
-        1  |    chr1               13       15  +
-        3  |    chr1               23       27  -
-        4  |    chr1               28       29  -
-        5  |    chr1               32       37  +
-        6  |    chr1               33       36  +
-  PyRanges with 5 rows, 4 columns, and 1 index columns.
+        1  |    chr1               12       14  +
+        3  |    chr1               25       29  -
+        4  |    chr1               34       36  +
+  PyRanges with 3 rows, 4 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
 On the other hand, value 'ignore' will define overlaps regardless of strands:
@@ -196,12 +191,12 @@ On the other hand, value 'ignore' will define overlaps regardless of strands:
     index  |    Chromosome      Start      End  Strand
     int64  |    object          int64    int64  object
   -------  ---  ------------  -------  -------  --------
-        1  |    chr1               13       15  +
-        2  |    chr1               18       21  -
-        3  |    chr1               23       27  -
-        4  |    chr1               28       29  -
-        5  |    chr1               32       37  +
-        6  |    chr1               33       36  +
+	1  |    chr1               13       15  +
+	2  |    chr1               18       21  -
+	3  |    chr1               23       27  -
+	4  |    chr1               28       29  -
+	5  |    chr1               32       37  +
+	6  |    chr1               33       36  +
   PyRanges with 6 rows, 4 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
@@ -211,7 +206,7 @@ Value 'opposite' will require two intervals to be on the opposite strands to be 
     index  |    Chromosome      Start      End  Strand
     int64  |    object          int64    int64  object
   -------  ---  ------------  -------  -------  --------
-        2  |    chr1               18       21  -
+	2  |    chr1               18       21  -
   PyRanges with 1 rows, 4 columns, and 1 index columns.
   Contains 1 chromosomes and 1 strands.
 
@@ -347,27 +342,28 @@ to differentiate columns in other which are present with the same name in the se
     index  |    Chromosome      Start      End  Strand      Start_b    End_b
     int64  |    object          int64    int64  object        int64    int64
   -------  ---  ------------  -------  -------  --------  ---------  -------
-        0  |    chr1               13       15  +                12       14
-        1  |    chr1               23       27  -                25       29
-        2  |    chr1               28       29  -                25       29
-        3  |    chr1               32       37  +                34       36
-        4  |    chr1               33       36  +                34       36
+        1  |    chr1               13       15  +                12       14
+        3  |    chr1               23       27  -                25       29
+        4  |    chr1               28       29  -                25       29
+        5  |    chr1               32       37  +                34       36
+        6  |    chr1               33       36  +                34       36
   PyRanges with 5 rows, 6 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
 In contrast to :func:`overlap <pyranges.PyRanges.overlap>`, a row is returned per overlap, so
-if an interval in self overlaps with more than one interval in other, it will be reported multiple times:
+if an interval in self overlaps with more than one interval in other, it will be reported multiple times,
+resulting in index duplicates (see below); you may call .reset_index() to correct this.
 
   >>> b.join_ranges(a)
     index  |    Chromosome      Start      End  Strand      Start_b    End_b
     int64  |    object          int64    int64  object        int64    int64
   -------  ---  ------------  -------  -------  --------  ---------  -------
-        0  |    chr1               12       14  +                13       15
-        1  |    chr1               25       29  -                23       27
-        2  |    chr1               25       29  -                28       29
-        3  |    chr1               34       36  +                32       37
+        1  |    chr1               12       14  +                13       15
+        3  |    chr1               25       29  -                23       27
+        3  |    chr1               25       29  -                28       29
+        4  |    chr1               34       36  +                32       37
         4  |    chr1               34       36  +                33       36
-  PyRanges with 5 rows, 6 columns, and 1 index columns.
+  PyRanges with 5 rows, 6 columns, and 1 index columns (with 2 index duplicates).
   Contains 1 chromosomes and 2 strands.
 
 Like all overlap-related methods accepting two PyRanges as input,
@@ -379,12 +375,12 @@ be returned for both PyRanges:
     index  |    Chromosome      Start      End  Strand      Start_b    End_b  Strand_b
     int64  |    object          int64    int64  object        int64    int64  object
   -------  ---  ------------  -------  -------  --------  ---------  -------  ----------
-        0  |    chr1               13       15  +                12       14  +
-        1  |    chr1               18       21  -                19       20  +
-        2  |    chr1               23       27  -                25       29  -
-        3  |    chr1               28       29  -                25       29  -
-        4  |    chr1               32       37  +                34       36  +
-        5  |    chr1               33       36  +                34       36  +
+        1  |    chr1               13       15  +                12       14  +
+        2  |    chr1               18       21  -                19       20  +
+        3  |    chr1               23       27  -                25       29  -
+        4  |    chr1               28       29  -                25       29  -
+        5  |    chr1               32       37  +                34       36  +
+        6  |    chr1               33       36  +                34       36  +
   PyRanges with 6 rows, 7 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
@@ -394,8 +390,8 @@ be returned for both PyRanges:
     index  |    Chromosome      Start      End  Strand        odd    Start_b    End_b
     int64  |    object          int64    int64  object      int64      int64    int64
   -------  ---  ------------  -------  -------  --------  -------  ---------  -------
-        0  |    chr1               23       27  -               1         25       29
-        1  |    chr1               32       37  +               0         34       36
+        3  |    chr1               23       27  -               1         25       29
+        5  |    chr1               32       37  +               0         34       36
   PyRanges with 2 rows, 7 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
@@ -403,9 +399,9 @@ be returned for both PyRanges:
     index  |    Chromosome      Start      End  Strand        odd    Start_b    End_b
     int64  |    object          int64    int64  object      int64      int64    int64
   -------  ---  ------------  -------  -------  --------  -------  ---------  -------
-        0  |    chr1               13       15  +               1         19       20
-        1  |    chr1               23       27  -               1         25       29
-        2  |    chr1               32       37  +               0         34       36
+        1  |    chr1               13       15  +               1         19       20
+        3  |    chr1               23       27  -               1         25       29
+        5  |    chr1               32       37  +               0         34       36
   PyRanges with 3 rows, 7 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
@@ -418,9 +414,9 @@ For example, this allows to obtain the union of the overlapping intervals:
     index  |    Chromosome      Start      End  Strand        odd
     int64  |    object          int64    int64  object      int64
   -------  ---  ------------  -------  -------  --------  -------
-        0  |    chr1               13       20  +               1
-        1  |    chr1               23       29  -               1
-        2  |    chr1               32       37  +               0
+        1  |    chr1               13       20  +               1
+        3  |    chr1               23       29  -               1
+        5  |    chr1               32       37  +               0
   PyRanges with 3 rows, 5 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
@@ -568,66 +564,67 @@ the number of intervals in other that overlaps with it.
 Input coordinates are not modified, and a new column is added:
 
   >>> a2.count_overlaps(b) # using a2 to show the 'odd' column is preserved
-    index  |    Chromosome      Start      End  Strand        odd    NumberOverlaps
-    int64  |    object          int64    int64  object      int64             int64
-  -------  ---  ------------  -------  -------  --------  -------  ----------------
-        0  |    chr1                3        6  +               1                 0
-        1  |    chr1               13       15  +               1                 1
-        2  |    chr1               18       21  -               0                 0
-        3  |    chr1               23       27  -               1                 1
-        4  |    chr1               28       29  -               0                 1
-        5  |    chr1               32       37  +               0                 1
-        6  |    chr1               33       36  +               1                 1
+    index  |    Chromosome      Start      End  Strand        odd     Count
+    int64  |    object          int64    int64  object      int64    uint32
+  -------  ---  ------------  -------  -------  --------  -------  --------
+	0  |    chr1                3        6  +               1         0
+	1  |    chr1               13       15  +               1         1
+	2  |    chr1               18       21  -               0         0
+	3  |    chr1               23       27  -               1         1
+	4  |    chr1               28       29  -               0         1
+	5  |    chr1               32       37  +               0         1
+	6  |    chr1               33       36  +               1         1
   PyRanges with 7 rows, 6 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
 Arguments ``strand_behavior`` and ``match_by`` are available:
 
   >>> a.count_overlaps(b, strand_behavior='ignore')
-    index  |    Chromosome      Start      End  Strand      NumberOverlaps
-    int64  |    object          int64    int64  object               int64
-  -------  ---  ------------  -------  -------  --------  ----------------
-        0  |    chr1                3        6  +                        0
-        1  |    chr1               13       15  +                        1
-        2  |    chr1               18       21  -                        1
-        3  |    chr1               23       27  -                        1
-        4  |    chr1               28       29  -                        1
-        5  |    chr1               32       37  +                        1
-        6  |    chr1               33       36  +                        1
+    index  |    Chromosome      Start      End  Strand       Count
+    int64  |    object          int64    int64  object      uint32
+  -------  ---  ------------  -------  -------  --------  --------
+	0  |    chr1                3        6  +                0
+	1  |    chr1               13       15  +                1
+	2  |    chr1               18       21  -                1
+	3  |    chr1               23       27  -                1
+	4  |    chr1               28       29  -                1
+	5  |    chr1               32       37  +                1
+	6  |    chr1               33       36  +                1
   PyRanges with 7 rows, 5 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
 
   >>> a2.count_overlaps(b2, strand_behavior='ignore', match_by='odd')
-    index  |    Chromosome      Start      End  Strand        odd    NumberOverlaps
-    int64  |    object          int64    int64  object      int64             int64
-  -------  ---  ------------  -------  -------  --------  -------  ----------------
-        0  |    chr1                3        6  +               1                 0
-        1  |    chr1               13       15  +               1                 0
-        2  |    chr1               18       21  -               0                 0
-        3  |    chr1               23       27  -               1                 1
-        4  |    chr1               28       29  -               0                 0
-        5  |    chr1               32       37  +               0                 1
-        6  |    chr1               33       36  +               1                 0
+    index  |    Chromosome      Start      End  Strand        odd     Count
+    int64  |    object          int64    int64  object      int64    uint32
+  -------  ---  ------------  -------  -------  --------  -------  --------
+	0  |    chr1                3        6  +               1         0
+	1  |    chr1               13       15  +               1         0
+	2  |    chr1               18       21  -               0         0
+	3  |    chr1               23       27  -               1         1
+	4  |    chr1               28       29  -               0         0
+	5  |    chr1               32       37  +               0         1
+	6  |    chr1               33       36  +               1         0
   PyRanges with 7 rows, 6 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-Optionally, argument ``calculate_coverage`` can be set to True to calculate the fraction of the self interval covered
-by intervals in other:
+  Advanced metrics (e.g. interval fraction covered by overlap)
+  can be computed using the :func:`compute_interval_metrics <pyranges.PyRanges.compute_interval_metrics>`
+  function, which is run on the output of :func:`join_range <pyranges.PyRanges.join_ranges>`:
 
-  >>> a.count_overlaps(b, strand_behavior='ignore', calculate_coverage=True)
-    index  |    Chromosome      Start      End  Strand      NumberOverlaps    CoverageOverlaps
-    int64  |    object          int64    int64  object               int64             float64
-  -------  ---  ------------  -------  -------  --------  ----------------  ------------------
-        0  |    chr1                3        6  +                        0            0
-        1  |    chr1               13       15  +                        1            0.5
-        2  |    chr1               18       21  -                        1            0.333333
-        3  |    chr1               23       27  -                        1            0.5
-        4  |    chr1               28       29  -                        1            1
-        5  |    chr1               32       37  +                        1            0.4
-        6  |    chr1               33       36  +                        1            0.666667
-  PyRanges with 7 rows, 6 columns, and 1 index columns.
+  >>> a.join_ranges(b, strand_behavior='ignore').compute_interval_metrics('fraction')
+    index  |    Chromosome      Start      End  Strand      Start_b    End_b  Strand_b      fraction
+    int64  |    object          int64    int64  object        int64    int64  object         float64
+  -------  ---  ------------  -------  -------  --------  ---------  -------  ----------  ----------
+	1  |    chr1               13       15  +                12       14  +             0.5
+	2  |    chr1               18       21  -                19       20  +             0.333333
+	3  |    chr1               23       27  -                25       29  -             0.5
+	4  |    chr1               28       29  -                25       29  -             1
+	5  |    chr1               32       37  +                34       36  +             0.4
+	6  |    chr1               33       36  +                34       36  +             0.666667
+  PyRanges with 6 rows, 8 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
+
 
 Find the closest interval: nearest
 ----------------------------------
