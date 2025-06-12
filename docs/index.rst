@@ -20,6 +20,10 @@ compared to version 0, still the 'default', soon to be deprecated. If you are a 
 check :doc:`this guide to migrate to v1 <./migration_guide>`.
 
 
+While we recommend using pyranges as Python library, alternatively, the
+:doc:`pyranger command-line tool <./pyranger_cli>` allows you to access the same functionalities from the command line,
+without writing any Python code.
+
 Citation
 ~~~~~~~~
 
@@ -33,6 +37,7 @@ Documentation outline
 #. 🚀 :doc:`The tutorial <./tutorial>`,  recommended for all new users
 #. 🚀 :doc:`The how-to pages <./how_to_pages>`, further below, where functionalities are grouped by topic
 #. 🚀 :doc:`The API reference <./api_reference>`, where all methods are explained in detail
+#. 🚀 :doc:`The pyranger command-line tool <./pyranger_cli>`, for those who prefer the command line
 #. 🚀 :doc:`The developer guide <./developer_guide>`, to follow in order to contribute to PyRanges
 #. 🚀 :doc:`The guide to migrate to v1 <./migration_guide>`, for existing users of pyranges v0
 
@@ -47,6 +52,7 @@ Documentation outline
    tutorial
    how_to_pages
    api_reference
+   pyranger_cli
    developer_guide
    migration_guide
 

@@ -113,7 +113,8 @@ Let's now filter the rows of the other PyRanges object:
   PyRanges with 3 rows, 4 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-Note above how intervals overlapping with more than one interval in the other PyRanges are reported just once.
+Note above how intervals overlapping with more than one interval in the other PyRanges are not reported multiple times.
+Use ``multiple=True`` to do so.
 
 To get the self intervals **without overlap** in other, use ``invert=True``:
 

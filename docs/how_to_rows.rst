@@ -314,25 +314,6 @@ sorted in reverse order:
   12       |    chr1          38457520   38457545   +           667
   18       |    chr1          194245558  194245583  +           29
   13       |    chr1          80668132   80668157   -           388
-  9        |    chr10         35419784   35419809   -           779
-  ...      |    ...           ...        ...        ...         ...
-  19       |    chr8          57916061   57916086   +           914
-  0        |    chr8          28510032   28510057   -           137
-  6        |    chr8          22714402   22714427   -           261
-  16       |    chr9          120803448  120803473  +           96
-  PyRanges with 20 rows, 5 columns, and 1 index columns.
-  Contains 15 chromosomes and 2 strands.
-
-
-Above, ``chr10`` appears before ``chr8`` because that what string sorting does. We can force 'natural sorting':
-
-  >>> c.sort_ranges(natsorting=True)
-  index    |    Chromosome    Start      End        Strand      peak
-  int64    |    category      int64      int64      category    int64
-  -------  ---  ------------  ---------  ---------  ----------  -------
-  12       |    chr1          38457520   38457545   +           667
-  18       |    chr1          194245558  194245583  +           29
-  13       |    chr1          80668132   80668157   -           388
   14       |    chr2          152562484  152562509  -           807
   ...      |    ...           ...        ...        ...         ...
   4        |    chr12         106679761  106679786  -           782
@@ -342,6 +323,25 @@ Above, ``chr10`` appears before ``chr8`` because that what string sorting does. 
   PyRanges with 20 rows, 5 columns, and 1 index columns.
   Contains 15 chromosomes and 2 strands.
 
+
+Above, ``chr8`` appears before ``chr10`` because of 'natural sorting'. We can force alphabetical sorting instead:
+
+  >>> c.sort_ranges(natsort=False)
+  index    |    Chromosome    Start      End        Strand      peak
+  int64    |    category      int64      int64      category    int64
+  -------  ---  ------------  ---------  ---------  ----------  -------
+  12       |    chr1          38457520   38457545   +           667
+  18       |    chr1          194245558  194245583  +           29
+  13       |    chr1          80668132   80668157   -           388
+  9        |    chr10         35419784   35419809   -           779
+  ...      |    ...           ...        ...        ...         ...
+  19       |    chr8          57916061   57916086   +           914
+  0        |    chr8          28510032   28510057   -           137
+  6        |    chr8          22714402   22714427   -           261
+  16       |    chr9          120803448  120803473  +           96
+  PyRanges with 20 rows, 5 columns, and 1 index columns.
+  Contains 15 chromosomes and 2 strands.
+    
 To sort by a different column, use the first argument (``by``). This is used after Chromosome and Strand, but before
 coordinates:
 
@@ -352,53 +352,32 @@ coordinates:
   18       |    chr1          194245558  194245583  +           29
   12       |    chr1          38457520   38457545   +           667
   13       |    chr1          80668132   80668157   -           388
-  9        |    chr10         35419784   35419809   -           779
+  14       |    chr2          152562484  152562509  -           807
   ...      |    ...           ...        ...        ...         ...
-  19       |    chr8          57916061   57916086   +           914
-  0        |    chr8          28510032   28510057   -           137
-  6        |    chr8          22714402   22714427   -           261
-  16       |    chr9          120803448  120803473  +           96
-  PyRanges with 20 rows, 5 columns, and 1 index columns.
-  Contains 15 chromosomes and 2 strands.
-
-
-Note that above each block defined by Chromosome and Strand is sorted by ``peak`` in ascending order.
-Let's sort by descending order:
-
-  >>> c.sort_ranges('peak', sort_descending='peak')
-  index    |    Chromosome    Start      End        Strand      peak
-  int64    |    category      int64      int64      category    int64
-  -------  ---  ------------  ---------  ---------  ----------  -------
-  12       |    chr1          38457520   38457545   +           667
-  18       |    chr1          194245558  194245583  +           29
-  13       |    chr1          80668132   80668157   -           388
-  9        |    chr10         35419784   35419809   -           779
-  ...      |    ...           ...        ...        ...         ...
-  19       |    chr8          57916061   57916086   +           914
-  6        |    chr8          22714402   22714427   -           261
-  0        |    chr8          28510032   28510057   -           137
-  16       |    chr9          120803448  120803473  +           96
+  4        |    chr12         106679761  106679786  -           782
+  3        |    chr14         19418999   19419024   -           821
+  7        |    chr19         19571102   19571127   +           120
+  5        |    chr21         40099618   40099643   +           64
   PyRanges with 20 rows, 5 columns, and 1 index columns.
   Contains 15 chromosomes and 2 strands.
 
 To use a different priorization of genomic location columns, specify them in the first argument (``by``):
 
-  >>> c.sort_ranges(['peak', 'Chromosome', 'Strand'], sort_descending='peak')
+  >>> c.sort_ranges(['peak', 'Chromosome', 'Strand'])
   index    |    Chromosome    Start      End        Strand      peak
   int64    |    category      int64      int64      category    int64
   -------  ---  ------------  ---------  ---------  ----------  -------
-  19       |    chr8          57916061   57916086   +           914
-  2        |    chr5          135821802  135821827  -           867
-  3        |    chr14         19418999   19419024   -           821
+  18       |    chr1          194245558  194245583  +           29
+  12       |    chr1          38457520   38457545   +           667
+  13       |    chr1          80668132   80668157   -           388
   14       |    chr2          152562484  152562509  -           807
   ...      |    ...           ...        ...        ...         ...
+  4        |    chr12         106679761  106679786  -           782
+  3        |    chr14         19418999   19419024   -           821
   7        |    chr19         19571102   19571127   +           120
-  16       |    chr9          120803448  120803473  +           96
   5        |    chr21         40099618   40099643   +           64
-  18       |    chr1          194245558  194245583  +           29
   PyRanges with 20 rows, 5 columns, and 1 index columns.
   Contains 15 chromosomes and 2 strands.
-
 
 
 
