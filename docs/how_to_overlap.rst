@@ -633,17 +633,17 @@ Method :func:`nearest <pyranges.PyRanges.nearest>` allows to find the closest in
 in self:
 
   >>> a.nearest(b)
-    index  |    Chromosome      Start      End  Strand      Start_b    End_b    Distance
-    int64  |    object          int64    int64  object        int64    int64       int64
-  -------  ---  ------------  -------  -------  --------  ---------  -------  ----------
-        0  |    chr1                3        6  +                 6        8           1
-        1  |    chr1               13       15  +                12       14           0
-        2  |    chr1               18       21  -                25       29           5
-        3  |    chr1               23       27  -                25       29           0
-        4  |    chr1               28       29  -                25       29           0
-        5  |    chr1               32       37  +                34       36           0
-        6  |    chr1               33       36  +                34       36           0
-  PyRanges with 7 rows, 7 columns, and 1 index columns.
+    index  |    Chromosome      Start      End  Strand    Chromosome_b      Start_b    End_b  Strand_b      Distance
+    int64  |    object          int64    int64  object    object              int64    int64  object           int64
+  -------  ---  ------------  -------  -------  --------  --------------  ---------  -------  ----------  ----------
+	0  |    chr1                3        6  +         chr1                    6        8  +                    1
+	1  |    chr1               13       15  +         chr1                   12       14  +                    0
+	2  |    chr1               18       21  -         chr1                   25       29  -                    5
+	3  |    chr1               23       27  -         chr1                   25       29  -                    0
+	4  |    chr1               28       29  -         chr1                   25       29  -                    0
+	5  |    chr1               32       37  +         chr1                   34       36  +                    0
+	6  |    chr1               33       36  +         chr1                   34       36  +                    0
+  PyRanges with 7 rows, 9 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
 The output format is similar to :func:`join_ranges <pyranges.PyRanges.join_ranges>`.
@@ -653,32 +653,34 @@ In case you want to find the nearest interval which does not overlap with each s
 ``exclude_overlaps=True``:
 
   >>> a.nearest(b, exclude_overlaps=True)
-    index  |    Chromosome      Start      End  Strand      Start_b      End_b    Distance
-    int64  |    object          int64    int64  object      float64    float64       int64
-  -------  ---  ------------  -------  -------  --------  ---------  ---------  ----------
-        0  |    chr1                3        6  +                 6          8           1
-        1  |    chr1               13       15  +                19         20           5
-        2  |    chr1               18       21  -                25         29           5
-        5  |    chr1               32       37  +                19         20          13
-        6  |    chr1               33       36  +                19         20          14
-  PyRanges with 5 rows, 7 columns, and 1 index columns.
+    index  |    Chromosome      Start      End  Strand    Chromosome_b      Start_b    End_b  Strand_b      Distance
+    int64  |    object          int64    int64  object    object              int64    int64  object           int64
+  -------  ---  ------------  -------  -------  --------  --------------  ---------  -------  ----------  ----------
+	0  |    chr1                3        6  +         chr1                    6        8  +                    1
+	1  |    chr1               13       15  +         chr1                   19       20  +                    5
+	2  |    chr1               18       21  -         chr1                   25       29  -                    5
+	5  |    chr1               32       37  +         chr1                   19       20  +                   13
+	6  |    chr1               33       36  +         chr1                   19       20  +                   14
+  PyRanges with 5 rows, 9 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
 The :func:`nearest <pyranges.PyRanges.nearest>` method also accepts the ``strand_behavior`` argument:
 
   >>> a.nearest(b, strand_behavior='ignore', exclude_overlaps=True)
-    index  |    Chromosome      Start      End  Strand      Start_b    End_b  Strand_b      Distance
-    int64  |    object          int64    int64  object        int64    int64  object           int64
-  -------  ---  ------------  -------  -------  --------  ---------  -------  ----------  ----------
-        0  |    chr1                3        6  +                 6        8  +                    1
-        1  |    chr1               13       15  +                19       20  +                    5
-        2  |    chr1               18       21  -                12       14  +                    5
-        3  |    chr1               23       27  -                19       20  +                    4
-        4  |    chr1               28       29  -                34       36  +                    6
-        5  |    chr1               32       37  +                25       29  -                    4
-        6  |    chr1               33       36  +                25       29  -                    5
-  PyRanges with 7 rows, 8 columns, and 1 index columns.
+    index  |    Chromosome      Start      End  Strand    Chromosome_b      Start_b    End_b  Strand_b      Distance
+    int64  |    object          int64    int64  object    object              int64    int64  object           int64
+  -------  ---  ------------  -------  -------  --------  --------------  ---------  -------  ----------  ----------
+	0  |    chr1                3        6  +         chr1                    6        8  +                    1
+	1  |    chr1               13       15  +         chr1                   19       20  +                    5
+	2  |    chr1               18       21  -         chr1                   12       14  +                    5
+	2  |    chr1               18       21  -         chr1                   25       29  -                    5
+	3  |    chr1               23       27  -         chr1                   19       20  +                    4
+	4  |    chr1               28       29  -         chr1                   34       36  +                    6
+	5  |    chr1               32       37  +         chr1                   25       29  -                    4
+	6  |    chr1               33       36  +         chr1                   25       29  -                    5
+  PyRanges with 8 rows, 9 columns, and 1 index columns (with 1 index duplicates).
   Contains 1 chromosomes and 2 strands.
+
 
 Methods for single PyRanges
 ===========================
@@ -715,16 +717,16 @@ with an additional column "Cluster" containing the cluster identifier:
 
   >>> c.cluster()
     index  |    Chromosome      Start      End  Strand      Cluster
-    int64  |    object          int64    int64  object        int64
+    int64  |    object          int64    int64  object       uint32
   -------  ---  ------------  -------  -------  --------  ---------
-        0  |    chr1                1        5  +                 0
-        1  |    chr1                4        7  +                 0
-        2  |    chr1               10       14  +                 1
-        3  |    chr1               12       16  -                 2
-        4  |    chr1               19       27  +                 3
-        5  |    chr1               20       22  +                 3
-        6  |    chr1               24       25  +                 3
-        7  |    chr1               28       30  +                 4
+	0  |    chr1                1        5  +                 0
+	1  |    chr1                4        7  +                 0
+	2  |    chr1               10       14  +                 1
+	4  |    chr1               19       27  +                 2
+	5  |    chr1               20       22  +                 2
+	6  |    chr1               24       25  +                 2
+	7  |    chr1               28       30  +                 3
+	3  |    chr1               12       16  -                 5
   PyRanges with 8 rows, 5 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
@@ -734,16 +736,16 @@ When set to False, strand is ignored for overlap detection:
 
   >>> c.cluster(use_strand=False)
     index  |    Chromosome      Start      End  Strand      Cluster
-    int64  |    object          int64    int64  object        int64
+    int64  |    object          int64    int64  object       uint32
   -------  ---  ------------  -------  -------  --------  ---------
-        0  |    chr1                1        5  +                 0
-        1  |    chr1                4        7  +                 0
-        2  |    chr1               10       14  +                 1
-        3  |    chr1               12       16  -                 1
-        4  |    chr1               19       27  +                 2
-        5  |    chr1               20       22  +                 2
-        6  |    chr1               24       25  +                 2
-        7  |    chr1               28       30  +                 3
+	0  |    chr1                1        5  +                 0
+	1  |    chr1                4        7  +                 0
+	2  |    chr1               10       14  +                 1
+	3  |    chr1               12       16  -                 1
+	4  |    chr1               19       27  +                 2
+	5  |    chr1               20       22  +                 2
+	6  |    chr1               24       25  +                 2
+	7  |    chr1               28       30  +                 3
   PyRanges with 8 rows, 5 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
@@ -763,16 +765,16 @@ like those with index 4 and 7 above; and so on.
   >>> c2 = c.cluster(slack=2, use_strand=False, cluster_column='myClust')
   >>> c2
     index  |    Chromosome      Start      End  Strand      myClust
-    int64  |    object          int64    int64  object        int64
+    int64  |    object          int64    int64  object       uint32
   -------  ---  ------------  -------  -------  --------  ---------
-        0  |    chr1                1        5  +                 0
-        1  |    chr1                4        7  +                 0
-        2  |    chr1               10       14  +                 1
-        3  |    chr1               12       16  -                 1
-        4  |    chr1               19       27  +                 2
-        5  |    chr1               20       22  +                 2
-        6  |    chr1               24       25  +                 2
-        7  |    chr1               28       30  +                 2
+	0  |    chr1                1        5  +                 0
+	1  |    chr1                4        7  +                 0
+	2  |    chr1               10       14  +                 1
+	3  |    chr1               12       16  -                 1
+	4  |    chr1               19       27  +                 2
+	5  |    chr1               20       22  +                 2
+	6  |    chr1               24       25  +                 2
+	7  |    chr1               28       30  +                 2
   PyRanges with 8 rows, 5 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
@@ -783,18 +785,19 @@ Let's add a gene column to the PyRanges object and compare "Cluster" results wit
   >>> c2['gene'] = ['abc'[s % 3] for s in c2.Start] # arbitrary gene assignment
   >>> c2.cluster(slack=2, use_strand=False, match_by='gene')
     index  |    Chromosome      Start      End  Strand      myClust  gene        Cluster
-    int64  |    object          int64    int64  object        int64  object        int64
+    int64  |    object          int64    int64  object       uint32  object       uint32
   -------  ---  ------------  -------  -------  --------  ---------  --------  ---------
-        0  |    chr1                1        5  +                 0  b                 0
-        1  |    chr1                4        7  +                 0  b                 0
-        2  |    chr1               10       14  +                 1  b                 1
-        3  |    chr1               12       16  -                 1  a                 2
-        4  |    chr1               19       27  +                 2  b                 3
-        5  |    chr1               20       22  +                 2  c                 4
-        6  |    chr1               24       25  +                 2  a                 5
-        7  |    chr1               28       30  +                 2  b                 3
+	3  |    chr1               12       16  -                 1  a                 0
+	6  |    chr1               24       25  +                 2  a                 1
+	0  |    chr1                1        5  +                 0  b                 3
+	1  |    chr1                4        7  +                 0  b                 3
+	2  |    chr1               10       14  +                 1  b                 4
+	4  |    chr1               19       27  +                 2  b                 5
+	7  |    chr1               28       30  +                 2  b                 5
+	5  |    chr1               20       22  +                 2  c                 7
   PyRanges with 8 rows, 7 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
+
 
 Resolve overlaps: merge_overlaps, split, max_disjoint
 -----------------------------------------------------
@@ -851,26 +854,28 @@ This function drops metadata, too:
     index  |    Chromosome      Start      End  Strand
     int64  |    object          int64    int64  object
   -------  ---  ------------  -------  -------  --------
-        0  |    chr1                1        4  +
-        1  |    chr1                4        5  +
-        2  |    chr1                5        7  +
-        4  |    chr1               10       14  +
-        6  |    chr1               19       20  +
-        7  |    chr1               20       22  +
-        8  |    chr1               22       24  +
-        9  |    chr1               24       25  +
-       10  |    chr1               25       27  +
-       12  |    chr1               28       30  +
-       13  |    chr1               12       16  -
+	0  |    chr1                1        4  +
+	1  |    chr1                4        5  +
+	2  |    chr1                5        7  +
+	3  |    chr1               10       14  +
+	4  |    chr1               19       20  +
+	5  |    chr1               20       22  +
+	6  |    chr1               22       24  +
+	7  |    chr1               24       25  +
+	8  |    chr1               25       27  +
+	9  |    chr1               28       30  +
+       10  |    chr1               12       16  -
   PyRanges with 11 rows, 4 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
 Function :func:`max_disjoint <pyranges.PyRanges.max_disjoint>` also returns a set of non-overlapping intervals.
 In this case, however, input intervals are not modified, just filtered.
 The intervals to return are chosen to maximize the number of intervals in the output.
+The usual arguments (e.g. ``use_strand``) are available:
+
 
   >>> pr.options.reset_options()
-  >>> c2.max_disjoint() # using c2 to show that metadata is retained
+  >>> c2.max_disjoint(use_strand=False) # using c2 to show that metadata is retained
     index  |    Chromosome      Start      End  Strand      myClust  gene
     int64  |    object          int64    int64  object        int64  object
   -------  ---  ------------  -------  -------  --------  ---------  --------
@@ -883,31 +888,3 @@ The intervals to return are chosen to maximize the number of intervals in the ou
   PyRanges with 6 rows, 6 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-``slack`` and ``use_strand`` are also available:
-
-  >>> c2.max_disjoint(slack=2, use_strand=False)
-    index  |    Chromosome      Start      End  Strand      myClust  gene
-    int64  |    object          int64    int64  object        int64  object
-  -------  ---  ------------  -------  -------  --------  ---------  --------
-        0  |    chr1                1        5  +                 0  b
-        2  |    chr1               10       14  +                 1  b
-        5  |    chr1               20       22  +                 2  c
-        6  |    chr1               24       25  +                 2  a
-        7  |    chr1               28       30  +                 2  b
-  PyRanges with 5 rows, 6 columns, and 1 index columns.
-  Contains 1 chromosomes and 1 strands.
-
-As well as ``match_by``:
-
-  >>> c2.max_disjoint(slack=2, use_strand=False, match_by='gene')
-    index  |    Chromosome      Start      End  Strand      myClust  gene
-    int64  |    object          int64    int64  object        int64  object
-  -------  ---  ------------  -------  -------  --------  ---------  --------
-        0  |    chr1                1        5  +                 0  b
-        2  |    chr1               10       14  +                 1  b
-        3  |    chr1               12       16  -                 1  a
-        4  |    chr1               19       27  +                 2  b
-        5  |    chr1               20       22  +                 2  c
-        6  |    chr1               24       25  +                 2  a
-  PyRanges with 6 rows, 6 columns, and 1 index columns.
-  Contains 1 chromosomes and 2 strands.
