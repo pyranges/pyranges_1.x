@@ -582,14 +582,14 @@ Argument ``overlap_column`` can be used to add a column indicating how much of t
 overlaps with the tile returned:
 
   >>> se.tile(200, overlap_column='nts')
-    index  |      Chromosome    Start      End  Strand      transcript_id        nts
-    int64  |        category    int64    int64  category    object             int64
-  -------  ---  ------------  -------  -------  ----------  ---------------  -------
-        0  |               1    11800    12000  +           ENST00000456328      122
-        0  |               1    12000    12200  +           ENST00000456328      200
-        0  |               1    12200    12400  +           ENST00000456328       27
-        7  |               1   133200   133400  -           ENST00000610542       22
-        7  |               1   133400   133600  -           ENST00000610542      200
-        7  |               1   133600   133800  -           ENST00000610542      123
+    index  |      Chromosome    Start      End  Strand      transcript_id          nts
+    int64  |        category    int64    int64  category    object             float64
+  -------  ---  ------------  -------  -------  ----------  ---------------  ---------
+        0  |               1    11800    12000  +           ENST00000456328      0.61
+        0  |               1    12000    12200  +           ENST00000456328      1
+        0  |               1    12200    12400  +           ENST00000456328      0.135
+        7  |               1   133200   133400  -           ENST00000610542      0.11
+        7  |               1   133400   133600  -           ENST00000610542      1
+        7  |               1   133600   133800  -           ENST00000610542      0.615
   PyRanges with 6 rows, 6 columns, and 1 index columns (with 4 index duplicates).
   Contains 1 chromosomes and 2 strands.

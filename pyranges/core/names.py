@@ -118,6 +118,7 @@ TEMP_CLUSTER_COL = "__temp_cluster__"
 TEMP_LENGTH_COL = "__temp_length__"
 TEMP_START_SLACK_COL = "__temp_start_slack__"
 TEMP_END_SLACK_COL = "__temp_end_slack__"
+TEMP_TRANSCRIPT_ID_COL = "__temp_transcript_id__"
 
 DEFAULT_CLUSTER_ID_COL = "Cluster"
 

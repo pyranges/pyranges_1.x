@@ -573,7 +573,7 @@ class RangeFrame(pd.DataFrame):
 
     def sort_ranges(
         self: "RangeFrame",
-        match_by: VALID_BY_TYPES = None,
+        by: VALID_BY_TYPES = None,
         *,
         natsort: bool = True,
         sort_rows_reverse_order: Sequence[bool] | None = None,
@@ -584,7 +584,7 @@ class RangeFrame(pd.DataFrame):
 
         Parameters
         ----------
-        match_by : str or list of str, default None
+        by : str or list of str, default None
             in the desired order as part of the 'by' argument.
 
         natsort : bool, default False
@@ -602,7 +602,7 @@ class RangeFrame(pd.DataFrame):
         """
         import ruranges
 
-        by = arg_to_list(match_by)
+        by = arg_to_list(by)
         by_sort_order_as_int = sort_factorize_dict(self, by, use_natsort=natsort)
         idxs = ruranges.sort_intervals(  # type: ignore[attr-defined]
             by_sort_order_as_int,

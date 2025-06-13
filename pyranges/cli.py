@@ -1,13 +1,25 @@
 import io
 import sys
 from contextlib import redirect_stdout
+from functools import wraps
+
+import pandas as pd
 
 import pyranges as pr
+from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
 
 try:
     import fire  # type: ignore[reportMissingImports]
 except ImportError:
     fire = None
+
+
+@wraps(pd.read_csv)
+def read_csv(path: str, **kwargs) -> pr.PyRanges:
+    """Read a CSV with pandas, then convert the resulting DataFrame into a PyRanges."""
+    df = pd.read_csv(path, **kwargs)
+    return mypy_ensure_pyranges(pr.PyRanges(df))
+
 
 # 1) Available readers (no from_string)
 READERS = {
@@ -16,6 +28,7 @@ READERS = {
     "read_gff3": pr.read_gff3,
     "read_bam": pr.read_bam,
     "read_bigwig": pr.read_bigwig,
+    "read_csv": read_csv,
 }
 
 
@@ -24,7 +37,7 @@ def show_usage() -> None:
     prog = "pyranger"
     sys.stdout.write(
         f"""
-Read sequence interval data into pyranges and apply a chain of methods
+pyranger: read sequence interval data into pyranges and apply a chain of methods
 
 Usage:
   {prog} reader <args> , [var=reader <args>]… , method <args> , …
@@ -37,6 +50,9 @@ Usage:
 
 Available readers:
   {", ".join(READERS)}
+
+PyRanges methods:
+   see https://pyranges1.readthedocs.io/en/latest/pyranges_objects.html
 
 Examples:
   1. Load only:

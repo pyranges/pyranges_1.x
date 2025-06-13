@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyranges1"
-version = "1.0.15"
+version = "1.0.16"
 description = "GenomicRanges for Python."
 requires-python = ">=3.12.0"
 readme = "README.md"
@@ -71,6 +71,7 @@ deps =
     hypothesis==6.92.1
     # fisher
 commands =
+    python tests/run_doctest_tutorial_howto.py
     pytest --doctest-modules pyranges
     pytest tests/unit
     ruff format --check pyranges

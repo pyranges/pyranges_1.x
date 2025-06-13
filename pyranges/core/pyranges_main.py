@@ -28,6 +28,7 @@ from pyranges.core.names import (
     START_COL,
     STRAND_BEHAVIOR_OPPOSITE,
     STRAND_COL,
+    TEMP_TRANSCRIPT_ID_COL,
     USE_STRAND_DEFAULT,
     VALID_BY_TYPES,
     VALID_COMBINE_OPTIONS,
@@ -964,6 +965,17 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
+        >>> gr.extend(ext_3=1, ext_5=2, use_strand=False)
+          index  |    Chromosome      Start      End  Strand
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                1        7  +
+              1  |    chr1                6       10  +
+              2  |    chr1                3        8  -
+        PyRanges with 3 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+
         >>> gr.extend(-1)
           index  |    Chromosome      Start      End  Strand
           int64  |    object          int64    int64  object
@@ -1017,7 +1029,9 @@ class PyRanges(RangeFrame):
             groups=groups,  # type: ignore[arg-type]
             starts=self[START_COL].to_numpy(),
             ends=self[END_COL].to_numpy(),
-            negative_strand=(self[STRAND_COL] == REVERSE_STRAND).to_numpy(),
+            negative_strand=(
+                (self[STRAND_COL] == REVERSE_STRAND).to_numpy() if use_strand else np.zeros(len(self), dtype=bool)
+            ),
             ext_3=_ext_3,
             ext_5=_ext_5,
         )
@@ -2683,6 +2697,8 @@ class PyRanges(RangeFrame):
         """
         from pyranges.methods.spliced_subsequence import _spliced_subseq
 
+        use_strand = validate_and_convert_use_strand(self, use_strand)
+
         by = (
             prepare_by_single(
                 self,
@@ -3127,16 +3143,36 @@ class PyRanges(RangeFrame):
         Contains 3 chromosomes and 2 strands.
 
         """
-        by = prepare_by_single(self, use_strand=use_strand, match_by=transcript_id) if transcript_id else []
+        # implementation: generating boundaries per exon group, then intersecting with the original
+        # intervals to get the subsequence
 
-        boundaries = self.boundaries(by, use_strand=use_strand) if by else self
+        use_strand = validate_and_convert_use_strand(self, use_strand=use_strand)
+
+        # "by" below must not contain Chromosome or it will crash, since
+        # this is not passed to internals as usual; rather, it is passed to
+        # methods in the PyRanges API, where we don't provide Chromosome or Strand
+
+        if not transcript_id:
+            x = self.copy()
+            x[TEMP_TRANSCRIPT_ID_COL] = np.arange(len(x))
+            by = [TEMP_TRANSCRIPT_ID_COL]
+
+        else:
+            x = self
+            by = arg_to_list(transcript_id)
+
+        boundaries = x.boundaries(transcript_id=by, use_strand=use_strand)
         result = boundaries.spliced_subsequence(
             transcript_id=[],
             use_strand=use_strand,
             start=start,
             end=end,
         )
-        return mypy_ensure_pyranges(self.intersect(result))
+        subs = x.intersect(result, match_by=by)
+        if not transcript_id:
+            subs = cast("pr.PyRanges", subs.drop(columns=[TEMP_TRANSCRIPT_ID_COL]))
+
+        return mypy_ensure_pyranges(subs)
 
     def subtract_ranges(  # type: ignore[override]
         self,
@@ -5655,7 +5691,9 @@ class PyRanges(RangeFrame):
         elif not isinstance(chromsizes, dict):
             # fall-back for pyfaidx.Fasta etc.
             faidx = cast("dict[str | int, list]", chromsizes)
-            chromsizes = {k: len(faidx[k]) for k in faidx}
+            # below: ruff would complain about .keys(), but it's necessary for pyfaidx.Fasta since
+            # iterating on the object itself would yield FastaRecord, not keys
+            chromsizes = {k: len(faidx[k]) for k in faidx.keys()}  # noqa: SIM118
 
         if missing := set(self[CHROM_COL]) - chromsizes.keys():
             msg = f"Not all chromosomes were in the chromsize dict.\nMissing keys: {missing}."

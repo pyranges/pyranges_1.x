@@ -86,9 +86,6 @@ class PyRangesOptions:
         >>> pr.options.reset_options()
         >>> pr.options.get_option('max_rows_to_show')
         8
-        >>> pr.options.get_option('console_width')
-
-        >>> pr.options.set_option('console_width', 120)
 
         """
         self.options_in_use = self.options_default.copy()

@@ -259,7 +259,7 @@ See an overview with:
   example_data.aorta2             : Example ChIP-seq data.
   example_data.ncbi_gff           : Example NCBI GFF data.
   example_data.ncbi_fasta         : Example NCBI fasta.
-  example_data.files              : A dict of basenames to file paths of available data.
+  example_data.files              : Return a dict of basenames to file paths of available data.
 
 You can load the data with this syntax:
 
