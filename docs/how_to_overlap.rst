@@ -877,14 +877,12 @@ The usual arguments (e.g. ``use_strand``) are available:
   >>> pr.options.reset_options()
   >>> c2.max_disjoint(use_strand=False) # using c2 to show that metadata is retained
     index  |    Chromosome      Start      End  Strand      myClust  gene
-    int64  |    object          int64    int64  object        int64  object
+    int64  |    object          int64    int64  object       uint32  object
   -------  ---  ------------  -------  -------  --------  ---------  --------
         0  |    chr1                1        5  +                 0  b
         2  |    chr1               10       14  +                 1  b
-        3  |    chr1               12       16  -                 1  a
-        5  |    chr1               20       22  +                 2  c
-        6  |    chr1               24       25  +                 2  a
+        4  |    chr1               19       27  +                 2  b
         7  |    chr1               28       30  +                 2  b
-  PyRanges with 6 rows, 6 columns, and 1 index columns.
-  Contains 1 chromosomes and 2 strands.
+  PyRanges with 4 rows, 6 columns, and 1 index columns.
+  Contains 1 chromosomes and 1 strands.
 
