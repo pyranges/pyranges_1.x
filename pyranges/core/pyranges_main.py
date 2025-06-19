@@ -1629,33 +1629,40 @@ class PyRanges(RangeFrame):
     ) -> "PyRanges":
         """Find the maximal disjoint set of intervals.
 
-        Returns a subset of the rows in self so that no two intervals overlap, choosing those that
-        maximize the number of intervals in the result.
+        Returns a subset of the rows in *self* so that no two intervals
+        overlap, choosing those that maximize the number of intervals in
+        the result.
 
         Parameters
         ----------
-        use_strand: {"auto", True, False}, default: "auto"
-            Find the max disjoint set separately for each strand.
-            The default "auto" means True if PyRanges has valid strands (see .strand_valid).
+        use_strand : {"auto", True, False}, default: "auto"
+            Find the max-disjoint set separately for each strand.
+            The default ``"auto"`` means ``True`` if ``PyRanges`` has valid
+            strands (see :pyattr:`PyRanges.strand_valid`).
 
         slack : int, default 0
             Length by which the criteria of overlap are loosened.
-            A value of 1 implies that bookended intervals are considered overlapping.
-            Higher slack values allow more distant intervals (with a maximum distance of slack-1 between them).
+            A value of ``1`` implies that book-ended intervals are
+            considered overlapping.  Higher values allow more distant
+            intervals (with a maximum distance of ``slack-1`` between
+            them).
 
-        match_by : str or list, default None
-            If provided, only intervals with an equal value in column(s) `match_by` may be considered as overlapping.
+        match_by : str or list, default ``None``
+            If provided, only intervals with an equal value in column(s)
+            *match_by* may be considered as overlapping.
 
         Returns
         -------
         PyRanges
-            PyRanges with maximal disjoint set of intervals.
+            A ``PyRanges`` containing the maximal disjoint set of
+            intervals.
 
         See Also
         --------
-        PyRanges.merge_overlaps : merge intervals into non-overlapping superintervals
-        PyRanges.split : split intervals into non-overlapping subintervals
-        PyRanges.cluster : annotate overlapping intervals with common ID
+        PyRanges.merge_overlaps : merge intervals into non-overlapping
+            super-intervals
+        PyRanges.split : split intervals into non-overlapping sub-intervals
+        PyRanges.cluster : annotate overlapping intervals with a common ID
 
         Examples
         --------
@@ -1679,6 +1686,44 @@ class PyRanges(RangeFrame):
         PyRanges with 2 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 1 strands.
 
+        Strand-aware selection
+
+        >>> c = pr.PyRanges(dict(
+        ...     Chromosome=["chr1"] * 8,
+        ...     Start=[1, 4, 10, 12, 19, 20, 24, 28],
+        ...     End=[5, 7, 14, 16, 27, 22, 25, 30],
+        ...     Strand=["+", "+", "+", "-", "+", "+", "+", "+"]
+        ... ))
+        >>> c.max_disjoint(use_strand=True)
+          index  |    Chromosome      Start      End  Strand
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                1        5  +
+              2  |    chr1               10       14  +
+              3  |    chr1               12       16  -
+              4  |    chr1               19       27  +
+              7  |    chr1               28       30  +
+        PyRanges with 5 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        Using *match_by* to exempt rows from mutual overlap
+
+        >>> c3 = c.copy()
+        >>> c3["label"] = [f"x{i}" for i in range(len(c3))]
+        >>> c3.max_disjoint(match_by="label")
+          index  |    Chromosome      Start      End  Strand    label
+          int64  |    object          int64    int64  object    object
+        -------  ---  ------------  -------  -------  --------  --------
+              0  |    chr1                1        5  +         x0
+              1  |    chr1                4        7  +         x1
+              2  |    chr1               10       14  +         x2
+              3  |    chr1               12       16  -         x3
+              4  |    chr1               19       27  +         x4
+              5  |    chr1               20       22  +         x5
+              6  |    chr1               24       25  +         x6
+              7  |    chr1               28       30  +         x7
+        PyRanges with 8 rows, 5 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
         """
         use_strand = validate_and_convert_use_strand(self, use_strand)
 
