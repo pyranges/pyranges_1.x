@@ -1036,6 +1036,9 @@ class PyRanges(RangeFrame):
             ext_5=_ext_5,
         )
 
+        if (starts < 0).any():
+            starts = np.maximum(starts, 0)
+
         result = self.copy()
         result.loc[:, START_COL] = starts
         result.loc[:, END_COL] = ends
@@ -1694,6 +1697,21 @@ class PyRanges(RangeFrame):
         ...     End=[5, 7, 14, 16, 27, 22, 25, 30],
         ...     Strand=["+", "+", "+", "-", "+", "+", "+", "+"]
         ... ))
+        >>> c
+          index  |    Chromosome      Start      End  Strand
+          int64  |    object          int64    int64  object
+        -------  ---  ------------  -------  -------  --------
+              0  |    chr1                1        5  +
+              1  |    chr1                4        7  +
+              2  |    chr1               10       14  +
+              3  |    chr1               12       16  -
+              4  |    chr1               19       27  +
+              5  |    chr1               20       22  +
+              6  |    chr1               24       25  +
+              7  |    chr1               28       30  +
+        PyRanges with 8 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
         >>> c.max_disjoint(use_strand=True)
           index  |    Chromosome      Start      End  Strand
           int64  |    object          int64    int64  object
@@ -1724,6 +1742,7 @@ class PyRanges(RangeFrame):
               7  |    chr1               28       30  +         x7
         PyRanges with 8 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
+
         """
         use_strand = validate_and_convert_use_strand(self, use_strand)
 
