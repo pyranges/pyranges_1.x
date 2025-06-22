@@ -944,13 +944,13 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> gr.extend(4)
+        >>> gr.extend(3)
           index  |    Chromosome      Start      End  Strand
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
-              0  |    chr1                0       10  +
-              1  |    chr1                4       13  +
-              2  |    chr1                1       11  -
+              0  |    chr1                0        9  +
+              1  |    chr1                5       12  +
+              2  |    chr1                2       10  -
         PyRanges with 3 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
@@ -975,6 +975,7 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
+        Extending by negative values will contract the intervals. This may yield invalid intervals:
 
         >>> gr.extend(-1)
           index  |    Chromosome      Start      End  Strand
@@ -988,15 +989,21 @@ class PyRanges(RangeFrame):
         Invalid ranges:
           * 2 intervals are empty or negative length (end <= start). See indexes: 1, 2
 
-        >>> gr.extend(ext_3=1, ext_5=2)
+        Extending beyond the boundaries of the chromosome is allowed though it yields invalid ranges (below).
+        See genome_bounds() to fix this.
+
+        >>> gr.extend(4)
           index  |    Chromosome      Start      End  Strand
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
-              0  |    chr1                1        7  +
-              1  |    chr1                6       10  +
-              2  |    chr1                4        9  -
+              0  |    chr1               -1       10  +
+              1  |    chr1                4       13  +
+              2  |    chr1                1       11  -
         PyRanges with 3 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
+        Invalid ranges:
+          * 1 starts or ends are < 0. See indexes: 0
+
 
         >>> gr['transcript_id']=['a', 'a', 'b']
         >>> gr.extend(transcript_id='transcript_id', ext_3=3)
@@ -1035,9 +1042,6 @@ class PyRanges(RangeFrame):
             ext_3=_ext_3,
             ext_5=_ext_5,
         )
-
-        if (starts < 0).any():
-            starts = np.maximum(starts, 0)
 
         result = self.copy()
         result.loc[:, START_COL] = starts
@@ -4250,14 +4254,19 @@ class PyRanges(RangeFrame):
         PyRanges with 4 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
+        Note that upstream regions may extend beyond the start of the chromosome, resulting in invalid ranges.
+        See genome_bounds() to fix this.
+
         >>> ex.upstream(5, transcript_id='Tx')
           index  |    Chromosome      Start      End  Strand    Tx
           int64  |    object          int64    int64  object    object
         -------  ---  ------------  -------  -------  --------  --------
-              0  |    chr1                0        5  +         tx1
+              0  |    chr1               -5        0  +         tx1
               3  |    chr1               60       65  -         tx2
         PyRanges with 2 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
+        Invalid ranges:
+          * 1 starts or ends are < 0. See indexes: 0
 
         """
         if length <= 0:
