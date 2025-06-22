@@ -9,8 +9,6 @@ from pyranges.core.names import (
     END_COL,
     START_COL,
     STRAND_COL,
-    USE_STRAND_DEFAULT,
-    VALID_USE_STRAND_TYPE,
 )
 from pyranges.core.pyranges_helpers import factorize_binary, mypy_ensure_pyranges
 
@@ -18,13 +16,8 @@ if TYPE_CHECKING:
     from pyranges import PyRanges
 
 
-def map_to_global(
-    local_gr: "PyRanges",
-    global_gr: "PyRanges",
-    global_on: str,
-    *,
-    local_on: str = "Chromosome",
-    use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
+def _map_to_global(
+    local_gr: "PyRanges", global_gr: "PyRanges", global_on: str, *, local_on: str = "Chromosome"
 ) -> "PyRanges":
     """Lift intervals from local_gr to genomic coordinates using global_gr exon annotations.
 
@@ -32,10 +25,12 @@ def map_to_global(
     """
     cumsum_start = "_local_start"
     cumsum_end = "_local_end"
+    local_has_strand = local_gr.has_strand
+    global_has_strand = global_gr.has_strand
 
     global_cum = global_gr.group_cumsum(
         match_by=global_on,
-        use_strand=use_strand,
+        use_strand="auto",
         cumsum_start_column=cumsum_start,
         cumsum_end_column=cumsum_end,
         sort=False,
@@ -62,11 +57,19 @@ def map_to_global(
     ex_local_end = ex_df[END_COL].to_numpy(copy=False)
     ex_genome_start = ex_df["__global_start__"].to_numpy(copy=False)
     ex_genome_end = ex_df["__global_end__"].to_numpy(copy=False)
-    ex_fwd = (ex_df[STRAND_COL] == "+").to_numpy(np.bool_, copy=False)
+    ex_fwd = (
+        (ex_df[STRAND_COL] == "+").to_numpy(np.bool_, copy=False)
+        if global_has_strand
+        else np.ones(len(ex_df), dtype=bool)
+    )
 
     q_start = local_df[START_COL].to_numpy(copy=False)
     q_end = local_df[END_COL].to_numpy(copy=False)
-    q_fwd = (local_df[STRAND_COL] == "+").to_numpy(np.bool_, copy=False)
+    q_fwd = (
+        (local_df[STRAND_COL] == "+").to_numpy(np.bool_, copy=False)
+        if local_has_strand
+        else np.ones(len(local_df), dtype=bool)
+    )
 
     keep_idx, out_start, out_end, out_strand_bool = ruranges.map_to_global(
         groups=ex_tx_code,
@@ -97,7 +100,8 @@ def map_to_global(
     mapped_df[CHROM_COL] = out_chr_str
     mapped_df[START_COL] = out_start
     mapped_df[END_COL] = out_end
-    mapped_df[STRAND_COL] = np.where(out_strand_bool, "+", "-")
+    if local_has_strand or global_has_strand:
+        mapped_df[STRAND_COL] = np.where(out_strand_bool, "+", "-")
 
     if tmp_tx_id in mapped_df.columns:
         mapped_df = mapped_df.drop(columns=[tmp_tx_id])
