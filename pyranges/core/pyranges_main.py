@@ -55,7 +55,8 @@ from pyranges.core.pyranges_helpers import (
 from pyranges.core.tostring import tostring
 from pyranges.methods.complement import _complement
 from pyranges.methods.interval_metrics import compute_interval_metrics
-from pyranges.methods.map_to_global import map_to_global
+from pyranges.methods.map_to_global import _map_to_global
+from pyranges.methods.map_to_local import _map_to_local
 from pyranges.methods.sort import sort_factorize_dict
 from pyranges.range_frame.range_frame import RangeFrame
 from pyranges.range_frame.range_frame_validator import InvalidRangesReason
@@ -1472,14 +1473,7 @@ class PyRanges(RangeFrame):
         """
         return self.End - self.Start
 
-    def map_to_global(
-        self,
-        gr: "PyRanges",
-        global_on: str,
-        *,
-        local_on: str = "Chromosome",
-        use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
-    ) -> "PyRanges":
+    def map_to_global(self, gr: "PyRanges", global_on: str, *, local_on: str = "Chromosome") -> "PyRanges":
         """Map intervals from a *local* reference frame (e.g. transcript) to *global* coordinates (e.g. genomic).
 
         The self PyRanges object is *local* in the sense that its
@@ -1507,9 +1501,6 @@ class PyRanges(RangeFrame):
         local_on : str, default "Chromosome"
             Column in `self` that holds the identifier to be lifted. Change this
             if your identifiers live in a different column.
-        use_strand: {"auto", True, False}, default: "auto"
-            Only map when strands in local and global match.
-            The default "auto" means True if PyRanges has valid strands (see .strand_valid).
 
         Returns
         -------
@@ -1619,13 +1610,177 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 1 strands.
 
         """
-        return map_to_global(
-            local_gr=self,
-            global_gr=gr,
-            global_on=global_on,
-            local_on=local_on,
-            use_strand=use_strand and STRAND_COL in self,
-        )
+        if (self.has_strand and not self.strand_valid) or (gr.has_strand and not gr.strand_valid):
+            msg = "Invalid strands detected! map_to_global needs PyRanges with valid strands, or not Strand at all)."
+            raise AssertionError(msg)
+
+        return _map_to_global(local_gr=self, global_gr=gr, global_on=global_on, local_on=local_on)
+
+    def map_to_local(self, ref, idcol, match_by=None) -> "PyRanges":
+        """Map *global* genomic intervals (``self``) onto a *local* frame defined by reference ranges ``ref``.
+
+        Both ``self`` and ``ref`` are given **in genomic coordinates**.
+        ``ref`` holds the layout of every local entity (typically the exons
+        that compose each transcript).  Each interval in ``self`` that overlap
+        with ``ref`` is *re-based* so that the returned ``Start``/``End``
+        are measured from the 5' end of the **entire transcript** of ``ref``,
+        with introns removed.  For instance, if the
+        first exon of a ``ref`` transcript is 100 nt long, the first base
+        of the second exon has local coordinate 100.
+
+        Intervals in ``self`` are mapped to **every transcript they
+        overlap**; non-overlapping intervals are not reported.  ``ref`` must
+        contain a column whose name is supplied in *idcol*. Those values
+        becomes the ``Chromosome`` column of the output.
+
+        The strand of each returned interval is the “product” of the strands
+        of the overlapping pair (e.g. *+* x. *-* → *-*).
+
+        Parameters
+        ----------
+        ref : PyRanges
+            Reference ranges in genomic coordinates that define the new
+            coordinate system (e.g. multi-exon transcript annotation).
+        idcol : str
+            Column in ``ref`` that groups intervals into transcripts.
+            Values are copied into ``Chromosome`` in the output.
+        match_by : str or list[str], optional
+            If provided, only overlapping intervals with an equal value in
+            column(s) `match_by` are reported.
+
+        Returns
+        -------
+        PyRanges
+            Intervals remapped to local (transcript) coordinates,
+            preserving the original row order, index and metadata columns of ``self``.
+
+        Warning
+        -------
+        *A single ``self``  interval may overlap several ``ref`` exons, or different transcripts.
+        In that case its index repeats in the output.  Call ``reset_index()`` afterwards if you
+        need unique indices.
+
+        Examples
+        --------
+        >>> import pandas as pd, pyranges as pr
+        >>> tr = pr.PyRanges(pd.DataFrame({
+        ...     "Chromosome":   ["chr1","chr1","chr1","chr1"],
+        ...     "Start":        [  100,   300,   1000, 1100],
+        ...     "End":          [  200,   400,   1050, 1200],
+        ...     "Strand":       ["+","+", "-","-"],
+        ...     "transcript_id":["tx1","tx1","tx2","tx2"],
+        ... }))
+        >>> g1 = pr.PyRanges(pd.DataFrame({
+        ...     "Chromosome": ["chr1","chr1","chr1","chr1","chr1","chr1","chr1"],
+        ...     "Start":      [ 110,   220,   320,   340,   500,  1030, 1180],
+        ...     "End":        [ 180,   240,   340,   360,   550,  1050, 1200],
+        ...     "Strand":     ["+","+", "+",  "-","+",   "-","+"],
+        ...     "label":      ["a","no_overlap_intronic","b","c",
+        ...                    "no_overlap_intergenic","d","e"],
+        ... }))
+
+        >>> tr
+          index  |    Chromosome      Start      End  Strand    transcript_id
+          int64  |    object          int64    int64  object    object
+        -------  ---  ------------  -------  -------  --------  ---------------
+              0  |    chr1              100      200  +         tx1
+              1  |    chr1              300      400  +         tx1
+              2  |    chr1             1000     1050  -         tx2
+              3  |    chr1             1100     1200  -         tx2
+        PyRanges with 4 rows, 5 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        >>> g1
+          index  |    Chromosome      Start      End  Strand    label
+          int64  |    object          int64    int64  object    object
+        -------  ---  ------------  -------  -------  --------  ---------------------
+              0  |    chr1              110      180  +         a
+              1  |    chr1              220      240  +         no_overlap_intronic
+              2  |    chr1              320      340  +         b
+              3  |    chr1              340      360  -         c
+              4  |    chr1              500      550  +         no_overlap_intergenic
+              5  |    chr1             1030     1050  -         d
+              6  |    chr1             1180     1200  +         e
+        PyRanges with 7 rows, 5 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        >>> g1.map_to_local(tr, "transcript_id")
+          index  |    Chromosome      Start      End  Strand    label
+          int64  |    object          int64    int64  object    object
+        -------  ---  ------------  -------  -------  --------  --------
+              0  |    tx1                10       80  +         a
+              2  |    tx1               120      140  +         b
+              3  |    tx1               140      160  -         c
+              5  |    tx2               100      120  +         d
+              6  |    tx2                 0       20  -         e
+        PyRanges with 5 rows, 5 columns, and 1 index columns.
+        Contains 2 chromosomes and 2 strands.
+
+        A genomic interval spanning **two exons** is split:
+
+        >>> g2 = pr.PyRanges(pd.DataFrame({
+        ...     "Chromosome":["chr1"], "Start":[180], "End":[330],
+        ...     "Strand":["+"], "label":["q"]}))
+        >>> g2.map_to_local(tr, "transcript_id")
+          index  |    Chromosome      Start      End  Strand    label
+          int64  |    object          int64    int64  object    object
+        -------  ---  ------------  -------  -------  --------  --------
+              0  |    tx1                80      100  +         q
+              0  |    tx1               100      130  +         q
+        PyRanges with 2 rows, 5 columns, and 1 index columns (with 1 index duplicates).
+        Contains 1 chromosomes and 1 strands.
+
+        Self intervals that overlaps multiple target ranges are reported as many times:
+
+        >>> tr2 = pr.PyRanges(pd.DataFrame({
+        ...      "Chromosome":   ["chr1","chr1","chr1","chr1"],
+        ...      "Start":        [  100,   300,   110, 300],
+        ...      "End":          [  200,   400,   200, 380],
+        ...      "Strand":       ["+","+","-","-"],
+        ...      "transcript_id":["tx1.1","tx1.1","tx1.2","tx1.2"],
+        ... }))
+
+        >>> g3 = pr.PyRanges(pd.DataFrame({
+        ...     "Chromosome": ["chr1"], "Start": [150], "End": [180], "Strand": ["+"], "label": ["x"]}))
+
+        >>> g3.map_to_local(tr2, "transcript_id")
+          index  |    Chromosome      Start      End  Strand    label
+          int64  |    object          int64    int64  object    object
+        -------  ---  ------------  -------  -------  --------  --------
+              0  |    tx1.1              50       80  +         x
+              0  |    tx1.2             100      130  -         x
+        PyRanges with 2 rows, 5 columns, and 1 index columns (with 1 index duplicates).
+        Contains 2 chromosomes and 2 strands.
+
+        Explicitly restrict what to report using match_by:
+
+        >>> g4 = g3.assign(transcript_id="tx1.1")
+        >>> g4.map_to_local(tr2, "transcript_id", match_by="transcript_id")
+          index  |    Chromosome      Start      End  Strand    label
+          int64  |    object          int64    int64  object    object
+        -------  ---  ------------  -------  -------  --------  --------
+              0  |    tx1.1              50       80  +         x
+        PyRanges with 1 rows, 5 columns, and 1 index columns.
+        Contains 1 chromosomes and 1 strands.
+
+        >>> tr3 = tr2.copy()
+        >>> tr3["label"] = ["x", "b", "c", "d"]
+        >>> g4.map_to_local(tr3, "transcript_id", match_by="label")
+          index  |    Chromosome      Start      End  Strand    label     transcript_id
+          int64  |    object          int64    int64  object    object    object
+        -------  ---  ------------  -------  -------  --------  --------  ---------------
+              0  |    tx1.1              50       80  +         x         tx1.1
+        PyRanges with 1 rows, 6 columns, and 1 index columns.
+        Contains 1 chromosomes and 1 strands.
+
+        """
+        if (self.has_strand and not self.strand_valid) or (ref.has_strand and not ref.strand_valid):
+            msg = "Invalid strands detected! map_to_local needs PyRanges with valid strands, or not Strand at all)."
+            raise AssertionError(msg)
+
+        gr = _map_to_local(gr=self, ref=ref, idcol=idcol, match_by=match_by)
+
+        return mypy_ensure_pyranges(gr)
 
     def max_disjoint(
         self,
