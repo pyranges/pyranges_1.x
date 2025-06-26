@@ -29,7 +29,7 @@ def _map_to_global(
     global_has_strand = global_gr.has_strand
 
     global_cum = global_gr.group_cumsum(
-        match_by=global_on,
+        group_by=global_on,
         use_strand="auto",
         cumsum_start_column=cumsum_start,
         cumsum_end_column=cumsum_end,

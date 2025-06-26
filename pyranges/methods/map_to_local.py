@@ -41,7 +41,7 @@ def _map_to_local(gr, ref, idcol, match_by) -> "PyRanges":
     ref = (
         ref.get_with_loc_columns(ref_cols_to_keep)
         .group_cumsum(
-            match_by=idcol,
+            group_by=idcol,
             use_strand="auto",
             cumsum_start_column=cumsum_start,
             cumsum_end_column=cumsum_end,
