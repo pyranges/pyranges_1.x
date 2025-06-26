@@ -2604,7 +2604,7 @@ class PyRanges(RangeFrame):
 
     def sort_ranges(  # type: ignore[override]
         self,
-        match_by: VALID_BY_TYPES = None,
+        by: VALID_BY_TYPES = None,
         *,
         natsort: bool = True,
         use_strand: VALID_USE_STRAND_TYPE = "auto",
@@ -2617,21 +2617,15 @@ class PyRanges(RangeFrame):
 
         Parameters
         ----------
-        match_by : str or list of str, default None
+        by : str or list of str, default None
             If provided, sorting occurs by Chromosome, Strand (if present), *by, Start, and End.
-            To prioritize columns differently (e.g. Strand before Chromosome), explicitly provide all columns
-            in the desired order as part of the 'by' argument.
-            You can prepend any column name with '-' to reverse the order of sorting for that column.
 
         use_strand: {"auto", True, False}, default: "auto"
             Whether negative strand intervals should be sorted in descending order, meaning 5' to 3'.
             The default "auto" means True if PyRanges has valid strands (see .strand_valid).
 
-        natsort : bool, default False
+        natsort : bool, default True
             Whether to use natural sorting for Chromosome column, so that e.g. chr2 < chr11.
-
-        reverse : bool, default False
-            Whether to reverse the sort order.
 
         Returns
         -------
@@ -2712,7 +2706,7 @@ class PyRanges(RangeFrame):
 
         Sort by 'transcript_id' before than by columns Start and End (but after Chromosome and Strand):
 
-        >>> p.sort_ranges(match_by='transcript_id', natsort=False)
+        >>> p.sort_ranges(by='transcript_id', natsort=False)
           index  |    Chromosome    Strand      Start      End  transcript_id
           int64  |    object        object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
@@ -2766,7 +2760,7 @@ class PyRanges(RangeFrame):
         """
         import ruranges
 
-        by = arg_to_list(match_by)
+        by = arg_to_list(by)
 
         use_strand = validate_and_convert_use_strand(self, use_strand)
 
@@ -4941,7 +4935,7 @@ class PyRanges(RangeFrame):
     def group_cumsum(
         self,
         *,
-        match_by: VALID_BY_TYPES = None,
+        group_by: VALID_BY_TYPES = None,
         use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
         cumsum_start_column: str | None = None,
         cumsum_end_column: str | None = None,
@@ -4950,7 +4944,7 @@ class PyRanges(RangeFrame):
         """Strand-aware cumulative length of every interval *within each chromosome-level group*.
 
         For every chromosome (and, if supplied, every unique combination in
-        *match_by*) the intervals are walked 5→3 **on their own strand**.
+        *group_by*) the intervals are walked 5→3 **on their own strand**.
         Two new columns are added:
 
         * ``cumsum_start_column`` - running total **before** the interval
@@ -4958,7 +4952,7 @@ class PyRanges(RangeFrame):
 
         Parameters
         ----------
-        match_by : str or list, default *None*
+        group_by : str or list, default *None*
             Additional column(s) that must match for two intervals to share a
             cumulative coordinate space.  When *None* all intervals on the same
             chromosome are cumulated together.
@@ -4994,7 +4988,7 @@ class PyRanges(RangeFrame):
              10  |               1   120873   120932  -           exon        AL627309.1
         PyRanges with 8 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
-        >>> gr.group_cumsum(match_by="gene_name")
+        >>> gr.group_cumsum(group_by="gene_name")
           index  |      Chromosome    Start      End  Strand      Feature     gene_name
           int64  |        category    int64    int64  category    category    object
         -------  ---  ------------  -------  -------  ----------  ----------  -----------
@@ -5013,8 +5007,8 @@ class PyRanges(RangeFrame):
         import ruranges  # local import reduces start-up time
 
         strand = validate_and_convert_use_strand(self, use_strand)
-        match_by = arg_to_list(match_by)
-        group_ids = factorize(self, match_by)
+        group_by = arg_to_list(group_by)
+        group_ids = factorize(self, group_by)
 
         forward = (self[STRAND_COL] == FORWARD_STRAND).to_numpy() if strand else np.ones(self.shape[0], dtype=np.bool_)
 
@@ -5426,7 +5420,7 @@ class PyRanges(RangeFrame):
 
     def complement(
         self: "PyRanges",
-        match_by: VALID_BY_TYPES = None,
+        transcript_id: VALID_BY_TYPES = None,
         *,
         use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
         include_first_interval: bool = False,
@@ -5441,7 +5435,7 @@ class PyRanges(RangeFrame):
 
         Parameters
         ----------
-        match_by : str or list, optional
+        transcript_id : str or list, optional
             Column(s) to group intervals (e.g. exons). If provided, the complement will be calculated separately for each group.
         use_strand : {"auto", True, False}, default "auto"
             Whether to return complement intervals separately for those on the positive and negative strands.
@@ -5604,7 +5598,7 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes.
 
         """
-        by = prepare_by_single(self, use_strand=use_strand, match_by=match_by)
+        by = prepare_by_single(self, use_strand=use_strand, match_by=transcript_id)
 
         result = _complement(
             self,
