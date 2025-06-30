@@ -51,7 +51,7 @@ def _outside_bounds(df: pd.DataFrame, **kwargs) -> pd.DataFrame:
         chromsizes = _chromsizes
 
     size = int(chromsizes[df.Chromosome.iloc[0]])
-    clip = kwargs.get("clip", False)
+    clip = kwargs.get("remove", False)
     only_right = kwargs.get("only_right", False)
 
     ends_outright = df.End > size

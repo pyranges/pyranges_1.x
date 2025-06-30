@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyranges1"
-version = "1.0.18"
+version = "1.0.19"
 description = "GenomicRanges for Python."
 requires-python = ">=3.12.0"
 readme = "README.md"
