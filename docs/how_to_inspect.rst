@@ -116,7 +116,7 @@ Intervals may also be invalid because of NaN in their Start or End values:
     * 1 starts or ends are nan. See indexes: 0
 
 Or because they have negative Start/End values, see below. This can be remedied with
-function :func:`genome_bounds <pyranges.PyRanges.genome_bounds>`.
+function :func:`clip_ranges <pyranges.PyRanges.clip_ranges>`.
 
   >>> pr.PyRanges(dict(Chromosome='chr1', Start=[1, -10], End=[11, 20]))
     index  |    Chromosome      Start      End

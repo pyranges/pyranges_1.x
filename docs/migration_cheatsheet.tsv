@@ -22,7 +22,7 @@ v0	v1	caveats
  :mslink:`g.as_df <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.as_df>` 	:func:`g.copy() <pyranges.PyRanges.copy>`	
  :mslink:`g.df <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.df>` 	:func:`g.copy() <pyranges.PyRanges.copy>`	
  :mslink:`g.dfs <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.dfs>` 	``REMOVED``	
- :mslink:`g.features <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.features>` 	``REMOVED``	functions retained and moved: pr.tile_genome pr.genome_bounds
+ :mslink:`g.features <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.features>` 	``REMOVED``	functions retained and moved: pr.tile_genome (same name) and pr.genome_bounds --> g.clip_ranges (now it clips by default instead of removing)
  :mslink:`g.stats <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.stats>` 	:func:`pr.stats <pyranges.stats>`	g.stats.func_name() now becomes pr.stats.func_name(g)
  :mslink:`g.stranded <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.stranded>` 	:func:`g.strand_valid <pyranges.PyRanges.strand_valid>`	
  :mslink:`g.strands <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.strands>` 	``g.Strand.drop_duplicates()``	

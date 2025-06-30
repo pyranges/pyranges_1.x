@@ -483,14 +483,12 @@ We can use method :func:`spliced_subsequence <pyranges.PyRanges.spliced_subseque
 
 Because we extended intervals, some may have gone out-of-bounds on the left or on the right side:
 they may have a Start smaller than 0, or an End greater than the length of its chromosome, respectively.
-The function :func:`genome_bounds <pyranges.PyRanges.genome_bounds>`
-is designed to correct this.
-We may use it to remove out-of-bounds intervals, or to retain only their in-bound portions.
-We go for the second option, with ``clip=True``:
+The function :func:`clip_ranges <pyranges.PyRanges.clip_ranges>`
+is designed to correct this:
 
   >>> import pyfaidx
   >>> pyf=pyfaidx.Fasta(genome_file)
-  >>> cor_prom = prom.genome_bounds(chromsizes=pyf, clip=True)
+  >>> cor_prom = prom.clip_ranges(chromsizes=pyf)
   >>> cor_prom.head()
     index  |    Chromosome           Start      End  Strand      ID
     int64  |    category             int64    int64  category    object
@@ -503,7 +501,7 @@ We go for the second option, with ``clip=True``:
   PyRanges with 5 rows, 5 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-To detect cases of out-of-bounds on the right side, :func:`genome_bounds <pyranges.PyRanges.genome_bounds>`
+To detect cases of out-of-bounds on the right side, :func:`clip_ranges <pyranges.PyRanges.clip_ranges>`
 needs to know chromosome sizes.
 Various input types are accepted for the ``chromsizes`` argument; we used a ``pyfaidx.Fasta``
 object, which derives it from a fasta file.

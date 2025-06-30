@@ -991,7 +991,7 @@ class PyRanges(RangeFrame):
           * 2 intervals are empty or negative length (end <= start). See indexes: 1, 2
 
         Extending beyond the boundaries of the chromosome is allowed though it yields invalid ranges (below).
-        See genome_bounds() to fix this.
+        See clip_ranges() to fix this.
 
         >>> gr.extend(4)
           index  |    Chromosome      Start      End  Strand
@@ -4404,7 +4404,7 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         Note that upstream regions may extend beyond the start of the chromosome, resulting in invalid ranges.
-        See genome_bounds() to fix this.
+        See clip_ranges() to fix this.
 
         >>> ex.upstream(5, transcript_id='Tx')
           index  |    Chromosome      Start      End  Strand    Tx
@@ -5832,25 +5832,24 @@ class PyRanges(RangeFrame):
 
         return gr.groupby(transcript_id, as_index=False).agg({sequence_column: "".join})
 
-    def genome_bounds(
+    def clip_ranges(
         self: "PyRanges",
-        chromsizes: "dict[str | int, int] | PyRanges",
+        chromsizes: "dict[str | int, int] | PyRanges | None" = None,
         *,
-        clip: bool = False,
+        remove: bool = False,
         only_right: bool = False,
     ) -> "PyRanges":
-        """Remove or clip intervals outside of genome bounds.
+        """Clip or remove intervals outside of sequence (e.g. Chromosome) bounds.
 
         Parameters
         ----------
-        chromsizes : dict or PyRanges or pyfaidx.Fasta
-            Dict or PyRanges describing the lengths of the chromosomes.
+        chromsizes : dict or PyRanges or pyfaidx.Fasta or None, default None
+            Dict or PyRanges describing the lengths of the sequences (the "Chromosomes" in the self object).
             pyfaidx.Fasta object is also accepted since it conveniently loads chromosome length
+            If None, clipping is only on the left, i.e. for the portions of intervals that are negative (Start < 0).
 
-        clip : bool, default False
-            Returns the portions of intervals within bounds,
-            instead of dropping intervals entirely if they are even partially
-            out of bounds
+        remove : bool, default False
+            Drops intervals entirely if they are even partially out of bounds, instead of clipping them
 
         only_right : bool, default False
             If True, remove or clip only intervals that are out-of-bounds on the right,
@@ -5876,16 +5875,7 @@ class PyRanges(RangeFrame):
         >>> chromsizes
         {1: 249250621, 3: 500}
 
-        >>> gr.genome_bounds(chromsizes)
-          index  |      Chromosome    Start      End
-          int64  |           int64    int64    int64
-        -------  ---  ------------  -------  -------
-              0  |               1        1        2
-              2  |               3        5        7
-        PyRanges with 2 rows, 3 columns, and 1 index columns.
-        Contains 2 chromosomes.
-
-        >>> gr.genome_bounds(chromsizes, clip=True)
+        >>> gr.clip_ranges(chromsizes)
           index  |      Chromosome      Start        End
           int64  |           int64      int64      int64
         -------  ---  ------------  ---------  ---------
@@ -5895,21 +5885,71 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 3 columns, and 1 index columns.
         Contains 2 chromosomes.
 
+        >>> gr.clip_ranges(chromsizes, remove=True)
+          index  |      Chromosome    Start      End
+          int64  |           int64    int64    int64
+        -------  ---  ------------  -------  -------
+              0  |               1        1        2
+              2  |               3        5        7
+        PyRanges with 2 rows, 3 columns, and 1 index columns.
+        Contains 2 chromosomes.
+
         >>> del chromsizes[3]
         >>> chromsizes
         {1: 249250621}
 
-        >>> gr.genome_bounds(chromsizes)
+        >>> gr.clip_ranges(chromsizes)
         Traceback (most recent call last):
         ...
         ValueError: Not all chromosomes were in the chromsize dict.
         Missing keys: {3}.
+
+        >>> w = pr.PyRanges({"Chromosome": [1, 1, 1], "Start": [-10, 249250600, 100], "End": [2, 249250640, 150]})
+        >>> w
+          index  |      Chromosome      Start        End
+          int64  |           int64      int64      int64
+        -------  ---  ------------  ---------  ---------
+              0  |               1        -10          2
+              1  |               1  249250600  249250640
+              2  |               1        100        150
+        PyRanges with 3 rows, 3 columns, and 1 index columns.
+        Contains 1 chromosomes.
+        Invalid ranges:
+          * 1 starts or ends are < 0. See indexes: 0
+
+        >>> w.clip_ranges()
+          index  |      Chromosome      Start        End
+          int64  |           int64      int64      int64
+        -------  ---  ------------  ---------  ---------
+              0  |               1          0          2
+              1  |               1  249250600  249250640
+              2  |               1        100        150
+        PyRanges with 3 rows, 3 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        >>> w.clip_ranges({1:249250620}, only_right=True)
+          index  |      Chromosome      Start        End
+          int64  |           int64      int64      int64
+        -------  ---  ------------  ---------  ---------
+              0  |               1        -10          2
+              1  |               1  249250600  249250620
+              2  |               1        100        150
+        PyRanges with 3 rows, 3 columns, and 1 index columns.
+        Contains 1 chromosomes.
+        Invalid ranges:
+          * 1 starts or ends are < 0. See indexes: 0
 
         """
         import ruranges
 
         if isinstance(chromsizes, pd.DataFrame):
             chromsizes = dict(zip(chromsizes[CHROM_COL], chromsizes[END_COL], strict=True))
+        elif chromsizes is None:
+            # fall-back for no chromsizes, only clip on the left
+            max_e = self[END_COL].max()
+            # tell pyright that the keys of chromsizes are str or int
+            chromsizes = cast("dict[str | int, int]", dict.fromkeys(self[CHROM_COL].unique(), max_e))
+
         elif not isinstance(chromsizes, dict):
             # fall-back for pyfaidx.Fasta etc.
             faidx = cast("dict[str | int, list]", chromsizes)
@@ -5939,12 +5979,12 @@ class PyRanges(RangeFrame):
             starts=self[START_COL].to_numpy(),
             ends=self[END_COL].to_numpy(),
             chrom_length=chrom_lengths_vec,  # **row-aligned!**
-            clip=clip,
+            clip=not remove,
             only_right=only_right,
         )
 
         res = self.take(idxs)  # type: ignore[arg-type]
-        if clip:
+        if not remove:
             res.loc[:, START_COL] = starts
             res.loc[:, END_COL] = ends
 

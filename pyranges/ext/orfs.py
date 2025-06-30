@@ -665,7 +665,7 @@ def _get_seqs(df, fs, selector) -> None:
 
 
 def _correct_bounds(df, adjust=None) -> None:
-    """Similar to pyranges genome_bounds, inplace, but see below.
+    """Similar to pyranges clip_ranges, inplace, but see below.
 
     but also: adjust the 5' or 3' end of intervals so they are multiples of 3
     and set boolean attribute __out_of_bounds.
