@@ -445,13 +445,51 @@ the pandas method ``head``:
   PyRanges with 5 rows, 5 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-First, we use the method  :func:`extend <pyranges.PyRanges.extend>`
+First, we use the method  :func:`extend_ranges <pyranges.PyRanges.extend_ranges>`
 to obtain intervals which include the CDS and the promoter defined as above.
 We will group by the ID column, so that the extension is applied to each CDS group
 (i.e. in this case only the 5' most
 interval of each group).
 
-  >>> g = cds.extend(ext_5=300, transcript_id='ID')
+  >>> g = cds.extend_ranges(ext_5=300, transcript_id='ID')
+  >>> g.head()
+    index  |    Chromosome           Start      End  Strand      ID
+    int64  |    category             int64    int64  category    object
+  -------  ---  -----------------  -------  -------  ----------  ----------------
+        4  |    CAJFCJ010000053.1     4882     5563  -           cds-CAD5126491.1
+       11  |    CAJFCJ010000053.1    10432    10958  +           cds-CAD5126492.1
+       12  |    CAJFCJ010000053.1    11028    11169  +           cds-CAD5126492.1
+       13  |    CAJFCJ010000053.1    11227    11400  +           cds-CAD5126492.1
+       14  |    CAJFCJ010000053.1    11453    14183  +           cds-CAD5126492.1
+  PyRanges with 5 rows, 5 columns, and 1 index columns.
+  Contains 1 chromosomes and 2 strands.
+
+In the object we obtained, the promoter corresponds to the first 300 bp of every interval group.
+We can use method
+We will group by the ID column, so that the extension is applied to each CDS group
+(i.e. in this case only the 5' most
+interval of each group).
+
+  >>> g = cds.extend_ranges(ext_5=300, transcript_id='ID')
+  >>> g.head()
+    index  |    Chromosome           Start      End  Strand      ID
+    int64  |    category             int64    int64  category    object
+  -------  ---  -----------------  -------  -------  ----------  ----------------
+        4  |    CAJFCJ010000053.1     4882     5563  -           cds-CAD5126491.1
+       11  |    CAJFCJ010000053.1    10432    10958  +           cds-CAD5126492.1
+       12  |    CAJFCJ010000053.1    11028    11169  +           cds-CAD5126492.1
+       13  |    CAJFCJ010000053.1    11227    11400  +           cds-CAD5126492.1
+       14  |    CAJFCJ010000053.1    11453    14183  +           cds-CAD5126492.1
+  PyRanges with 5 rows, 5 columns, and 1 index columns.
+  Contains 1 chromosomes and 2 strands.
+
+In the object we obtained, the promoter corresponds to the first 300 bp of every interval group.
+We can use method
+We will group by the ID column, so that the extension is applied to each CDS group
+(i.e. in this case only the 5' most
+interval of each group).
+
+  >>> g = cds.extend_ranges(ext_5=300, transcript_id='ID')
   >>> g.head()
     index  |    Chromosome           Start      End  Strand      ID
     int64  |    category             int64    int64  category    object

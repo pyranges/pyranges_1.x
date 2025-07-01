@@ -888,7 +888,7 @@ class PyRanges(RangeFrame):
         return _self
 
     # to do: optimize, doesn't need to split by chromosome, only strand and only if ext_3/5
-    def extend(
+    def extend_ranges(
         self,
         ext: int | None = None,
         ext_3: int | None = None,
@@ -927,7 +927,7 @@ class PyRanges(RangeFrame):
         PyRanges.downstream : return regions downstream of input intervals or transcripts
         PyRanges.five_end : return the 5' end of intervals or transcripts
         PyRanges.three_end : return the 3' end of intervals or transcripts
-        PyRanges.extend : return intervals or transcripts extended at one or both ends
+        PyRanges.extend_ranges : return intervals or transcripts extended at one or both ends
 
         Examples
         --------
@@ -944,7 +944,7 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> gr.extend(3)
+        >>> gr.extend_ranges(3)
           index  |    Chromosome      Start      End  Strand
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
@@ -955,7 +955,7 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
 
-        >>> gr.extend(ext_3=1, ext_5=2)
+        >>> gr.extend_ranges(ext_3=1, ext_5=2)
           index  |    Chromosome      Start      End  Strand
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
@@ -965,7 +965,7 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> gr.extend(ext_3=1, ext_5=2, use_strand=False)
+        >>> gr.extend_ranges(ext_3=1, ext_5=2, use_strand=False)
           index  |    Chromosome      Start      End  Strand
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
@@ -977,7 +977,7 @@ class PyRanges(RangeFrame):
 
         Extending by negative values will contract the intervals. This may yield invalid intervals:
 
-        >>> gr.extend(-1)
+        >>> gr.extend_ranges(-1)
           index  |    Chromosome      Start      End  Strand
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
@@ -992,7 +992,7 @@ class PyRanges(RangeFrame):
         Extending beyond the boundaries of the chromosome is allowed though it yields invalid ranges (below).
         See clip_ranges() to fix this.
 
-        >>> gr.extend(4)
+        >>> gr.extend_ranges(4)
           index  |    Chromosome      Start      End  Strand
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
@@ -1006,7 +1006,7 @@ class PyRanges(RangeFrame):
 
 
         >>> gr['transcript_id']=['a', 'a', 'b']
-        >>> gr.extend(transcript_id='transcript_id', ext_3=3)
+        >>> gr.extend_ranges(transcript_id='transcript_id', ext_3=3)
           index  |    Chromosome      Start      End  Strand    transcript_id
           int64  |    object          int64    int64  object    object
         -------  ---  ------------  -------  -------  --------  ---------------
@@ -1071,7 +1071,7 @@ class PyRanges(RangeFrame):
         --------
         PyRanges.upstream : return regions upstream of input intervals or transcripts
         PyRanges.three_end : return the 3' end of intervals or transcripts
-        PyRanges.extend : return intervals or transcripts extended at one or both ends
+        PyRanges.extend_ranges : return intervals or transcripts extended at one or both ends
 
         Returns
         -------
@@ -3622,7 +3622,7 @@ class PyRanges(RangeFrame):
         --------
         PyRanges.upstream : return regions upstream of input intervals or transcripts
         PyRanges.five_end : return the 5' end of intervals or transcripts
-        PyRanges.extend : return intervals or transcripts extended at one or both ends
+        PyRanges.extend_ranges : return intervals or transcripts extended at one or both ends
 
         Examples
         --------
@@ -4234,7 +4234,7 @@ class PyRanges(RangeFrame):
         --------
         PyRanges.downstream : return regions downstream of input intervals or transcripts
         PyRanges.five_end : return the 5' end of intervals or transcripts
-        PyRanges.extend : return intervals or transcripts extended at one or both ends
+        PyRanges.extend_ranges : return intervals or transcripts extended at one or both ends
         PyRanges.slice_ranges : obtain subsequences of intervals, providing transcript-level coordinates
 
         Examples
@@ -4326,7 +4326,7 @@ class PyRanges(RangeFrame):
             raise ValueError(msg)
 
         # 1. extend upstream by length+gap
-        ext = self.extend(
+        ext = self.extend_ranges(
             ext_5=ext_5,
             ext_3=0,
             use_strand=use_strand,
@@ -4370,7 +4370,7 @@ class PyRanges(RangeFrame):
         PyRanges.slice_ranges : obtain subsequences of intervals, providing transcript-level coordinates
         PyRanges.upstream : return regions upstream of input intervals or transcripts
         PyRanges.three_end : return the 3' end of intervals or transcripts
-        PyRanges.extend : return intervals or transcripts extended at one or both ends
+        PyRanges.extend_ranges : return intervals or transcripts extended at one or both ends
 
         Examples
         --------
@@ -4456,7 +4456,7 @@ class PyRanges(RangeFrame):
             raise ValueError(msg)
 
         # 1. extend downstream by length+gap
-        ext = self.extend(
+        ext = self.extend_ranges(
             ext_5=0,
             ext_3=ext_3,
             use_strand=use_strand,

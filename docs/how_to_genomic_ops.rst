@@ -99,10 +99,10 @@ Next, we will showcase some of its functionalities, using the ``e`` object above
 
 Extending intervals
 -------------------
-The :func:`extend <pyranges.PyRanges.extend>` method allows to extend the intervals in a PyRanges object.
+The :func:`extend_ranges <pyranges.PyRanges.extend_ranges>` method allows to extend the intervals in a PyRanges object.
 The ``ext`` parameter implies an extension in both directions of all intervals:
 
-  >>> e.extend(ext=5)
+  >>> e.extend_ranges(ext=5)
     index  |      Chromosome    Start      End  Strand      transcript_id
     int64  |        category    int64    int64  category    object
   -------  ---  ------------  -------  -------  ----------  ---------------
@@ -123,7 +123,7 @@ on the positive strand, and the End position of intervals on the negative strand
 
 Let's extend upstream by 10 bases:
 
-  >>> e.extend(ext_5=10)
+  >>> e.extend_ranges(ext_5=10)
     index  |      Chromosome    Start      End  Strand      transcript_id
     int64  |        category    int64    int64  category    object
   -------  ---  ------------  -------  -------  ----------  ---------------
@@ -140,7 +140,7 @@ Let's extend upstream by 10 bases:
 
 Let's extend by 12 bases on the 5' end, and 6 bases on the 3' end:
 
-  >>> e.extend(ext_5=12, ext_3=6)
+  >>> e.extend_ranges(ext_5=12, ext_3=6)
     index  |      Chromosome    Start      End  Strand      transcript_id
     int64  |        category    int64    int64  category    object
   -------  ---  ------------  -------  -------  ----------  ---------------
@@ -157,7 +157,7 @@ Let's extend by 12 bases on the 5' end, and 6 bases on the 3' end:
 
 To ignore strand (i.e. treat all intervals as if on the positive strand), use ``use_strand=False``:
 
-  >>> e.extend(ext_5=12, ext_3=6, use_strand=False)
+  >>> e.extend_ranges(ext_5=12, ext_3=6, use_strand=False)
     index  |      Chromosome    Start      End  Strand      transcript_id
     int64  |        category    int64    int64  category    object
   -------  ---  ------------  -------  -------  ----------  ---------------
@@ -177,7 +177,7 @@ Alternatively, you can group intervals by a column, specified with the ``transcr
 When provided, extensions are relative to the transcript, not the interval. In practice, only the first and/or last
 exons of each transcript may be extended:
 
-  >>> e.extend(ext_5=10, transcript_id='transcript_id')
+  >>> e.extend_ranges(ext_5=10, transcript_id='transcript_id')
     index  |      Chromosome    Start      End  Strand      transcript_id
     int64  |        category    int64    int64  category    object
   -------  ---  ------------  -------  -------  ----------  ---------------
@@ -356,7 +356,7 @@ So, this will get the first and last 10 bases of each spliced transcript:
 Subsequence operations can be combined with extensions to obtain intervals adjacent to the input ones.
 For example, this will obtain the 100 bases upstream of each transcript:
 
-  >>> e.extend(ext_5=100, transcript_id='transcript_id').slice_ranges(0, 100, transcript_id='transcript_id')
+  >>> e.extend_ranges(ext_5=100, transcript_id='transcript_id').slice_ranges(0, 100, transcript_id='transcript_id')
     index  |      Chromosome    Start      End  Strand      transcript_id
     int64  |        category    int64    int64  category    object
   -------  ---  ------------  -------  -------  ----------  ---------------
@@ -369,7 +369,7 @@ For example, this will obtain the 100 bases upstream of each transcript:
 
 This will obtain the 100 bases downstream of each transcript:
 
-  >>> e.extend(ext_3=100, transcript_id='transcript_id').slice_ranges(-100, transcript_id='transcript_id')
+  >>> e.extend_ranges(ext_3=100, transcript_id='transcript_id').slice_ranges(-100, transcript_id='transcript_id')
     index  |      Chromosome    Start      End  Strand      transcript_id
     int64  |        category    int64    int64  category    object
   -------  ---  ------------  -------  -------  ----------  ---------------

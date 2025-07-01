@@ -44,7 +44,7 @@ v0	v1	caveats
  :mslink:`g.coverage <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.coverage>` 	:func:`g.count_overlaps(..., calculate_coverage=True) <pyranges.PyRanges.count_overlaps>`	args changed
  :mslink:`g.drop_duplicate_positions <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.drop_duplicate_positions>` 	``g.drop_duplicates( g.loc_columns+['Start', 'End'])``	
  :mslink:`g.drop(cols) <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.drop(cols)>` 	``g.drop(columns=cols)``	inherited by pandas DataFrame
- :mslink:`g.extend <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.extend>` 	:func:`g.extend <pyranges.PyRanges.extend>`	args changed
+ :mslink:`g.extend <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.extend>` 	:func:`g.extend_ranges <pyranges.PyRanges.extend_ranges>`	args changed
  :mslink:`g.insert <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.insert>` 	``g.insert``	inherited by pandas DataFrame
  :mslink:`g.intersect <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.intersect>` 	:func:`g.intersect_overlaps <pyranges.PyRanges.intersect_overlaps>`	args changed
  :mslink:`g.items <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.items>` 	``REMOVED``	
