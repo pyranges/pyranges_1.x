@@ -596,9 +596,31 @@ Above, we used a pandas syntax to select columns. Because the returned object do
 columns, it is a pandas DataFrame.
 
 Let's get the intersection between the overlapping intervals, using function
-:func:`intersect <pyranges.PyRanges.intersect>`:
+:func:`intersect_overlaps <pyranges.PyRanges.intersect_overlaps>`:
 
-  >>> prom_in_cds = cor_prom.intersect(cds)
+  >>> prom_in_cds = cor_prom.intersect_overlaps(cds)
+  >>> prom_in_cds
+    index  |    Chromosome           Start      End  Strand      ID
+    int64  |    category             int64    int64  category    object
+  -------  ---  -----------------  -------  -------  ----------  ----------------
+      135  |    CAJFCJ010000025.1     2755     2851  -           cds-CAD5125115.1
+  PyRanges with 1 rows, 5 columns, and 1 index columns.
+  Contains 1 chromosomes and 1 strands.
+
+Let's go back to the
+
+  >>> prom_in_cds = cor_prom.intersect_overlaps(cds)
+  >>> prom_in_cds
+    index  |    Chromosome           Start      End  Strand      ID
+    int64  |    category             int64    int64  category    object
+  -------  ---  -----------------  -------  -------  ----------  ----------------
+      135  |    CAJFCJ010000025.1     2755     2851  -           cds-CAD5125115.1
+  PyRanges with 1 rows, 5 columns, and 1 index columns.
+  Contains 1 chromosomes and 1 strands.
+
+Let's go back to the
+
+  >>> prom_in_cds = cor_prom.intersect_overlaps(cds)
   >>> prom_in_cds
     index  |    Chromosome           Start      End  Strand      ID
     int64  |    category             int64    int64  category    object

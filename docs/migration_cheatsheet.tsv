@@ -46,7 +46,7 @@ v0	v1	caveats
  :mslink:`g.drop(cols) <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.drop(cols)>` 	``g.drop(columns=cols)``	inherited by pandas DataFrame
  :mslink:`g.extend <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.extend>` 	:func:`g.extend <pyranges.PyRanges.extend>`	args changed
  :mslink:`g.insert <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.insert>` 	``g.insert``	inherited by pandas DataFrame
- :mslink:`g.intersect <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.intersect>` 	:func:`g.intersect <pyranges.PyRanges.intersect>`	args changed
+ :mslink:`g.intersect <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.intersect>` 	:func:`g.intersect_overlaps <pyranges.PyRanges.intersect_overlaps>`	args changed
  :mslink:`g.items <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.items>` 	``REMOVED``	
  :mslink:`g.join <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.join>` 	:func:`g.join_overlaps <pyranges.PyRanges.join_overlaps>`	args changed; and old syntax triggers unrelated pandas method
  :mslink:`g.k_nearest <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.k_nearest>` 	:func:`g.nearest <pyranges.PyRanges.nearest>`	args changed; and only k=1 now supported

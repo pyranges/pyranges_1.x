@@ -28,7 +28,7 @@ along these lines::
      • The command line defines a pipeline of actions separated by " , " and starting with readers
      • The first reader loads the main PyRanges object
      • Every reader beyond the first *must* be named (e.g. b=read_bed b.bed)
-     • Methods are invoked on the main object; others can be provided as arguments, e.g. intersect b
+     • Methods are invoked on the main object; others can be provided as arguments, e.g. intersect_overlaps b
      • The result replaces the main object in the pipeline
 
 Readers
@@ -60,13 +60,13 @@ Without further operations, pyranger will print its content to stdout::
 
 *(From here onwards, the output of commands is omitted.)*
 
-Some operations (e.g. intersect) require two objects.
+Some operations (e.g. intersect_overlaps) require two objects.
 You can chain multiple readers and methods together, separated by a comma surrounded by spaces
 (:literal:` , `). After the first one, all subsequent readers
 must be named into variables that can be used later.
 For example, to read two BED files and intersect them, use::
 
-   pyranger read_bed sample1.bed , b=read_bed sample2.bed , intersect b
+   pyranger read_bed sample1.bed , b=read_bed sample2.bed , intersect_overlaps b
 
 Methods
 -------
@@ -88,14 +88,14 @@ Arguments can be passed to readers/methods either positionally or by name::
 
    pyranger read_bed sample1.bed , downstream 10 --gap=5
 
-   pyranger read_bed sample1.bed , b=read_bed sample2.bed , intersect b --multiple first
+   pyranger read_bed sample1.bed , b=read_bed sample2.bed , intersect_overlaps b --multiple first
 
 Typically, the last method in a pipeline will be the one that outputs the result
 (e.g., :func:`to_bed <pyranges.PyRanges.to_bed>`, :func:`to_csv <pyranges.PyRanges.to_csv>`,
 :func:`to_gtf <pyranges.PyRanges.to_gtf>`, :func:`to_gff3 <pyranges.PyRanges.to_csv>`)::
 
    pyranger read_bed sample1.bed , downstream 10 --gap=5 , to_bed output.bed
-   pyranger read_bed sample1.bed , b=read_bed sample2.bed , intersect b , to_csv output.tsv --sep $'\t'
+   pyranger read_bed sample1.bed , b=read_bed sample2.bed , intersect_overlaps b , to_csv output.tsv --sep $'\t'
 
 Getting help
 ------------
@@ -129,19 +129,19 @@ either a named reader or a method invocation, in sequence:
 
 3. **Intersect two BED files**::
 
-     pyranger read_bed a.bed , other=read_bed b.bed , intersect other
+     pyranger read_bed a.bed , other=read_bed b.bed , intersect_overlaps other
 
    - ``read_bed a.bed`` → main object  
    - ``other=read_bed b.bed`` → variable ``other``  
-   - ``intersect other`` → runs ``.intersect(other)``
+   - ``intersect_overlaps other`` → runs ``.intersect_overlaps(other)``
 
 4. **Chain three readers and two methods**::
 
-     pyranger read_bed a.bed , b=read_bed b.bed , c=read_bed c.bed , join_overlaps b , intersect c
+     pyranger read_bed a.bed , b=read_bed b.bed , c=read_bed c.bed , join_overlaps b , intersect_overlaps c
 
    - Load `a.bed` as main  
    - Load `b.bed` into ``b`` and `c.bed` into ``c``  
-   - Run ``.join_overlaps(b)`` on the main object, then ``.intersect(c)`` on the result
+   - Run ``.join_overlaps(b)`` on the main object, then ``.intersect_overlaps(c)`` on the result
 
 
 Final notes

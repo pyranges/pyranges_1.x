@@ -19,7 +19,7 @@ Pyranges offers many efficient methods to detect / process overlaps. We present 
     pyranges.PyRanges.join_overlaps
     pyranges.PyRanges.set_intersect
     pyranges.PyRanges.set_union
-    pyranges.PyRanges.intersect
+    pyranges.PyRanges.intersect_overlaps
     pyranges.PyRanges.subtract_overlaps
     pyranges.PyRanges.count_overlaps
     pyranges.PyRanges.nearest
@@ -620,16 +620,16 @@ are present in at least one of the PyRanges:
   PyRanges with 6 rows, 3 columns, and 1 index columns.
   Contains 1 chromosomes.
 
-Interval manipulation operations: intersect, subtract
------------------------------------------------------
+Interval manipulation operations: intersect_overlaps, subtract_overlaps
+-----------------------------------------------------------------------
 Set operations do not preserve input metadata.
 :func:`join_overlaps <pyranges.PyRanges.join_overlaps>` preserve metadata of both PyRanges, but is less efficient.
 Pyranges also offers methods that preserve the metadata in self, but not in other.
-Specifically, method :func:`intersect <pyranges.PyRanges.intersect>` allows to obtain the intervals in self that overlap
+Specifically, method :func:`intersect_overlaps <pyranges.PyRanges.intersect_overlaps>` allows to obtain the intervals in self that overlap
 with any interval in other. It is similar to :func:`overlap <pyranges.PyRanges.overlap>`, but here coordinates
 are modified to return only the actual overlaps:
 
-  >>> a2.intersect(b)
+  >>> a2.intersect_overlaps(b)
     index  |    Chromosome      Start      End  Strand        odd
     int64  |    object          int64    int64  object      int64
   -------  ---  ------------  -------  -------  --------  -------
@@ -641,7 +641,7 @@ are modified to return only the actual overlaps:
   PyRanges with 5 rows, 5 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-  >>> a2.intersect(b2, strand_behavior='ignore', match_by='odd')
+  >>> a2.intersect_overlaps(b2, strand_behavior='ignore', match_by='odd')
     index  |    Chromosome      Start      End  Strand        odd
     int64  |    object          int64    int64  object      int64
   -------  ---  ------------  -------  -------  --------  -------
