@@ -163,7 +163,7 @@ class RangeFrame(pd.DataFrame):
     ) -> "RangeFrame":
         """Use two pairs of columns representing intervals to create a new start and end column.
 
-        The function is designed as post-processing after join_ranges to aggregate the coordinates of the two intervals.
+        The function is designed as post-processing after join_overlaps to aggregate the coordinates of the two intervals.
         By default, the new start and end columns will be the intersection of the intervals.
 
         Parameters
@@ -312,7 +312,7 @@ class RangeFrame(pd.DataFrame):
         match_by = arg_to_list(match_by)
         return _complement_overlaps(self, other, by=match_by, slack=slack)
 
-    def join_ranges(
+    def join_overlaps(
         self,
         other: "RangeFrame",
         *,
@@ -477,7 +477,7 @@ class RangeFrame(pd.DataFrame):
 
         See Also
         --------
-        RangeFrame.join_ranges : Has a slack argument to find intervals within a distance.
+        RangeFrame.join_overlaps : Has a slack argument to find intervals within a distance.
 
         """
         import ruranges

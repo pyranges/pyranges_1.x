@@ -71,7 +71,7 @@ deps =
     ruranges >= 0.0.9
     # fisher
 commands =
-    #python tests/run_doctest_tutorial_howto.py
+    python tests/run_doctest_tutorial_howto.py
     pytest --doctest-modules pyranges
     pytest tests/unit
     ruff format --check pyranges

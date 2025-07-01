@@ -354,7 +354,7 @@ def test_join(gr, gr2, strand_behavior) -> None:
         dtype={"Chromosome": "category", "Strand": "category"},
     ).drop(["Chromosome_b", "Overlap"], axis=1)
 
-    result = gr.join_ranges(gr2, strand_behavior=strand_behavior)
+    result = gr.join_overlaps(gr2, strand_behavior=strand_behavior)
 
     if result.df.empty:
         assert bedtools_df.empty

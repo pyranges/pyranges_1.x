@@ -137,11 +137,11 @@ either a named reader or a method invocation, in sequence:
 
 4. **Chain three readers and two methods**::
 
-     pyranger read_bed a.bed , b=read_bed b.bed , c=read_bed c.bed , join_ranges b , intersect c
+     pyranger read_bed a.bed , b=read_bed b.bed , c=read_bed c.bed , join_overlaps b , intersect c
 
    - Load `a.bed` as main  
    - Load `b.bed` into ``b`` and `c.bed` into ``c``  
-   - Run ``.join_ranges(b)`` on the main object, then ``.intersect(c)`` on the result
+   - Run ``.join_overlaps(b)`` on the main object, then ``.intersect(c)`` on the result
 
 
 Final notes

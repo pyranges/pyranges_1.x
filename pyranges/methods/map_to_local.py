@@ -50,7 +50,7 @@ def _map_to_local(gr, ref, idcol, match_by) -> "PyRanges":
         .rename(columns={idcol: fixed_idcol})
     )
 
-    gr = gr.join_ranges(ref, strand_behavior="ignore", match_by=match_by, suffix=suffix)
+    gr = gr.join_overlaps(ref, strand_behavior="ignore", match_by=match_by, suffix=suffix)
 
     # removing gr regions that do not overlap with ref
     gr = gr.combine_interval_columns("intersect", drop_old_columns=False, start2=start_b, end2=end_b)
@@ -59,7 +59,7 @@ def _map_to_local(gr, ref, idcol, match_by) -> "PyRanges":
 
     # dealing with - strand intervals on ref.
     if ref_has_strand:
-        # depending on whether gr had strand, STRAND_COL + suffix may be missing in join_ranges output
+        # depending on whether gr had strand, STRAND_COL + suffix may be missing in join_overlaps output
         strand_col_of_ref = strand_b if gr_has_strand else STRAND_COL
 
         ref_strand_is_neg = gr[strand_col_of_ref] == "-"

@@ -549,10 +549,34 @@ Argument ``strand_behavior`` is available in many functions to control how stran
 (see :func:`overlap <pyranges.PyRanges.overlap>`).
 
 Above, we obtained the promoter region that overlaps another CDS, but we don't know what CDS it is.
-Function :func:`join_ranges <pyranges.PyRanges.join_ranges>` will find overlaps and combine the columns
+Function :func:`join_overlaps <pyranges.PyRanges.join_overlaps>` will find overlaps and combine the columns
 of the overlapping intervals, similar to a SQL join operation:
 
-  >>> j = cor_prom.join_ranges(cds)
+  >>> j = cor_prom.join_overlaps(cds)
+  >>> j
+    index  |    Chromosome           Start      End  Strand      ID                  Start_b    End_b  ID_b
+    int64  |    category             int64    int64  category    object                int64    int64  object
+  -------  ---  -----------------  -------  -------  ----------  ----------------  ---------  -------  ----------------
+       15  |    CAJFCJ010000025.1     2755     3055  -           cds-CAD5125115.1       2753     2851  cds-CAD5125114.1
+  PyRanges with 1 rows, 8 columns, and 1 index columns.
+  Contains 1 chromosomes and 1 strands.
+
+The object `
+of the overlapping intervals, similar to a SQL join operation:
+
+  >>> j = cor_prom.join_overlaps(cds)
+  >>> j
+    index  |    Chromosome           Start      End  Strand      ID                  Start_b    End_b  ID_b
+    int64  |    category             int64    int64  category    object                int64    int64  object
+  -------  ---  -----------------  -------  -------  ----------  ----------------  ---------  -------  ----------------
+       15  |    CAJFCJ010000025.1     2755     3055  -           cds-CAD5125115.1       2753     2851  cds-CAD5125114.1
+  PyRanges with 1 rows, 8 columns, and 1 index columns.
+  Contains 1 chromosomes and 1 strands.
+
+The object `
+of the overlapping intervals, similar to a SQL join operation:
+
+  >>> j = cor_prom.join_overlaps(cds)
   >>> j
     index  |    Chromosome           Start      End  Strand      ID                  Start_b    End_b  ID_b
     int64  |    category             int64    int64  category    object                int64    int64  object

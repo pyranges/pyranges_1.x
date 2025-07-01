@@ -342,7 +342,7 @@ def mcc(
             continue
 
         else:  # noqa: RET507
-            j = t.join_ranges(f, strand_behavior=strand_behavior)
+            j = t.join_overlaps(f, strand_behavior=strand_behavior)
             tp_gr = j.combine_interval_columns().merge_overlaps(use_strand=use_strand)
             if use_strand:
                 for _strand in ["+", "-"]:

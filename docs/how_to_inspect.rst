@@ -146,9 +146,9 @@ Non-valid strands can affect the functioning of many methods that have a ``use_s
 (e.g. :func:`slice_ranges <pyranges.PyRanges.slice_ranges>`) or
 a ``strand_behavior`` parameter (e.g. :func:`overlap <pyranges.PyRanges.overlap>`), because these parameters
 by default are set to ``auto``, meaning that strand is considered only if it is valid.
-Indeed, see that this subsequence is calculated from the left limit, even for the interval on  the '-' strand:
+Indeed, see that this subregion is calculated from the left limit, even for the interval on  the '-' strand:
 
-  >>> g.subsequence(0, 3)
+  >>> g.slice_ranges(0, 3)
     index  |    Chromosome      Start      End  Strand
     int64  |    object          int64    int64  object
   -------  ---  ------------  -------  -------  --------
@@ -161,8 +161,8 @@ When running the code above, you should get a warning message like this:
 
   .. code-block:: none
 
-    UserWarning: subsequence: 'auto' use_strand treated as False due to invalid Strand values. Suppress this warning with use_strand=False
-    g.subsequence(0, 3)
+    UserWarning: slice_ranges: 'auto' use_strand treated as False due to invalid Strand values. Suppress this warning with use_strand=False
+    g.slice_ranges(0, 3)
 
 You can check whether a PyRanges object has valid Strand information with property
 :func:`strand_valid <pyranges.PyRanges.strand_valid>`:

@@ -65,7 +65,7 @@ Examples:
        {prog} read_bed a.bed , other=read_bed b.bed , intersect other
 
   4. Chain involving three files:
-       {prog} read_bed a.bed , b=read_bed b.bed , c=read_bed c.bed , join_ranges b , intersect c
+       {prog} read_bed a.bed , b=read_bed b.bed , c=read_bed c.bed , join_overlaps b , intersect c
 
 Tip:
   Append `--help` immediately after any reader or method to see its documentation
