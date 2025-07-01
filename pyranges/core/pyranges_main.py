@@ -2829,7 +2829,7 @@ class PyRanges(RangeFrame):
 
         See Also
         --------
-        PyRanges.window : divide intervals into windows
+        PyRanges.window_ranges : divide intervals into windows
 
         Examples
         --------
@@ -3517,7 +3517,7 @@ class PyRanges(RangeFrame):
 
         See Also
         --------
-        PyRanges.window : divide intervals into windows
+        PyRanges.window_ranges : divide intervals into windows
         pyranges.tile_genome : divide the genome into tiles
 
 
@@ -4565,7 +4565,7 @@ class PyRanges(RangeFrame):
 
         return mypy_ensure_pyranges(result)
 
-    def window(
+    def window_ranges(
         self,
         window_size: int,
         use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
@@ -4609,7 +4609,7 @@ class PyRanges(RangeFrame):
         PyRanges with 1 rows, 3 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        >>> gr.window(100)
+        >>> gr.window_ranges(100)
           index  |      Chromosome    Start      End
           int64  |           int64    int64    int64
         -------  ---  ------------  -------  -------
@@ -4619,7 +4619,7 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 3 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes.
 
-        >>> gr.window(100).reset_index(drop=True)
+        >>> gr.window_ranges(100).reset_index(drop=True)
           index  |      Chromosome    Start      End
           int64  |           int64    int64    int64
         -------  ---  ------------  -------  -------
@@ -4641,7 +4641,7 @@ class PyRanges(RangeFrame):
         PyRanges with 2 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> w = gs.window(100)
+        >>> w = gs.window_ranges(100)
         >>> w['lengths'] = w.lengths() # add lengths column to see the length of the windows
         >>> w
           index  |      Chromosome    Start      End  Strand      lengths
@@ -4654,7 +4654,7 @@ class PyRanges(RangeFrame):
         PyRanges with 4 rows, 5 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes and 2 strands.
 
-        >>> gs.window(100, use_strand=False)
+        >>> gs.window_ranges(100, use_strand=False)
           index  |      Chromosome    Start      End  Strand
           int64  |           int64    int64    int64  object
         -------  ---  ------------  -------  -------  --------
@@ -4683,7 +4683,7 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         >>> gr2 = pr.example_data.ensembl_gtf.get_with_loc_columns(["Feature", "gene_name"])
-        >>> gr2.window(1000)
+        >>> gr2.window_ranges(1000)
         index    |    Chromosome    Start    End      Strand      Feature     gene_name
         int64    |    category      int64    int64    category    category    object
         -------  ---  ------------  -------  -------  ----------  ----------  -----------

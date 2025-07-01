@@ -231,7 +231,7 @@ def test_windows(gr) -> None:
             dtype={"Chromosome": "category"},
         )
 
-    result = gr.window(10)[["Chromosome", "Start", "End"]].remove_strand()
+    result = gr.window_ranges(10)[["Chromosome", "Start", "End"]].remove_strand()
 
     if not bedtools_df.empty:
         assert_df_equal(result.df, bedtools_df)

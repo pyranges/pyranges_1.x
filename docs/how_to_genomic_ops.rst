@@ -538,7 +538,7 @@ Other slicing operations
 ------------------------
 
 Many genomic analyses involved running a sliding window over the genome or subregions of it.
-Method :func:`window <pyranges.PyRanges.window>` allows to obtain adjacent windows of a specified size and step that
+Method :func:`window_ranges <pyranges.PyRanges.window_ranges>` allows to obtain adjacent windows of a specified size and step that
 span each interval in a PyRanges object.
 
   >>> g = pr.PyRanges(dict(Chromosome=1, Start=[4, 60, 100], End=[11, 66, 107],
@@ -555,7 +555,7 @@ span each interval in a PyRanges object.
 
 For example, let's get windows of size 3:
 
-  >>> g.window(3)
+  >>> g.window_ranges(3)
     index  |      Chromosome    Start      End  Strand    Name
     int64  |           int64    int64    int64  object    object
   -------  ---  ------------  -------  -------  --------  --------
@@ -573,7 +573,7 @@ For example, let's get windows of size 3:
 Windows are generated for each interval independently. Strand is considered: they are generated starting from the 5'
 end. To ignore strand, use ``use_strand=False``:
 
-  >>> g.window(3, use_strand=False)
+  >>> g.window_ranges(3, use_strand=False)
     index  |      Chromosome    Start      End  Strand    Name
     int64  |           int64    int64    int64  object    object
   -------  ---  ------------  -------  -------  --------  --------
@@ -590,7 +590,7 @@ end. To ignore strand, use ``use_strand=False``:
 
 To avoid duplicated indices, run pandas dataframe method ``reset_index`` on the output:
 
-  >>> g.window(3).reset_index(drop=True)
+  >>> g.window_ranges(3).reset_index(drop=True)
     index  |      Chromosome    Start      End  Strand    Name
     int64  |           int64    int64    int64  object    object
   -------  ---  ------------  -------  -------  --------  --------
@@ -607,7 +607,7 @@ To avoid duplicated indices, run pandas dataframe method ``reset_index`` on the 
 
 To may retain the old index as column, with:
 
-  >>> g.window(3).reset_index(names='g_index')
+  >>> g.window_ranges(3).reset_index(names='g_index')
     index  |      g_index    Chromosome    Start      End  Strand    Name
     int64  |        int64         int64    int64    int64  object    object
   -------  ---  ---------  ------------  -------  -------  --------  --------
@@ -684,7 +684,7 @@ a defined size) that overlap the intervals in a PyRanges object:
   PyRanges with 6 rows, 5 columns, and 1 index columns (with 4 index duplicates).
   Contains 1 chromosomes and 2 strands.
 
-Note that, in contrast with :func:`window <pyranges.PyRanges.window>`, the function
+Note that, in contrast with :func:`window_ranges <pyranges.PyRanges.window_ranges>`, the function
 :func:`tile <pyranges.PyRanges.tile>` returns intervals anchored to genome positions: their Start will always be
 a multiple of the tile size, like :func:`pyranges.tile_genome`, and regardless of the strand of the original intervals.
 Argument ``overlap_column`` can be used to add a column indicating how much of the original interval

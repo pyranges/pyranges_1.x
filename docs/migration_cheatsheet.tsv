@@ -79,4 +79,4 @@ v0	v1	caveats
  :mslink:`g.to_example <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.to_example>` 	``REMOVED``	
  :mslink:`g.unstrand <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.unstrand>` 	:func:`g.remove_strand <pyranges.PyRanges.remove_strand>`	
  :mslink:`g.values <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.values>` 	``REMOVED``	
- :mslink:`g.window <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.window>` 	:func:`g.window <pyranges.PyRanges.window>`	args change
+ :mslink:`g.window <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.window>` 	:func:`g.window_ranges <pyranges.PyRanges.window_ranges>`	args change
