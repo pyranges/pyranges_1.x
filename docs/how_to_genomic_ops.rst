@@ -657,7 +657,7 @@ To ensure tile size consistency, use the ``full_last_tile`` parameter:
   Contains 2 chromosomes.
 
 
-A related operation is :func:`tile <pyranges.PyRanges.tile>`, whose rationale is to obtain only the genome tiles (of
+A related operation is :func:`tile_ranges <pyranges.PyRanges.tile_ranges>`, whose rationale is to obtain only the genome tiles (of
 a defined size) that overlap the intervals in a PyRanges object:
 
 
@@ -671,7 +671,7 @@ a defined size) that overlap the intervals in a PyRanges object:
   PyRanges with 2 rows, 5 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-  >>> se.tile(200)
+  >>> se.tile_ranges(200)
     index  |      Chromosome    Start      End  Strand      transcript_id
     int64  |        category    int64    int64  category    object
   -------  ---  ------------  -------  -------  ----------  ---------------
@@ -685,12 +685,12 @@ a defined size) that overlap the intervals in a PyRanges object:
   Contains 1 chromosomes and 2 strands.
 
 Note that, in contrast with :func:`window_ranges <pyranges.PyRanges.window_ranges>`, the function
-:func:`tile <pyranges.PyRanges.tile>` returns intervals anchored to genome positions: their Start will always be
+:func:`tile_ranges <pyranges.PyRanges.tile_ranges>` returns intervals anchored to genome positions: their Start will always be
 a multiple of the tile size, like :func:`pyranges.tile_genome`, and regardless of the strand of the original intervals.
 Argument ``overlap_column`` can be used to add a column indicating how much of the original interval
 overlaps with the tile returned:
 
-  >>> se.tile(200, overlap_column='nts')
+  >>> se.tile_ranges(200, overlap_column='nts')
     index  |      Chromosome    Start      End  Strand      transcript_id          nts
     int64  |        category    int64    int64  category    object             float64
   -------  ---  ------------  -------  -------  ----------  ---------------  ---------

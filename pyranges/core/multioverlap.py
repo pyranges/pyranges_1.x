@@ -102,7 +102,7 @@ def count_overlaps(
     PyRanges with 12 rows, 6 columns, and 1 index columns.
     Contains 1 chromosomes.
 
-    >>> gr = pr.PyRanges({"Chromosome": ["chr1"] * 2, "Start": [0, 25], "End": [40, 35]}).tile(10)
+    >>> gr = pr.PyRanges({"Chromosome": ["chr1"] * 2, "Start": [0, 25], "End": [40, 35]}).tile_ranges(10)
     >>> gr
       index  |    Chromosome      Start      End
       int64  |    object          int64    int64

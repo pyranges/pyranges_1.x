@@ -3479,7 +3479,7 @@ class PyRanges(RangeFrame):
 
         return _summary(self, return_df=return_df)
 
-    def tile(
+    def tile_ranges(
         self,
         tile_size: int,
         *,
@@ -3540,7 +3540,7 @@ class PyRanges(RangeFrame):
         PyRanges with 11 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> gr.tile(200)
+        >>> gr.tile_ranges(200)
         index    |    Chromosome    Start    End      Strand      Feature     gene_name
         int64    |    category      int64    int64    category    category    object
         -------  ---  ------------  -------  -------  ----------  ----------  -----------
@@ -3556,7 +3556,7 @@ class PyRanges(RangeFrame):
         PyRanges with 116 rows, 6 columns, and 1 index columns (with 105 index duplicates).
         Contains 1 chromosomes and 2 strands.
 
-        >>> gr.tile(100, overlap_column="TileOverlap")
+        >>> gr.tile_ranges(100, overlap_column="TileOverlap")
         index    |    Chromosome    Start    End      Strand      Feature     gene_name    TileOverlap
         int64    |    category      int64    int64    category    category    object       float64
         -------  ---  ------------  -------  -------  ----------  ----------  -----------  -------------
@@ -4595,7 +4595,7 @@ class PyRanges(RangeFrame):
 
         See Also
         --------
-        PyRanges.tile : divide intervals into adjacent tiles.
+        PyRanges.tile_ranges : divide intervals into adjacent tiles.
 
         Examples
         --------

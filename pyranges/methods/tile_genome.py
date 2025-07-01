@@ -32,7 +32,7 @@ def tile_genome(
 
     See Also
     --------
-    pyranges.PyRanges.tile : split intervals into adjacent non-overlapping tiles.
+    pyranges.PyRanges.tile_ranges : split intervals into adjacent non-overlapping tiles.
 
     Examples
     --------
@@ -95,7 +95,7 @@ def tile_genome(
     else:
         chromsize_dict = dict(zip(chromsizes[CHROM_COL], chromsizes[END_COL], strict=True))
 
-    gr = mypy_ensure_pyranges(chromsizes).sort_ranges().tile(tile_size)
+    gr = mypy_ensure_pyranges(chromsizes).sort_ranges().tile_ranges(tile_size)
 
     return mypy_ensure_pyranges(
         gr.reset_index(drop=True)
