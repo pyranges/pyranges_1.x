@@ -2264,7 +2264,7 @@ class PyRanges(RangeFrame):
         See Also
         --------
         PyRanges.intersect_overlaps : report overlapping subintervals
-        PyRanges.set_intersect : set-intersect PyRanges (e.g. merge then intersect)
+        PyRanges.set_intersect_overlaps : set-intersect PyRanges (e.g. merge then intersect)
 
         Examples
         --------
@@ -2408,7 +2408,7 @@ class PyRanges(RangeFrame):
 
         return mypy_ensure_pyranges(gr)
 
-    def set_intersect(
+    def set_intersect_overlaps(
         self,
         other: "PyRanges",
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
@@ -2442,7 +2442,7 @@ class PyRanges(RangeFrame):
 
         See Also
         --------
-        PyRanges.set_union : set-theoretical union
+        PyRanges.set_union_overlaps : set-theoretical union
         PyRanges.intersect_overlaps : find overlapping subintervals
         PyRanges.overlap : report overlapping intervals
         PyRanges.merge_overlaps : merge overlapping intervals
@@ -2473,7 +2473,7 @@ class PyRanges(RangeFrame):
         PyRanges with 4 rows, 3 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        >>> r1.set_intersect(r2, multiple='first')
+        >>> r1.set_intersect_overlaps(r2, multiple='first')
           index  |    Chromosome      Start      End
           int64  |    object          int64    int64
         -------  ---  ------------  -------  -------
@@ -2482,7 +2482,7 @@ class PyRanges(RangeFrame):
         PyRanges with 2 rows, 3 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        >>> r1.set_intersect(r2)
+        >>> r1.set_intersect_overlaps(r2)
           index  |    Chromosome      Start      End
           int64  |    object          int64    int64
         -------  ---  ------------  -------  -------
@@ -2501,7 +2501,7 @@ class PyRanges(RangeFrame):
         result = self_clusters.intersect_overlaps(other_clusters, strand_behavior=strand_behavior, multiple=multiple)
         return mypy_ensure_pyranges(result.reset_index(drop=True))
 
-    def set_union(self, other: "PyRanges", strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto") -> "PyRanges":
+    def set_union_overlaps(self, other: "PyRanges", strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto") -> "PyRanges":
         """Return set-theoretical union.
 
         Returns the regions present in either self or other.
@@ -2525,7 +2525,7 @@ class PyRanges(RangeFrame):
 
         See Also
         --------
-        PyRanges.set_intersect : set-theoretical intersection
+        PyRanges.set_intersect_overlaps : set-theoretical intersection
         PyRanges.overlap : report overlapping intervals
         PyRanges.merge_overlaps : merge overlapping intervals
 
@@ -2554,7 +2554,7 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 3 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        >>> gr.set_union(gr2)
+        >>> gr.set_union_overlaps(gr2)
           index  |    Chromosome      Start      End
           int64  |    object          int64    int64
         -------  ---  ------------  -------  -------
@@ -2566,7 +2566,7 @@ class PyRanges(RangeFrame):
 
         Merging bookended intervals:
 
-        >>> gr.set_union(gr2).merge_overlaps(slack=1)
+        >>> gr.set_union_overlaps(gr2).merge_overlaps(slack=1)
           index  |    Chromosome      Start      End
           int64  |    object          int64    int64
         -------  ---  ------------  -------  -------
@@ -4968,7 +4968,7 @@ class PyRanges(RangeFrame):
         --------
         PyRanges.overlap : report overlapping (unmodified) intervals
         PyRanges.subtract_overlaps : report non-overlapping subintervals
-        PyRanges.set_intersect : set-intersect PyRanges
+        PyRanges.set_intersect_overlaps : set-intersect PyRanges
 
         Examples
         --------

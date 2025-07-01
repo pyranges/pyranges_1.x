@@ -17,8 +17,8 @@ Pyranges offers many efficient methods to detect / process overlaps. We present 
 
     pyranges.PyRanges.overlap
     pyranges.PyRanges.join_overlaps
-    pyranges.PyRanges.set_intersect
-    pyranges.PyRanges.set_union
+    pyranges.PyRanges.set_intersect_overlaps
+    pyranges.PyRanges.set_union_overlaps
     pyranges.PyRanges.intersect_overlaps
     pyranges.PyRanges.subtract_overlaps
     pyranges.PyRanges.count_overlaps
@@ -551,18 +551,18 @@ For example, this allows to obtain the union of the overlapping intervals:
 retains the full information of the two input PyRanges objects.
 Nevertheless, more efficient alternative methods are available for specific use cases, detailed below.
 
-Set operations: set_intersect, set_union
-----------------------------------------
+Set operations: set_intersect_overlaps, set_union_overlaps
+----------------------------------------------------------
 
 Pyranges offers efficient methods based on the concept of set operations in mathematics. These are useful
 when the user is interested in the intervals themselves, rather than in the full information (i.e. metadata)
 of the input intervals.
 
 
-Method :func:`set_intersect <pyranges.PyRanges.set_intersect>`, allows to obtain the genomic regions
+Method :func:`set_intersect_overlaps <pyranges.PyRanges.set_intersect_overlaps>`, allows to obtain the genomic regions
 present in both PyRanges:
 
-  >>> a.set_intersect(b)
+  >>> a.set_intersect_overlaps(b)
     index  |    Chromosome      Start      End  Strand
     int64  |    object          int64    int64  object
   -------  ---  ------------  -------  -------  --------
@@ -573,7 +573,7 @@ present in both PyRanges:
   PyRanges with 4 rows, 4 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-  >>> a.set_intersect(b, strand_behavior="ignore")
+  >>> a.set_intersect_overlaps(b, strand_behavior="ignore")
     index  |    Chromosome      Start      End
     int64  |    object          int64    int64
   -------  ---  ------------  -------  -------
@@ -587,13 +587,13 @@ present in both PyRanges:
 
 The regions reported may be part of any interval in the two PyRanges. All metadata columns are dropped:
 
-  >>> a2.set_intersect(b2).columns  # see above: a2 and b2 had the 'odd' column
+  >>> a2.set_intersect_overlaps(b2).columns  # see above: a2 and b2 had the 'odd' column
   Index(['Chromosome', 'Start', 'End', 'Strand'], dtype='object')
 
-Analogously, method :func:`set_union <pyranges.PyRanges.set_union>` allows to obtain the genomic regions that
+Analogously, method :func:`set_union_overlaps <pyranges.PyRanges.set_union_overlaps>` allows to obtain the genomic regions that
 are present in at least one of the PyRanges:
 
-  >>> a.set_union(b)
+  >>> a.set_union_overlaps(b)
     index  |    Chromosome      Start      End  Strand
     int64  |    object          int64    int64  object
   -------  ---  ------------  -------  -------  --------
@@ -607,7 +607,7 @@ are present in at least one of the PyRanges:
   PyRanges with 7 rows, 4 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-  >>> a2.set_union(b2, strand_behavior='ignore')
+  >>> a2.set_union_overlaps(b2, strand_behavior='ignore')
     index  |    Chromosome      Start      End
     int64  |    object          int64    int64
   -------  ---  ------------  -------  -------

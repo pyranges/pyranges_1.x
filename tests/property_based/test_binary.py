@@ -112,7 +112,7 @@ def test_set_intersect(gr, gr2, strand_behavior) -> None:
 
     bedtools_df = read_bedtools_result_set_op(bedtools_result, strand_behavior)
 
-    result = gr.set_intersect(gr2, strand_behavior=strand_behavior)
+    result = gr.set_intersect_overlaps(gr2, strand_behavior=strand_behavior)
 
     compare_results(bedtools_df, result)
 
@@ -132,7 +132,7 @@ def test_set_union(gr, gr2, strand_behavior) -> None:
 
     bedtools_df = read_bedtools_result_set_op(bedtools_result, strand_behavior)
 
-    result = gr.set_union(gr2, strand_behavior=strand_behavior)
+    result = gr.set_union_overlaps(gr2, strand_behavior=strand_behavior)
 
     compare_results(bedtools_df, result)
 

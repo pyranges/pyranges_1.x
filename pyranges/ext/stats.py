@@ -738,7 +738,7 @@ def forbes(
     reference_length = p.merge_overlaps(use_strand=use_strand).length
     query_length = other.merge_overlaps(use_strand=use_strand).length
 
-    intersection_sum = p.set_intersect(other, strand_behavior=strand_behavior).lengths().sum()
+    intersection_sum = p.set_intersect_overlaps(other, strand_behavior=strand_behavior).lengths().sum()
     return _chromsizes * intersection_sum / (reference_length * query_length)
 
 
@@ -785,7 +785,7 @@ def jaccard(
     strand_behavior = validate_and_convert_strand_behavior(p, other, strand_behavior)
     use_strand = use_strand_from_validated_strand_behavior(p, other, strand_behavior)
 
-    intersection_sum = p.set_intersect(other).lengths().sum()
+    intersection_sum = p.set_intersect_overlaps(other).lengths().sum()
 
     union_sum = 0
     for gr in [p, other]:

@@ -33,7 +33,7 @@ v0	v1	caveats
  :mslink:`g[chrom, strand, slice]  <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.__getitem__>` 	:func:`g.loci[chrom, strand, slice] <pyranges.PyRanges.loci>`	flexible syntax
  :mslink:`for k in g: ... <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.__iter__>` 	``REMOVED``	
 **PyRanges methods:**		
- :mslink:`g,set_intersect <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.set_intersect>` 	:func:`g,set_intersect <pyranges.PyRanges.set_intersect>`	args changed
+ :mslink:`g,set_intersect <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.set_intersect>` 	:func:`g,set_intersect_overlaps <pyranges.PyRanges.set_intersect_overlaps>`	args changed
  :mslink:`g.apply <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.apply>` 	:func:`g.apply_single <pyranges.PyRanges.apply_single>`	args changed; and old syntax triggers pandas method
  :mslink:`g.apply_chunks <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.apply_chunks>` 	``REMOVED``	
  :mslink:`g.apply_pair <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.apply_pair>` 	:func:`g.apply_pair <pyranges.PyRanges.apply_pair>`	args changed
@@ -65,7 +65,7 @@ v0	v1	caveats
  :mslink:`g.rp <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.rp>` 	``REMOVED``	
  :mslink:`g.rpc <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.rpc>` 	``REMOVED``	
  :mslink:`g.sample <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.sample>` 	``g.sample``	inherited by pandas DataFrame
- :mslink:`g.set_union <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.set_union>` 	:func:`g.set_union <pyranges.PyRanges.set_union>`	args changed
+ :mslink:`g.set_union <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.set_union>` 	:func:`g.set_union_overlaps <pyranges.PyRanges.set_union_overlaps>`	args changed
  :mslink:`g.sort <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.sort>` 	:func:`g,sort_ranges <pyranges.PyRanges.sort_ranges>`	args changed
  :mslink:`g.sp <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.sp>` 	``REMOVED``	
  :mslink:`g.spc <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.spc>` 	``REMOVED``	
