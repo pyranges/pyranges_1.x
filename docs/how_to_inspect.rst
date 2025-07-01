@@ -188,7 +188,7 @@ penultimate line of the string representation:
 
   >>> gr1= pr.PyRanges(dict(Chromosome='chr1', Start=[1], End=[100]))
   >>> gr2 = pr.PyRanges(dict(Chromosome='chr1', Start=[20, 50], End=[30, 60]))
-  >>> gr3 = gr1.subtract_ranges(gr2)
+  >>> gr3 = gr1.subtract_overlaps(gr2)
   >>> gr3
     index  |    Chromosome      Start      End
     int64  |    object          int64    int64

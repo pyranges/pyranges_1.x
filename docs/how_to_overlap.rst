@@ -20,7 +20,7 @@ Pyranges offers many efficient methods to detect / process overlaps. We present 
     pyranges.PyRanges.set_intersect
     pyranges.PyRanges.set_union
     pyranges.PyRanges.intersect
-    pyranges.PyRanges.subtract_ranges
+    pyranges.PyRanges.subtract_overlaps
     pyranges.PyRanges.count_overlaps
     pyranges.PyRanges.nearest
 
@@ -650,10 +650,10 @@ are modified to return only the actual overlaps:
   PyRanges with 2 rows, 5 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-Method :func:`subtract_ranges <pyranges.PyRanges.subtract_ranges>` allows to obtain the portions of intervals in self
+Method :func:`subtract_overlaps <pyranges.PyRanges.subtract_overlaps>` allows to obtain the portions of intervals in self
 that do not overlap any interval in other:
 
-  >>> a2.subtract_ranges(b).sort_values('Start')
+  >>> a2.subtract_overlaps(b).sort_values('Start')
     index  |    Chromosome      Start      End  Strand        odd
     int64  |    object          int64    int64  object      int64
   -------  ---  ------------  -------  -------  --------  -------
@@ -668,7 +668,7 @@ that do not overlap any interval in other:
   Contains 1 chromosomes and 2 strands.
 
 
-  >>> a2.subtract_ranges(b, strand_behavior='ignore').sort_values('Start')
+  >>> a2.subtract_overlaps(b, strand_behavior='ignore').sort_values('Start')
     index  |    Chromosome      Start      End  Strand        odd
     int64  |    object          int64    int64  object      int64
   -------  ---  ------------  -------  -------  --------  -------

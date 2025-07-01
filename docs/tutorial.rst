@@ -750,9 +750,9 @@ not depend on strand, we remove it using :func:`remove_strand <pyranges.PyRanges
   PyRanges with 1 rows, 3 columns, and 1 index columns.
   Contains 1 chromosomes.
 
-Now we can get the intergenic regions using :func:`subtract_ranges <pyranges.PyRanges.subtract_ranges>`:
+Now we can get the intergenic regions using :func:`subtract_overlaps <pyranges.PyRanges.subtract_overlaps>`:
 
-  >>> intergenic = all_mRNA_bounds.subtract_ranges(mRNA_bounds)
+  >>> intergenic = all_mRNA_bounds.subtract_overlaps(mRNA_bounds)
   >>> intergenic
     index  |    Chromosome           Start      End
     int64  |    category             int64    int64

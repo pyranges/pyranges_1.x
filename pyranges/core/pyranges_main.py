@@ -3289,7 +3289,7 @@ class PyRanges(RangeFrame):
 
         return mypy_ensure_pyranges(result)
 
-    def subtract_ranges(  # type: ignore[override]
+    def subtract_overlaps(  # type: ignore[override]
         self,
         other: "pr.PyRanges",
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
@@ -3353,7 +3353,7 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 3 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        >>> gr.subtract_ranges(gr2)
+        >>> gr.subtract_overlaps(gr2)
           index  |    Chromosome      Start      End  ID
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
@@ -3384,7 +3384,7 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        >>> gr.subtract_ranges(gr2, match_by="tag")
+        >>> gr.subtract_overlaps(gr2, match_by="tag")
           index  |    Chromosome      Start      End  ID        tag
           int64  |    object          int64    int64  object    object
         -------  ---  ------------  -------  -------  --------  --------
@@ -3397,7 +3397,7 @@ class PyRanges(RangeFrame):
         """
         _other, by = prepare_by_binary(self, other=other, strand_behavior=strand_behavior, match_by=match_by)
 
-        gr = super().subtract_ranges(
+        gr = super().subtract_overlaps(
             _other,
             match_by=by,
         )
@@ -4969,7 +4969,7 @@ class PyRanges(RangeFrame):
         See Also
         --------
         PyRanges.overlap : report overlapping (unmodified) intervals
-        PyRanges.subtract_ranges : report non-overlapping subintervals
+        PyRanges.subtract_overlaps : report non-overlapping subintervals
         PyRanges.set_intersect : set-intersect PyRanges
 
         Examples
@@ -5357,7 +5357,7 @@ class PyRanges(RangeFrame):
 
         See Also
         --------
-        PyRanges.subtract_ranges : report non-overlapping subintervals
+        PyRanges.subtract_overlaps : report non-overlapping subintervals
         PyRanges.boundaries : report the boundaries of groups of intervals (e.g. transcripts/genes)
 
 

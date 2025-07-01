@@ -73,7 +73,7 @@ v0	v1	caveats
  :mslink:`g.split <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.split>` 	:func:`g.split <pyranges.PyRanges.split>`	args changed
  :mslink:`g.subsequence <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.subsequence>` 	:func:`g.slice_ranges <pyranges.PyRanges.slice_ranges>`	with count_introns=True
  :mslink:`g.subset(fn) <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.subset(fn)>` 	``g[fn]``	
- :mslink:`g.subtract <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.subtract>` 	:func:`g.subtract_ranges <pyranges.PyRanges.subtract_ranges>`	args changed; and old syntax triggers unrelated pandas method
+ :mslink:`g.subtract <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.subtract>` 	:func:`g.subtract_overlaps <pyranges.PyRanges.subtract_overlaps>`	args changed; and old syntax triggers unrelated pandas method
  :mslink:`g.tile <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.tile>` 	:func:`g.tile <pyranges.PyRanges.tile>`	args changed
  :mslink:`g.to_csv <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.to_csv>` 	``g.to_csv``	inherited by pandas DataFrame
  :mslink:`g.to_example <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.to_example>` 	``REMOVED``	

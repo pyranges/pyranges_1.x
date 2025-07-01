@@ -305,7 +305,7 @@ class RangeFrame(pd.DataFrame):
 
         See Also
         --------
-        PyRanges.subtract_ranges : report non-overlapping subintervals
+        PyRanges.subtract_overlaps : report non-overlapping subintervals
         PyRanges.boundaries : report the boundaries of groups of intervals (e.g. transcripts/genes)
 
         """
@@ -612,7 +612,7 @@ class RangeFrame(pd.DataFrame):
         )
         return _mypy_ensure_rangeframe(self.take(idxs))  # type: ignore[arg-type]
 
-    def subtract_ranges(
+    def subtract_overlaps(
         self: "RangeFrame",
         other: "RangeFrame",
         match_by: VALID_BY_TYPES = None,
