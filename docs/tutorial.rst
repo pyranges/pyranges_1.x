@@ -608,10 +608,50 @@ Let's get the intersection between the overlapping intervals, using function
   Contains 1 chromosomes and 1 strands.
 
 Let's go back to the ``cds`` object and see if any of its intervals overlap each other.
-We can use :func:`cluster <pyranges.PyRanges.cluster>`. This will assign each interval to a cluster,
+We can use :func:`cluster_overlaps <pyranges.PyRanges.cluster_overlaps>`. This will assign each interval to a cluster,
 identified by an integer. The intervals that overlap each other will be assigned to the same cluster.
 
-  >>> clu_cds = cds.cluster()
+  >>> clu_cds = cds.cluster_overlaps()
+  >>> clu_cds
+  index    |    Chromosome         Start    End      Strand      ID                Cluster
+  int64    |    category           int64    int64    category    object            uint32
+  -------  ---  -----------------  -------  -------  ----------  ----------------  ---------
+  138      |    CAJFCJ010000025.1  2174     2294     -           cds-CAD5125115.1  0
+  149      |    CAJFCJ010000025.1  2174     2294     -           cds-CAD5125114.1  0
+  137      |    CAJFCJ010000025.1  2354     2537     -           cds-CAD5125115.1  1
+  148      |    CAJFCJ010000025.1  2354     2537     -           cds-CAD5125114.1  1
+  ...      |    ...                ...      ...      ...         ...               ...
+  95       |    CAJFCJ010000097.1  5579     6029     -           cds-CAD5126874.1  47
+  94       |    CAJFCJ010000097.1  6082     6450     -           cds-CAD5126874.1  48
+  93       |    CAJFCJ010000097.1  6505     6599     -           cds-CAD5126874.1  49
+  103      |    CAJFCJ010000097.1  31876    32194    -           cds-CAD5126876.1  50
+  PyRanges with 56 rows, 6 columns, and 1 index columns.
+  Contains 3 chromosomes and 2 strands.
+
+Let's get the clusters that have more than one interval in them, using pandas
+identified by an integer. The intervals that overlap each other will be assigned to the same cluster.
+
+  >>> clu_cds = cds.cluster_overlaps()
+  >>> clu_cds
+  index    |    Chromosome         Start    End      Strand      ID                Cluster
+  int64    |    category           int64    int64    category    object            uint32
+  -------  ---  -----------------  -------  -------  ----------  ----------------  ---------
+  138      |    CAJFCJ010000025.1  2174     2294     -           cds-CAD5125115.1  0
+  149      |    CAJFCJ010000025.1  2174     2294     -           cds-CAD5125114.1  0
+  137      |    CAJFCJ010000025.1  2354     2537     -           cds-CAD5125115.1  1
+  148      |    CAJFCJ010000025.1  2354     2537     -           cds-CAD5125114.1  1
+  ...      |    ...                ...      ...      ...         ...               ...
+  95       |    CAJFCJ010000097.1  5579     6029     -           cds-CAD5126874.1  47
+  94       |    CAJFCJ010000097.1  6082     6450     -           cds-CAD5126874.1  48
+  93       |    CAJFCJ010000097.1  6505     6599     -           cds-CAD5126874.1  49
+  103      |    CAJFCJ010000097.1  31876    32194    -           cds-CAD5126876.1  50
+  PyRanges with 56 rows, 6 columns, and 1 index columns.
+  Contains 3 chromosomes and 2 strands.
+
+Let's get the clusters that have more than one interval in them, using pandas
+identified by an integer. The intervals that overlap each other will be assigned to the same cluster.
+
+  >>> clu_cds = cds.cluster_overlaps()
   >>> clu_cds
   index    |    Chromosome         Start    End      Strand      ID                Cluster
   int64    |    category           int64    int64    category    object            uint32

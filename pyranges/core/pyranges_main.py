@@ -651,7 +651,7 @@ class PyRanges(RangeFrame):
             msg = f"PyRanges contains non-genomic strands. Only {VALID_GENOMIC_STRAND_INFO} are valid."
             raise ValueError(msg)
 
-    def cluster(
+    def cluster_overlaps(
         self,
         use_strand: VALID_USE_STRAND_TYPE = "auto",
         *,
@@ -704,7 +704,7 @@ class PyRanges(RangeFrame):
         PyRanges with 7 rows, 3 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        >>> gr.cluster()
+        >>> gr.cluster_overlaps()
           index  |      Chromosome    Start      End    Cluster
           int64  |           int64    int64    int64     uint32
         -------  ---  ------------  -------  -------  ---------
@@ -720,7 +720,7 @@ class PyRanges(RangeFrame):
 
         Slack=1 will cluster also bookended intervals:
 
-        >>> gr.cluster(slack=1)
+        >>> gr.cluster_overlaps(slack=1)
           index  |      Chromosome    Start      End    Cluster
           int64  |           int64    int64    int64     uint32
         -------  ---  ------------  -------  -------  ---------
@@ -736,7 +736,7 @@ class PyRanges(RangeFrame):
 
         Higher values of slack will cluster more distant intervals:
 
-        >>> gr.cluster(slack=3)
+        >>> gr.cluster_overlaps(slack=3)
           index  |      Chromosome    Start      End    Cluster
           int64  |           int64    int64    int64     uint32
         -------  ---  ------------  -------  -------  ---------
@@ -751,7 +751,7 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes.
 
         """
-        result = super().cluster(
+        result = super().cluster_overlaps(
             cluster_column=cluster_column,
             match_by=prepare_by_single(self, use_strand=use_strand, match_by=match_by),
             slack=slack,

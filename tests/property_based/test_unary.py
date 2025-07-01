@@ -121,7 +121,7 @@ def test_cluster(gr, strand) -> None:
             dtype={"Chromosome": "category"},
         )
 
-    result = gr.cluster(use_strand=strand)
+    result = gr.cluster_overlaps(use_strand=strand)
 
     if not bedtools_df.empty:
         # need to sort because bedtools sometimes gives the result in non-natsorted chromosome order!
@@ -155,7 +155,7 @@ def test_cluster(gr, strand) -> None:
 )
 @given(gr=dfs_min_with_id())  # pylint: disable=no-value-for-parameter
 def test_cluster_by(gr, strand) -> None:
-    result = gr.cluster(use_strand=strand, by="ID").df
+    result = gr.cluster_overlaps(use_strand=strand, by="ID").df
     df = gr.df
 
     groupby = ["Chromosome", "Strand", "ID"] if strand else ["Chromosome", "ID"]
@@ -165,7 +165,7 @@ def test_cluster_by(gr, strand) -> None:
     for _, gdf in natsorted(df.groupby(groupby)):
         grs.append(pr.PyRanges(gdf))
 
-    clusters = [gr.cluster(use_strand=strand) for gr in grs]
+    clusters = [gr.cluster_overlaps(use_strand=strand) for gr in grs]
     i = 1
     new_clusters = []
     for c in clusters:

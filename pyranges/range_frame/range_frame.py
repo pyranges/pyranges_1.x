@@ -208,7 +208,7 @@ class RangeFrame(pd.DataFrame):
 
         return z.drop_and_return(labels=cols_to_drop, axis="columns")
 
-    def cluster(
+    def cluster_overlaps(
         self,
         *,
         match_by: VALID_BY_TYPES = None,

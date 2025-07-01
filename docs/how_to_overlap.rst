@@ -30,7 +30,7 @@ Pyranges offers many efficient methods to detect / process overlaps. We present 
     :toctree: _generated_hidden2
     :template: custom_method_summary.rst
 
-    pyranges.PyRanges.cluster
+    pyranges.PyRanges.cluster_overlaps
     pyranges.PyRanges.merge_overlaps
     pyranges.PyRanges.split
     pyranges.PyRanges.max_disjoint
@@ -835,14 +835,14 @@ We will showcase them with this data:
   Contains 1 chromosomes and 2 strands.
 
 
-Grouping overlapping intervals: cluster
----------------------------------------
-The most flexible method in this category is :func:`cluster <pyranges.PyRanges.cluster>`.
+Grouping overlapping intervals: cluster_overlaps
+------------------------------------------------
+The most flexible method in this category is :func:`cluster_overlaps <pyranges.PyRanges.cluster_overlaps>`.
 This function will detect overlaps among intervals in self, and assign a cluster identifier
 to each group of overlapping intervals. The object returned is identical to the input,
 with an additional column "Cluster" containing the cluster identifier:
 
-  >>> c.cluster()
+  >>> c.cluster_overlaps()
     index  |    Chromosome      Start      End  Strand      Cluster
     int64  |    object          int64    int64  object       uint32
   -------  ---  ------------  -------  -------  --------  ---------
@@ -861,7 +861,7 @@ Note that clusters 1 and 2 are kept separated only because of strand.
 We introduce argument ``use_strand``, accepted by all overlap-related methods for single PyRanges.
 When set to False, strand is ignored for overlap detection:
 
-  >>> c.cluster(use_strand=False)
+  >>> c.cluster_overlaps(use_strand=False)
     index  |    Chromosome      Start      End  Strand      Cluster
     int64  |    object          int64    int64  object       uint32
   -------  ---  ------------  -------  -------  --------  ---------
@@ -889,7 +889,7 @@ Its default value is 0. With ``slack=1``, bookended intervals are placed in the 
 With ``slack=2``, intervals that are distant at the most 1 bp are placed in the same cluster,
 like those with index 4 and 7 above; and so on.
 
-  >>> c2 = c.cluster(slack=2, use_strand=False, cluster_column='myClust')
+  >>> c2 = c.cluster_overlaps(slack=2, use_strand=False, cluster_column='myClust')
   >>> c2
     index  |    Chromosome      Start      End  Strand      myClust
     int64  |    object          int64    int64  object       uint32
@@ -910,7 +910,7 @@ Only intervals with the same value in the specified column will be considered fo
 Let's add a gene column to the PyRanges object and compare "Cluster" results with the previous column "myClust":
 
   >>> c2['gene'] = ['abc'[s % 3] for s in c2.Start] # arbitrary gene assignment
-  >>> c2.cluster(slack=2, use_strand=False, match_by='gene')
+  >>> c2.cluster_overlaps(slack=2, use_strand=False, match_by='gene')
     index  |    Chromosome      Start      End  Strand      myClust  gene        Cluster
     int64  |    object          int64    int64  object       uint32  object       uint32
   -------  ---  ------------  -------  -------  --------  ---------  --------  ---------

@@ -39,7 +39,7 @@ v0	v1	caveats
  :mslink:`g.apply_pair <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.apply_pair>` 	:func:`g.apply_pair <pyranges.PyRanges.apply_pair>`	args changed
  :mslink:`g.assign <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.assign>` 	``g.assign``	inherited by pandas DataFrame
  :mslink:`g.calculate_frame <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.calculate_frame>` 	:func:`pr.orfs.calculate_frame <pyranges.orfs.calculate_frame>`	now a copy is returned
- :mslink:`g.cluster <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.cluster>` 	:func:`g.cluster <pyranges.PyRanges.cluster>`	args changed; and use slack +1 for old behavior
+ :mslink:`g.cluster <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.cluster>` 	:func:`g.cluster_overlaps <pyranges.PyRanges.cluster_overlaps>`	args changed; and use slack +1 for old behavior
  :mslink:`g.count_overlaps <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.count_overlaps>` 	:func:`g.count_overlaps <pyranges.PyRanges.count_overlaps>`	args changed
  :mslink:`g.coverage <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.coverage>` 	:func:`g.count_overlaps(..., calculate_coverage=True) <pyranges.PyRanges.count_overlaps>`	args changed
  :mslink:`g.drop_duplicate_positions <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.drop_duplicate_positions>` 	``g.drop_duplicates( g.loc_columns+['Start', 'End'])``	
