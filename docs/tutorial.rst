@@ -252,10 +252,10 @@ Various PyRanges methods are available to work with groups of intervals, accepti
 Next, we will examine the first and last codon of annotated CDSs.
 We will obtain their genomic coordinate, then fetch their sequence.
 
-Method :func:`spliced_subsequence <pyranges.PyRanges.spliced_subsequence>` allows to obtain a subregion of
+Method :func:`slice_ranges <pyranges.PyRanges.slice_ranges>` allows to obtain a subregion of
 groups of intervals. The code below derives the first codon of each CDS group; grouping is defined by their ID:
 
-  >>> first=cds.spliced_subsequence(start=0, end=3, transcript_id='ID')
+  >>> first=cds.slice_ranges(start=0, end=3, transcript_id='ID')
   >>> first
   index    |    Chromosome         Start    End      Strand      ID
   int64    |    category           int64    int64    category    object
@@ -355,10 +355,10 @@ Ok, so far we got the coordinates and sequences of the first codon of each CDS.
 
 Now let's look at  stop codons.
 First, we get the a pyranges object of the last codon of each CDS.
-Conveniently, :func:`spliced_subsequence <pyranges.PyRanges.spliced_subsequence>` accepts negative arguments
+Conveniently, :func:`slice_ranges <pyranges.PyRanges.slice_ranges>` accepts negative arguments
 to count from the 3', so we can obtain the last three nucleotides of CDSs with:
 
-  >>> last = cds.spliced_subsequence(start=-3, transcript_id='ID')
+  >>> last = cds.slice_ranges(start=-3, transcript_id='ID')
 
 By not providing an ``end`` argument, we requested intervals that reach the very end of each CDS group.
 Let's get their sequence as before:
@@ -465,9 +465,9 @@ interval of each group).
   Contains 1 chromosomes and 2 strands.
 
 In the object we obtained, the promoter corresponds to the first 300 bp of every interval group.
-We can use method :func:`spliced_subsequence <pyranges.PyRanges.spliced_subsequence>`  again to get it:
+We can use method :func:`slice_ranges <pyranges.PyRanges.slice_ranges>`  again to get it:
 
-  >>> prom = g.spliced_subsequence(0, 300, transcript_id='ID')
+  >>> prom = g.slice_ranges(0, 300, transcript_id='ID')
   >>> prom.head()
     index  |    Chromosome           Start      End  Strand      ID
     int64  |    category             int64    int64  category    object

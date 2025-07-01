@@ -143,7 +143,7 @@ Note the warning in the last line of the string representation:
   Contains 1 chromosomes and 2 strands (including non-genomic strands: #).
 
 Non-valid strands can affect the functioning of many methods that have a ``use_strand`` parameter
-(e.g. :func:`subsequence <pyranges.PyRanges.subsequence>`) or
+(e.g. :func:`slice_ranges <pyranges.PyRanges.slice_ranges>`) or
 a ``strand_behavior`` parameter (e.g. :func:`overlap <pyranges.PyRanges.overlap>`), because these parameters
 by default are set to ``auto``, meaning that strand is considered only if it is valid.
 Indeed, see that this subsequence is calculated from the left limit, even for the interval on  the '-' strand:

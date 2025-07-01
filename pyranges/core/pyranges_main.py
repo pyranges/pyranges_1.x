@@ -922,8 +922,7 @@ class PyRanges(RangeFrame):
 
         See Also
         --------
-        PyRanges.subsequence : obtain subsequences of intervals
-        PyRanges.spliced_subsequence : obtain subsequences of intervals, providing transcript-level coordinates
+        PyRanges.slice_ranges : obtain subsequences of intervals, providing transcript-level coordinates
         PyRanges.upstream : return regions upstream of input intervals or transcripts
         PyRanges.downstream : return regions downstream of input intervals or transcripts
         PyRanges.five_end : return the 5' end of intervals or transcripts
@@ -1087,8 +1086,7 @@ class PyRanges(RangeFrame):
         See Also
         --------
         PyRanges.three_end : return the 3' end
-        PyRanges.subsequence : return subintervals specified in relative genome-based coordinates
-        PyRanges.spliced_subsequence : return subintervals specified in relative mRNA-based coordinates
+        PyRanges.slice_ranges : return subintervals specified in relative mRNA-based coordinates
 
         Examples
         --------
@@ -1131,7 +1129,7 @@ class PyRanges(RangeFrame):
         return mypy_ensure_pyranges(
             process_site(self, slack=slack, site="tss")
             if transcript_id is None
-            else self.subsequence(transcript_id=transcript_id, start=0, end=1)
+            else self.slice_ranges(transcript_id=transcript_id, start=0, end=1)
         )
 
     @property
@@ -2777,20 +2775,22 @@ class PyRanges(RangeFrame):
 
         return mypy_ensure_pyranges(res)
 
-    def spliced_subsequence(
+    def slice_ranges(
         self,
         start: int = 0,
         end: int | None = None,
         transcript_id: VALID_BY_TYPES = None,
         use_strand: VALID_USE_STRAND_TYPE = "auto",
+        *,
+        count_introns: bool = False,
     ) -> "PyRanges":
-        """Get subsequences of the intervals, using coordinates mapping to spliced transcripts (without introns).
+        """Slice ranges into subregions, using coordinates relative to intervals or groups (e.g. transcripts).
 
         The returned intervals are subregions of self, cut according to specifications.
         Start and end are relative to the 5' end: 0 means the leftmost nucleotide for + strand
         intervals, while it means the rightmost one for - strand.
         This method also allows to manipulate groups of intervals (e.g. exons belonging to same transcripts)
-        through the 'by' argument. When using it, start and end refer to the spliced transcript coordinates,
+        through the 'transcript_id' argument. When using it, start and end refer to the spliced transcript coordinates,
         meaning that introns are ignored in the count.
 
         Parameters
@@ -2806,13 +2806,17 @@ class PyRanges(RangeFrame):
 
         transcript_id : list of str, default None
             intervals are grouped by this/these ID column(s) beforehand, e.g. exons belonging to same transcripts
-            If not provided, it is equivalent to PyRanges.subsequence.
 
         use_strand: {"auto", True, False}, default: "auto"
             Whether strand is considered when interpreting the start and end arguments of this function.
             If True, counting is from the 5' end (the leftmost coordinate for + strand and the rightmost for - strand).
             If False, all intervals are processed like they reside on the + strand.
             The default "auto" means True if PyRanges has valid strands (see .strand_valid).
+
+        count_introns : bool, default False
+            If False (default), the start and end arguments refer to the spliced transcript coordinates,
+            meaning that introns are ignored in the count.
+            If True, the start and end arguments refer to the unspliced transcript coordinates.
 
         Returns
         -------
@@ -2825,7 +2829,6 @@ class PyRanges(RangeFrame):
 
         See Also
         --------
-        PyRanges.subsequence : analogous to this method, but input coordinates refer to the unspliced transcript
         PyRanges.window : divide intervals into windows
 
         Examples
@@ -2847,9 +2850,35 @@ class PyRanges(RangeFrame):
         PyRanges with 5 rows, 5 columns, and 1 index columns.
         Contains 3 chromosomes and 2 strands.
 
+        Get the first 5 nucleotides of each interval, counting from the 5' end:
+        >>> p.slice_ranges(0, 5)
+          index  |      Chromosome  Strand      Start      End  transcript_id
+          int64  |           int64  object      int64    int64  object
+        -------  ---  ------------  --------  -------  -------  ---------------
+              0  |               1  +               1        6  t1
+              1  |               1  +              40       45  t1
+              2  |               2  -              20       25  t2
+              3  |               2  -              75       80  t2
+              4  |               3  +             140      145  t3
+        PyRanges with 5 rows, 5 columns, and 1 index columns.
+        Contains 3 chromosomes and 2 strands.
+
+        Get the last 10 nucleotides of each interval. End is omitted to get the existing 3' end:
+        >>> p.slice_ranges(-10)
+          index  |      Chromosome  Strand      Start      End  transcript_id
+          int64  |           int64  object      int64    int64  object
+        -------  ---  ------------  --------  -------  -------  ---------------
+              0  |               1  +               1       11  t1
+              1  |               1  +              50       60  t1
+              2  |               2  -              10       20  t2
+              3  |               2  -              70       80  t2
+              4  |               3  +             142      152  t3
+        PyRanges with 5 rows, 5 columns, and 1 index columns.
+        Contains 3 chromosomes and 2 strands.
+
         Get the first 15 nucleotides of *each spliced transcript*, grouping exons by transcript_id:
 
-        >>> p.spliced_subsequence(0, 15, transcript_id='transcript_id')
+        >>> p.slice_ranges(0, 15, transcript_id='transcript_id')
           index  |      Chromosome  Strand      Start      End  transcript_id
           int64  |           int64  object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
@@ -2863,7 +2892,7 @@ class PyRanges(RangeFrame):
 
         Get the last 20 nucleotides of each spliced transcript:
 
-        >>> p.spliced_subsequence(-20, transcript_id='transcript_id')
+        >>> p.slice_ranges(-20, transcript_id='transcript_id')
           index  |      Chromosome  Strand      Start      End  transcript_id
           int64  |           int64  object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
@@ -2876,7 +2905,7 @@ class PyRanges(RangeFrame):
 
         Use use_strand=False to treat all intervals as if they were on the + strand:
 
-        >>> p.spliced_subsequence(0, 15, transcript_id='transcript_id', use_strand=False)
+        >>> p.slice_ranges(0, 15, transcript_id='transcript_id', use_strand=False)
           index  |      Chromosome  Strand      Start      End  transcript_id
           int64  |           int64  object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
@@ -2889,7 +2918,7 @@ class PyRanges(RangeFrame):
 
         Get region from 25 to 60 of each spliced transcript, or their existing subportion:
 
-        >>> p.spliced_subsequence(25, 60, transcript_id='transcript_id')
+        >>> p.slice_ranges(25, 60, transcript_id='transcript_id')
           index  |      Chromosome  Strand      Start      End  transcript_id
           int64  |           int64  object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
@@ -2899,7 +2928,7 @@ class PyRanges(RangeFrame):
 
         Get region of each spliced transcript which excludes their first and last 3 nucleotides:
 
-        >>> p.spliced_subsequence(3, -3, transcript_id='transcript_id')
+        >>> p.slice_ranges(3, -3, transcript_id='transcript_id')
           index  |      Chromosome  Strand      Start      End  transcript_id
           int64  |           int64  object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
@@ -2911,28 +2940,94 @@ class PyRanges(RangeFrame):
         PyRanges with 5 rows, 5 columns, and 1 index columns.
         Contains 3 chromosomes and 2 strands.
 
+        Considering input start,end to refer to the unspliced transcript, i.e. counting introns.
+        This fetches all interval portions that overlap with the first 50nt of each transcript:
+
+        >>> p.slice_ranges(0, 50, transcript_id='transcript_id', count_introns=True)
+          index  |      Chromosome  Strand      Start      End  transcript_id
+          int64  |           int64  object      int64    int64  object
+        -------  ---  ------------  --------  -------  -------  ---------------
+              0  |               1  +               1       11  t1
+              1  |               1  +              40       51  t1
+              3  |               2  -              70       80  t2
+              4  |               3  +             140      152  t3
+        PyRanges with 4 rows, 5 columns, and 1 index columns.
+        Contains 3 chromosomes and 2 strands.
+
+        >>> p.slice_ranges(0, 50, transcript_id='transcript_id', count_introns=True, use_strand=False)
+          index  |      Chromosome  Strand      Start      End  transcript_id
+          int64  |           int64  object      int64    int64  object
+        -------  ---  ------------  --------  -------  -------  ---------------
+              0  |               1  +               1       11  t1
+              1  |               1  +              40       51  t1
+              2  |               2  -              10       25  t2
+              4  |               3  +             140      152  t3
+        PyRanges with 4 rows, 5 columns, and 1 index columns.
+        Contains 3 chromosomes and 2 strands.
+
+        >>> p.slice_ranges(-50, -5, transcript_id='transcript_id', count_introns=True)
+          index  |      Chromosome  Strand      Start      End  transcript_id
+          int64  |           int64  object      int64    int64  object
+        -------  ---  ------------  --------  -------  -------  ---------------
+              0  |               1  +              10       11  t1
+              1  |               1  +              40       55  t1
+              2  |               2  -              15       25  t2
+              4  |               3  +             140      147  t3
+        PyRanges with 4 rows, 5 columns, and 1 index columns.
+        Contains 3 chromosomes and 2 strands.
+
+
         """
-        from pyranges.methods.spliced_subsequence import _spliced_subseq
+        from pyranges.methods.slice_ranges import _spliced_subseq
 
         use_strand = validate_and_convert_use_strand(self, use_strand)
 
-        by = (
-            prepare_by_single(
-                self,
-                use_strand=use_strand,
-                match_by=transcript_id,
-            )
-            if transcript_id
-            else []
-        )
+        if count_introns:
+            # implementation: generating boundaries per exon group, then intersecting with the original
+            # intervals to get the subsequence
+            # "by" below must not contain Chromosome or it will crash, since
+            # this is not passed to internals as usual; rather, it is passed to
+            # methods in the PyRanges API, where we don't provide Chromosome or Strand
 
-        result = _spliced_subseq(
-            self,
-            by=by,
-            force_plus_strand=not use_strand,
-            start=start,
-            end=end,
-        )
+            if not transcript_id:
+                x = self.copy()
+                x[TEMP_TRANSCRIPT_ID_COL] = np.arange(len(x))
+                by = [TEMP_TRANSCRIPT_ID_COL]
+
+            else:
+                x = self
+                by = arg_to_list(transcript_id)
+
+            boundaries = x.boundaries(transcript_id=by, use_strand=use_strand)
+            result = boundaries.slice_ranges(
+                transcript_id=[],
+                use_strand=use_strand,
+                start=start,
+                end=end,
+            )
+            result = x.intersect(result, match_by=by)
+            if not transcript_id:
+                result = cast("pr.PyRanges", result.drop(columns=[TEMP_TRANSCRIPT_ID_COL]))
+
+        else:
+            # standard spliced subsequence slicing
+            by = (
+                prepare_by_single(
+                    self,
+                    use_strand=use_strand,
+                    match_by=transcript_id,
+                )
+                if transcript_id
+                else []
+            )
+
+            result = _spliced_subseq(
+                self,
+                by=by,
+                force_plus_strand=not use_strand,
+                start=start,
+                end=end,
+            )
 
         return mypy_ensure_pyranges(result)
 
@@ -3193,203 +3288,6 @@ class PyRanges(RangeFrame):
             result.loc[~(self[STRAND_COL].isin(VALID_GENOMIC_STRAND_INFO)), STRAND_COL] = "+"
 
         return mypy_ensure_pyranges(result)
-
-    def subsequence(
-        self,
-        start: int = 0,
-        end: int | None = None,
-        transcript_id: VALID_BY_TYPES = None,
-        use_strand: VALID_USE_STRAND_TYPE = "auto",
-    ) -> "PyRanges":
-        """Get subsequences of the intervals.
-
-        The returned intervals are subregions of self, cut according to specifications.
-        Start and end are relative to the 5' end: 0 means the leftmost nucleotide for + strand
-        intervals, while it means the rightmost one for - strand.
-        This method also allows to manipulate groups of intervals (e.g. exons belonging to same transcripts)
-        through the 'by' argument. When using it, start and end refer to the unspliced transcript coordinates,
-        meaning that introns are included in the count.
-
-        Parameters
-        ----------
-        start : int
-            Start of subregion, 0-based and included, counting from the 5' end.
-            Use a negative int to count from the 3'  (e.g. -1 is the last nucleotide)
-
-        end : int, default None
-            End of subregion, 0-based and excluded, counting from the 5' end.
-            Use a negative int to count from the 3'  (e.g. -1 is the last nucleotide)
-
-            If None, the existing 3' end is returned.
-
-        transcript_id : list of str, default None
-            intervals are grouped by this/these ID column(s) beforehand, e.g. exons belonging to same transcripts
-
-        use_strand: {"auto", True, False}, default: "auto"
-            Whether strand is considered when interpreting the start and end arguments of this function.
-            If True, counting is from the 5' end (the leftmost coordinate for + strand and the rightmost for - strand).
-            If False, all intervals are processed like they reside on the + strand.
-            The default "auto" means True if PyRanges has valid strands (see .strand_valid).
-
-        Returns
-        -------
-        PyRanges
-            Subregion of self, subsequenced as specified by arguments
-
-        Note
-        ----
-        If the request goes out of bounds (e.g. requesting 100 nts for a 90nt region), only the existing portion is returned
-
-        See Also
-        --------
-        PyRanges.spliced_subsequence : analogous to this method, but intronic regions are not counted, so that input coordinates refer to the spliced transcript
-        PyRanges.window : divide intervals into windows
-
-        Examples
-        --------
-        >>> p  = pr.PyRanges({"Chromosome": [1, 1, 2, 2, 3],
-        ...                   "Strand": ["+", "+", "-", "-", "+"],
-        ...                   "Start": [1, 40, 2, 30, 140],
-        ...                   "End": [20, 60, 13, 45, 155],
-        ...                   "transcript_id":["t1", "t1", "t2", "t2", "t3"] })
-        >>> p
-          index  |      Chromosome  Strand      Start      End  transcript_id
-          int64  |           int64  object      int64    int64  object
-        -------  ---  ------------  --------  -------  -------  ---------------
-              0  |               1  +               1       20  t1
-              1  |               1  +              40       60  t1
-              2  |               2  -               2       13  t2
-              3  |               2  -              30       45  t2
-              4  |               3  +             140      155  t3
-        PyRanges with 5 rows, 5 columns, and 1 index columns.
-        Contains 3 chromosomes and 2 strands.
-
-
-        >>> p.subsequence(30, 300, transcript_id='transcript_id')
-          index  |      Chromosome  Strand      Start      End  transcript_id
-          int64  |           int64  object      int64    int64  object
-        -------  ---  ------------  --------  -------  -------  ---------------
-              1  |               1  +              40       60  t1
-              2  |               2  -               2       13  t2
-        PyRanges with 2 rows, 5 columns, and 1 index columns.
-        Contains 2 chromosomes and 2 strands.
-
-        >>> p.subsequence(0, 10)
-          index  |      Chromosome  Strand      Start      End  transcript_id
-          int64  |           int64  object      int64    int64  object
-        -------  ---  ------------  --------  -------  -------  ---------------
-              0  |               1  +               1       11  t1
-              1  |               1  +              40       50  t1
-              2  |               2  -               3       13  t2
-              3  |               2  -              35       45  t2
-              4  |               3  +             140      150  t3
-        PyRanges with 5 rows, 5 columns, and 1 index columns.
-        Contains 3 chromosomes and 2 strands.
-
-        >>> p.subsequence(-5)
-          index  |      Chromosome  Strand      Start      End  transcript_id
-          int64  |           int64  object      int64    int64  object
-        -------  ---  ------------  --------  -------  -------  ---------------
-              0  |               1  +              15       20  t1
-              1  |               1  +              55       60  t1
-              2  |               2  -               2        7  t2
-              3  |               2  -              30       35  t2
-              4  |               3  +             150      155  t3
-        PyRanges with 5 rows, 5 columns, and 1 index columns.
-        Contains 3 chromosomes and 2 strands.
-
-        Use use_strand=False to treat all intervals as if they were on the + strand:
-
-        >>> p.subsequence(0, 10, use_strand=False)
-          index  |      Chromosome  Strand      Start      End  transcript_id
-          int64  |           int64  object      int64    int64  object
-        -------  ---  ------------  --------  -------  -------  ---------------
-              0  |               1  +               1       11  t1
-              1  |               1  +              40       50  t1
-              2  |               2  -               2       12  t2
-              3  |               2  -              30       40  t2
-              4  |               3  +             140      150  t3
-        PyRanges with 5 rows, 5 columns, and 1 index columns.
-        Contains 3 chromosomes and 2 strands.
-
-        Get the first 10 nucleotides of *each transcript*, grouping exons by transcript_id:
-
-        >>> p.subsequence(0, 10, transcript_id='transcript_id')
-          index  |      Chromosome  Strand      Start      End  transcript_id
-          int64  |           int64  object      int64    int64  object
-        -------  ---  ------------  --------  -------  -------  ---------------
-              0  |               1  +               1       11  t1
-              3  |               2  -              35       45  t2
-              4  |               3  +             140      150  t3
-        PyRanges with 3 rows, 5 columns, and 1 index columns.
-        Contains 3 chromosomes and 2 strands.
-
-        Get the last 20 nucleotides of each transcript:
-
-        >>> p.subsequence(-20, transcript_id='transcript_id')
-          index  |      Chromosome  Strand      Start      End  transcript_id
-          int64  |           int64  object      int64    int64  object
-        -------  ---  ------------  --------  -------  -------  ---------------
-              1  |               1  +              40       60  t1
-              2  |               2  -               2       13  t2
-              4  |               3  +             140      155  t3
-        PyRanges with 3 rows, 5 columns, and 1 index columns.
-        Contains 3 chromosomes and 2 strands.
-
-        Get the first 10 nucleotides (at the 5') of *each interval* (each line of the dataframe):
-
-        Get region from 30 to 330 of each transcript, or their existing subportion:
-
-        >>> p.subsequence(30, 300, transcript_id='transcript_id')
-          index  |      Chromosome  Strand      Start      End  transcript_id
-          int64  |           int64  object      int64    int64  object
-        -------  ---  ------------  --------  -------  -------  ---------------
-              1  |               1  +              40       60  t1
-              2  |               2  -               2       13  t2
-        PyRanges with 2 rows, 5 columns, and 1 index columns.
-        Contains 2 chromosomes and 2 strands.
-
-        >>> p.subsequence(-20, transcript_id='transcript_id', use_strand=False)
-          index  |      Chromosome  Strand      Start      End  transcript_id
-          int64  |           int64  object      int64    int64  object
-        -------  ---  ------------  --------  -------  -------  ---------------
-              1  |               1  +              40       60  t1
-              3  |               2  -              30       45  t2
-              4  |               3  +             140      155  t3
-        PyRanges with 3 rows, 5 columns, and 1 index columns.
-        Contains 3 chromosomes and 2 strands.
-
-        """
-        # implementation: generating boundaries per exon group, then intersecting with the original
-        # intervals to get the subsequence
-
-        use_strand = validate_and_convert_use_strand(self, use_strand=use_strand)
-
-        # "by" below must not contain Chromosome or it will crash, since
-        # this is not passed to internals as usual; rather, it is passed to
-        # methods in the PyRanges API, where we don't provide Chromosome or Strand
-
-        if not transcript_id:
-            x = self.copy()
-            x[TEMP_TRANSCRIPT_ID_COL] = np.arange(len(x))
-            by = [TEMP_TRANSCRIPT_ID_COL]
-
-        else:
-            x = self
-            by = arg_to_list(transcript_id)
-
-        boundaries = x.boundaries(transcript_id=by, use_strand=use_strand)
-        result = boundaries.spliced_subsequence(
-            transcript_id=[],
-            use_strand=use_strand,
-            start=start,
-            end=end,
-        )
-        subs = x.intersect(result, match_by=by)
-        if not transcript_id:
-            subs = cast("pr.PyRanges", subs.drop(columns=[TEMP_TRANSCRIPT_ID_COL]))
-
-        return mypy_ensure_pyranges(subs)
 
     def subtract_ranges(  # type: ignore[override]
         self,
@@ -3767,7 +3665,7 @@ class PyRanges(RangeFrame):
         return mypy_ensure_pyranges(
             process_site(self, slack=slack, site="tes")
             if transcript_id is None
-            else self.subsequence(transcript_id=transcript_id, start=-1, use_strand=True)
+            else self.slice_ranges(transcript_id=transcript_id, start=-1, use_strand=True)
         )
 
     def to_bed(
@@ -4337,7 +4235,7 @@ class PyRanges(RangeFrame):
         PyRanges.downstream : return regions downstream of input intervals or transcripts
         PyRanges.five_end : return the 5' end of intervals or transcripts
         PyRanges.extend : return intervals or transcripts extended at one or both ends
-        PyRanges.spliced_subsequence : obtain subsequences of intervals, providing transcript-level coordinates
+        PyRanges.slice_ranges : obtain subsequences of intervals, providing transcript-level coordinates
 
         Examples
         --------
@@ -4436,7 +4334,7 @@ class PyRanges(RangeFrame):
         )
 
         # 2. keep the first `length` bp of the extension
-        win = ext.spliced_subsequence(
+        win = ext.slice_ranges(
             start=0,
             end=length,
             use_strand=use_strand,
@@ -4469,7 +4367,7 @@ class PyRanges(RangeFrame):
 
         See Also
         --------
-        PyRanges.spliced_subsequence : obtain subsequences of intervals, providing transcript-level coordinates
+        PyRanges.slice_ranges : obtain subsequences of intervals, providing transcript-level coordinates
         PyRanges.upstream : return regions upstream of input intervals or transcripts
         PyRanges.three_end : return the 3' end of intervals or transcripts
         PyRanges.extend : return intervals or transcripts extended at one or both ends
@@ -4566,7 +4464,7 @@ class PyRanges(RangeFrame):
         )
 
         # 2. keep the last `length` bp of the extension
-        win = ext.spliced_subsequence(
+        win = ext.slice_ranges(
             start=-length,
             end=None,
             use_strand=use_strand,
