@@ -302,7 +302,7 @@ class RangeFrame(pd.DataFrame):
         See Also
         --------
         PyRanges.subtract_overlaps : report non-overlapping subintervals
-        PyRanges.boundaries : report the boundaries of groups of intervals (e.g. transcripts/genes)
+        PyRanges.outer_ranges : report the boundaries of groups of intervals (e.g. transcripts/genes)
 
         """
         match_by = arg_to_list(match_by)

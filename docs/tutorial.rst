@@ -821,9 +821,9 @@ the annotation ``ann``:
 
 Let's define the boundaries of each mRNA, e.g. the left and right limits of its exons. While this may be readily
 available in the genome annotation, let's use PyRanges to calculate them, using
-:func:`boundaries <pyranges.PyRanges.boundaries>`:
+:func:`outer_ranges <pyranges.PyRanges.outer_ranges>`:
 
-  >>> mRNA_bounds = exons.boundaries(transcript_id='Parent')
+  >>> mRNA_bounds = exons.outer_ranges(transcript_id='Parent')
   >>> mRNA_bounds
     index  |    Chromosome           Start      End  Strand      Parent
     int64  |    category             int64    int64  category    object
@@ -838,10 +838,10 @@ available in the genome annotation, let's use PyRanges to calculate them, using
   Contains 1 chromosomes and 2 strands.
 
 To get the intergenic regions, let's define the maximum and minimum coordinates of any mRNA in this region,
-using :func:`boundaries <pyranges.PyRanges.boundaries>` again without ``transcript_id``. Because we want our result to
+using :func:`outer_ranges <pyranges.PyRanges.outer_ranges>` again without ``transcript_id``. Because we want our result to
 not depend on strand, we remove it using :func:`remove_strand <pyranges.PyRanges.remove_strand>`:
 
-  >>> all_mRNA_bounds = mRNA_bounds.remove_strand().boundaries()
+  >>> all_mRNA_bounds = mRNA_bounds.remove_strand().outer_ranges()
   >>> all_mRNA_bounds
     index  |    Chromosome           Start      End
     int64  |    category             int64    int64

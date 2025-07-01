@@ -533,7 +533,7 @@ class PyRanges(RangeFrame):
             str_repr = f"{str_repr}\nInvalid ranges:\n{reasons}"
         return str_repr
 
-    def boundaries(
+    def outer_ranges(
         self,
         transcript_id: VALID_BY_TYPES = None,
         use_strand: VALID_USE_STRAND_TYPE = "auto",
@@ -582,7 +582,7 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        >>> gr.boundaries("transcript_id")
+        >>> gr.outer_ranges("transcript_id")
           index  |      Chromosome    Start      End  transcript_id
           int64  |           int64    int64    int64  object
         -------  ---  ------------  -------  -------  ---------------
@@ -591,7 +591,7 @@ class PyRanges(RangeFrame):
         PyRanges with 2 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        >>> gr.boundaries()
+        >>> gr.outer_ranges()
           index  |      Chromosome    Start      End
           int64  |           int64    int64    int64
         -------  ---  ------------  -------  -------
@@ -2998,7 +2998,7 @@ class PyRanges(RangeFrame):
                 x = self
                 by = arg_to_list(transcript_id)
 
-            boundaries = x.boundaries(transcript_id=by, use_strand=use_strand)
+            boundaries = x.outer_ranges(transcript_id=by, use_strand=use_strand)
             result = boundaries.slice_ranges(
                 transcript_id=[],
                 use_strand=use_strand,
@@ -5356,7 +5356,7 @@ class PyRanges(RangeFrame):
         See Also
         --------
         PyRanges.subtract_overlaps : report non-overlapping subintervals
-        PyRanges.boundaries : report the boundaries of groups of intervals (e.g. transcripts/genes)
+        PyRanges.outer_ranges : report the boundaries of groups of intervals (e.g. transcripts/genes)
 
 
         Examples

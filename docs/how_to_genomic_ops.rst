@@ -407,7 +407,7 @@ the returned intervals and the input ones:
 Sometimes, you may want to slice ranges according to non-spliced coordinates. This can be done with
 :func:`slice_ranges <pyranges.PyRanges.slice_ranges>` setting the ``count_introns`` argument to ``True``:
 
-So, the following will get the subintervals included in the first 1500 bases of each transcript:
+So, the following will get the subintervals included in the first 1500 bases of each unspliced transcript:
 
   >>> e.slice_ranges(0, 1500, transcript_id='transcript_id', count_introns=True)
     index  |      Chromosome    Start      End  Strand      transcript_id
@@ -425,7 +425,7 @@ So, the following will get the subintervals included in the first 1500 bases of 
 Thus, the command above is equivalent to requesting the portions of intervals
 that overlap with the first 1500 bases of the boundaries of each transcript:
 
-  >>> b = e.boundaries('transcript_id')
+  >>> b = e.outer_ranges('transcript_id')
   >>> b
     index  |      Chromosome    Start      End  Strand      transcript_id
     int64  |        category    int64    int64  category    object
@@ -449,89 +449,6 @@ that overlap with the first 1500 bases of the boundaries of each transcript:
   PyRanges with 6 rows, 5 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-So, the following will get the subintervals included in the first 1500 bases of each transcript:
-
-  >>> e.slice_ranges(0, 1500, transcript_id='transcript_id', count_introns=True)
-    index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
-  -------  ---  ------------  -------  -------  ----------  ---------------
-        0  |               1    11878    12227  +           ENST00000456328
-        1  |               1    12622    12721  +           ENST00000456328
-        2  |               1    13225    13378  +           ENST00000456328
-        3  |               1   111304   111357  -           ENST00000471248
-        4  |               1   112699   112804  -           ENST00000471248
-        7  |               1   133378   133723  -           ENST00000610542
-  PyRanges with 6 rows, 5 columns, and 1 index columns.
-  Contains 1 chromosomes and 2 strands.
-
-Thus, the command above is equivalent to requesting the portions of intervals
-that overlap with the first 1500 bases of the boundaries of each transcript:
-
-  >>> b = e.boundaries('transcript_id')
-  >>> b
-    index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
-  -------  ---  ------------  -------  -------  ----------  ---------------
-        0  |               1    11878    14409  +           ENST00000456328
-        1  |               1   110952   112804  -           ENST00000471248
-        2  |               1   120873   133723  -           ENST00000610542
-  PyRanges with 3 rows, 5 columns, and 1 index columns.
-  Contains 1 chromosomes and 2 strands.
-
-  >>> e.intersect_overlaps( b.slice_ranges(0, 1500) )
-    index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
-  -------  ---  ------------  -------  -------  ----------  ---------------
-        0  |               1    11878    12227  +           ENST00000456328
-        1  |               1    12622    12721  +           ENST00000456328
-        2  |               1    13225    13378  +           ENST00000456328
-        3  |               1   111304   111357  -           ENST00000471248
-        4  |               1   112699   112804  -           ENST00000471248
-        7  |               1   133378   133723  -           ENST00000610542
-  PyRanges with 6 rows, 5 columns, and 1 index columns.
-  Contains 1 chromosomes and 2 strands.
-
-So, the following will get the subintervals included in the first 1500 bases of each transcript:
-
-  >>> e.slice_ranges(0, 1500, transcript_id='transcript_id', count_introns=True)
-    index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
-  -------  ---  ------------  -------  -------  ----------  ---------------
-        0  |               1    11878    12227  +           ENST00000456328
-        1  |               1    12622    12721  +           ENST00000456328
-        2  |               1    13225    13378  +           ENST00000456328
-        3  |               1   111304   111357  -           ENST00000471248
-        4  |               1   112699   112804  -           ENST00000471248
-        7  |               1   133378   133723  -           ENST00000610542
-  PyRanges with 6 rows, 5 columns, and 1 index columns.
-  Contains 1 chromosomes and 2 strands.
-
-Thus, the command above is equivalent to requesting the portions of intervals
-that overlap with the first 1500 bases of the boundaries of each transcript:
-
-  >>> b = e.boundaries('transcript_id')
-  >>> b
-    index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
-  -------  ---  ------------  -------  -------  ----------  ---------------
-        0  |               1    11878    14409  +           ENST00000456328
-        1  |               1   110952   112804  -           ENST00000471248
-        2  |               1   120873   133723  -           ENST00000610542
-  PyRanges with 3 rows, 5 columns, and 1 index columns.
-  Contains 1 chromosomes and 2 strands.
-
-  >>> e.intersect_overlaps( b.slice_ranges(0, 1500) )
-    index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
-  -------  ---  ------------  -------  -------  ----------  ---------------
-        0  |               1    11878    12227  +           ENST00000456328
-        1  |               1    12622    12721  +           ENST00000456328
-        2  |               1    13225    13378  +           ENST00000456328
-        3  |               1   111304   111357  -           ENST00000471248
-        4  |               1   112699   112804  -           ENST00000471248
-        7  |               1   133378   133723  -           ENST00000610542
-  PyRanges with 6 rows, 5 columns, and 1 index columns.
-  Contains 1 chromosomes and 2 strands.
 
 
 Other slicing operations
