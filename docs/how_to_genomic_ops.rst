@@ -173,11 +173,11 @@ To ignore strand (i.e. treat all intervals as if on the positive strand), use ``
   Contains 1 chromosomes and 2 strands.
 
 In all examples above, the extension is applied independently to all intervals in the PyRanges object.
-Alternatively, you can group intervals by a column, specified with the ``transcript_id`` argument.
+Alternatively, you can group intervals by a column, specified with the ``group_by`` argument.
 When provided, extensions are relative to the transcript, not the interval. In practice, only the first and/or last
 exons of each transcript may be extended:
 
-  >>> e.extend_ranges(ext_5=10, transcript_id='transcript_id')
+  >>> e.extend_ranges(ext_5=10, group_by='transcript_id')
     index  |      Chromosome    Start      End  Strand      transcript_id
     int64  |        category    int64    int64  category    object
   -------  ---  ------------  -------  -------  ----------  ---------------
@@ -291,9 +291,9 @@ This returns intervals without their first and last 3 bases:
   Contains 1 chromosomes and 2 strands.
 
 Above, each interval is treated independently. Alternatively, you can consider transcripts,
-grouping intervals (i.e. exons) by a column, specified with the ``transcript_id`` argument.
+grouping intervals (i.e. exons) by a column, specified with the ``group_by`` argument.
 When provided, slice_ranges are relative to the transcript, not the interval.
-Note that using ``transcript_id`` assumes that exons belonging to the same transcript have no overlap; on the other hand,
+Note that using ``group_by`` assumes that exons belonging to the same transcript have no overlap; on the other hand,
 it does not assume presorting of intervals.
 
 By default, coordinates are relative to spliced transcripts.
@@ -303,7 +303,7 @@ regardless of the length of the intron in-between.
 Below we request the first 1500 bases of each spliced transcript. Only
 exons are counted to sum up to that length, and introns are ignored:
 
-  >>> e.slice_ranges(0, 1500, transcript_id='transcript_id')
+  >>> e.slice_ranges(0, 1500, group_by='transcript_id')
     index  |      Chromosome    Start      End  Strand      transcript_id
     int64  |        category    int64    int64  category    object
   -------  ---  ------------  -------  -------  ----------  ---------------
@@ -338,8 +338,8 @@ Compare it with the result above, noting that its third exon has been shortened:
 
 So, this will get the first and last 10 bases of each spliced transcript:
 
-  >>> first10 = e.slice_ranges(0, 10, transcript_id='transcript_id')
-  >>> last10 = e.slice_ranges(-10, transcript_id='transcript_id')
+  >>> first10 = e.slice_ranges(0, 10, group_by='transcript_id')
+  >>> last10 = e.slice_ranges(-10, group_by='transcript_id')
   >>> pr.concat([first10, last10])
     index  |      Chromosome    Start      End  Strand      transcript_id
     int64  |        category    int64    int64  category    object
@@ -356,7 +356,7 @@ So, this will get the first and last 10 bases of each spliced transcript:
 Subsequence operations can be combined with extensions to obtain intervals adjacent to the input ones.
 For example, this will obtain the 100 bases upstream of each transcript:
 
-  >>> e.extend_ranges(ext_5=100, transcript_id='transcript_id').slice_ranges(0, 100, transcript_id='transcript_id')
+  >>> e.extend_ranges(ext_5=100, group_by='transcript_id').slice_ranges(0, 100, group_by='transcript_id')
     index  |      Chromosome    Start      End  Strand      transcript_id
     int64  |        category    int64    int64  category    object
   -------  ---  ------------  -------  -------  ----------  ---------------
@@ -369,7 +369,7 @@ For example, this will obtain the 100 bases upstream of each transcript:
 
 This will obtain the 100 bases downstream of each transcript:
 
-  >>> e.extend_ranges(ext_3=100, transcript_id='transcript_id').slice_ranges(-100, transcript_id='transcript_id')
+  >>> e.extend_ranges(ext_3=100, group_by='transcript_id').slice_ranges(-100, group_by='transcript_id')
     index  |      Chromosome    Start      End  Strand      transcript_id
     int64  |        category    int64    int64  category    object
   -------  ---  ------------  -------  -------  ----------  ---------------
@@ -384,7 +384,7 @@ and :func:`downstream <pyranges.PyRanges.downstream>` allow  to obtain regions u
 downstream of intervals. They allow to specify the length, as well as any optional gap between
 the returned intervals and the input ones:
 
-  >>> e.downstream(100, transcript_id='transcript_id')
+  >>> e.downstream(100, group_by='transcript_id')
     index  |      Chromosome    Start      End  Strand      transcript_id
     int64  |        category    int64    int64  category    object
   -------  ---  ------------  -------  -------  ----------  ---------------
@@ -394,7 +394,7 @@ the returned intervals and the input ones:
   PyRanges with 3 rows, 5 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-  >>> e.downstream(100, gap=10, transcript_id='transcript_id')
+  >>> e.downstream(100, gap=10, group_by='transcript_id')
     index  |      Chromosome    Start      End  Strand      transcript_id
     int64  |        category    int64    int64  category    object
   -------  ---  ------------  -------  -------  ----------  ---------------
@@ -409,7 +409,7 @@ Sometimes, you may want to slice ranges according to non-spliced coordinates. Th
 
 So, the following will get the subintervals included in the first 1500 bases of each unspliced transcript:
 
-  >>> e.slice_ranges(0, 1500, transcript_id='transcript_id', count_introns=True)
+  >>> e.slice_ranges(0, 1500, group_by='transcript_id', count_introns=True)
     index  |      Chromosome    Start      End  Strand      transcript_id
     int64  |        category    int64    int64  category    object
   -------  ---  ------------  -------  -------  ----------  ---------------

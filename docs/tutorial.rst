@@ -247,7 +247,7 @@ intervals belonging to the same CDS: these rows have the same ID value.
 While this concept applies to all annotations, files from different sources may use different column names
 for this purpose (e.g. transcript_id). Note that here we focus on CDS regions. These may encompass multiple exons,
 but they do not span the whole mRNA: the 5'UTRs and 3'UTRs are not included.
-Various PyRanges methods are available to work with groups of intervals, accepting argument ``transcript_id``.
+Various PyRanges methods are available to work with groups of intervals, accepting argument ``group_by``.
 
 Next, we will examine the first and last codon of annotated CDSs.
 We will obtain their genomic coordinate, then fetch their sequence.
@@ -255,7 +255,7 @@ We will obtain their genomic coordinate, then fetch their sequence.
 Method :func:`slice_ranges <pyranges.PyRanges.slice_ranges>` allows to obtain a subregion of
 groups of intervals. The code below derives the first codon of each CDS group; grouping is defined by their ID:
 
-  >>> first=cds.slice_ranges(start=0, end=3, transcript_id='ID')
+  >>> first=cds.slice_ranges(start=0, end=3, group_by='ID')
   >>> first
   index    |    Chromosome         Start    End      Strand      ID
   int64    |    category           int64    int64    category    object
@@ -317,34 +317,34 @@ Let's look at those sequences, using a row selector as before:
 In some cases the starting codon is split between two exons. This is uncommon, but expected at least in a few genes
 in a genome. How do we get the full codon sequence?
 
-Instead of :func:`get_sequence <pyranges.PyRanges.get_sequence>`, let's use
-:func:`get_transcript_sequence <pyranges.PyRanges.get_transcript_sequence>` ,
-which returns the concatenated sequence of a group of intervals,
+ :func:`get_sequence <pyranges.PyRanges.get_sequence>` can accept a ``group_by`` argument,
+thus returning the concatenated sequence of a group of intervals,
 i.e. joining exons together. The sequence is given 5' to 3'.
 
-  >>> seq_first = first.get_transcript_sequence(transcript_id='ID', path=genome_file)
-  >>> seq_first
-                    ID Sequence
-  0   cds-CAD5125114.1      ATG
-  1   cds-CAD5125115.1      atg
-  2   cds-CAD5126491.1      ATG
-  3   cds-CAD5126492.1      ATG
-  4   cds-CAD5126493.1      ATG
-  5   cds-CAD5126494.1      ATG
-  6   cds-CAD5126495.1      ATG
-  7   cds-CAD5126496.1      atg
-  8   cds-CAD5126497.1      ATG
-  9   cds-CAD5126498.1      atg
-  10  cds-CAD5126499.1      atg
-  11  cds-CAD5126873.1      ATG
-  12  cds-CAD5126874.1      ATG
-  13  cds-CAD5126875.1      ATG
-  14  cds-CAD5126876.1      ATG
-  15  cds-CAD5126877.1      ATG
-  16  cds-CAD5126878.1      ATG
+  >>> seq_first = first.get_sequence(group_by='ID', path=genome_file)
+  >>> seq_first # doctest: +NORMALIZE_WHITESPACE
+                   Sequence
+  ID
+  cds-CAD5125114.1      ATG
+  cds-CAD5125115.1      atg
+  cds-CAD5126491.1      ATG
+  cds-CAD5126492.1      ATG
+  cds-CAD5126493.1      ATG
+  cds-CAD5126494.1      ATG
+  cds-CAD5126495.1      ATG
+  cds-CAD5126496.1      atg
+  cds-CAD5126497.1      ATG
+  cds-CAD5126498.1      atg
+  cds-CAD5126499.1      atg
+  cds-CAD5126873.1      ATG
+  cds-CAD5126874.1      ATG
+  cds-CAD5126875.1      ATG
+  cds-CAD5126876.1      ATG
+  cds-CAD5126877.1      ATG
+  cds-CAD5126878.1      ATG
 
 
-``seq_first`` is not a PyRanges object, but a pandas DataFrame. It has a column for the group (ID) and one for Sequence.
+
 Here we confirm the sequence length is always 3:
 
   >>> bool( (seq_first.Sequence.str.len()==3).all() )
@@ -358,32 +358,33 @@ First, we get the a pyranges object of the last codon of each CDS.
 Conveniently, :func:`slice_ranges <pyranges.PyRanges.slice_ranges>` accepts negative arguments
 to count from the 3', so we can obtain the last three nucleotides of CDSs with:
 
-  >>> last = cds.slice_ranges(start=-3, transcript_id='ID')
+  >>> last = cds.slice_ranges(start=-3, group_by='ID')
 
 By not providing an ``end`` argument, we requested intervals that reach the very end of each CDS group.
 Let's get their sequence as before:
 
-  >>> seq_last = last.get_transcript_sequence(transcript_id='ID', path=genome_file)
+  >>> seq_last = last.get_sequence(group_by='ID', path=genome_file)
   >>> seq_last['Sequence'] = seq_last['Sequence'].str.upper()
-  >>> seq_last
-                    ID Sequence
-  0   cds-CAD5125114.1      TGA
-  1   cds-CAD5125115.1      TGA
-  2   cds-CAD5126491.1      TAA
-  3   cds-CAD5126492.1      TGA
-  4   cds-CAD5126493.1      TAA
-  5   cds-CAD5126494.1      TAG
-  6   cds-CAD5126495.1      TAA
-  7   cds-CAD5126496.1      TGA
-  8   cds-CAD5126497.1      TAA
-  9   cds-CAD5126498.1      TAA
-  10  cds-CAD5126499.1      TAG
-  11  cds-CAD5126873.1      TGA
-  12  cds-CAD5126874.1      TAG
-  13  cds-CAD5126875.1      TAA
-  14  cds-CAD5126876.1      TGA
-  15  cds-CAD5126877.1      TAA
-  16  cds-CAD5126878.1      TAA
+  >>> seq_last # doctest: +NORMALIZE_WHITESPACE
+                   Sequence
+  ID
+  cds-CAD5125114.1      TGA
+  cds-CAD5125115.1      TGA
+  cds-CAD5126491.1      TAA
+  cds-CAD5126492.1      TGA
+  cds-CAD5126493.1      TAA
+  cds-CAD5126494.1      TAG
+  cds-CAD5126495.1      TAA
+  cds-CAD5126496.1      TGA
+  cds-CAD5126497.1      TAA
+  cds-CAD5126498.1      TAA
+  cds-CAD5126499.1      TAG
+  cds-CAD5126873.1      TGA
+  cds-CAD5126874.1      TAG
+  cds-CAD5126875.1      TAA
+  cds-CAD5126876.1      TGA
+  cds-CAD5126877.1      TAA
+  cds-CAD5126878.1      TAA
 
 
 Let's use pandas ``value_counts`` to see the usage of stop codons:
@@ -397,7 +398,7 @@ Let's use pandas ``value_counts`` to see the usage of stop codons:
 
 Say we want to focus on CDSs with a TAA stop codon. Let's gather the IDs of those CDSs:
 
-  >>> taa_stop_ids = seq_last[ seq_last.Sequence == 'TAA' ].ID
+  >>> taa_stop_ids = seq_last[ seq_last.Sequence == 'TAA' ].index
 
 We can now use this list to subset the ``cds`` object:
 
@@ -416,13 +417,13 @@ object to a file, for example in GTF format:
 
 Let's get the sequence for these CDSs and write it to a tabular file using pandas method ``to_csv``:
 
-  >>> taa_stop_cds_seqs = taa_stop_cds.get_transcript_sequence(transcript_id='ID', path=genome_file)
-  >>> taa_stop_cds_seqs.to_csv('Dgyro_taa_CDS_seqs.tsv', sep='\t', index=False)
+  >>> taa_stop_cds_seqs = taa_stop_cds.get_sequence(group_by='ID', path=genome_file)
+  >>> taa_stop_cds_seqs.to_csv('Dgyro_taa_CDS_seqs.tsv', sep='\t', index=True)
 
-Note that ``taa_stop_cds_seqs`` is a pandas DataFrame. To write sequences in fasta format we use:
+Note that ``taa_stop_cds_seqs`` is a pandas Series. To write sequences in fasta format we use:
 
   >>> with open('Dgyro_taa_CDS_seqs.fa', 'w') as fw: # doctest: +SKIP
-  ...   for xin, xid, xseq in taa_stop_cds_seqs.itertuples():
+  ...   for xid, xseq in taa_stop_cds_seqs.itertuples():
   ...     fw.write(f'>{xid}\n{xseq}\n')
 
 
@@ -451,7 +452,7 @@ We will group by the ID column, so that the extension is applied to each CDS gro
 (i.e. in this case only the 5' most
 interval of each group).
 
-  >>> g = cds.extend_ranges(ext_5=300, transcript_id='ID')
+  >>> g = cds.extend_ranges(ext_5=300, group_by='ID')
   >>> g.head()
     index  |    Chromosome           Start      End  Strand      ID
     int64  |    category             int64    int64  category    object
@@ -470,7 +471,7 @@ We will group by the ID column, so that the extension is applied to each CDS gro
 (i.e. in this case only the 5' most
 interval of each group).
 
-  >>> g = cds.extend_ranges(ext_5=300, transcript_id='ID')
+  >>> g = cds.extend_ranges(ext_5=300, group_by='ID')
   >>> g.head()
     index  |    Chromosome           Start      End  Strand      ID
     int64  |    category             int64    int64  category    object
@@ -489,7 +490,7 @@ We will group by the ID column, so that the extension is applied to each CDS gro
 (i.e. in this case only the 5' most
 interval of each group).
 
-  >>> g = cds.extend_ranges(ext_5=300, transcript_id='ID')
+  >>> g = cds.extend_ranges(ext_5=300, group_by='ID')
   >>> g.head()
     index  |    Chromosome           Start      End  Strand      ID
     int64  |    category             int64    int64  category    object
@@ -505,7 +506,7 @@ interval of each group).
 In the object we obtained, the promoter corresponds to the first 300 bp of every interval group.
 We can use method :func:`slice_ranges <pyranges.PyRanges.slice_ranges>`  again to get it:
 
-  >>> prom = g.slice_ranges(0, 300, transcript_id='ID')
+  >>> prom = g.slice_ranges(0, 300, group_by='ID')
   >>> prom.head()
     index  |    Chromosome           Start      End  Strand      ID
     int64  |    category             int64    int64  category    object
@@ -823,7 +824,7 @@ Let's define the boundaries of each mRNA, e.g. the left and right limits of its 
 available in the genome annotation, let's use PyRanges to calculate them, using
 :func:`outer_ranges <pyranges.PyRanges.outer_ranges>`:
 
-  >>> mRNA_bounds = exons.outer_ranges(transcript_id='Parent')
+  >>> mRNA_bounds = exons.outer_ranges(group_by='Parent')
   >>> mRNA_bounds
     index  |    Chromosome           Start      End  Strand      Parent
     int64  |    category             int64    int64  category    object
@@ -838,7 +839,7 @@ available in the genome annotation, let's use PyRanges to calculate them, using
   Contains 1 chromosomes and 2 strands.
 
 To get the intergenic regions, let's define the maximum and minimum coordinates of any mRNA in this region,
-using :func:`outer_ranges <pyranges.PyRanges.outer_ranges>` again without ``transcript_id``. Because we want our result to
+using :func:`outer_ranges <pyranges.PyRanges.outer_ranges>` again without ``group_by``. Because we want our result to
 not depend on strand, we remove it using :func:`remove_strand <pyranges.PyRanges.remove_strand>`:
 
   >>> all_mRNA_bounds = mRNA_bounds.remove_strand().outer_ranges()

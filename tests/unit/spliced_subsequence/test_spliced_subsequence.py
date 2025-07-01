@@ -14,7 +14,7 @@ def test_spliced_subsequence_use_strand_false() -> None:
         },
     )
 
-    result = p.slice_ranges(0, 5, use_strand=False, transcript_id="transcript_id")
+    result = p.slice_ranges(0, 5, use_strand=False, group_by="transcript_id")
 
     _expected_result = {
         "Chromosome": {0: 1, 2: 2, 4: 3},

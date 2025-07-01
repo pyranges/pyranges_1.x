@@ -535,23 +535,16 @@ class PyRanges(RangeFrame):
 
     def outer_ranges(
         self,
-        transcript_id: VALID_BY_TYPES = None,
+        group_by: VALID_BY_TYPES = None,
         use_strand: VALID_USE_STRAND_TYPE = "auto",
     ) -> "PyRanges":
-        """Return the boundaries of groups of intervals (e.g. transcripts).
-
-        While designed with transcript in mind, it can be used for any group of intervals.
+        """Return the boundaries (the minimum start and end) of groups of intervals (e.g. transcripts).
 
         Parameters
         ----------
-        transcript_id : str or list of str or None
-            Name(s) of column(s) to group intervals.
+        group_by : str or list of str or None
+            Name(s) of column(s) to group intervals (e.g. into multi-exon transcripts)
             If None, intervals are grouped by chromosome, and strand if present and valid (see .strand_valid).
-
-        agg : dict or None
-            Defines how to aggregate metadata columns. Provided as
-            dictionary of column names -> functions, function names or list of such,
-            as accepted by the pd.DataFrame.agg method.
 
         use_strand: {"auto", True, False}, default: "auto"
             Whether to cluster only intervals on the same strand.
@@ -605,7 +598,7 @@ class PyRanges(RangeFrame):
         by = prepare_by_single(
             self,
             use_strand=use_strand,
-            match_by=transcript_id,
+            match_by=group_by,
         )
 
         by = [*dict.fromkeys(by).keys()]
@@ -891,9 +884,9 @@ class PyRanges(RangeFrame):
     def extend_ranges(
         self,
         ext: int | None = None,
-        ext_3: int | None = None,
         ext_5: int | None = None,
-        transcript_id: VALID_BY_TYPES = None,
+        ext_3: int | None = None,
+        group_by: VALID_BY_TYPES = None,
         use_strand: VALID_USE_STRAND_TYPE = "auto",
     ) -> "PyRanges":
         """Extend the intervals from the 5' and/or 3' ends.
@@ -906,14 +899,14 @@ class PyRanges(RangeFrame):
         ext: int or None
             Extend intervals by this amount from both ends.
 
-        ext_3: int or None
-            Extend intervals by this amount from the 3' end.
-
         ext_5: int or None
             Extend intervals by this amount from the 5' end.
 
-        transcript_id : str or list of str, default: None
-            group intervals into transcripts by these column name(s), so that the
+        ext_3: int or None
+            Extend intervals by this amount from the 3' end.
+
+        group_by : str or list of str, default: None
+            group intervals by these column name(s) (e.g. into multi-exon transcripts), so that the
             extension is applied only to the left-most and/or right-most interval.
 
         use_strand: {"auto", True, False}, default: "auto"
@@ -1006,7 +999,7 @@ class PyRanges(RangeFrame):
 
 
         >>> gr['transcript_id']=['a', 'a', 'b']
-        >>> gr.extend_ranges(transcript_id='transcript_id', ext_3=3)
+        >>> gr.extend_ranges(group_by='transcript_id', ext_3=3)
           index  |    Chromosome      Start      End  Strand    transcript_id
           int64  |    object          int64    int64  object    object
         -------  ---  ------------  -------  -------  --------  ---------------
@@ -1030,7 +1023,7 @@ class PyRanges(RangeFrame):
         else:
             _ext_3, _ext_5 = ext_3 or 0, ext_5 or 0
 
-        groups = factorize(self, transcript_id) if transcript_id is not None else np.arange(len(self), dtype=np.uint32)
+        groups = factorize(self, group_by) if group_by is not None else np.arange(len(self), dtype=np.uint32)
 
         starts, ends = ruranges.extend(
             groups=groups,  # type: ignore[arg-type]
@@ -1050,8 +1043,8 @@ class PyRanges(RangeFrame):
 
     def five_end(
         self,
-        transcript_id: VALID_BY_TYPES = None,
-        slack: int = 0,
+        group_by: VALID_BY_TYPES = None,
+        ext: int = 0,
     ) -> "PyRanges":
         """Return the five prime end of intervals.
 
@@ -1060,12 +1053,12 @@ class PyRanges(RangeFrame):
 
         Parameters
         ----------
-        transcript_id : str or list of str, default: None
+        group_by : str or list of str, default: None
             Optional column name(s). If provided, the five prime end is calculated for each
             group of intervals.
 
-        slack : int, default 0
-            Lengthen (or contract) intervals.
+        ext : int, default 0
+            Lengthen the resulting intervals on both ends by this amount.
 
         See Also
         --------
@@ -1112,7 +1105,7 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> gr.five_end(transcript_id='Name')
+        >>> gr.five_end(group_by='Name')
           index  |    Chromosome      Start      End  Strand    Name
           int64  |    object          int64    int64  object    object
         -------  ---  ------------  -------  -------  --------  --------
@@ -1121,16 +1114,25 @@ class PyRanges(RangeFrame):
         PyRanges with 2 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
+        >>> gr.five_end(group_by='Name', ext=1)
+          index  |    Chromosome      Start      End  Strand    Name
+          int64  |    object          int64    int64  object    object
+        -------  ---  ------------  -------  -------  --------  --------
+              0  |    chr1                2        5  +         a
+              2  |    chr1                5        8  -         b
+        PyRanges with 2 rows, 5 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
         """
         if not self.strand_valid:
             msg = f"Need PyRanges with valid strands ({VALID_GENOMIC_STRAND_INFO}) to find 5'."
             raise AssertionError(msg)
 
-        return mypy_ensure_pyranges(
-            process_site(self, slack=slack, site="tss")
-            if transcript_id is None
-            else self.slice_ranges(transcript_id=transcript_id, start=0, end=1)
-        )
+        result = self.slice_ranges(group_by=group_by, start=0, end=1, use_strand=True)
+        if ext:
+            result = result.extend_ranges(ext=ext, group_by=group_by, use_strand=True)
+
+        return mypy_ensure_pyranges(result)
 
     @property
     def loc_columns(self) -> list[str]:
@@ -1479,7 +1481,7 @@ class PyRanges(RangeFrame):
         transcript ID), so that its interval coordinates are expressed
         relative to that identifier.
         The *global* object *gr* supplies the absolute genomic coordinates
-        of every interval group (e.g. transcripts, potentially with multiple
+        of every interval group (e.g. annotation of transcripts, potentially with multiple
         exons). The function returns the self intervals in the reference
         system of the global object.
 
@@ -1579,7 +1581,7 @@ class PyRanges(RangeFrame):
         ...     "Strand": ["+","+", "-"],
         ...     "label": ["q","w","e"],
         ... }))
-        >>> tr2.map_to_global(gr, "transcript_id")    # doctest: +ELLIPSIS
+        >>> tr2.map_to_global(gr, "transcript_id")
           index  |    Chromosome      Start      End  Strand    label
           int64  |    object          int64    int64  object    object
         -------  ---  ------------  -------  -------  --------  --------
@@ -1609,7 +1611,7 @@ class PyRanges(RangeFrame):
 
         """
         if (self.has_strand and not self.strand_valid) or (gr.has_strand and not gr.strand_valid):
-            msg = "Invalid strands detected! map_to_global needs PyRanges with valid strands, or not Strand at all)."
+            msg = "Invalid strands detected! map_to_global needs PyRanges with valid strands, or no Strand at all)."
             raise AssertionError(msg)
 
         return _map_to_global(local_gr=self, global_gr=gr, global_on=global_on, local_on=local_on)
@@ -2779,7 +2781,7 @@ class PyRanges(RangeFrame):
         self,
         start: int = 0,
         end: int | None = None,
-        transcript_id: VALID_BY_TYPES = None,
+        group_by: VALID_BY_TYPES = None,
         use_strand: VALID_USE_STRAND_TYPE = "auto",
         *,
         count_introns: bool = False,
@@ -2790,7 +2792,7 @@ class PyRanges(RangeFrame):
         Start and end are relative to the 5' end: 0 means the leftmost nucleotide for + strand
         intervals, while it means the rightmost one for - strand.
         This method also allows to manipulate groups of intervals (e.g. exons belonging to same transcripts)
-        through the 'transcript_id' argument. When using it, start and end refer to the spliced transcript coordinates,
+        through the 'group_by' argument. When using it, start and end refer to the spliced transcript coordinates,
         meaning that introns are ignored in the count.
 
         Parameters
@@ -2804,7 +2806,7 @@ class PyRanges(RangeFrame):
             Use a negative int to count from the 3'  (e.g. -1 is the last nucleotide)
             If None, the existing 3' end is returned.
 
-        transcript_id : list of str, default None
+        group_by : list of str, default None
             intervals are grouped by this/these ID column(s) beforehand, e.g. exons belonging to same transcripts
 
         use_strand: {"auto", True, False}, default: "auto"
@@ -2878,7 +2880,7 @@ class PyRanges(RangeFrame):
 
         Get the first 15 nucleotides of *each spliced transcript*, grouping exons by transcript_id:
 
-        >>> p.slice_ranges(0, 15, transcript_id='transcript_id')
+        >>> p.slice_ranges(0, 15, group_by='transcript_id')
           index  |      Chromosome  Strand      Start      End  transcript_id
           int64  |           int64  object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
@@ -2892,7 +2894,7 @@ class PyRanges(RangeFrame):
 
         Get the last 20 nucleotides of each spliced transcript:
 
-        >>> p.slice_ranges(-20, transcript_id='transcript_id')
+        >>> p.slice_ranges(-20, group_by='transcript_id')
           index  |      Chromosome  Strand      Start      End  transcript_id
           int64  |           int64  object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
@@ -2905,7 +2907,7 @@ class PyRanges(RangeFrame):
 
         Use use_strand=False to treat all intervals as if they were on the + strand:
 
-        >>> p.slice_ranges(0, 15, transcript_id='transcript_id', use_strand=False)
+        >>> p.slice_ranges(0, 15, group_by='transcript_id', use_strand=False)
           index  |      Chromosome  Strand      Start      End  transcript_id
           int64  |           int64  object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
@@ -2918,7 +2920,7 @@ class PyRanges(RangeFrame):
 
         Get region from 25 to 60 of each spliced transcript, or their existing subportion:
 
-        >>> p.slice_ranges(25, 60, transcript_id='transcript_id')
+        >>> p.slice_ranges(25, 60, group_by='transcript_id')
           index  |      Chromosome  Strand      Start      End  transcript_id
           int64  |           int64  object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
@@ -2928,7 +2930,7 @@ class PyRanges(RangeFrame):
 
         Get region of each spliced transcript which excludes their first and last 3 nucleotides:
 
-        >>> p.slice_ranges(3, -3, transcript_id='transcript_id')
+        >>> p.slice_ranges(3, -3, group_by='transcript_id')
           index  |      Chromosome  Strand      Start      End  transcript_id
           int64  |           int64  object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
@@ -2943,7 +2945,7 @@ class PyRanges(RangeFrame):
         Considering input start,end to refer to the unspliced transcript, i.e. counting introns.
         This fetches all interval portions that overlap with the first 50nt of each transcript:
 
-        >>> p.slice_ranges(0, 50, transcript_id='transcript_id', count_introns=True)
+        >>> p.slice_ranges(0, 50, group_by='transcript_id', count_introns=True)
           index  |      Chromosome  Strand      Start      End  transcript_id
           int64  |           int64  object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
@@ -2954,7 +2956,7 @@ class PyRanges(RangeFrame):
         PyRanges with 4 rows, 5 columns, and 1 index columns.
         Contains 3 chromosomes and 2 strands.
 
-        >>> p.slice_ranges(0, 50, transcript_id='transcript_id', count_introns=True, use_strand=False)
+        >>> p.slice_ranges(0, 50, group_by='transcript_id', count_introns=True, use_strand=False)
           index  |      Chromosome  Strand      Start      End  transcript_id
           int64  |           int64  object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
@@ -2965,7 +2967,7 @@ class PyRanges(RangeFrame):
         PyRanges with 4 rows, 5 columns, and 1 index columns.
         Contains 3 chromosomes and 2 strands.
 
-        >>> p.slice_ranges(-50, -5, transcript_id='transcript_id', count_introns=True)
+        >>> p.slice_ranges(-50, -5, group_by='transcript_id', count_introns=True)
           index  |      Chromosome  Strand      Start      End  transcript_id
           int64  |           int64  object      int64    int64  object
         -------  ---  ------------  --------  -------  -------  ---------------
@@ -2982,42 +2984,15 @@ class PyRanges(RangeFrame):
 
         use_strand = validate_and_convert_use_strand(self, use_strand)
 
-        if count_introns:
-            # implementation: generating boundaries per exon group, then intersecting with the original
-            # intervals to get the subsequence
-            # "by" below must not contain Chromosome or it will crash, since
-            # this is not passed to internals as usual; rather, it is passed to
-            # methods in the PyRanges API, where we don't provide Chromosome or Strand
-
-            if not transcript_id:
-                x = self.copy()
-                x[TEMP_TRANSCRIPT_ID_COL] = np.arange(len(x))
-                by = [TEMP_TRANSCRIPT_ID_COL]
-
-            else:
-                x = self
-                by = arg_to_list(transcript_id)
-
-            boundaries = x.outer_ranges(transcript_id=by, use_strand=use_strand)
-            result = boundaries.slice_ranges(
-                transcript_id=[],
-                use_strand=use_strand,
-                start=start,
-                end=end,
-            )
-            result = x.intersect_overlaps(result, match_by=by)
-            if not transcript_id:
-                result = cast("pr.PyRanges", result.drop(columns=[TEMP_TRANSCRIPT_ID_COL]))
-
-        else:
+        if not count_introns:
             # standard spliced subsequence slicing
             by = (
                 prepare_by_single(
                     self,
                     use_strand=use_strand,
-                    match_by=transcript_id,
+                    match_by=group_by,
                 )
-                if transcript_id
+                if group_by
                 else []
             )
 
@@ -3028,6 +3003,32 @@ class PyRanges(RangeFrame):
                 start=start,
                 end=end,
             )
+
+        else:
+            # implementation: generating boundaries per exon group, then intersecting with the original
+            # intervals to get the subsequence
+            # "by" below must not contain Chromosome or it will crash, since
+            # this is not passed to internals as usual; rather, it is passed to
+            # methods in the PyRanges API, where we don't provide Chromosome or Strand
+
+            if not group_by:
+                x = self.copy()
+                x[TEMP_TRANSCRIPT_ID_COL] = np.arange(len(x))
+                by = [TEMP_TRANSCRIPT_ID_COL]
+
+            else:
+                x = self
+                by = arg_to_list(group_by)
+
+            boundaries = x.outer_ranges(group_by=by, use_strand=use_strand)
+            result = boundaries.slice_ranges(
+                use_strand=use_strand,
+                start=start,
+                end=end,
+            )
+            result = x.intersect_overlaps(result, match_by=by)
+            if not group_by:
+                result = cast("pr.PyRanges", result.drop(columns=[TEMP_TRANSCRIPT_ID_COL]))
 
         return mypy_ensure_pyranges(result)
 
@@ -3407,16 +3408,15 @@ class PyRanges(RangeFrame):
         *,
         return_df: bool = False,
     ) -> pd.DataFrame | None:
-        """Return info.
+        """Return a summary of info regarding this PyRanges object.
 
-        Count refers to the number of intervals, the rest to the lengths.
+        In output, the row "count" refers to thenumber of intervals and "sum" to their total length.
+        The rest describe the distribution of lengths of the intervals.
 
         The column "pyrange" describes the data as is. "coverage_forward" and "coverage_reverse"
         describe the data after strand-specific merging of overlapping intervals.
         "coverage_unstranded" describes the data after merging, without considering the strands.
 
-        The row "count" is the number of intervals and "sum" is their total length. The rest describe the lengths of the
-        intervals.
 
         Parameters
         ----------
@@ -3594,8 +3594,8 @@ class PyRanges(RangeFrame):
 
     def three_end(
         self,
-        transcript_id: VALID_BY_TYPES = None,
-        slack: int = 0,
+        group_by: VALID_BY_TYPES = None,
+        ext: int = 0,
     ) -> "PyRanges":
         """Return the three prime end of intervals.
 
@@ -3604,12 +3604,12 @@ class PyRanges(RangeFrame):
 
         Parameters
         ----------
-        transcript_id : str or list of str, default: None
+        group_by : str or list of str, default: None
             Optional column name(s). If provided, the three prime end is calculated for each
-            group of intervals.
+            group of intervals (e.g. for each transcript).
 
-        slack : int, default 0
-            Lengthen (or contract) intervals.
+        ext : int, default 0
+            Lengthen the resulting intervals on both ends by this amount.
 
         Returns
         -------
@@ -3636,15 +3636,6 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> gr.three_end(transcript_id='Name')
-          index  |    Chromosome      Start      End  Strand    Name
-          int64  |    object          int64    int64  object    object
-        -------  ---  ------------  -------  -------  --------  --------
-              1  |    chr1               13       14  +         a
-              2  |    chr1                5        6  -         b
-        PyRanges with 2 rows, 5 columns, and 1 index columns.
-        Contains 1 chromosomes and 2 strands.
-
         >>> gr.three_end()
           index  |    Chromosome      Start      End  Strand    Name
           int64  |    object          int64    int64  object    object
@@ -3655,16 +3646,34 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
+        >>> gr.three_end(group_by='Name')
+          index  |    Chromosome      Start      End  Strand    Name
+          int64  |    object          int64    int64  object    object
+        -------  ---  ------------  -------  -------  --------  --------
+              1  |    chr1               13       14  +         a
+              2  |    chr1                5        6  -         b
+        PyRanges with 2 rows, 5 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        >>> gr.three_end(group_by='Name', ext=1)
+          index  |    Chromosome      Start      End  Strand    Name
+          int64  |    object          int64    int64  object    object
+        -------  ---  ------------  -------  -------  --------  --------
+              1  |    chr1               12       15  +         a
+              2  |    chr1                4        7  -         b
+        PyRanges with 2 rows, 5 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
         """
         if not (self.has_strand and self.strand_valid):
             msg = f"Need PyRanges with valid strands ({VALID_GENOMIC_STRAND_INFO}) to find 3'."
             raise AssertionError(msg)
 
-        return mypy_ensure_pyranges(
-            process_site(self, slack=slack, site="tes")
-            if transcript_id is None
-            else self.slice_ranges(transcript_id=transcript_id, start=-1, use_strand=True)
-        )
+        result = self.slice_ranges(group_by=group_by, start=-1, use_strand=True)
+        if ext:
+            result = result.extend_ranges(ext=ext, group_by=group_by, use_strand=True)
+
+        return mypy_ensure_pyranges(result)
 
     def to_bed(
         self,
@@ -4211,7 +4220,7 @@ class PyRanges(RangeFrame):
         length: int,
         gap: int = 0,
         *,
-        transcript_id: VALID_BY_TYPES = None,
+        group_by: VALID_BY_TYPES = None,
         use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
     ) -> "PyRanges":
         r"""Return regions upstream (at the 5' side) of input intervals.
@@ -4222,8 +4231,8 @@ class PyRanges(RangeFrame):
             Size of the region (bp), **> 0**.
         gap : int, default 0
             Distance between region and input intervals; use negative to include some overlap.
-        transcript_id : str or list of str or None
-            Name(s) of column(s) to group intervals. If provided, one region per group is returned.
+        group_by : str or list of str or None
+            Name(s) of column(s) to group intervals. If provided, one region per group (e.g. transcript) is returned.
         use_strand: {"auto", True, False}, default: "auto"
             Whether to consider strand; if so, the upstream window of negative intervals is on their right.
             The default "auto" means True if PyRanges has valid strands (see .strand_valid).
@@ -4302,7 +4311,7 @@ class PyRanges(RangeFrame):
         Note that upstream regions may extend beyond the start of the chromosome, resulting in invalid ranges.
         See clip_ranges() to fix this.
 
-        >>> ex.upstream(5, transcript_id='Tx')
+        >>> ex.upstream(5, group_by='Tx')
           index  |    Chromosome      Start      End  Strand    Tx
           int64  |    object          int64    int64  object    object
         -------  ---  ------------  -------  -------  --------  --------
@@ -4328,7 +4337,7 @@ class PyRanges(RangeFrame):
             ext_5=ext_5,
             ext_3=0,
             use_strand=use_strand,
-            transcript_id=transcript_id,
+            group_by=group_by,
         )
 
         # 2. keep the first `length` bp of the extension
@@ -4336,7 +4345,7 @@ class PyRanges(RangeFrame):
             start=0,
             end=length,
             use_strand=use_strand,
-            transcript_id=transcript_id,
+            group_by=group_by,
         )
 
         return mypy_ensure_pyranges(win)
@@ -4346,7 +4355,7 @@ class PyRanges(RangeFrame):
         length: int,
         gap: int = 0,
         *,
-        transcript_id: VALID_BY_TYPES = None,
+        group_by: VALID_BY_TYPES = None,
         use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
     ) -> "PyRanges":
         r"""Return regions downstream (at the 5' side) of input intervals.
@@ -4357,8 +4366,8 @@ class PyRanges(RangeFrame):
             Size of the region (bp), **> 0**.
         gap : int, default 0
             Distance between input intervals and region; use negative to include some overlap.
-        transcript_id : str or list of str or None
-            Name(s) of column(s) to group intervals. If provided, one region per group is returned.
+        group_by : str or list of str or None
+            Name(s) of column(s) to group intervals. If provided, one region per group (e.g. transcript) is returned.
         use_strand: {"auto", True, False}, default: "auto"
             Whether to consider strand; if so, the downstream window of negative intervals is on their left.
             The default "auto" means True if PyRanges has valid strands (see .strand_valid).
@@ -4434,7 +4443,7 @@ class PyRanges(RangeFrame):
         PyRanges with 4 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> ex.downstream(5, transcript_id='Tx')
+        >>> ex.downstream(5, group_by='Tx')
           index  |    Chromosome      Start      End  Strand    Tx
           int64  |    object          int64    int64  object    object
         -------  ---  ------------  -------  -------  --------  --------
@@ -4458,7 +4467,7 @@ class PyRanges(RangeFrame):
             ext_5=0,
             ext_3=ext_3,
             use_strand=use_strand,
-            transcript_id=transcript_id,
+            group_by=group_by,
         )
 
         # 2. keep the last `length` bp of the extension
@@ -4466,7 +4475,7 @@ class PyRanges(RangeFrame):
             start=-length,
             end=None,
             use_strand=use_strand,
-            transcript_id=transcript_id,
+            group_by=group_by,
         )
 
         return mypy_ensure_pyranges(win)
@@ -5316,7 +5325,7 @@ class PyRanges(RangeFrame):
 
     def complement_ranges(
         self: "PyRanges",
-        transcript_id: VALID_BY_TYPES = None,
+        group_by: VALID_BY_TYPES = None,
         *,
         use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
         include_first_interval: bool = False,
@@ -5331,8 +5340,9 @@ class PyRanges(RangeFrame):
 
         Parameters
         ----------
-        transcript_id : str or list, optional
-            Column(s) to group intervals (e.g. exons). If provided, the complement will be calculated separately for each group.
+        group_by : str or list, optional
+            Column(s) to group intervals (e.g. exons into transcripts).
+            If provided, the complement will be calculated separately for each group.
         use_strand : {"auto", True, False}, default "auto"
             Whether to return complement intervals separately for those on the positive and negative strands.
             The default "auto" means that strand information is used if present and valid (see .strand_valid).
@@ -5494,7 +5504,7 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes.
 
         """
-        by = prepare_by_single(self, use_strand=use_strand, match_by=transcript_id)
+        by = prepare_by_single(self, use_strand=use_strand, match_by=group_by)
 
         result = _complement(
             self,
@@ -5509,8 +5519,10 @@ class PyRanges(RangeFrame):
     def get_sequence(
         self: "PyRanges",
         path: Path | None = None,
+        *,
         pyfaidx_fasta: Optional["pyfaidx.Fasta"] = None,
         use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
+        group_by: VALID_BY_TYPES = None,
         sequence_column: str = "Sequence",
     ) -> pd.Series:
         r"""Get the sequence of the intervals from a fasta file.
@@ -5527,6 +5539,11 @@ class PyRanges(RangeFrame):
             If True, intervals on the reverse strand will be reverse complemented.
             The default "auto" means True if PyRanges has valid strands (see .strand_valid).
 
+
+        group_by : str or list of str, optional
+            If provided, intervals grouped by this/these ID column(s) and the corresponding sequences
+            are concatenated 5'->3'. This is useful for obtaining the full sequences of multi-exon transcripts.
+
         sequence_column: str, default "Sequence"
             What the added column will be called.
 
@@ -5534,7 +5551,8 @@ class PyRanges(RangeFrame):
         -------
         Series
 
-            Sequences, one per interval. The series is named 'Sequence'
+            Sequences, one per interval, with the same index as self.
+            If group_by is provided, instead returns one sequence per group, with the index being the group ID(s).
 
         Note
         ----
@@ -5552,17 +5570,16 @@ class PyRanges(RangeFrame):
 
         See Also
         --------
-        PyRanges.get_transcript_sequence : obtain mRNA sequences, by joining exons belonging to the same transcript
         pyranges.seqs : submodule with sequence-related functions
 
         Examples
         --------
         >>> import pyranges as pr
-        >>> gr = pr.PyRanges({"Chromosome": ["chr1", "chr1"],
+        >>> r = pr.PyRanges({"Chromosome": ["chr1", "chr1"],
         ...                   "Start": [5, 0], "End": [8, 5],
         ...                   "Strand": ["+", "-"]})
 
-        >>> gr
+        >>> r
           index  |    Chromosome      Start      End  Strand
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
@@ -5576,14 +5593,14 @@ class PyRanges(RangeFrame):
         >>> _ = tmp_handle.write("GTAATCAT\n")
         >>> tmp_handle.close()
 
-        >>> seq = gr.get_sequence("temp.fasta", sequence_column="Sequence")
+        >>> seq = r.get_sequence("temp.fasta", sequence_column="Sequence")
         >>> seq
         0      CAT
         1    ATTAC
         Name: Sequence, dtype: object
 
-        >>> gr["seq"] = seq
-        >>> gr
+        >>> r["seq"] = seq
+        >>> r
           index  |    Chromosome      Start      End  Strand    seq
           int64  |    object          int64    int64  object    object
         -------  ---  ------------  -------  -------  --------  --------
@@ -5592,10 +5609,51 @@ class PyRanges(RangeFrame):
         PyRanges with 2 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> gr.get_sequence("temp.fasta", use_strand=False)
+        >>> r.get_sequence("temp.fasta", use_strand=False)
         0      CAT
         1    GTAAT
         Name: Sequence, dtype: object
+
+        Fetching full sequences of transcripts:
+
+        >>> gr = pr.PyRanges({"Chromosome": ['chr1'] * 5,
+        ...                   "Start": [0, 9, 18, 9, 18], "End": [4, 13, 21, 13, 21],
+        ...                   "Strand":['+', '-', '-', '-', '-'],
+        ...                   "transcript": ['t1', 't2', 't2', 't4', 't5']})
+
+        >>> tmp_handle = open("temp.fasta", "w+")
+        >>> _ = tmp_handle.write(">chr1\n")
+        >>> _ = tmp_handle.write("AAACCCTTTGGGAAACCCTTTGGG\n")
+        >>> tmp_handle.close()
+
+        >>> seq = gr.get_sequence(path="temp.fasta", group_by='transcript')
+        >>> seq  # doctest: +NORMALIZE_WHITESPACE
+                   Sequence
+        transcript
+        t1             AAAC
+        t2          AAATCCC
+        t4             TCCC
+        t5              AAA
+
+        With use_strand=False, all intervals are treated as if on the forward strand:
+
+        >>> seq2 = gr.get_sequence(path="temp.fasta", group_by='transcript', use_strand=False, sequence_column="Seq2")
+        >>> seq2 # doctest: +NORMALIZE_WHITESPACE
+                       Seq2
+        transcript
+        t1             AAAC
+        t2          GGGATTT
+        t4             GGGA
+        t5              TTT
+
+        To write to a file in fasta format:
+        >>> with open('outfile.fasta', 'w') as fw:
+        ...     nchars=60
+        ...     for row in seq.itertuples():
+        ...         s = '\\n'.join([ row.Sequence[i:i+nchars] for i in range(0, len(row.Sequence), nchars)])
+        ...         _bytes_written = fw.write(f'>{row.Index}\\n{s}\\n')
+
+
 
         """
         try:
@@ -5613,11 +5671,12 @@ class PyRanges(RangeFrame):
             pyfaidx_fasta = pyfaidx.Fasta(path, read_ahead=int(1e5))
 
         use_strand = validate_and_convert_use_strand(self, use_strand=use_strand)
+        gr = self.sort_ranges(use_strand=use_strand) if group_by else self
 
         iterables = (
-            zip(self[CHROM_COL], self[START_COL], self[END_COL], [FORWARD_STRAND] * len(self), strict=True)
+            zip(gr[CHROM_COL], gr[START_COL], gr[END_COL], [FORWARD_STRAND] * len(gr), strict=True)
             if not use_strand
-            else zip(self[CHROM_COL], self[START_COL], self[END_COL], self[STRAND_COL], strict=True)
+            else zip(gr[CHROM_COL], gr[START_COL], gr[END_COL], gr[STRAND_COL], strict=True)
         )
 
         # below, -seq from pyfaidx is used to get reverse complement of the sequence
@@ -5628,105 +5687,13 @@ class PyRanges(RangeFrame):
             if (seq := _fasta[start:end]) is not None:
                 seqs.append(seq.seq if forward_strand else (-seq).seq)
 
-        return pd.Series(data=seqs, index=self.index, name=sequence_column)
+        seq = pd.Series(data=seqs, index=gr.index, name=sequence_column)
 
-    def get_transcript_sequence(
-        self: "PyRanges",
-        transcript_id: str | list[str],
-        path: Path | None = None,
-        *,
-        pyfaidx_fasta: Optional["pyfaidx.Fasta"] = None,
-        use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
-        sequence_column: str = "Sequence",
-    ) -> pd.DataFrame:
-        r"""Get the sequence of mRNAs, e.g. joining intervals corresponding to exons of the same transcript.
+        if group_by:
+            gr[sequence_column] = seq.to_numpy()
+            seq = gr.groupby(group_by, as_index=True).agg({sequence_column: "".join})
 
-        Parameters
-        ----------
-        transcript_id : str or list of str
-            intervals are grouped by this/these ID column(s): these are exons belonging to same transcript
-
-        path : Optional Path
-            Path to fasta file. It will be indexed using pyfaidx if an index is not found
-
-        pyfaidx_fasta : pyfaidx.Fasta
-            Alternative method to provide fasta target, as a pyfaidx.Fasta object
-
-        use_strand: {"auto", True, False}, default: "auto"
-            If True, intervals on the reverse strand will be reverse complemented.
-            The default "auto" means True if PyRanges has valid strands (see .strand_valid).
-
-        sequence_column: str, default "Sequence"
-            What the added column will be called.
-
-        Returns
-        -------
-        DataFrame
-            Pandas DataFrame with a column for Sequence, plus ID column(s) provided with "transcript_id"
-
-        Note
-        ----
-        This function requires the library pyfaidx, it can be installed with
-        ``conda install -c bioconda pyfaidx`` or ``pip install pyfaidx``.
-
-        Sorting the PyRanges is likely to improve the speed.
-        Intervals on the negative strand will be reverse complemented.
-
-        Warning
-        -------
-        Note that the names in the fasta header and self.Chromosome must be the same.
-
-        See Also
-        --------
-        PyRanges.get_sequence : obtain sequence of single intervals
-        pyranges.seqs : submodule with sequence-related functions
-
-        Examples
-        --------
-        >>> import pyranges as pr
-        >>> gr = pr.PyRanges({"Chromosome": ['chr1'] * 5,
-        ...                   "Start": [0, 9, 18, 9, 18], "End": [4, 13, 21, 13, 21],
-        ...                   "Strand":['+', '-', '-', '-', '-'],
-        ...                   "transcript": ['t1', 't2', 't2', 't4', 't5']})
-
-        >>> tmp_handle = open("temp.fasta", "w+")
-        >>> _ = tmp_handle.write(">chr1\n")
-        >>> _ = tmp_handle.write("AAACCCTTTGGGAAACCCTTTGGG\n")
-        >>> tmp_handle.close()
-
-        >>> seq = gr.get_transcript_sequence(path="temp.fasta", transcript_id='transcript')
-        >>> seq
-          transcript Sequence
-        0         t1     AAAC
-        1         t2  AAATCCC
-        2         t4     TCCC
-        3         t5      AAA
-
-        With use_strand=False, all intervals are treated as if on the forward strand:
-
-        >>> seq2 = gr.get_transcript_sequence(path="temp.fasta", transcript_id='transcript', use_strand=False, sequence_column="Seq2")
-        >>> seq2
-          transcript     Seq2
-        0         t1     AAAC
-        1         t2  GGGATTT
-        2         t4     GGGA
-        3         t5      TTT
-
-        To write to a file in fasta format:
-        >>> with open('outfile.fasta', 'w') as fw:
-        ...     nchars=60
-        ...     for row in seq.itertuples():
-        ...         s = '\\n'.join([ row.Sequence[i:i+nchars] for i in range(0, len(row.Sequence), nchars)])
-        ...         _bytes_written = fw.write(f'>{row.transcript}\\n{s}\\n')
-
-        """
-        use_strand = validate_and_convert_use_strand(self, use_strand=use_strand)
-        gr = self.sort_ranges(use_strand=use_strand)
-
-        seq = gr.get_sequence(path=path, pyfaidx_fasta=pyfaidx_fasta, use_strand=use_strand)
-        gr[sequence_column] = seq.to_numpy()
-
-        return gr.groupby(transcript_id, as_index=False).agg({sequence_column: "".join})
+        return seq
 
     def clip_ranges(
         self: "PyRanges",
@@ -5885,39 +5852,3 @@ class PyRanges(RangeFrame):
             res.loc[:, END_COL] = ends
 
         return mypy_ensure_pyranges(res)
-
-
-def process_site(df: "PyRanges", slack: int = 0, site: str = "tss") -> "PyRanges":
-    """Process a DataFrame to update the 'Start' and 'End' positions based on the site type.
-
-    Args:
-    ----
-        df: A DataFrame that contains 'Start', 'End', and 'Strand' columns.
-        slack: An integer value to adjust the positions.
-        site: A string indicating the site type: "tss" or "tes".
-              For "tss": use 'Start' for '+' strand and 'End - 1' for '-' strand.
-              For "tes": use 'End - 1' for '+' strand and 'Start' for '-' strand.
-
-    Returns:
-    -------
-        A new DataFrame with updated 'Start' and 'End' columns.
-
-    """
-    df = df.copy(deep=True)
-    dtype = df.dtypes["Start"]
-
-    if site == "tss":
-        starts = np.where(df.Strand == "+", df.Start, df.End - 1)
-    elif site == "tes":
-        starts = np.where(df.Strand == "+", df.End - 1, df.Start)
-    else:
-        msg = "Invalid site type. Expected 'tss' or 'tes'."
-        raise ValueError(msg)
-
-    ends = starts + slack + 1
-    starts = starts - slack
-    starts = np.where(starts < 0, 0, starts)
-
-    df.loc[:, "Start"] = starts.astype(dtype)
-    df.loc[:, "End"] = ends.astype(dtype)
-    return df

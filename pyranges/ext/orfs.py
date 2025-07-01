@@ -39,7 +39,7 @@ STOPS_NUCLEOTIDE_SEQ = ["TAG", "TGA", "TAA"]
 N_PRINTED_NON_MULTIPLE_3 = 10
 
 
-def calculate_frame(p: "pr.PyRanges", transcript_id: str | list[str], frame_col: str = "Frame") -> "pr.PyRanges":
+def calculate_frame(p: "pr.PyRanges", group_by: str | list[str], frame_col: str = "Frame") -> "pr.PyRanges":
     """Calculate the frame of genomic intervals, assuming all are coding sequences (CDS), and add it as column.
 
     A stranded
@@ -54,7 +54,7 @@ def calculate_frame(p: "pr.PyRanges", transcript_id: str | list[str], frame_col:
     p : PyRanges
         Input CDS intervals.
 
-    transcript_id : str or list of str
+    group_by : str or list of str
         Column(s) to group by the intervals: coding exons belonging to the same transcript have the same values in this/these column(s).
 
     frame_col : str, default 'Frame'
@@ -84,7 +84,7 @@ def calculate_frame(p: "pr.PyRanges", transcript_id: str | list[str], frame_col:
     PyRanges with 5 rows, 5 columns, and 1 index columns.
     Contains 2 chromosomes and 2 strands.
 
-    >>> pr.orfs.calculate_frame(p, transcript_id=['transcript_id'])
+    >>> pr.orfs.calculate_frame(p, group_by=['transcript_id'])
       index  |      Chromosome  Strand      Start      End  transcript_id      Frame
       int64  |           int64  object      int64    int64  object             int64
     -------  ---  ------------  --------  -------  -------  ---------------  -------
@@ -107,16 +107,16 @@ def calculate_frame(p: "pr.PyRanges", transcript_id: str | list[str], frame_col:
     gr[TEMP_INDEX_COL] = np.arange(len(p))
 
     # Filtering for desired columns
-    sorted_p = gr.get_with_loc_columns([TEMP_INDEX_COL, *arg_to_list(transcript_id)])
+    sorted_p = gr.get_with_loc_columns([TEMP_INDEX_COL, *arg_to_list(group_by)])
 
     # Sorting by 5' (Intervals on + are sorted by ascending order and - are sorted by descending order)
     sorted_p = sorted_p.sort_ranges()
 
-    # Creating a column saving the length for the intervals (for selenoprofiles and ensembl)
+    # Creating a column saving the length for the intervals
     sorted_p[TEMP_LENGTH_COL] = sorted_p.lengths()
 
     # Creating a column saving the cumulative length for the intervals
-    sorted_p[TEMP_CUMSUM_COL] = sorted_p.groupby(transcript_id)[TEMP_LENGTH_COL].cumsum()
+    sorted_p[TEMP_CUMSUM_COL] = sorted_p.groupby(group_by)[TEMP_LENGTH_COL].cumsum()
 
     # Creating a frame column
     sorted_p[FRAME_COL] = (sorted_p[TEMP_CUMSUM_COL] - sorted_p[TEMP_LENGTH_COL]) % 3
@@ -132,7 +132,7 @@ def calculate_frame(p: "pr.PyRanges", transcript_id: str | list[str], frame_col:
 def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     p: "pr.PyRanges",
     fasta_path: str,
-    transcript_id: str | list[str] | None = None,
+    group_by: str | list[str] | None = None,
     *,
     direction: Iterable[DIRECTION_OPTIONS] | DIRECTION_OPTIONS | None = None,
     starts: list[str] = STARTS_NUCLEOTIDE_SEQ,
@@ -155,7 +155,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     fasta_path : location of the Fasta file from which the sequences
         for the extensions will be retrieved.
 
-    transcript_id : str or list of str or None
+    group_by : str or list of str or None
         Name(s) of column(s) to group intervals into transcripts
 
     starts : list containing the nucleotide pattern to look for upstream.
@@ -287,7 +287,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     1      TT
     Name: Sequence, dtype: object
 
-    >>> ep = pr.orfs.extend_orfs(np, fasta_path="temp1.fasta", transcript_id='ID')
+    >>> ep = pr.orfs.extend_orfs(np, fasta_path="temp1.fasta", group_by='ID')
     >>> ep.get_sequence("temp1.fasta")
     0    ATGTTGGGCC
     1      TTCAGTAG
@@ -389,11 +389,11 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
         msg = "Intervals must be have valid strands to call extend_orfs"
         raise AssertionError(msg)
 
-    if transcript_id is None:
+    if group_by is None:
         cds_id = "Custom_ID"
         p[cds_id] = np.arange(len(p))  # Generates a New Column
     else:
-        cds_id = transcript_id
+        cds_id = group_by
 
     if isinstance(cds_id, str):  # ensure it is a list
         cds_id = [cds_id]
@@ -609,7 +609,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     else:
         to_drop = ["__extension_up", "__extension_down", "__order"]
 
-    if transcript_id is None:
+    if group_by is None:
         to_drop.extend(cds_id)
 
     return mypy_ensure_pyranges(p.drop_and_return(to_drop, axis=1))

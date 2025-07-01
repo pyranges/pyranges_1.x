@@ -260,7 +260,7 @@ class RangeFrame(pd.DataFrame):
         self: "RangeFrame",
         other: "RangeFrame",
         *,
-        match_by: VALID_BY_TYPES = None,
+        group_by: VALID_BY_TYPES = None,
         slack: int = 0,
     ) -> "RangeFrame":
         """Return the non-overlaps of self with other.
@@ -270,7 +270,7 @@ class RangeFrame(pd.DataFrame):
         other : PyRanges
            PyRanges to find non-overlaps with.
 
-        match_by : str or list, default None
+        group_by : str or list, default None
             Column(s) to group by intervals (i.e. exons). If provided, the complement will be calculated for each group.
 
         use_strand: {"auto", True, False}, default "auto"
@@ -280,7 +280,7 @@ class RangeFrame(pd.DataFrame):
         chromsizes : dict or PyRanges or pyfaidx.Fasta
             If provided, external complement intervals will also be returned, i.e. the intervals corresponding to the
             beginning of the chromosome up to the first interval and from the last interval to the end of the
-            chromosome. If transcript_id is provided, these are returned for each group.
+            chromosome. If group_by is provided, these are returned for each group.
             Format of chromsizes: dict or PyRanges describing the lengths of the chromosomes.
             pyfaidx.Fasta object is also accepted since it conveniently loads chromosome length
 
@@ -305,8 +305,8 @@ class RangeFrame(pd.DataFrame):
         PyRanges.outer_ranges : report the boundaries of groups of intervals (e.g. transcripts/genes)
 
         """
-        match_by = arg_to_list(match_by)
-        return _complement_overlaps(self, other, by=match_by, slack=slack)
+        group_by = arg_to_list(group_by)
+        return _complement_overlaps(self, other, by=group_by, slack=slack)
 
     def join_overlaps(
         self,
