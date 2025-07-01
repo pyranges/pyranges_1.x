@@ -263,7 +263,7 @@ class RangeFrame(pd.DataFrame):
         match_by: VALID_BY_TYPES = None,
         slack: int = 0,
     ) -> "RangeFrame":
-        """Returns the non-overlaps of self with other
+        """Return the non-overlaps of self with other.
 
         Parameters
         ----------
@@ -411,7 +411,6 @@ class RangeFrame(pd.DataFrame):
         See Also
         --------
         RangeFrame.merge_overlaps : merge intervals into non-overlapping superintervals
-        RangeFrame.split : split intervals into non-overlapping subintervals
         RangeFrame.cluster : annotate overlapping intervals with common ID
 
         """

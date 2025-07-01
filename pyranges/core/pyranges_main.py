@@ -1821,7 +1821,7 @@ class PyRanges(RangeFrame):
         --------
         PyRanges.merge_overlaps : merge intervals into non-overlapping
             super-intervals
-        PyRanges.split : split intervals into non-overlapping sub-intervals
+        PyRanges.split_overlaps : split intervals into non-overlapping sub-intervals
         PyRanges.cluster : annotate overlapping intervals with a common ID
 
         Examples
@@ -1953,7 +1953,7 @@ class PyRanges(RangeFrame):
         --------
         PyRanges.cluster : annotate overlapping intervals with common ID
         PyRanges.max_disjoint : find the maximal disjoint set of intervals
-        PyRanges.split : split intervals into non-overlapping subintervals
+        PyRanges.split_overlaps : split intervals into non-overlapping subintervals
 
         Examples
         --------
@@ -3031,7 +3031,7 @@ class PyRanges(RangeFrame):
 
         return mypy_ensure_pyranges(result)
 
-    def split(
+    def split_overlaps(
         self,
         use_strand: VALID_USE_STRAND_TYPE = "auto",
         *,
@@ -3065,8 +3065,6 @@ class PyRanges(RangeFrame):
         --------
         PyRanges.merge_overlaps : merge overlapping intervals
         PyRanges.max_disjoint : find the maximal disjoint set of intervals
-        PyRanges.split : split intervals into non-overlapping subintervals
-
 
         Examples
         --------
@@ -3083,7 +3081,7 @@ class PyRanges(RangeFrame):
         PyRanges with 4 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> gr.split()
+        >>> gr.split_overlaps()
           index  |    Chromosome      Start      End  Strand
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
@@ -3095,7 +3093,7 @@ class PyRanges(RangeFrame):
         PyRanges with 5 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> gr.split(between=True)
+        >>> gr.split_overlaps(between=True)
           index  |    Chromosome      Start      End  Strand
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
@@ -3108,7 +3106,7 @@ class PyRanges(RangeFrame):
         PyRanges with 6 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> gr.split(use_strand=False)
+        >>> gr.split_overlaps(use_strand=False)
           index  |    Chromosome      Start      End
           int64  |    object          int64    int64
         -------  ---  ------------  -------  -------
@@ -3120,7 +3118,7 @@ class PyRanges(RangeFrame):
         PyRanges with 5 rows, 3 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        >>> gr.split(use_strand=False, between=True)
+        >>> gr.split_overlaps(use_strand=False, between=True)
           index  |    Chromosome      Start      End
           int64  |    object          int64    int64
         -------  ---  ------------  -------  -------
@@ -3145,7 +3143,7 @@ class PyRanges(RangeFrame):
         PyRanges with 4 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> gr.split(use_strand=False, match_by='ID')
+        >>> gr.split_overlaps(use_strand=False, match_by='ID')
           index  |    Chromosome      Start      End  ID
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------

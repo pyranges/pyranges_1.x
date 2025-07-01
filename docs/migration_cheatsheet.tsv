@@ -70,7 +70,7 @@ v0	v1	caveats
  :mslink:`g.sp <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.sp>` 	``REMOVED``	
  :mslink:`g.spc <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.spc>` 	``REMOVED``	
  :mslink:`g.spliced_subsequence <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.spliced_subsequence>` 	:func:`g.slice_ranges <pyranges.PyRanges.slice_ranges>`	args changed;
- :mslink:`g.split <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.split>` 	:func:`g.split <pyranges.PyRanges.split>`	args changed
+ :mslink:`g.split <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.split>` 	:func:`g.split_overlaps <pyranges.PyRanges.split_overlaps>`	args changed
  :mslink:`g.subsequence <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.subsequence>` 	:func:`g.slice_ranges <pyranges.PyRanges.slice_ranges>`	with count_introns=True
  :mslink:`g.subset(fn) <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.subset(fn)>` 	``g[fn]``	
  :mslink:`g.subtract <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.subtract>` 	:func:`g.subtract_overlaps <pyranges.PyRanges.subtract_overlaps>`	args changed; and old syntax triggers unrelated pandas method

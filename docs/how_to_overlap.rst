@@ -32,7 +32,7 @@ Pyranges offers many efficient methods to detect / process overlaps. We present 
 
     pyranges.PyRanges.cluster_overlaps
     pyranges.PyRanges.merge_overlaps
-    pyranges.PyRanges.split
+    pyranges.PyRanges.split_overlaps
     pyranges.PyRanges.max_disjoint
 
 Overlap-related operations: cheatsheet
@@ -926,8 +926,8 @@ Let's add a gene column to the PyRanges object and compare "Cluster" results wit
   Contains 1 chromosomes and 2 strands.
 
 
-Resolve overlaps: merge_overlaps, split, max_disjoint
------------------------------------------------------
+Resolve overlaps: merge_overlaps, split_overlaps, max_disjoint
+--------------------------------------------------------------
 Various methods exists to obtain a PyRanges object without internal overlaps.
 
 Method :func:`merge_overlaps <pyranges.PyRanges.merge_overlaps>`
@@ -972,12 +972,13 @@ Note that Strand is not reported when ``use_strand`` is set to False:
   PyRanges with 3 rows, 3 columns, and 1 index columns.
   Contains 1 chromosomes.
 
-On the other hand, method :func:`split <pyranges.PyRanges.split>` allows to split intervals in self
+On the other hand, method :func:`split_overlaps <pyranges.PyRanges.split_overlaps>` allows
+to split intervals in self
 at the position of overlaps, leaving as many bookended intervals as necessary to avoid overlaps.
 This function drops metadata, too:
 
   >>> pr.options.set_option('max_rows_to_show', 12) # to see all rows
-  >>> c.split()
+  >>> c.split_overlaps()
     index  |    Chromosome      Start      End  Strand
     int64  |    object          int64    int64  object
   -------  ---  ------------  -------  -------  --------

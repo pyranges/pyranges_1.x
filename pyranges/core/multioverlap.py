@@ -131,7 +131,7 @@ def count_overlaps(
 
     """
     concated = concat.concat(grs.values())
-    _features = concated.split(between=True) if features is None else features.copy()
+    _features = concated.split_overlaps(between=True) if features is None else features.copy()
 
     for name, gr in grs.items():
         counts = _features._count_overlaps(  # noqa: SLF001
