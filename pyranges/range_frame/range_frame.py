@@ -263,11 +263,7 @@ class RangeFrame(pd.DataFrame):
         match_by: VALID_BY_TYPES = None,
         slack: int = 0,
     ) -> "RangeFrame":
-        """Return the internal complement of the intervals, i.e. its introns.
-
-        The complement of an interval is the set of intervals that are not covered by the original interval.
-        This function is useful for obtaining the introns of a set of exons, corresponding to the
-        "internal" complement, i.e. excluding the first and last portion of each chromosome not covered by intervals.
+        """Returns the non-overlaps of self with other
 
         Parameters
         ----------
@@ -296,7 +292,7 @@ class RangeFrame(pd.DataFrame):
         Returns
         -------
         PyRanges
-            Complement intervals, i.e. introns in the typical use case.
+            Non-overlapping intervals
 
         Notes
         -----
@@ -642,7 +638,7 @@ class RangeFrame(pd.DataFrame):
         See Also
         --------
         RangeFrame.overlap : use with invert=True to return all intervals without overlap
-        RangeFrame.complement : return the internal complement of intervals, i.e. its introns.
+        RangeFrame.complement_ranges : return the internal complement_ranges of intervals, i.e. its introns.
 
         """
         import ruranges

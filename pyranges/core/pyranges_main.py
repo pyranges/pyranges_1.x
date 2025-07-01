@@ -564,7 +564,7 @@ class PyRanges(RangeFrame):
 
         See Also
         --------
-        PyRanges.complement : return the internal complement of intervals, i.e. its introns.
+        PyRanges.complement_ranges : return the internal complement of intervals, i.e. its introns.
 
         Examples
         --------
@@ -3326,7 +3326,7 @@ class PyRanges(RangeFrame):
         See Also
         --------
         PyRanges.overlap : use with invert=True to return all intervals without overlap
-        PyRanges.complement : return the internal complement of intervals, i.e. its introns.
+        PyRanges.complement_ranges : return the internal complement of intervals, i.e. its introns.
 
         Examples
         --------
@@ -5316,7 +5316,7 @@ class PyRanges(RangeFrame):
         )
         return mypy_ensure_pyranges(res)
 
-    def complement(
+    def complement_ranges(
         self: "PyRanges",
         transcript_id: VALID_BY_TYPES = None,
         *,
@@ -5375,7 +5375,7 @@ class PyRanges(RangeFrame):
         PyRanges with 4 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        >>> a.complement('ID', group_sizes_col="ID", chromsizes={"a": 22, "b": 100}, include_first_interval=True)
+        >>> a.complement_ranges('ID', group_sizes_col="ID", chromsizes={"a": 22, "b": 100}, include_first_interval=True)
           index  |    Chromosome      Start      End  ID
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
@@ -5392,7 +5392,7 @@ class PyRanges(RangeFrame):
 
         Using complement to get introns:
 
-        >>> a.complement('ID')
+        >>> a.complement_ranges('ID')
           index  |    Chromosome      Start      End  ID
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
@@ -5401,7 +5401,7 @@ class PyRanges(RangeFrame):
         PyRanges with 2 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        >>> a.complement()
+        >>> a.complement_ranges()
           index  |    Chromosome      Start      End
           int64  |    object          int64    int64
         -------  ---  ------------  -------  -------
@@ -5413,7 +5413,7 @@ class PyRanges(RangeFrame):
 
         Include external intervals:
 
-        >>> a.complement(chromsizes={'chr1': 10000}, include_first_interval=True)
+        >>> a.complement_ranges(chromsizes={'chr1': 10000}, include_first_interval=True)
           index  |    Chromosome      Start      End
           int64  |    object          int64    int64
         -------  ---  ------------  -------  -------
@@ -5425,7 +5425,7 @@ class PyRanges(RangeFrame):
         PyRanges with 5 rows, 3 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        >>> a.complement('ID', chromsizes={'chr1': 10000}, include_first_interval=True)
+        >>> a.complement_ranges('ID', chromsizes={'chr1': 10000}, include_first_interval=True)
           index  |    Chromosome      Start      End  ID
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
@@ -5453,7 +5453,7 @@ class PyRanges(RangeFrame):
         PyRanges with 4 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> b.complement(use_strand=True)  # same as b.complement() because b.strand_valid == True
+        >>> b.complement_ranges(use_strand=True)  # same as b.complement_ranges() because b.strand_valid == True
           index  |    Chromosome      Start      End  Strand
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
@@ -5462,7 +5462,7 @@ class PyRanges(RangeFrame):
         PyRanges with 2 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> b.complement(use_strand=False)
+        >>> b.complement_ranges(use_strand=False)
           index  |    Chromosome      Start      End
           int64  |    object          int64    int64
         -------  ---  ------------  -------  -------
@@ -5472,7 +5472,7 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 3 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        >>> b.complement(use_strand=False, chromsizes={'chr1': 10000}, include_first_interval=True)
+        >>> b.complement_ranges(use_strand=False, chromsizes={'chr1': 10000}, include_first_interval=True)
           index  |    Chromosome      Start      End
           int64  |    object          int64    int64
         -------  ---  ------------  -------  -------
@@ -5487,7 +5487,7 @@ class PyRanges(RangeFrame):
         Bookended intervals (indices 0-1 below) and overlapping intervals (2-3) won't return any in-between intervals:
 
         >>> c = pr.PyRanges(dict(Chromosome="chr1", Start=[1, 5, 8, 10], End=[5, 7, 14, 16]))
-        >>> c.complement()
+        >>> c.complement_ranges()
           index  |    Chromosome      Start      End
           int64  |    object          int64    int64
         -------  ---  ------------  -------  -------
