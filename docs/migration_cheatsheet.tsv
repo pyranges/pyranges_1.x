@@ -51,7 +51,7 @@ v0	v1	caveats
  :mslink:`g.join <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.join>` 	:func:`g.join_overlaps <pyranges.PyRanges.join_overlaps>`	args changed; and old syntax triggers unrelated pandas method
  :mslink:`g.k_nearest <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.k_nearest>` 	:func:`g.nearest <pyranges.PyRanges.nearest>`	args changed; and only k=1 now supported
  :mslink:`g.keys <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.keys>` 	``REMOVED``	
- :mslink:`g.max_disjoint <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.max_disjoint>` 	:func:`g.max_disjoint <pyranges.PyRanges.max_disjoint>`	args changed; and use slack +1 for old behavior
+ :mslink:`g.max_disjoint <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.max_disjoint>` 	:func:`g.max_disjoint_overlaps <pyranges.PyRanges.max_disjoint_overlaps>`	args changed; and use slack +1 for old behavior
  :mslink:`g.merge <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.merge>` 	:func:`g.merge_overlaps <pyranges.PyRanges.merge_overlaps>`	args changed; and use slack +1 for old behavior
  :mslink:`g.mp <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.mp>` 	``REMOVED``	
  :mslink:`g.mpc <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.mpc>` 	``REMOVED``	

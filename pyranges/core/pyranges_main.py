@@ -1780,7 +1780,7 @@ class PyRanges(RangeFrame):
 
         return mypy_ensure_pyranges(gr)
 
-    def max_disjoint(
+    def max_disjoint_overlaps(
         self,
         use_strand: VALID_USE_STRAND_TYPE = "auto",
         *,
@@ -1837,7 +1837,7 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> gr.max_disjoint(use_strand=False)
+        >>> gr.max_disjoint_overlaps(use_strand=False)
           index  |    Chromosome      Start      End  Name         Score  Strand
           int64  |    category        int64    int64  object       int64  category
         -------  ---  ------------  -------  -------  ---------  -------  ----------
@@ -1869,7 +1869,7 @@ class PyRanges(RangeFrame):
         PyRanges with 8 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> c.max_disjoint(use_strand=True)
+        >>> c.max_disjoint_overlaps(use_strand=True)
           index  |    Chromosome      Start      End  Strand
           int64  |    object          int64    int64  object
         -------  ---  ------------  -------  -------  --------
@@ -1885,7 +1885,7 @@ class PyRanges(RangeFrame):
 
         >>> c3 = c.copy()
         >>> c3["label"] = [f"x{i}" for i in range(len(c3))]
-        >>> c3.max_disjoint(match_by="label")
+        >>> c3.max_disjoint_overlaps(match_by="label")
           index  |    Chromosome      Start      End  Strand    label
           int64  |    object          int64    int64  object    object
         -------  ---  ------------  -------  -------  --------  --------
@@ -1903,7 +1903,7 @@ class PyRanges(RangeFrame):
         """
         use_strand = validate_and_convert_use_strand(self, use_strand)
 
-        result = super().max_disjoint(
+        result = super().max_disjoint_overlaps(
             match_by=prepare_by_single(self, use_strand=use_strand, match_by=match_by),
             slack=slack,
         )
@@ -1952,7 +1952,7 @@ class PyRanges(RangeFrame):
         See Also
         --------
         PyRanges.cluster : annotate overlapping intervals with common ID
-        PyRanges.max_disjoint : find the maximal disjoint set of intervals
+        PyRanges.max_disjoint_overlaps : find the maximal disjoint set of intervals
         PyRanges.split_overlaps : split intervals into non-overlapping subintervals
 
         Examples
@@ -3064,7 +3064,7 @@ class PyRanges(RangeFrame):
         See Also
         --------
         PyRanges.merge_overlaps : merge overlapping intervals
-        PyRanges.max_disjoint : find the maximal disjoint set of intervals
+        PyRanges.max_disjoint_overlaps : find the maximal disjoint set of intervals
 
         Examples
         --------

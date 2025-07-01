@@ -943,7 +943,7 @@ method :func:`merge_overlaps <pyranges.PyRanges.merge_overlaps>` :
   Contains 1 chromosomes and 1 strands.
 
 Various methods are available to obtain non-overlapping intervals, depending on the desired output. See
-:func:`split_overlaps <pyranges.PyRanges.split_overlaps>`, :func:`max_disjoint <pyranges.PyRanges.max_disjoint>`.
+:func:`split_overlaps <pyranges.PyRanges.split_overlaps>`, :func:`max_disjoint_overlaps <pyranges.PyRanges.max_disjoint_overlaps>`.
 
 Finally, let's count how many non-redundant CDS intervals overlap our target region:
 

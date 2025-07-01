@@ -382,7 +382,7 @@ class RangeFrame(pd.DataFrame):
 
         return _mypy_ensure_rangeframe(res)
 
-    def max_disjoint(
+    def max_disjoint_overlaps(
         self,
         *,
         slack: int = 0,

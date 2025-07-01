@@ -33,7 +33,7 @@ Pyranges offers many efficient methods to detect / process overlaps. We present 
     pyranges.PyRanges.cluster_overlaps
     pyranges.PyRanges.merge_overlaps
     pyranges.PyRanges.split_overlaps
-    pyranges.PyRanges.max_disjoint
+    pyranges.PyRanges.max_disjoint_overlaps
 
 Overlap-related operations: cheatsheet
 ======================================
@@ -926,8 +926,8 @@ Let's add a gene column to the PyRanges object and compare "Cluster" results wit
   Contains 1 chromosomes and 2 strands.
 
 
-Resolve overlaps: merge_overlaps, split_overlaps, max_disjoint
---------------------------------------------------------------
+Resolve overlaps: merge_overlaps, split_overlaps, max_disjoint_overlaps
+-----------------------------------------------------------------------
 Various methods exists to obtain a PyRanges object without internal overlaps.
 
 Method :func:`merge_overlaps <pyranges.PyRanges.merge_overlaps>`
@@ -996,14 +996,14 @@ This function drops metadata, too:
   PyRanges with 11 rows, 4 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-Function :func:`max_disjoint <pyranges.PyRanges.max_disjoint>` also returns a set of non-overlapping intervals.
+Function :func:`max_disjoint_overlaps <pyranges.PyRanges.max_disjoint_overlaps>` also returns a set of non-overlapping intervals.
 In this case, however, input intervals are not modified, just filtered.
 The intervals to return are chosen to maximize the number of intervals in the output.
 The usual arguments (e.g. ``use_strand``) are available:
 
 
   >>> pr.options.reset_options()
-  >>> c2.max_disjoint(use_strand=False) # using c2 to show that metadata is retained
+  >>> c2.max_disjoint_overlaps(use_strand=False) # using c2 to show that metadata is retained
     index  |    Chromosome      Start      End  Strand      myClust  gene
     int64  |    object          int64    int64  object       uint32  object
   -------  ---  ------------  -------  -------  --------  ---------  --------
