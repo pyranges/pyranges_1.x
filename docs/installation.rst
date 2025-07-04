@@ -24,6 +24,9 @@ Here you can see the optional dependencies grouped by functionality::
     # user add-ons: to fetch sequences, read BAM files, parallelize execution ...
     pip install pyranges1[add-ons]
 
+    # command line: to use the pyranger command-line tool
+    pip install pyranges1[cli]
+
     # development: for testing, linting, type checking, generating documentation
     pip install pyranges1[dev]
 

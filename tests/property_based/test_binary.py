@@ -292,7 +292,7 @@ def test_nearest(gr, gr2, nearest_how, overlap, strand_behavior) -> None:
     bedtools_df = bedtools_df[bedtools_df.Chromosome2 != "."]
     bedtools_df = bedtools_df.drop("Chromosome2", axis=1)
 
-    result = gr.nearest(gr2, strand_behavior=strand_behavior, overlap=overlap, how=nearest_how)
+    result = gr.nearest_ranges(gr2, strand_behavior=strand_behavior, overlap=overlap, how=nearest_how)
 
     compare_results_nearest(bedtools_df, result)
 
@@ -527,7 +527,7 @@ k_nearest_params = reversed(list(product(nearest_hows, [True, False], strand_beh
 #     if len(result_k) > 0:
 #         result_k.Distance = result_k.Distance.abs()
 #
-#     result_n = gr.nearest(gr2, strand_behavior=None, overlap=True, how=None)
+#     result_n = gr.nearest_ranges(gr2, strand_behavior=None, overlap=True, how=None)
 #
 #     if len(result_k) == 0 and len(result_n) == 0:
 #         pass

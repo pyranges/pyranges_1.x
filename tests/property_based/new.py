@@ -219,7 +219,7 @@ def test_set_union(gr, gr2, strand_behavior) -> None:
 #     bedtools_df = bedtools_df[bedtools_df.Chromosome2 != "."]
 #     bedtools_df = bedtools_df.drop("Chromosome2", axis=1)
 #
-#     result = gr.nearest(gr2, strand_behavior=strand_behavior, overlap=overlap, how=nearest_how)
+#     result = gr.nearest_ranges(gr2, strand_behavior=strand_behavior, overlap=overlap, how=nearest_how)
 #
 #     print("bedtools " * 5)
 #     print(bedtools_df)

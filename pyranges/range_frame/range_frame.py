@@ -256,7 +256,8 @@ class RangeFrame(pd.DataFrame):
         res.insert(res.shape[1], cluster_column, cluster)
         return _mypy_ensure_rangeframe(res)
 
-    def complement_overlaps(
+    # complement_overlaps: unexpected behavior. Not sure what to do with it. Right now, not exposed in PyRanges API.
+    def _complement_overlaps(
         self: "RangeFrame",
         other: "RangeFrame",
         *,
@@ -426,7 +427,7 @@ class RangeFrame(pd.DataFrame):
         )
         return _mypy_ensure_rangeframe(self.take(idx))  # type: ignore[arg-type]
 
-    def nearest(
+    def nearest_ranges(
         self,
         other: "RangeFrame",
         *,

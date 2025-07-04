@@ -13,6 +13,8 @@ example_data.chipseq            : Example ChIP-seq data.
 example_data.chipseq_background : Example ChIP-seq data.
 example_data.chromsizes         : Example chromsizes data (hg19).
 example_data.ensembl_gtf        : Example gtf file from Ensembl.
+example_data.interpro_hits      : Example of InterPro protein hits.
+example_data.rfam_hits          : Example of RNA motifs (Rfam) as 1-based dataframe.
 example_data.f1                 : Example bed file.
 example_data.f2                 : Example bed file.
 example_data.aorta              : Example ChIP-seq data.
@@ -42,7 +44,10 @@ from importlib.resources import files
 from pathlib import Path
 from typing import Any, ClassVar
 
+import pandas as pd
+
 import pyranges as pr
+from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
 
 if typing.TYPE_CHECKING:
     import pyfaidx
@@ -131,6 +136,13 @@ class ExampleData:
             f.write(contents)
             f.flush()
             return pr.read_gtf(Path(f.name))
+
+    @staticmethod
+    def _read_tsv_from_string(contents: str) -> "pd.DataFrame":
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8") as f:
+            f.write(contents)
+            f.flush()
+            return pd.read_csv(Path(f.name), sep="\t")
 
     @property
     def chipseq(self) -> "pr.PyRanges":
@@ -228,6 +240,58 @@ chrM	0	16571"""
 1	ensembl	exon	129055	129223	.	-	.	gene_id "ENSG00000238009"; gene_version "6"; transcript_id "ENST00000610542"; transcript_version "1"; exon_number "2"; gene_name "AL627309.1"; gene_source "ensembl_havana"; gene_biotype "lincRNA"; transcript_name "AL627309.1-205"; transcript_source "ensembl"; transcript_biotype "lincRNA"; exon_id "ENSE00003734824"; exon_version "1"; tag "basic"; transcript_support_level "5";
 1	ensembl	exon	120874	120932	.	-	.	gene_id "ENSG00000238009"; gene_version "6"; transcript_id "ENST00000610542"; transcript_version "1"; exon_number "3"; gene_name "AL627309.1"; gene_source "ensembl_havana"; gene_biotype "lincRNA"; transcript_name "AL627309.1-205"; transcript_source "ensembl"; transcript_biotype "lincRNA"; exon_id "ENSE00003740919"; exon_version "1"; tag "basic"; transcript_support_level "5";"""
         return self._read_gtf_from_string(contents)
+
+    @property
+    def interpro_hits(self) -> "pr.PyRanges":
+        """Example of InterPro protein hits."""
+        contents = """Chromosome	predictor	feature	Start	End
+CAD5126873.1	SignalP_EUK	SignalP-noTM	1	18
+CAD5126492.1	SignalP_EUK	SignalP-noTM	1	16
+CAD5126498.1	SignalP_EUK	SignalP-noTM	1	21
+CAD5126499.1	SignalP_EUK	SignalP-noTM	1	21"""
+        d = pr.PyRanges(self._read_tsv_from_string(contents))
+        d["Start"] -= 1
+        return mypy_ensure_pyranges(d)
+
+    @property
+    def rfam_hits(self) -> "pd.DataFrame":
+        """Example of RNA motifs (Rfam) as 1-based dataframe."""
+        contents = """target_name	accession	query_name	accession.1	mdl	mdl_from	mdl_to	seq_from	seq_to	strand	trunc	pass	gc	bias	score	E-value	inc	description_of_target
+DGYR_LOCUS12552-2-3	-	GAIT	RF00179	cm	1	71	51	95	+	no	1	0.31	0.0	19.2	0.0066	!	-
+DGYR_LOCUS12552-3	-	GAIT	RF00179	cm	1	71	51	95	+	no	1	0.31	0.0	19.2	0.0066	!	-
+DGYR_LOCUS13738-3	-	REN-SRE	RF00180	cm	1	37	87	124	+	no	1	0.37	0.0	16.6	0.0015	!	-
+DGYR_LOCUS14091-1	-	IFN_gamma	RF00259	cm	1	169	137	43	-	no	1	0.27	0.7	19.6	0.004	!	-
+DGYR_LOCUS14091-1	-	snoZ30	RF00288	cm	1	97	547	616	+	no	1	0.33	0.0	18.5	0.005	!	-
+DGYR_LOCUS13734-4	-	snoR21	RF00352	cm	1	82	2478	2391	-	no	1	0.35	0.0	30.4	0.00027	!	-
+DGYR_LOCUS13734-4	-	HIV_GSL3	RF00376	cm	1	84	2558	2480	-	no	1	0.34	0.0	21.2	0.0022	!	-
+DGYR_LOCUS14091-1	-	SNORA53	RF00563	cm	1	248	833	748	-	no	1	0.29	0.1	15.4	0.0026	!	-
+DGYR_LOCUS13737-1	-	mir-320	RF00736	cm	1	76	1264	1310	+	no	1	0.28	0.1	15.6	0.0095	!	-
+DGYR_LOCUS13739-1	-	sR43	RF01128	hmm	7	38	432	468	+	-	6	0.43	0.0	10.7	0.0074	!	-
+DGYR_LOCUS13734-4	-	SNORD107	RF01164	cm	1	74	183	254	+	no	1	0.25	0.6	21.2	0.0019	!	-
+DGYR_LOCUS14092-3	-	snR77	RF01181	hmm	17	61	109	154	+	-	6	0.33	0.7	12.9	0.0016	!	-
+DGYR_LOCUS14092-3	-	snR50	RF01190	cm	1	89	253	329	+	no	1	0.3	0.1	21.0	0.0085	!	-
+DGYR_LOCUS13737-1	-	snoR31	RF01288	cm	1	93	244	172	-	no	1	0.23	1.0	21.6	0.0045	!	-
+DGYR_LOCUS13738-1	-	CRISPR-DR42	RF01351	hmm	7	27	312	332	+	-	6	0.24	0.3	13.8	0.0017	!	-
+DGYR_LOCUS13734-1	-	rli62	RF01486	cm	1	135	276	401	+	no	1	0.36	0.0	20.1	0.0024	!	-
+DGYR_LOCUS13738-5	-	6S-Flavo	RF01685	cm	1	108	548	637	+	no	1	0.28	0.4	25.2	0.002	!	-
+DGYR_LOCUS13734-4	-	alpha_tmRNA	RF01849	cm	40	242	1659	1783	+	no	1	0.33	0.2	13.5	0.00042	!	-
+DGYR_LOCUS13741-5	-	HEARO	RF02033	cm	1	77	74	1	-	3'	3	0.35	0.0	15.7	0.0052	!	-
+DGYR_LOCUS13740-5	-	HEARO	RF02033	cm	1	73	74	1	-	3'	3	0.36	0.0	14.9	0.0082	!	-
+DGYR_LOCUS13734-1	-	STnc420	RF02054	cm	1	58	94	48	-	no	1	0.19	0.6	18.2	0.0076	!	-
+DGYR_LOCUS14095-1	-	MESTIT1_1	RF02148	hmm	60	124	174	112	-	-	6	0.25	1.1	11.7	0.0022	!	-
+DGYR_LOCUS14095-2-1	-	MESTIT1_1	RF02148	hmm	60	124	174	112	-	-	6	0.25	1.1	11.7	0.0022	!	-
+DGYR_LOCUS13738-1	-	PVT1_5	RF02168	hmm	17	117	739	635	-	-	6	0.26	0.1	13.6	0.0008	!	-
+DGYR_LOCUS12552-2-5	-	psRNA6	RF02350	cm	242	333	385	299	-	5'	2	0.21	8.4	11.5	0.0063	!	-
+DGYR_LOCUS12552-5	-	psRNA6	RF02350	cm	242	333	385	299	-	5'	2	0.21	8.4	11.5	0.0063	!	-
+DGYR_LOCUS13736-4	-	ToxI	RF02519	cm	1	34	105	148	+	no	1	0.32	0.0	19.4	0.005	!	-
+DGYR_LOCUS14092-3	-	OppA_thermometer	RF02777	cm	1	65	387	450	+	3'	3	0.25	0.2	12.7	0.0042	!	-
+DGYR_LOCUS13737-1	-	RT-8	RF03029	cm	1	92	163	77	-	no	1	0.33	0.0	21.4	0.0026	!	-
+DGYR_LOCUS13734-4	-	mir-5697	RF03269	cm	1	59	178	228	+	no	1	0.18	3.6	18.7	0.005	!	-
+DGYR_LOCUS13737-1	-	mir-3047	RF03339	cm	1	61	550	600	+	no	1	0.33	0.0	18.2	0.0074	!	-
+DGYR_LOCUS13737-1	-	mir-3156	RF03360	cm	1	77	544	605	+	no	1	0.32	0.0	26.3	4.9e-05	!	-
+DGYR_LOCUS13737-1	-	MIR1523	RF04113	cm	1	92	530	612	+	no	1	0.3	0.1	18.8	0.0053	!	-
+DGYR_LOCUS13737-1	-	MIR8001	RF04255	cm	1	67	550	600	+	no	1	0.33	0.0	18.7	0.0068	!	-"""
+        return self._read_tsv_from_string(contents)
 
     @property
     def f1(self) -> "pr.PyRanges":

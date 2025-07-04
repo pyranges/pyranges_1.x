@@ -311,43 +311,40 @@ Let's look at those sequences, using a row selector as before:
   PyRanges with 2 rows, 6 columns, and 1 index columns.
   Contains 1 chromosomes and 1 strands.
 
-  >>> pr.options.reset_options()
-
 
 In some cases the starting codon is split between two exons. This is uncommon, but expected at least in a few genes
 in a genome. How do we get the full codon sequence?
 
- :func:`get_sequence <pyranges.PyRanges.get_sequence>` can accept a ``group_by`` argument,
+Function :func:`get_sequence <pyranges.PyRanges.get_sequence>` can accept a ``group_by`` argument,
 thus returning the concatenated sequence of a group of intervals,
 i.e. joining exons together. The sequence is given 5' to 3'.
 
-  >>> seq_first = first.get_sequence(group_by='ID', path=genome_file)
+  >>> seq_first = first.get_sequence(genome_file, group_by='ID')
   >>> seq_first # doctest: +NORMALIZE_WHITESPACE
-                   Sequence
   ID
-  cds-CAD5125114.1      ATG
-  cds-CAD5125115.1      atg
-  cds-CAD5126491.1      ATG
-  cds-CAD5126492.1      ATG
-  cds-CAD5126493.1      ATG
-  cds-CAD5126494.1      ATG
-  cds-CAD5126495.1      ATG
-  cds-CAD5126496.1      atg
-  cds-CAD5126497.1      ATG
-  cds-CAD5126498.1      atg
-  cds-CAD5126499.1      atg
-  cds-CAD5126873.1      ATG
-  cds-CAD5126874.1      ATG
-  cds-CAD5126875.1      ATG
-  cds-CAD5126876.1      ATG
-  cds-CAD5126877.1      ATG
-  cds-CAD5126878.1      ATG
+  cds-CAD5125114.1    ATG
+  cds-CAD5125115.1    atg
+  cds-CAD5126491.1    ATG
+  cds-CAD5126492.1    ATG
+  cds-CAD5126493.1    ATG
+  cds-CAD5126494.1    ATG
+  cds-CAD5126495.1    ATG
+  cds-CAD5126496.1    atg
+  cds-CAD5126497.1    ATG
+  cds-CAD5126498.1    atg
+  cds-CAD5126499.1    atg
+  cds-CAD5126873.1    ATG
+  cds-CAD5126874.1    ATG
+  cds-CAD5126875.1    ATG
+  cds-CAD5126876.1    ATG
+  cds-CAD5126877.1    ATG
+  cds-CAD5126878.1    ATG
+  Name: Sequence, dtype: object
 
+Note that, when :func:`get_sequence <pyranges.PyRanges.get_sequence>` is called with the ``group_by`` argument,
+the output is indexed by the group_by column, in this case the ``ID``. Here we confirm the sequence length is always 3:
 
-
-Here we confirm the sequence length is always 3:
-
-  >>> bool( (seq_first.Sequence.str.len()==3).all() )
+  >>> bool( (seq_first.str.len()==3).all() )
   True
 
 
@@ -363,33 +360,32 @@ to count from the 3', so we can obtain the last three nucleotides of CDSs with:
 By not providing an ``end`` argument, we requested intervals that reach the very end of each CDS group.
 Let's get their sequence as before:
 
-  >>> seq_last = last.get_sequence(group_by='ID', path=genome_file)
-  >>> seq_last['Sequence'] = seq_last['Sequence'].str.upper()
+  >>> seq_last = last.get_sequence(genome_file, group_by='ID').str.upper()
   >>> seq_last # doctest: +NORMALIZE_WHITESPACE
-                   Sequence
   ID
-  cds-CAD5125114.1      TGA
-  cds-CAD5125115.1      TGA
-  cds-CAD5126491.1      TAA
-  cds-CAD5126492.1      TGA
-  cds-CAD5126493.1      TAA
-  cds-CAD5126494.1      TAG
-  cds-CAD5126495.1      TAA
-  cds-CAD5126496.1      TGA
-  cds-CAD5126497.1      TAA
-  cds-CAD5126498.1      TAA
-  cds-CAD5126499.1      TAG
-  cds-CAD5126873.1      TGA
-  cds-CAD5126874.1      TAG
-  cds-CAD5126875.1      TAA
-  cds-CAD5126876.1      TGA
-  cds-CAD5126877.1      TAA
-  cds-CAD5126878.1      TAA
+  cds-CAD5125114.1    TGA
+  cds-CAD5125115.1    TGA
+  cds-CAD5126491.1    TAA
+  cds-CAD5126492.1    TGA
+  cds-CAD5126493.1    TAA
+  cds-CAD5126494.1    TAG
+  cds-CAD5126495.1    TAA
+  cds-CAD5126496.1    TGA
+  cds-CAD5126497.1    TAA
+  cds-CAD5126498.1    TAA
+  cds-CAD5126499.1    TAG
+  cds-CAD5126873.1    TGA
+  cds-CAD5126874.1    TAG
+  cds-CAD5126875.1    TAA
+  cds-CAD5126876.1    TGA
+  cds-CAD5126877.1    TAA
+  cds-CAD5126878.1    TAA
+  Name: Sequence, dtype: object
 
 
 Let's use pandas ``value_counts`` to see the usage of stop codons:
 
-  >>> seq_last['Sequence'].value_counts()
+  >>> seq_last.value_counts()
   Sequence
   TAA    8
   TGA    6
@@ -398,7 +394,7 @@ Let's use pandas ``value_counts`` to see the usage of stop codons:
 
 Say we want to focus on CDSs with a TAA stop codon. Let's gather the IDs of those CDSs:
 
-  >>> taa_stop_ids = seq_last[ seq_last.Sequence == 'TAA' ].index
+  >>> taa_stop_ids = seq_last[ seq_last == 'TAA' ].index
 
 We can now use this list to subset the ``cds`` object:
 
@@ -410,17 +406,17 @@ Writing coordinates and sequences to the disk
 
 We obtained a custom genome annotation, consisting of CDS with a TAA stop codon.
 We can now write this :class:`PyRanges <pyranges.PyRanges>`
-object to a file, for example in GTF format:
+object to a file, for example in GTF format using method :func:`to_gtf <pyranges.PyRanges.to_gtf>`:
 
   >>> taa_stop_cds.to_gtf('Dgyro.taa_CDS.gtf')
 
 
 Let's get the sequence for these CDSs and write it to a tabular file using pandas method ``to_csv``:
 
-  >>> taa_stop_cds_seqs = taa_stop_cds.get_sequence(group_by='ID', path=genome_file)
+  >>> taa_stop_cds_seqs = taa_stop_cds.get_sequence(genome_file, group_by='ID')
   >>> taa_stop_cds_seqs.to_csv('Dgyro_taa_CDS_seqs.tsv', sep='\t', index=True)
 
-Note that ``taa_stop_cds_seqs`` is a pandas Series. To write sequences in fasta format we use:
+Note that ``taa_stop_cds_seqs`` is a pandas Series. To write sequences in fasta format we may use:
 
   >>> with open('Dgyro_taa_CDS_seqs.fa', 'w') as fw: # doctest: +SKIP
   ...   for xid, xseq in taa_stop_cds_seqs.itertuples():
@@ -430,7 +426,7 @@ Note that ``taa_stop_cds_seqs`` is a pandas Series. To write sequences in fasta 
 Extending genomic intervals
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Now we want to obtain (a practical approximation of) promoter sequences, here defined as the
+Now we want to obtain (a toy approximation of) promoter sequences, here defined as the
 300bp region before the start codon. Before we begin, let's peek into our object ``cds`` using
 the pandas method ``head``:
 
@@ -466,44 +462,6 @@ interval of each group).
   Contains 1 chromosomes and 2 strands.
 
 In the object we obtained, the promoter corresponds to the first 300 bp of every interval group.
-We can use method
-We will group by the ID column, so that the extension is applied to each CDS group
-(i.e. in this case only the 5' most
-interval of each group).
-
-  >>> g = cds.extend_ranges(ext_5=300, group_by='ID')
-  >>> g.head()
-    index  |    Chromosome           Start      End  Strand      ID
-    int64  |    category             int64    int64  category    object
-  -------  ---  -----------------  -------  -------  ----------  ----------------
-        4  |    CAJFCJ010000053.1     4882     5563  -           cds-CAD5126491.1
-       11  |    CAJFCJ010000053.1    10432    10958  +           cds-CAD5126492.1
-       12  |    CAJFCJ010000053.1    11028    11169  +           cds-CAD5126492.1
-       13  |    CAJFCJ010000053.1    11227    11400  +           cds-CAD5126492.1
-       14  |    CAJFCJ010000053.1    11453    14183  +           cds-CAD5126492.1
-  PyRanges with 5 rows, 5 columns, and 1 index columns.
-  Contains 1 chromosomes and 2 strands.
-
-In the object we obtained, the promoter corresponds to the first 300 bp of every interval group.
-We can use method
-We will group by the ID column, so that the extension is applied to each CDS group
-(i.e. in this case only the 5' most
-interval of each group).
-
-  >>> g = cds.extend_ranges(ext_5=300, group_by='ID')
-  >>> g.head()
-    index  |    Chromosome           Start      End  Strand      ID
-    int64  |    category             int64    int64  category    object
-  -------  ---  -----------------  -------  -------  ----------  ----------------
-        4  |    CAJFCJ010000053.1     4882     5563  -           cds-CAD5126491.1
-       11  |    CAJFCJ010000053.1    10432    10958  +           cds-CAD5126492.1
-       12  |    CAJFCJ010000053.1    11028    11169  +           cds-CAD5126492.1
-       13  |    CAJFCJ010000053.1    11227    11400  +           cds-CAD5126492.1
-       14  |    CAJFCJ010000053.1    11453    14183  +           cds-CAD5126492.1
-  PyRanges with 5 rows, 5 columns, and 1 index columns.
-  Contains 1 chromosomes and 2 strands.
-
-In the object we obtained, the promoter corresponds to the first 300 bp of every interval group.
 We can use method :func:`slice_ranges <pyranges.PyRanges.slice_ranges>`  again to get it:
 
   >>> prom = g.slice_ranges(0, 300, group_by='ID')
@@ -511,7 +469,25 @@ We can use method :func:`slice_ranges <pyranges.PyRanges.slice_ranges>`  again t
     index  |    Chromosome           Start      End  Strand      ID
     int64  |    category             int64    int64  category    object
   -------  ---  -----------------  -------  -------  ----------  ----------------
-	4  |    CAJFCJ010000053.1     5263     5563  -           cds-CAD5126491.1
+        4  |    CAJFCJ010000053.1     5263     5563  -           cds-CAD5126491.1
+       11  |    CAJFCJ010000053.1    10432    10732  +           cds-CAD5126492.1
+       18  |    CAJFCJ010000053.1    19349    19649  +           cds-CAD5126493.1
+       25  |    CAJFCJ010000053.1    27139    27439  -           cds-CAD5126494.1
+       32  |    CAJFCJ010000053.1    38860    39160  +           cds-CAD5126495.1
+  PyRanges with 5 rows, 5 columns, and 1 index columns.
+  Contains 1 chromosomes and 2 strands.
+
+So far we applied :func:`extend_ranges <pyranges.PyRanges.extend_ranges>` and
+:func:`slice_ranges <pyranges.PyRanges.slice_ranges>` to obtain the regions immediately upstream of each CDS group.
+In latest versions, pyranges offers a direct method to perform this operation, called
+:func:`upstream <pyranges.PyRanges.upstream>` (as well as its 3' analog
+:func:`downstream <pyranges.PyRanges.downstream>`):
+
+  >>> cds.upstream(length=300, group_by='ID').head()
+    index  |    Chromosome           Start      End  Strand      ID
+    int64  |    category             int64    int64  category    object
+  -------  ---  -----------------  -------  -------  ----------  ----------------
+        4  |    CAJFCJ010000053.1     5263     5563  -           cds-CAD5126491.1
        11  |    CAJFCJ010000053.1    10432    10732  +           cds-CAD5126492.1
        18  |    CAJFCJ010000053.1    19349    19649  +           cds-CAD5126493.1
        25  |    CAJFCJ010000053.1    27139    27439  -           cds-CAD5126494.1
@@ -532,7 +508,7 @@ is designed to correct this:
     index  |    Chromosome           Start      End  Strand      ID
     int64  |    category             int64    int64  category    object
   -------  ---  -----------------  -------  -------  ----------  ----------------
-	4  |    CAJFCJ010000053.1     5263     5563  -           cds-CAD5126491.1
+        4  |    CAJFCJ010000053.1     5263     5563  -           cds-CAD5126491.1
        11  |    CAJFCJ010000053.1    10432    10732  +           cds-CAD5126492.1
        18  |    CAJFCJ010000053.1    19349    19649  +           cds-CAD5126493.1
        25  |    CAJFCJ010000053.1    27139    27439  -           cds-CAD5126494.1
@@ -542,13 +518,13 @@ is designed to correct this:
 
 To detect cases of out-of-bounds on the right side, :func:`clip_ranges <pyranges.PyRanges.clip_ranges>`
 needs to know chromosome sizes.
-Various input types are accepted for the ``chromsizes`` argument; we used a ``pyfaidx.Fasta``
+Various input types are accepted for the ``chromsizes`` argument; above, we used a ``pyfaidx.Fasta``
 object, which derives it from a fasta file.
 
 You see below that some intervals were gone out-of-bounds on the right side, and have been corrected:
 
-  >>> diff_end = cor_prom.End != prom.End
-  >>> prom[diff_end]
+  >>> select_diff_end = cor_prom.End != prom.End
+  >>> prom[select_diff_end]
     index  |    Chromosome           Start      End  Strand      ID
     int64  |    category             int64    int64  category    object
   -------  ---  -----------------  -------  -------  ----------  ----------------
@@ -556,7 +532,7 @@ You see below that some intervals were gone out-of-bounds on the right side, and
   PyRanges with 1 rows, 5 columns, and 1 index columns.
   Contains 1 chromosomes and 1 strands.
 
-  >>> cor_prom[diff_end]
+  >>> cor_prom[select_diff_end]
     index  |    Chromosome           Start      End  Strand      ID
     int64  |    category             int64    int64  category    object
   -------  ---  -----------------  -------  -------  ----------  ----------------
@@ -583,8 +559,8 @@ Let's see if any of the promoter regions overlap other CDSs:
   Contains 1 chromosomes and 1 strands.
 
 As many PyRanges methods, the Strand (if present) is taken into account in the comparison, so that
-the overlap bewteen intervals is reported only if they are on the same strand.
-Argument ``strand_behavior`` is available in many functions to control how strand is handled in overlap comparisons.
+the overlap between intervals is reported only if they are on the same strand.
+Argument ``strand_behavior`` is available in many functions to control how strand is handled in overlap comparisons
 (see :func:`overlap <pyranges.PyRanges.overlap>`).
 
 Above, we obtained the promoter region that overlaps another CDS, but we don't know what CDS it is.
@@ -600,29 +576,6 @@ of the overlapping intervals, similar to a SQL join operation:
   PyRanges with 1 rows, 8 columns, and 1 index columns.
   Contains 1 chromosomes and 1 strands.
 
-The object `
-of the overlapping intervals, similar to a SQL join operation:
-
-  >>> j = cor_prom.join_overlaps(cds)
-  >>> j
-    index  |    Chromosome           Start      End  Strand      ID                  Start_b    End_b  ID_b
-    int64  |    category             int64    int64  category    object                int64    int64  object
-  -------  ---  -----------------  -------  -------  ----------  ----------------  ---------  -------  ----------------
-       15  |    CAJFCJ010000025.1     2755     3055  -           cds-CAD5125115.1       2753     2851  cds-CAD5125114.1
-  PyRanges with 1 rows, 8 columns, and 1 index columns.
-  Contains 1 chromosomes and 1 strands.
-
-The object `
-of the overlapping intervals, similar to a SQL join operation:
-
-  >>> j = cor_prom.join_overlaps(cds)
-  >>> j
-    index  |    Chromosome           Start      End  Strand      ID                  Start_b    End_b  ID_b
-    int64  |    category             int64    int64  category    object                int64    int64  object
-  -------  ---  -----------------  -------  -------  ----------  ----------------  ---------  -------  ----------------
-       15  |    CAJFCJ010000025.1     2755     3055  -           cds-CAD5125115.1       2753     2851  cds-CAD5125114.1
-  PyRanges with 1 rows, 8 columns, and 1 index columns.
-  Contains 1 chromosomes and 1 strands.
 
 The object ``j`` contains the columns of both objects, with the suffix "_b" to distinguish the second one (``cds``).
 It may be a bit too wide for our taste. Let's just look at a few columns to understand the overlap:
@@ -646,27 +599,6 @@ Let's get the intersection between the overlapping intervals, using function
   PyRanges with 1 rows, 5 columns, and 1 index columns.
   Contains 1 chromosomes and 1 strands.
 
-Let's go back to the
-
-  >>> prom_in_cds = cor_prom.intersect_overlaps(cds)
-  >>> prom_in_cds
-    index  |    Chromosome           Start      End  Strand      ID
-    int64  |    category             int64    int64  category    object
-  -------  ---  -----------------  -------  -------  ----------  ----------------
-      135  |    CAJFCJ010000025.1     2755     2851  -           cds-CAD5125115.1
-  PyRanges with 1 rows, 5 columns, and 1 index columns.
-  Contains 1 chromosomes and 1 strands.
-
-Let's go back to the
-
-  >>> prom_in_cds = cor_prom.intersect_overlaps(cds)
-  >>> prom_in_cds
-    index  |    Chromosome           Start      End  Strand      ID
-    int64  |    category             int64    int64  category    object
-  -------  ---  -----------------  -------  -------  ----------  ----------------
-      135  |    CAJFCJ010000025.1     2755     2851  -           cds-CAD5125115.1
-  PyRanges with 1 rows, 5 columns, and 1 index columns.
-  Contains 1 chromosomes and 1 strands.
 
 Let's go back to the ``cds`` object and see if any of its intervals overlap each other.
 We can use :func:`cluster_overlaps <pyranges.PyRanges.cluster_overlaps>`. This will assign each interval to a cluster,
@@ -753,7 +685,7 @@ Let's get the clusters that have more than one interval in them, using pandas ``
 Sorting intervals
 ~~~~~~~~~~~~~~~~~
 Above, it is not apparent that there are overlaps among the intervals in the object ``multi_clu_cds``. This is due to
-the order of rows. We could sort row using pandas ``sort_values``, but PyRanges offers something
+the order of rows. We could sort rows using pandas ``sort_values``, but Pyranges offers something
 better: the method :func:`sort_ranges <pyranges.PyRanges.sort_ranges>` sorts by chromosome, strand, then by
 coordinates. By default, intervals are sorted 5' to 3', meaning that intervals on the positive strand are sorted
 from left-most to right-most, while intervals on the negative strand are sorted in the opposite direction.
@@ -775,7 +707,7 @@ from left-most to right-most, while intervals on the negative strand are sorted 
   Contains 2 chromosomes and 2 strands.
 
 
-:func:`sort_ranges <pyranges.PyRanges.sort_ranges>` can be combined by Pandas sort_values to customize the sorting.
+:func:`sort_ranges <pyranges.PyRanges.sort_ranges>` can be combined by Pandas ``sort_values`` to customize the sorting.
 For example, let's add a columns with the lengths of each interval.
 Thus, sort by chromosome, strand, length, then interval coordinates:
 

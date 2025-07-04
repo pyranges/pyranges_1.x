@@ -29,18 +29,20 @@ Citation
 
 Stovner EB, Sætrom P (2020) PyRanges: efficient comparison of genomic intervals in Python. *Bioinformatics 36(3):918-919*  http://dx.doi.org/10.1093/bioinformatics/btz615
 
+Coming soon: a paper for v1!
+
 
 Documentation outline
 ~~~~~~~~~~~~~~~~~~~~~
 
-#. 🚀 :doc:`Installation instructions <./installation>`
-#. 🚀 :doc:`The tutorial <./tutorial>`,  recommended for all new users
-#. 🚀 :doc:`The how-to pages <./how_to_pages>`, further below, where functionalities are grouped by topic
-#. 🚀 :doc:`The API reference <./api_reference>`, where all methods are explained in detail
-#. 🚀 :doc:`The pyranger command-line tool <./pyranger_cli>`, for those who prefer the command line
-#. 🚀 :doc:`The developer guide <./developer_guide>`, to follow in order to contribute to PyRanges
-#. 🚀 :doc:`The guide to migrate to v1 <./migration_guide>`, for existing users of pyranges v0
-
+#. 🛠️  :doc:`Installation instructions <./installation>`
+#. 📖  :doc:`The tutorial <./tutorial>`,  recommended for all new users
+#. 🧰  :doc:`The how-to pages <./how_to_pages>`, where functionalities are grouped by topic
+#. 📑  :doc:`The API reference <./api_reference>`, where all methods are explained in detail
+#. 🚀  :doc:`The cheatsheet <./cheatsheet>`, a quick reference for the most common operations
+#. 💻  :doc:`The pyranger command-line tool <./pyranger_cli>`, for those who prefer the command line
+#. 🧑‍💻 :doc:`The developer guide <./developer_guide>`, to follow in order to contribute to PyRanges
+#. 🔄  :doc:`The guide to migrate to v1 <./migration_guide>`, for existing users of PyRanges v0
 
 
 .. toctree::
@@ -52,6 +54,7 @@ Documentation outline
    tutorial
    how_to_pages
    api_reference
+   cheatsheet
    pyranger_cli
    developer_guide
    migration_guide

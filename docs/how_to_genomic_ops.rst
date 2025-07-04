@@ -8,9 +8,11 @@ Operating on coordinates
 Operating on coordinates: cheatsheet
 ------------------------------------
 
-.. image:: images/cheatsheet_subseq.png
+.. image:: https://raw.githubusercontent.com/pyranges/pyranges_plot/for_pyranges1_1/examples/cheatsheet_genomic_ops.png
+   :alt: PyRanges cheatsheet
+   :target: https://raw.githubusercontent.com/pyranges/pyranges_plot/for_pyranges1_1/examples/cheatsheet_genomic_ops.png
 
-.. image:: images/cheatsheet_tile.png
+
 
 Modifying coordinates
 ---------------------
@@ -292,11 +294,11 @@ This returns intervals without their first and last 3 bases:
 
 Above, each interval is treated independently. Alternatively, you can consider transcripts,
 grouping intervals (i.e. exons) by a column, specified with the ``group_by`` argument.
-When provided, slice_ranges are relative to the transcript, not the interval.
-Note that using ``group_by`` assumes that exons belonging to the same transcript have no overlap; on the other hand,
-it does not assume presorting of intervals.
+When provided, :func:`slice_ranges <pyranges.PyRanges.slice_ranges>` arguments are relative to the transcript, not the
+interval. Note that using ``group_by`` assumes that exons belonging to the same transcript have no overlap; on the other
+hand, it does not assume presorting of intervals.
 
-By default, coordinates are relative to spliced transcripts.
+By default, coordinates are relative to **spliced** transcripts.
 For example, for a transcript with two exons of 50 bp, the first position of the second exon is considered to be 50
 regardless of the length of the intron in-between.
 
@@ -405,8 +407,7 @@ the returned intervals and the input ones:
   Contains 1 chromosomes and 2 strands.
 
 Sometimes, you may want to slice ranges according to non-spliced coordinates. This can be done with
-:func:`slice_ranges <pyranges.PyRanges.slice_ranges>` setting the ``count_introns`` argument to ``True``:
-
+:func:`slice_ranges <pyranges.PyRanges.slice_ranges>` setting the ``count_introns`` argument to ``True``.
 So, the following will get the subintervals included in the first 1500 bases of each unspliced transcript:
 
   >>> e.slice_ranges(0, 1500, group_by='transcript_id', count_introns=True)
@@ -450,11 +451,110 @@ that overlap with the first 1500 bases of the boundaries of each transcript:
   Contains 1 chromosomes and 2 strands.
 
 
+Interval complement
+-------------------
+
+Another useful operation is to obtain the complement of intervals in a PyRanges object, that is,
+all the bases that are not covered by any of the intervals.
+This can be done with the :func:`complement_ranges <pyranges.PyRanges.complement_ranges>` method.
+Let's revise our ``e`` object:
+
+  >>> e
+    index  |      Chromosome    Start      End  Strand      transcript_id
+    int64  |        category    int64    int64  category    object
+  -------  ---  ------------  -------  -------  ----------  ---------------
+        0  |               1    11878    12227  +           ENST00000456328
+        1  |               1    12622    12721  +           ENST00000456328
+        2  |               1    13225    14409  +           ENST00000456328
+        3  |               1   110952   111357  -           ENST00000471248
+        4  |               1   112699   112804  -           ENST00000471248
+        5  |               1   120873   120932  -           ENST00000610542
+        6  |               1   129059   129223  -           ENST00000610542
+        7  |               1   133378   133723  -           ENST00000610542
+  PyRanges with 8 rows, 5 columns, and 1 index columns.
+  Contains 1 chromosomes and 2 strands.
+
+By default, the complement return includes only the internals that are not covered by any of the intervals, and
+split by strand; it does not include the bases before the first interval or after the last one.
+
+  >>> e.complement_ranges()
+    index  |      Chromosome    Start      End  Strand
+    int64  |        category    int64    int64  category
+  -------  ---  ------------  -------  -------  ----------
+        0  |               1    12227    12622  +
+        1  |               1    12721    13225  +
+        2  |               1   111357   112699  -
+        3  |               1   112804   120873  -
+        4  |               1   120932   129059  -
+        5  |               1   129223   133378  -
+  PyRanges with 6 rows, 4 columns, and 1 index columns.
+  Contains 1 chromosomes and 2 strands.
+
+Argument ``use_strand`` allows to ignore strand, returning the complement of all intervals:
+
+  >>> e.complement_ranges(use_strand=False)
+    index  |      Chromosome    Start      End
+    int64  |        category    int64    int64
+  -------  ---  ------------  -------  -------
+        0  |               1    12227    12622
+        1  |               1    12721    13225
+        2  |               1    14409   110952
+        3  |               1   111357   112699
+        4  |               1   112804   120873
+        5  |               1   120932   129059
+        6  |               1   129223   133378
+  PyRanges with 7 rows, 3 columns, and 1 index columns.
+  Contains 1 chromosomes.
+
+A possible application of the complement operation is to obtain the intergenic regions. To do that, we use the
+boundaries of each transcript group, i.e. object ``b`` obtained above:
+
+  >>> b.complement_ranges(use_strand=False)
+    index  |      Chromosome    Start      End
+    int64  |        category    int64    int64
+  -------  ---  ------------  -------  -------
+        0  |               1    14409   110952
+        1  |               1   112804   120873
+  PyRanges with 2 rows, 3 columns, and 1 index columns.
+  Contains 1 chromosomes.
+
+Note that the first and last intervals are not included in the output. To do so, we set ``include_first_interval=True``,
+and provide the ``chromsize`` argument, which is a dictionary with chromosome names as keys and their sizes as values:
+
+>>> b.complement_ranges(use_strand=False, chromsizes={'1':249250621}, include_first_interval=True)
+  index  |      Chromosome    Start        End
+  int64  |        category    int64      int64
+-------  ---  ------------  -------  ---------
+      0  |               1        0      11878
+      1  |               1    14409     110952
+      2  |               1   112804     120873
+      3  |               1   133723  249250621
+PyRanges with 4 rows, 3 columns, and 1 index columns.
+Contains 1 chromosomes.
+
+
+Another useful application of the complement operation is to obtain the coordinates of introns in a transcript.
+To do this, the complement must be applied to each transcript independently, that is, grouped by a column.
+This can be done with the ``group_by`` argument:
+
+  >>> introns = e.complement_ranges(group_by='transcript_id')
+  >>> introns
+    index  |      Chromosome    Start      End  Strand      transcript_id
+    int64  |        category    int64    int64  category    object
+  -------  ---  ------------  -------  -------  ----------  ---------------
+        0  |               1    12227    12622  +           ENST00000456328
+        1  |               1    12721    13225  +           ENST00000456328
+        2  |               1   111357   112699  -           ENST00000471248
+        3  |               1   120932   129059  -           ENST00000610542
+        4  |               1   129223   133378  -           ENST00000610542
+  PyRanges with 5 rows, 5 columns, and 1 index columns.
+  Contains 1 chromosomes and 2 strands.
+
 
 Other slicing operations
 ------------------------
 
-Many genomic analyses involved running a sliding window over the genome or subregions of it.
+Many genomic analyses involve running a sliding window over the genome or subregions of it.
 Method :func:`window_ranges <pyranges.PyRanges.window_ranges>` allows to obtain adjacent windows of a specified size and step that
 span each interval in a PyRanges object.
 

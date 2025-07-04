@@ -77,12 +77,9 @@ LOGGER.setLevel(logging.INFO)
 class PyRanges(RangeFrame):
     """Two-dimensional representation of genomic intervals and their annotations.
 
-    A PyRanges object must have the columns Chromosome, Start and End. These
-    describe the genomic position and function as implicit row labels. A Strand
+    A PyRanges object must have the columns Chromosome, Start and End. A Strand
     column is optional and adds strand information to the intervals. Any other
     columns are allowed and are considered metadata.
-
-    Operations between PyRanges align intervals based on their position.
 
     You can **initialize a PyRanges object like you would a pandas DataFrame**, as long as the resulting DataFrame
     has the necessary columns (Chromosome, Start, End; Strand is optional).
@@ -96,7 +93,7 @@ class PyRanges(RangeFrame):
 
     columns : Index or array-like
 
-    dtyped : type, default None
+    dtype : type, default None
 
     copy : bool or None, default None
 
@@ -107,7 +104,7 @@ class PyRanges(RangeFrame):
     pyranges.read_bam: read bam-file into PyRanges
     pyranges.read_gff: read gff-file into PyRanges
     pyranges.read_gtf: read gtf-file into PyRanges
-    pyranges.from_string: create PyRanges from multiline string
+
 
     Examples
     --------
@@ -1392,7 +1389,7 @@ class PyRanges(RangeFrame):
             .drop(columns=[col + suffix for col in by])
         )
 
-        # ─── Pyright-friendly: gr is never None in practice ────────────────────
+        #  Pyright-friendly: gr is never None in practice
         return mypy_ensure_pyranges(cast("pd.DataFrame", gr))
 
     @property
@@ -1473,7 +1470,15 @@ class PyRanges(RangeFrame):
         """
         return self.End - self.Start
 
-    def map_to_global(self, gr: "PyRanges", global_on: str, *, local_on: str = "Chromosome") -> "PyRanges":
+    def map_to_global(
+        self,
+        gr: "PyRanges",
+        global_on: str,
+        *,
+        local_on: str = "Chromosome",
+        keep_id: bool = False,
+        keep_loc: bool = False,
+    ) -> "PyRanges":
         """Map intervals from a *local* reference frame (e.g. transcript) to *global* coordinates (e.g. genomic).
 
         The self PyRanges object is *local* in the sense that its
@@ -1501,6 +1506,10 @@ class PyRanges(RangeFrame):
         local_on : str, default "Chromosome"
             Column in `self` that holds the identifier to be lifted. Change this
             if your identifiers live in a different column.
+        keep_id : bool, default False
+            If True, keep the identifier column (Chromosome in `self`) in the output.
+        keep_loc : bool, default False
+            If True, keep the local location columns (Start, End, Strand) in the output.
 
         Returns
         -------
@@ -1614,7 +1623,9 @@ class PyRanges(RangeFrame):
             msg = "Invalid strands detected! map_to_global needs PyRanges with valid strands, or no Strand at all)."
             raise AssertionError(msg)
 
-        return _map_to_global(local_gr=self, global_gr=gr, global_on=global_on, local_on=local_on)
+        return _map_to_global(
+            local_gr=self, global_gr=gr, global_on=global_on, local_on=local_on, keep_id=keep_id, keep_loc=keep_loc
+        )
 
     def map_to_local(self, ref, idcol, match_by=None) -> "PyRanges":
         """Map *global* genomic intervals (``self``) onto a *local* frame defined by reference ranges ``ref``.
@@ -1800,7 +1811,7 @@ class PyRanges(RangeFrame):
         use_strand : {"auto", True, False}, default: "auto"
             Find the max-disjoint set separately for each strand.
             The default ``"auto"`` means ``True`` if ``PyRanges`` has valid
-            strands (see :pyattr:`PyRanges.strand_valid`).
+            strands (see `.strand_valid`).
 
         slack : int, default 0
             Length by which the criteria of overlap are loosened.
@@ -2008,7 +2019,7 @@ class PyRanges(RangeFrame):
 
         return mypy_ensure_pyranges(result)
 
-    def nearest(  # type: ignore[override]
+    def nearest_ranges(  # type: ignore[override]
         self,
         other: "PyRanges",
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
@@ -2086,7 +2097,7 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> f1.nearest(f2)
+        >>> f1.nearest_ranges(f2)
           index  |    Chromosome      Start      End  Strand      Chromosome_b      Start_b    End_b  Strand_b      Distance
           int64  |    category        int64    int64  category    object              int64    int64  object           int64
         -------  ---  ------------  -------  -------  ----------  --------------  ---------  -------  ----------  ----------
@@ -2096,7 +2107,7 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 9 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> f1.nearest(f2, strand_behavior='ignore')
+        >>> f1.nearest_ranges(f2, strand_behavior='ignore')
           index  |    Chromosome      Start      End  Strand      Chromosome_b      Start_b    End_b  Strand_b      Distance
           int64  |    category        int64    int64  category    object              int64    int64  object           int64
         -------  ---  ------------  -------  -------  ----------  --------------  ---------  -------  ----------  ----------
@@ -2106,7 +2117,7 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 9 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> f1.nearest(f2, k=2, strand_behavior='ignore')
+        >>> f1.nearest_ranges(f2, k=2, strand_behavior='ignore')
           index  |    Chromosome      Start      End  Strand      Chromosome_b      Start_b    End_b  Strand_b      Distance
           int64  |    category        int64    int64  category    object              int64    int64  object           int64
         -------  ---  ------------  -------  -------  ----------  --------------  ---------  -------  ----------  ----------
@@ -2119,7 +2130,7 @@ class PyRanges(RangeFrame):
         PyRanges with 6 rows, 9 columns, and 1 index columns (with 3 index duplicates).
         Contains 1 chromosomes and 2 strands.
 
-        >>> f1.nearest(f2, strand_behavior='ignore', exclude_overlaps=True)
+        >>> f1.nearest_ranges(f2, strand_behavior='ignore', exclude_overlaps=True)
           index  |    Chromosome      Start      End  Strand      Chromosome_b      Start_b    End_b  Strand_b      Distance
           int64  |    category        int64    int64  category    object              int64    int64  object           int64
         -------  ---  ------------  -------  -------  ----------  --------------  ---------  -------  ----------  ----------
@@ -2129,7 +2140,7 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 9 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> f1.nearest(f2, direction='downstream')
+        >>> f1.nearest_ranges(f2, direction='downstream')
           index  |    Chromosome      Start      End  Strand      Chromosome_b      Start_b    End_b  Strand_b      Distance
           int64  |    category        int64    int64  category    object              int64    int64  object           int64
         -------  ---  ------------  -------  -------  ----------  --------------  ---------  -------  ----------  ----------
@@ -2141,7 +2152,7 @@ class PyRanges(RangeFrame):
 
         If an input interval has no suitable nearest interval, these rows are dropped:
 
-        >>> f1.nearest(f2, direction='upstream', exclude_overlaps=True)
+        >>> f1.nearest_ranges(f2, direction='upstream', exclude_overlaps=True)
           index  |    Chromosome      Start      End  Strand      Chromosome_b      Start_b    End_b  Strand_b      Distance
           int64  |    category        int64    int64  category    object              int64    int64  object           int64
         -------  ---  ------------  -------  -------  ----------  --------------  ---------  -------  ----------  ----------
@@ -2154,7 +2165,7 @@ class PyRanges(RangeFrame):
         _other, by = prepare_by_binary(self, other=other, strand_behavior=strand_behavior, match_by=match_by)
 
         if direction == NEAREST_ANY_DIRECTION:
-            res = super().nearest(
+            res = super().nearest_ranges(
                 other=_other,
                 match_by=by,
                 suffix=suffix,
@@ -2167,7 +2178,7 @@ class PyRanges(RangeFrame):
 
         fwd_self, rev_self = split_on_strand(self)
         if direction == NEAREST_DOWNSTREAM:
-            res = RangeFrame(fwd_self).nearest(
+            res = RangeFrame(fwd_self).nearest_ranges(
                 other=_other,
                 match_by=by,
                 suffix=suffix,
@@ -2176,7 +2187,7 @@ class PyRanges(RangeFrame):
                 dist_col=dist_col,
                 direction="forward",
             )
-            res2 = RangeFrame(rev_self).nearest(
+            res2 = RangeFrame(rev_self).nearest_ranges(
                 other=_other,
                 match_by=by,
                 suffix=suffix,
@@ -2186,7 +2197,7 @@ class PyRanges(RangeFrame):
                 direction="forward",
             )
         elif direction == NEAREST_UPSTREAM:
-            res = RangeFrame(fwd_self).nearest(
+            res = RangeFrame(fwd_self).nearest_ranges(
                 other=RangeFrame(_other),
                 match_by=by,
                 suffix=suffix,
@@ -2195,7 +2206,7 @@ class PyRanges(RangeFrame):
                 dist_col=dist_col,
                 direction="backward",
             )
-            res2 = RangeFrame(rev_self).nearest(
+            res2 = RangeFrame(rev_self).nearest_ranges(
                 other=RangeFrame(_other),
                 match_by=by,
                 suffix=suffix,
@@ -2866,6 +2877,7 @@ class PyRanges(RangeFrame):
         Contains 3 chromosomes and 2 strands.
 
         Get the last 10 nucleotides of each interval. End is omitted to get the existing 3' end:
+
         >>> p.slice_ranges(-10)
           index  |      Chromosome  Strand      Start      End  transcript_id
           int64  |           int64  object      int64    int64  object
@@ -4517,13 +4529,12 @@ class PyRanges(RangeFrame):
             return self
         return self.drop_and_return(STRAND_COL, axis=1)
 
-    # ─────────────────────────────────────────────────────────────────────────────
     def flip_strand(self: "PyRanges") -> "PyRanges":
-        r"""Flip the strand of every interval (+ → - and - → +).
+        """Flip the strand of every interval (+ → - and - → +).
 
         All other columns remain unchanged.  If the object does not contain a
-        valid *Strand* column (see :pyattr:`.strand_valid`) a
-        :class:`ValueError` is raised.
+        valid *Strand* column (see .strand_valid) a
+        `ValueError` is raised.
 
         Returns
         -------
@@ -4561,12 +4572,12 @@ class PyRanges(RangeFrame):
         ValueError: strand column is missing or invalid
 
         """
-        # ─── ensure strand information is present & valid ─────────────────
+        # ensure strand information is present & valid
         if not self.strand_valid:
             _msg = "strand column is missing or invalid"
             raise ValueError(_msg)
 
-        # ─── flip + and -
+        # flip + and -
         result = self.copy()
         result.Strand = result.Strand.map({"+": "-", "-": "+"})
 
@@ -5628,32 +5639,30 @@ class PyRanges(RangeFrame):
 
         >>> seq = gr.get_sequence(path="temp.fasta", group_by='transcript')
         >>> seq  # doctest: +NORMALIZE_WHITESPACE
-                   Sequence
         transcript
-        t1             AAAC
-        t2          AAATCCC
-        t4             TCCC
-        t5              AAA
+        t1       AAAC
+        t2    AAATCCC
+        t4       TCCC
+        t5        AAA
+        Name: Sequence, dtype: object
 
         With use_strand=False, all intervals are treated as if on the forward strand:
 
         >>> seq2 = gr.get_sequence(path="temp.fasta", group_by='transcript', use_strand=False, sequence_column="Seq2")
         >>> seq2 # doctest: +NORMALIZE_WHITESPACE
-                       Seq2
         transcript
-        t1             AAAC
-        t2          GGGATTT
-        t4             GGGA
-        t5              TTT
+        t1       AAAC
+        t2    GGGATTT
+        t4       GGGA
+        t5        TTT
+        Name: Seq2, dtype: object
 
         To write to a file in fasta format:
         >>> with open('outfile.fasta', 'w') as fw:
         ...     nchars=60
-        ...     for row in seq.itertuples():
-        ...         s = '\\n'.join([ row.Sequence[i:i+nchars] for i in range(0, len(row.Sequence), nchars)])
-        ...         _bytes_written = fw.write(f'>{row.Index}\\n{s}\\n')
-
-
+        ...     for oneid, oneseq in seq.items():
+        ...         s = '\\n'.join([ oneseq[i:i+nchars] for i in range(0, len(oneseq), nchars)])
+        ...         _bytes_written = fw.write(f'>{oneid}\\n{s}\\n')
 
         """
         try:
@@ -5691,7 +5700,7 @@ class PyRanges(RangeFrame):
 
         if group_by:
             gr[sequence_column] = seq.to_numpy()
-            seq = gr.groupby(group_by, as_index=True).agg({sequence_column: "".join})
+            seq = gr.groupby(group_by, as_index=True).agg({sequence_column: "".join})[sequence_column]
 
         return seq
 
@@ -5708,7 +5717,7 @@ class PyRanges(RangeFrame):
         ----------
         chromsizes : dict or PyRanges or pyfaidx.Fasta or None, default None
             Dict or PyRanges describing the lengths of the sequences (the "Chromosomes" in the self object).
-            pyfaidx.Fasta object is also accepted since it conveniently loads chromosome length
+            pyfaidx.Fasta object is also accepted since it conveniently loads chromosome length.
             If None, clipping is only on the left, i.e. for the portions of intervals that are negative (Start < 0).
 
         remove : bool, default False
