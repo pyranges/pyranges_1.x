@@ -6,7 +6,7 @@ from functools import wraps
 import pandas as pd
 
 import pyranges as pr
-from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
+from pyranges.core.pyranges_helpers import ensure_pyranges
 
 try:
     import fire  # type: ignore[reportMissingImports]
@@ -18,7 +18,7 @@ except ImportError:
 def read_csv(path: str, **kwargs) -> pr.PyRanges:
     """Read a CSV with pandas, then convert the resulting DataFrame into a PyRanges."""
     df = pd.read_csv(path, **kwargs)
-    return mypy_ensure_pyranges(pr.PyRanges(df))
+    return ensure_pyranges(pr.PyRanges(df))
 
 
 # 1) Available readers (no from_string)

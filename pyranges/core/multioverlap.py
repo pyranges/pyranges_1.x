@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Optional
 
 from pyranges.core.names import VALID_STRAND_BEHAVIOR_TYPE
-from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
+from pyranges.core.pyranges_helpers import ensure_pyranges
 from pyranges.methods import concat
 
 if TYPE_CHECKING:
@@ -140,4 +140,4 @@ def count_overlaps(
             strand_behavior=strand_behavior,
         )
         _features.insert(_features.shape[1], name, counts)
-    return mypy_ensure_pyranges(_features.astype(dict.fromkeys(grs, int)))
+    return ensure_pyranges(_features.astype(dict.fromkeys(grs, int)))

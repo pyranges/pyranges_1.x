@@ -47,7 +47,7 @@ from typing import Any, ClassVar
 import pandas as pd
 
 import pyranges as pr
-from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
+from pyranges.core.pyranges_helpers import ensure_pyranges
 
 if typing.TYPE_CHECKING:
     import pyfaidx
@@ -251,7 +251,7 @@ CAD5126498.1	SignalP_EUK	SignalP-noTM	1	21
 CAD5126499.1	SignalP_EUK	SignalP-noTM	1	21"""
         d = pr.PyRanges(self._read_tsv_from_string(contents))
         d["Start"] -= 1
-        return mypy_ensure_pyranges(d)
+        return ensure_pyranges(d)
 
     @property
     def rfam_hits(self) -> "pd.DataFrame":

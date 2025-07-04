@@ -43,8 +43,8 @@ from pyranges.core.names import (
 from pyranges.core.pyranges_groupby import PyRangesDataFrameGroupBy
 from pyranges.core.pyranges_helpers import (
     arg_to_list,
+    ensure_pyranges,
     factorize,
-    mypy_ensure_pyranges,
     prepare_by_binary,
     prepare_by_single,
     split_on_strand,
@@ -600,7 +600,7 @@ class PyRanges(RangeFrame):
 
         by = [*dict.fromkeys(by).keys()]
 
-        return mypy_ensure_pyranges(
+        return ensure_pyranges(
             _bounds(
                 df=self,
                 by=by,
@@ -747,11 +747,11 @@ class PyRanges(RangeFrame):
             slack=slack,
         )
 
-        return mypy_ensure_pyranges(result)
+        return ensure_pyranges(result)
 
     def copy(self, *args, **kwargs) -> "pr.PyRanges":
         """Return a copy of the PyRanges."""
-        return mypy_ensure_pyranges(super().copy(*args, **kwargs))
+        return ensure_pyranges(super().copy(*args, **kwargs))
 
     def _count_overlaps(
         self,
@@ -1036,7 +1036,7 @@ class PyRanges(RangeFrame):
         result = self.copy()
         result.loc[:, START_COL] = starts
         result.loc[:, END_COL] = ends
-        return mypy_ensure_pyranges(result)
+        return ensure_pyranges(result)
 
     def five_end(
         self,
@@ -1129,7 +1129,7 @@ class PyRanges(RangeFrame):
         if ext:
             result = result.extend_ranges(ext=ext, group_by=group_by, use_strand=True)
 
-        return mypy_ensure_pyranges(result)
+        return ensure_pyranges(result)
 
     @property
     def loc_columns(self) -> list[str]:
@@ -1390,7 +1390,7 @@ class PyRanges(RangeFrame):
         )
 
         #  Pyright-friendly: gr is never None in practice
-        return mypy_ensure_pyranges(cast("pd.DataFrame", gr))
+        return ensure_pyranges(cast("pd.DataFrame", gr))
 
     @property
     def length(self) -> int:
@@ -1575,7 +1575,31 @@ class PyRanges(RangeFrame):
         PyRanges with 5 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        Extra columns are preserved:
+        >>> tr.map_to_global(gr, "transcript_id", keep_id=True)
+          index  |    Chromosome      Start      End  Strand    label     transcript_id
+          int64  |    object          int64    int64  object    object    object
+        -------  ---  ------------  -------  -------  --------  --------  ---------------
+              0  |    chr1              100      180  -         a         tx1
+              1  |    chr1              320      340  -         b         tx1
+              2  |    chr1              360      370  +         c         tx1
+              3  |    chr1             1180     1200  -         d         tx2
+              4  |    chr1             1020     1050  -         e         tx2
+        PyRanges with 5 rows, 6 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        >>> tr.map_to_global(gr, "transcript_id", keep_loc=True)
+          index  |    Chromosome      Start      End  Strand    label       Start_local    End_local  Strand_local
+          int64  |    object          int64    int64  object    object            int64        int64  object
+        -------  ---  ------------  -------  -------  --------  --------  -------------  -----------  --------------
+              0  |    chr1              100      180  -         a                     0           80  -
+              1  |    chr1              320      340  -         b                   120          140  -
+              2  |    chr1              360      370  +         c                   160          170  +
+              3  |    chr1             1180     1200  -         d                     0           20  +
+              4  |    chr1             1020     1050  -         e                   100          130  +
+        PyRanges with 5 rows, 8 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        Metadata columns are preserved:
 
         >>> tr.assign(tag=7).map_to_global(gr, "transcript_id").tag.unique()
         array([7])
@@ -1627,7 +1651,7 @@ class PyRanges(RangeFrame):
             local_gr=self, global_gr=gr, global_on=global_on, local_on=local_on, keep_id=keep_id, keep_loc=keep_loc
         )
 
-    def map_to_local(self, ref, idcol, match_by=None) -> "PyRanges":
+    def map_to_local(self, ref, ref_on, match_by=None) -> "PyRanges":
         """Map *global* genomic intervals (``self``) onto a *local* frame defined by reference ranges ``ref``.
 
         Both ``self`` and ``ref`` are given **in genomic coordinates**.
@@ -1641,8 +1665,8 @@ class PyRanges(RangeFrame):
 
         Intervals in ``self`` are mapped to **every transcript they
         overlap**; non-overlapping intervals are not reported.  ``ref`` must
-        contain a column whose name is supplied in *idcol*. Those values
-        becomes the ``Chromosome`` column of the output.
+        contain a column whose name is supplied in *ref_on*. Those values
+        become the ``Chromosome`` column of the output.
 
         The strand of each returned interval is the “product” of the strands
         of the overlapping pair (e.g. *+* x. *-* → *-*).
@@ -1652,7 +1676,7 @@ class PyRanges(RangeFrame):
         ref : PyRanges
             Reference ranges in genomic coordinates that define the new
             coordinate system (e.g. multi-exon transcript annotation).
-        idcol : str
+        ref_on : str
             Column in ``ref`` that groups intervals into transcripts.
             Values are copied into ``Chromosome`` in the output.
         match_by : str or list[str], optional
@@ -1789,9 +1813,9 @@ class PyRanges(RangeFrame):
             msg = "Invalid strands detected! map_to_local needs PyRanges with valid strands, or not Strand at all)."
             raise AssertionError(msg)
 
-        gr = _map_to_local(gr=self, ref=ref, idcol=idcol, match_by=match_by)
+        gr = _map_to_local(gr=self, ref=ref, ref_on=ref_on, match_by=match_by)
 
-        return mypy_ensure_pyranges(gr)
+        return ensure_pyranges(gr)
 
     def max_disjoint_overlaps(
         self,
@@ -1920,7 +1944,7 @@ class PyRanges(RangeFrame):
             match_by=prepare_by_single(self, use_strand=use_strand, match_by=match_by),
             slack=slack,
         )
-        return mypy_ensure_pyranges(result)
+        return ensure_pyranges(result)
 
     def merge_overlaps(
         self,
@@ -2017,7 +2041,7 @@ class PyRanges(RangeFrame):
             slack=slack,
         )
 
-        return mypy_ensure_pyranges(result)
+        return ensure_pyranges(result)
 
     def nearest_ranges(  # type: ignore[override]
         self,
@@ -2174,7 +2198,7 @@ class PyRanges(RangeFrame):
                 dist_col=dist_col,
                 direction="any",
             )
-            return mypy_ensure_pyranges(res)
+            return ensure_pyranges(res)
 
         fwd_self, rev_self = split_on_strand(self)
         if direction == NEAREST_DOWNSTREAM:
@@ -2219,7 +2243,7 @@ class PyRanges(RangeFrame):
             msg = f"Invalid direction: {direction}"
             raise ValueError(msg)
 
-        return mypy_ensure_pyranges(
+        return ensure_pyranges(
             pd.concat(
                 [res, res2],
             )
@@ -2419,7 +2443,7 @@ class PyRanges(RangeFrame):
         if invert:
             gr = self.loc[~self.index.isin(gr.index)].copy()
 
-        return mypy_ensure_pyranges(gr)
+        return ensure_pyranges(gr)
 
     def set_intersect_overlaps(
         self,
@@ -2512,7 +2536,7 @@ class PyRanges(RangeFrame):
         self_clusters = self.merge_overlaps(use_strand=use_strand and self.has_strand)
         other_clusters = other.merge_overlaps(use_strand=use_strand and other.has_strand)
         result = self_clusters.intersect_overlaps(other_clusters, strand_behavior=strand_behavior, multiple=multiple)
-        return mypy_ensure_pyranges(result.reset_index(drop=True))
+        return ensure_pyranges(result.reset_index(drop=True))
 
     def set_union_overlaps(self, other: "PyRanges", strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto") -> "PyRanges":
         """Return set-theoretical union.
@@ -2590,7 +2614,7 @@ class PyRanges(RangeFrame):
 
         """
         if self.empty and other.empty:
-            return mypy_ensure_pyranges(self.copy())
+            return ensure_pyranges(self.copy())
 
         strand_behavior = validate_and_convert_strand_behavior(self, other, strand_behavior)
         use_strand = use_strand_from_validated_strand_behavior(self, other, strand_behavior)
@@ -2599,7 +2623,7 @@ class PyRanges(RangeFrame):
             _self = _self.remove_strand()
             other = other.remove_strand()
         elif strand_behavior == STRAND_BEHAVIOR_OPPOSITE:
-            other = mypy_ensure_pyranges(
+            other = ensure_pyranges(
                 other.assign(
                     **{
                         STRAND_COL: other[STRAND_COL].replace(
@@ -2786,7 +2810,7 @@ class PyRanges(RangeFrame):
         )
         res = self.take(idxs)  # type: ignore[arg-type]
 
-        return mypy_ensure_pyranges(res)
+        return ensure_pyranges(res)
 
     def slice_ranges(
         self,
@@ -3042,7 +3066,7 @@ class PyRanges(RangeFrame):
             if not group_by:
                 result = cast("pr.PyRanges", result.drop(columns=[TEMP_TRANSCRIPT_ID_COL]))
 
-        return mypy_ensure_pyranges(result)
+        return ensure_pyranges(result)
 
     def split_overlaps(
         self,
@@ -3183,7 +3207,7 @@ class PyRanges(RangeFrame):
             between=between,
         )
 
-        res = mypy_ensure_pyranges(self.take(idxs).reset_index(drop=True))  # type: ignore[arg-type]
+        res = ensure_pyranges(self.take(idxs).reset_index(drop=True))  # type: ignore[arg-type]
         if between:
             res = res.remove_nonloc_columns()
 
@@ -3193,7 +3217,7 @@ class PyRanges(RangeFrame):
         res.loc[:, START_COL] = starts
         res.loc[:, END_COL] = ends
 
-        return mypy_ensure_pyranges(res)
+        return ensure_pyranges(res)
 
     @property
     def strand_valid(self) -> bool:
@@ -3298,7 +3322,7 @@ class PyRanges(RangeFrame):
             result = self.copy()
             result.loc[~(self[STRAND_COL].isin(VALID_GENOMIC_STRAND_INFO)), STRAND_COL] = "+"
 
-        return mypy_ensure_pyranges(result)
+        return ensure_pyranges(result)
 
     def subtract_overlaps(  # type: ignore[override]
         self,
@@ -3413,7 +3437,7 @@ class PyRanges(RangeFrame):
             match_by=by,
         )
 
-        return mypy_ensure_pyranges(gr)
+        return ensure_pyranges(gr)
 
     def summary(
         self,
@@ -3602,7 +3626,7 @@ class PyRanges(RangeFrame):
             res.loc[:, overlap_column] = overlap_fraction
 
         # every interval can be processed individually. This may be optimized in the future
-        return mypy_ensure_pyranges(res)
+        return ensure_pyranges(res)
 
     def three_end(
         self,
@@ -3685,7 +3709,7 @@ class PyRanges(RangeFrame):
         if ext:
             result = result.extend_ranges(ext=ext, group_by=group_by, use_strand=True)
 
-        return mypy_ensure_pyranges(result)
+        return ensure_pyranges(result)
 
     def to_bed(
         self,
@@ -4360,7 +4384,7 @@ class PyRanges(RangeFrame):
             group_by=group_by,
         )
 
-        return mypy_ensure_pyranges(win)
+        return ensure_pyranges(win)
 
     def downstream(
         self: "PyRanges",
@@ -4490,7 +4514,7 @@ class PyRanges(RangeFrame):
             group_by=group_by,
         )
 
-        return mypy_ensure_pyranges(win)
+        return ensure_pyranges(win)
 
     def remove_strand(self) -> "PyRanges":
         """Return a copy with the Strand column removed.
@@ -4581,7 +4605,7 @@ class PyRanges(RangeFrame):
         result = self.copy()
         result.Strand = result.Strand.map({"+": "-", "-": "+"})
 
-        return mypy_ensure_pyranges(result)
+        return ensure_pyranges(result)
 
     def window_ranges(
         self,
@@ -4735,7 +4759,7 @@ class PyRanges(RangeFrame):
         df.loc[:, END_COL] = ends
 
         # every interval can be processed individually. This may be optimized in the future.
-        return mypy_ensure_pyranges(df)
+        return ensure_pyranges(df)
 
     def remove_nonloc_columns(self) -> "PyRanges":
         """Remove all columns that are not genome location columns (Chromosome, Start, End, Strand).
@@ -4760,7 +4784,7 @@ class PyRanges(RangeFrame):
 
         """
         cols = GENOME_LOC_COLS_WITH_STRAND if self.has_strand else GENOME_LOC_COLS
-        return mypy_ensure_pyranges(super().__getitem__(cols))
+        return ensure_pyranges(super().__getitem__(cols))
 
     def get_with_loc_columns(
         self,
@@ -4846,7 +4870,7 @@ class PyRanges(RangeFrame):
             loc_columns = GENOME_LOC_COLS_WITH_STRAND if self.has_strand else GENOME_LOC_COLS
             cols_to_include_genome_loc_correct_order = loc_columns + keys
 
-        return mypy_ensure_pyranges(super().__getitem__(cols_to_include_genome_loc_correct_order))
+        return ensure_pyranges(super().__getitem__(cols_to_include_genome_loc_correct_order))
 
     def group_cumsum(
         self,
@@ -4944,7 +4968,7 @@ class PyRanges(RangeFrame):
             res.insert(res.shape[1], cumsum_start_column, cumsum_start)
             res.insert(res.shape[1], cumsum_end_column, cumsum_end)
 
-        return mypy_ensure_pyranges(res)
+        return ensure_pyranges(res)
 
     def intersect_overlaps(  # type: ignore[override]
         self,
@@ -5065,7 +5089,7 @@ class PyRanges(RangeFrame):
             multiple=multiple,
         )
 
-        return mypy_ensure_pyranges(gr)
+        return ensure_pyranges(gr)
 
     def compute_interval_metrics(
         self,
@@ -5189,7 +5213,7 @@ class PyRanges(RangeFrame):
         ['same', 'opposite', 'opposite', 'opposite', 'opposite']
 
         """
-        return mypy_ensure_pyranges(
+        return ensure_pyranges(
             compute_interval_metrics(
                 self,
                 metrics=metrics,
@@ -5332,7 +5356,7 @@ class PyRanges(RangeFrame):
             end2=end2,
             drop_old_columns=drop_old_columns,
         )
-        return mypy_ensure_pyranges(res)
+        return ensure_pyranges(res)
 
     def complement_ranges(
         self: "PyRanges",
@@ -5525,7 +5549,7 @@ class PyRanges(RangeFrame):
             include_first_interval=include_first_interval,
         )
 
-        return mypy_ensure_pyranges(result)
+        return ensure_pyranges(result)
 
     def get_sequence(
         self: "PyRanges",
@@ -5860,4 +5884,4 @@ class PyRanges(RangeFrame):
             res.loc[:, START_COL] = starts
             res.loc[:, END_COL] = ends
 
-        return mypy_ensure_pyranges(res)
+        return ensure_pyranges(res)

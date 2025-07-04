@@ -10,7 +10,7 @@ from pyranges.core.names import (
     START_COL,
     STRAND_COL,
 )
-from pyranges.core.pyranges_helpers import factorize_binary, mypy_ensure_pyranges
+from pyranges.core.pyranges_helpers import ensure_pyranges, factorize_binary
 
 if TYPE_CHECKING:
     from pyranges import PyRanges
@@ -96,7 +96,7 @@ def _map_to_global(
     )
 
     if len(keep_idx) == 0:
-        return mypy_ensure_pyranges(local_df.head(0))
+        return ensure_pyranges(local_df.head(0))
 
     max_code = int(ex_tx_code.max()) + 1
     tx2chr_code = np.empty(max_code, dtype=ex_chr_code.dtype)
@@ -126,4 +126,4 @@ def _map_to_global(
         if mapped_df is None:
             raise ValueError
 
-    return mypy_ensure_pyranges(mapped_df)
+    return ensure_pyranges(mapped_df)

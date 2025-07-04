@@ -23,7 +23,7 @@ from pyranges.core.names import (
     VALID_STRAND_BEHAVIOR_TYPE,
 )
 from pyranges.core.pyranges_helpers import (
-    mypy_ensure_pyranges,
+    ensure_pyranges,
     strand_behavior_from_validated_use_strand,
     use_strand_from_validated_strand_behavior,
     validate_and_convert_strand_behavior,
@@ -673,7 +673,7 @@ def simes(
         columns.append(columns[0])
         del columns[0]
         _simes: PyRanges | DataFrame
-        _simes = mypy_ensure_pyranges(simes[columns])
+        _simes = ensure_pyranges(simes[columns])
     else:
         _simes = sdf.groupby(by).Simes.min().reset_index()
 

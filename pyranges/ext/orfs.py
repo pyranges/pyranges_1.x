@@ -19,7 +19,7 @@ from pyranges.core.names import (
     TEMP_INDEX_COL,
     TEMP_LENGTH_COL,
 )
-from pyranges.core.pyranges_helpers import arg_to_list, mypy_ensure_pyranges
+from pyranges.core.pyranges_helpers import arg_to_list, ensure_pyranges
 
 if TYPE_CHECKING:
     import pyranges as pr
@@ -122,7 +122,7 @@ def calculate_frame(p: "pr.PyRanges", group_by: str | list[str], frame_col: str 
     sorted_p[FRAME_COL] = (sorted_p[TEMP_CUMSUM_COL] - sorted_p[TEMP_LENGTH_COL]) % 3
 
     # Appending the Frame of sorted_p by the index of p
-    sorted_p = mypy_ensure_pyranges(sorted_p.sort_values(by=TEMP_INDEX_COL))
+    sorted_p = ensure_pyranges(sorted_p.sort_values(by=TEMP_INDEX_COL))
 
     gr[frame_col] = sorted_p[FRAME_COL]
 
@@ -578,7 +578,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
 
     ### Extensions have been determined. Now let's apply them to the original DF
     p["__order"] = np.arange(len(p))
-    zp = mypy_ensure_pyranges(
+    zp = ensure_pyranges(
         p.merge(
             pd.DataFrame({"__extension_up": ext_up, "__extension_down": ext_down}),
             left_on=cds_id,
@@ -593,11 +593,11 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
 
     p = p.sort_ranges()
     _extend_groups(p, cds_id)
-    p = mypy_ensure_pyranges(p.sort_values("__order"))  # restore order
+    p = ensure_pyranges(p.sort_values("__order"))  # restore order
 
     # getting ready to return
     if record_extensions:
-        p = mypy_ensure_pyranges(
+        p = ensure_pyranges(
             p.rename(
                 columns={
                     "__extension_up": "extension_up",
@@ -612,7 +612,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     if group_by is None:
         to_drop.extend(cds_id)
 
-    return mypy_ensure_pyranges(p.drop_and_return(to_drop, axis=1))
+    return ensure_pyranges(p.drop_and_return(to_drop, axis=1))
 
 
 # MM # efficients methods to work inplace. All methods with df as input have one row per CDS group

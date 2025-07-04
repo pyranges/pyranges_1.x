@@ -5,7 +5,7 @@ import pandas as pd
 
 from pyranges.core import names
 from pyranges.core.example_data import example_data
-from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
+from pyranges.core.pyranges_helpers import ensure_pyranges
 
 if TYPE_CHECKING:
     import pyranges as pr
@@ -89,4 +89,4 @@ def random(
         s = rng.choice(["+", "-"], size=n)
         random_df["Strand"] = s
 
-    return mypy_ensure_pyranges(random_df.reset_index(drop=True))
+    return ensure_pyranges(random_df.reset_index(drop=True))

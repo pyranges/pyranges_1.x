@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 from natsort import natsorted  # type: ignore[import]
 
-from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
+from pyranges.core.pyranges_helpers import ensure_pyranges
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -53,7 +53,7 @@ def from_string(s: str) -> "PyRanges":
 
     df = pd.read_csv(StringIO(s), sep=r"\s+", index_col=None)
 
-    return mypy_ensure_pyranges(df)
+    return ensure_pyranges(df)
 
 
 def read_bed(f: Path, /, nrows: int | None = None) -> "PyRanges":
@@ -142,7 +142,7 @@ def read_bed(f: Path, /, nrows: int | None = None) -> "PyRanges":
 
     df.columns = pd.Index(columns[: df.shape[1]])
 
-    return mypy_ensure_pyranges(df)
+    return ensure_pyranges(df)
 
 
 def read_bam(
@@ -234,9 +234,9 @@ def read_bam(
         sys.exit(1)
 
     if sparse:
-        return mypy_ensure_pyranges(bamread.read_bam(path, mapq, required_flag, filter_flag))
+        return ensure_pyranges(bamread.read_bam(path, mapq, required_flag, filter_flag))
     df = bamread.read_bam_full(path, mapq, required_flag, filter_flag)
-    return mypy_ensure_pyranges(df)
+    return ensure_pyranges(df)
 
 
 def _fetch_gene_transcript_exon_id(attribute: pd.Series, annotation: str | None = None) -> pd.DataFrame:
@@ -429,7 +429,7 @@ def read_gtf_full(
     df = pd.concat(dfs, sort=False)
     df.loc[:, "Start"] = df.Start - 1
 
-    return mypy_ensure_pyranges(df)
+    return ensure_pyranges(df)
 
 
 def parse_kv_fields(line: str) -> list[list[str]]:
@@ -550,7 +550,7 @@ def read_gtf_restricted(f: str | Path, skiprows: int | None, nrows: int | None =
 
     df.loc[:, "Start"] = df.Start - 1
 
-    return mypy_ensure_pyranges(df)
+    return ensure_pyranges(df)
 
 
 def to_rows_gff3(anno: pd.Series) -> pd.DataFrame:
@@ -633,7 +633,7 @@ def read_gff3(
 
     df.loc[:, "Start"] = df.Start - 1
 
-    return mypy_ensure_pyranges(df)
+    return ensure_pyranges(df)
 
 
 def read_bigwig(f: str | Path) -> "PyRanges":
@@ -717,4 +717,4 @@ def read_bigwig(f: str | Path) -> "PyRanges":
             },
         )
 
-    return mypy_ensure_pyranges(pd.concat(dfs).reset_index(drop=True))
+    return ensure_pyranges(pd.concat(dfs).reset_index(drop=True))

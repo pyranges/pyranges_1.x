@@ -22,18 +22,18 @@ end_b = END_COL + suffix
 strand_b = STRAND_COL + suffix
 
 
-def _map_to_local(gr, ref, idcol, match_by) -> "PyRanges":
+def _map_to_local(gr, ref, ref_on, match_by) -> "PyRanges":
     # record ordered columns of gr
     gr_cols = gr.columns.tolist()
     gr_has_strand = gr.has_strand
     ref_has_strand = ref.has_strand
     match_by = arg_to_list(match_by)
-    ref_cols_to_keep = [*match_by, idcol]
+    ref_cols_to_keep = [*match_by, ref_on]
 
-    if idcol in match_by:
-        # dealing with case in which user used idcol as match_by
-        fixed_idcol = idcol
-        gr_cols = [c for c in gr_cols if c != idcol]
+    if ref_on in match_by:
+        # dealing with case in which user used ref_on as match_by
+        fixed_idcol = ref_on
+        gr_cols = [c for c in gr_cols if c != ref_on]
         ref_cols_to_keep.pop(-1)  # remove idcol from match_by
     else:
         fixed_idcol = "__idcol"
@@ -41,13 +41,13 @@ def _map_to_local(gr, ref, idcol, match_by) -> "PyRanges":
     ref = (
         ref.get_with_loc_columns(ref_cols_to_keep)
         .group_cumsum(
-            group_by=idcol,
+            group_by=ref_on,
             use_strand="auto",
             cumsum_start_column=cumsum_start,
             cumsum_end_column=cumsum_end,
             sort=False,
         )
-        .rename(columns={idcol: fixed_idcol})
+        .rename(columns={ref_on: fixed_idcol})
     )
 
     gr = gr.join_overlaps(ref, strand_behavior="ignore", match_by=match_by, suffix=suffix)
