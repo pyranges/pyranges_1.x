@@ -14,3 +14,4 @@ These pages explain pyranges functionalities grouped by topic:
    how_to_sequences
    how_to_genomic_ops
    how_to_overlap
+   how_to_map

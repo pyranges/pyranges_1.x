@@ -21,10 +21,22 @@ start_b = START_COL + suffix
 end_b = END_COL + suffix
 strand_b = STRAND_COL + suffix
 
+out_global_chromosome = "Chromosome_global"
+out_global_start = "Start_global"
+out_global_end = "End_global"
+out_global_strand = "Strand_global"
 
-def _map_to_local(gr, ref, ref_on, match_by) -> "PyRanges":
+
+def _map_to_local(
+    gr,
+    ref,
+    ref_on,
+    match_by,
+    keep_chrom,
+    keep_loc,
+) -> "PyRanges":
     # record ordered columns of gr
-    gr_cols = gr.columns.tolist()
+    output_cols = gr.columns.tolist()
     gr_has_strand = gr.has_strand
     ref_has_strand = ref.has_strand
     match_by = arg_to_list(match_by)
@@ -33,7 +45,7 @@ def _map_to_local(gr, ref, ref_on, match_by) -> "PyRanges":
     if ref_on in match_by:
         # dealing with case in which user used ref_on as match_by
         fixed_idcol = ref_on
-        gr_cols = [c for c in gr_cols if c != ref_on]
+        output_cols = [c for c in output_cols if c != ref_on]
         ref_cols_to_keep.pop(-1)  # remove idcol from match_by
     else:
         fixed_idcol = "__idcol"
@@ -55,7 +67,11 @@ def _map_to_local(gr, ref, ref_on, match_by) -> "PyRanges":
     # removing gr regions that do not overlap with ref
     gr = gr.combine_interval_columns("intersect", drop_old_columns=False, start2=start_b, end2=end_b)
 
-    columns_to_drop = [cumsum_start, cumsum_end, start_b, end_b, CHROM_COL]
+    columns_to_drop = [cumsum_start, cumsum_end]
+    if not keep_chrom:
+        columns_to_drop = [*columns_to_drop, CHROM_COL]
+    if not keep_loc:
+        columns_to_drop = [*columns_to_drop, start_b, end_b]
 
     # dealing with - strand intervals on ref.
     if ref_has_strand:
@@ -81,7 +97,8 @@ def _map_to_local(gr, ref, ref_on, match_by) -> "PyRanges":
         if gr_has_strand:  # and ref_has_strand: # implicit
             # transform Strand: for rows with Strand == Strand_b, it becomes '+', otherwise '-'
             gr[STRAND_COL] = np.where(gr[STRAND_COL] == gr[strand_b], "+", "-")
-            columns_to_drop = [*columns_to_drop, strand_b]
+            if not keep_loc:
+                columns_to_drop = [*columns_to_drop, strand_b]
     else:
         ref_strand_is_neg = pd.Series(data=False, index=gr.index, dtype=np.bool_)
 
@@ -98,7 +115,19 @@ def _map_to_local(gr, ref, ref_on, match_by) -> "PyRanges":
     )
 
     # drop useless columns
+
+    if keep_chrom:
+        gr = gr.rename(columns={CHROM_COL: out_global_chromosome})
+        output_cols = [*output_cols, out_global_chromosome]
+
     gr = gr.drop(columns=columns_to_drop).rename(columns={fixed_idcol: CHROM_COL})
 
+    if keep_loc:
+        gr = gr.rename(columns={start_b: out_global_start, end_b: out_global_end})
+        output_cols = [*output_cols, out_global_start, out_global_end]
+        if gr_has_strand and ref_has_strand:
+            gr = gr.rename(columns={strand_b: out_global_strand})
+            output_cols = [*output_cols, out_global_strand]
+
     # reordering columns to match original gr
-    return gr.reindex(columns=gr_cols)
+    return gr.reindex(columns=output_cols)
