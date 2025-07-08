@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 
 from pyranges.core.names import CHROM_COL, END_COL, RANGE_COLS, START_COL, STRAND_COL
-from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
+from pyranges.core.pyranges_helpers import ensure_pyranges
 
 if TYPE_CHECKING:
     from pyranges import PyRanges
@@ -34,4 +34,4 @@ def _split(
     if use_strand:
         _features.insert(_features.shape[1], STRAND_COL, df[STRAND_COL].iloc[0])
 
-    return mypy_ensure_pyranges(_features.reset_index(drop=True))
+    return ensure_pyranges(_features.reset_index(drop=True))

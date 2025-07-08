@@ -143,12 +143,12 @@ Note the warning in the last line of the string representation:
   Contains 1 chromosomes and 2 strands (including non-genomic strands: #).
 
 Non-valid strands can affect the functioning of many methods that have a ``use_strand`` parameter
-(e.g. :func:`subsequence <pyranges.PyRanges.subsequence>`) or
+(e.g. :func:`slice_ranges <pyranges.PyRanges.slice_ranges>`) or
 a ``strand_behavior`` parameter (e.g. :func:`overlap <pyranges.PyRanges.overlap>`), because these parameters
 by default are set to ``auto``, meaning that strand is considered only if it is valid.
-Indeed, see that this subsequence is calculated from the left limit, even for the interval on  the '-' strand:
+Indeed, see that this subregion is calculated from the left limit, even for the interval on  the '-' strand:
 
-  >>> g.subsequence(0, 3)
+  >>> g.slice_ranges(0, 3)
     index  |    Chromosome      Start      End  Strand
     int64  |    object          int64    int64  object
   -------  ---  ------------  -------  -------  --------
@@ -161,8 +161,8 @@ When running the code above, you should get a warning message like this:
 
   .. code-block:: none
 
-    UserWarning: subsequence: 'auto' use_strand treated as False due to invalid Strand values. Suppress this warning with use_strand=False
-    g.subsequence(0, 3)
+    UserWarning: slice_ranges: 'auto' use_strand treated as False due to invalid Strand values. Suppress this warning with use_strand=False
+    g.slice_ranges(0, 3)
 
 You can check whether a PyRanges object has valid Strand information with property
 :func:`strand_valid <pyranges.PyRanges.strand_valid>`:
@@ -188,7 +188,7 @@ penultimate line of the string representation:
 
   >>> gr1= pr.PyRanges(dict(Chromosome='chr1', Start=[1], End=[100]))
   >>> gr2 = pr.PyRanges(dict(Chromosome='chr1', Start=[20, 50], End=[30, 60]))
-  >>> gr3 = gr1.subtract_ranges(gr2)
+  >>> gr3 = gr1.subtract_overlaps(gr2)
   >>> gr3
     index  |    Chromosome      Start      End
     int64  |    object          int64    int64

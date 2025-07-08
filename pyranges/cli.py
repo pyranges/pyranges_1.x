@@ -6,7 +6,7 @@ from functools import wraps
 import pandas as pd
 
 import pyranges as pr
-from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
+from pyranges.core.pyranges_helpers import ensure_pyranges
 
 try:
     import fire  # type: ignore[reportMissingImports]
@@ -18,7 +18,7 @@ except ImportError:
 def read_csv(path: str, **kwargs) -> pr.PyRanges:
     """Read a CSV with pandas, then convert the resulting DataFrame into a PyRanges."""
     df = pd.read_csv(path, **kwargs)
-    return mypy_ensure_pyranges(pr.PyRanges(df))
+    return ensure_pyranges(pr.PyRanges(df))
 
 
 # 1) Available readers (no from_string)
@@ -45,7 +45,7 @@ Usage:
   • The command line defines a pipeline of actions separated by " , " and starting with readers
   • The first reader loads the main PyRanges object
   • Every reader beyond the first *must* be named (e.g. b=read_bed b.bed)
-  • Methods are invoked on the main object; others can be provided as arguments, e.g. intersect b
+  • Methods are invoked on the main object; others can be provided as arguments, e.g. intersect_overlaps b
   • The result replaces the main object in the main
 
 Available readers:
@@ -61,11 +61,11 @@ Examples:
   2. Load + inspect first 5 lines:
        {prog} read_bed sample1.bed , head 5
 
-  3. Intersect two files:
-       {prog} read_bed a.bed , other=read_bed b.bed , intersect other
+  3. intersect_overlaps two files:
+       {prog} read_bed a.bed , other=read_bed b.bed , intersect_overlaps other
 
   4. Chain involving three files:
-       {prog} read_bed a.bed , b=read_bed b.bed , c=read_bed c.bed , join_ranges b , intersect c
+       {prog} read_bed a.bed , b=read_bed b.bed , c=read_bed c.bed , join_overlaps b , intersect_overlaps c
 
 Tip:
   Append `--help` immediately after any reader or method to see its documentation

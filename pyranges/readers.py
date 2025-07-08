@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 from natsort import natsorted  # type: ignore[import]
 
-from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
+from pyranges.core.pyranges_helpers import ensure_pyranges
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -53,7 +53,7 @@ def from_string(s: str) -> "PyRanges":
 
     df = pd.read_csv(StringIO(s), sep=r"\s+", index_col=None)
 
-    return mypy_ensure_pyranges(df)
+    return ensure_pyranges(df)
 
 
 def read_bed(f: Path, /, nrows: int | None = None) -> "PyRanges":
@@ -142,7 +142,7 @@ def read_bed(f: Path, /, nrows: int | None = None) -> "PyRanges":
 
     df.columns = pd.Index(columns[: df.shape[1]])
 
-    return mypy_ensure_pyranges(df)
+    return ensure_pyranges(df)
 
 
 def read_bam(
@@ -234,24 +234,24 @@ def read_bam(
         sys.exit(1)
 
     if sparse:
-        return mypy_ensure_pyranges(bamread.read_bam(path, mapq, required_flag, filter_flag))
+        return ensure_pyranges(bamread.read_bam(path, mapq, required_flag, filter_flag))
     df = bamread.read_bam_full(path, mapq, required_flag, filter_flag)
-    return mypy_ensure_pyranges(df)
+    return ensure_pyranges(df)
 
 
 def _fetch_gene_transcript_exon_id(attribute: pd.Series, annotation: str | None = None) -> pd.DataFrame:
     no_quotes = attribute.str.replace('"', "").str.replace("'", "")
 
     df = no_quotes.str.extract(
-        "gene_id.?(.+?);(?:.*transcript_id.?(.+?);)?(?:.*exon_number.?(.+?);)?(?:.*exon_id.?(.+?);)?",
+        "gene_id.?(.+?);(?:.*group_by.?(.+?);)?(?:.*exon_number.?(.+?);)?(?:.*exon_id.?(.+?);)?",
         expand=True,
     )  # .iloc[:, [1, 2, 3]]
 
-    df.columns = pd.Index(["gene_id", "transcript_id", "exon_number", "exon_id"])
+    df.columns = pd.Index(["gene_id", "group_by", "exon_number", "exon_id"])
 
     if annotation == "ensembl":
         newdfs = []
-        for c in ["gene_id", "transcript_id", "exon_id"]:
+        for c in ["gene_id", "group_by", "exon_id"]:
             r = df[c].astype(str).str.extract(r"(\d+)").astype(float)
             newdfs.append(r)
 
@@ -332,7 +332,7 @@ def read_gtf(
     >>> from tempfile import NamedTemporaryFile
     >>> contents = ['#!genome-build GRCh38.p10']
     >>> contents.append('1\thavana\tgene\t11869\t14409\t.\t+\t.\tgene_id "ENSG00000223972"; gene_version "5"; gene_name "DDX11L1"; gene_source "havana"; gene_biotype "transcribed_unprocessed_pseudogene";')
-    >>> contents.append('1\thavana\ttranscript\t11869\t14409\t.\t+\t.\tgene_id "ENSG00000223972"; gene_version "5"; transcript_id "ENST00000456328"; transcript_version "2"; gene_name "DDX11L1"; gene_source "havana"; gene_biotype "transcribed_unprocessed_pseudogene"; transcript_name "DDX11L1-202"; transcript_source "havana"; transcript_biotype "processed_transcript"; tag "basic"; transcript_support_level "1";')
+    >>> contents.append('1\thavana\ttranscript\t11869\t14409\t.\t+\t.\tgene_id "ENSG00000223972"; gene_version "5"; group_by "ENST00000456328"; transcript_version "2"; gene_name "DDX11L1"; gene_source "havana"; gene_biotype "transcribed_unprocessed_pseudogene"; transcript_name "DDX11L1-202"; transcript_source "havana"; transcript_biotype "processed_transcript"; tag "basic"; transcript_support_level "1";')
     >>> f = NamedTemporaryFile("w")
     >>> _bytes_written = f.write("\n".join(contents))
     >>> f.flush()
@@ -429,7 +429,7 @@ def read_gtf_full(
     df = pd.concat(dfs, sort=False)
     df.loc[:, "Start"] = df.Start - 1
 
-    return mypy_ensure_pyranges(df)
+    return ensure_pyranges(df)
 
 
 def parse_kv_fields(line: str) -> list[list[str]]:
@@ -537,7 +537,7 @@ def read_gtf_restricted(f: str | Path, skiprows: int | None, nrows: int | None =
             cols_to_concat = ["Chromosome", "Start", "End", "Strand", "Feature", "Score"]
 
         extract = _fetch_gene_transcript_exon_id(df.Attribute)
-        extract.columns = pd.Index(["gene_id", "transcript_id", "exon_number", "exon_id"])
+        extract.columns = pd.Index(["gene_id", "group_by", "exon_number", "exon_id"])
 
         extract.exon_number = extract.exon_number.astype(float)
 
@@ -550,7 +550,7 @@ def read_gtf_restricted(f: str | Path, skiprows: int | None, nrows: int | None =
 
     df.loc[:, "Start"] = df.Start - 1
 
-    return mypy_ensure_pyranges(df)
+    return ensure_pyranges(df)
 
 
 def to_rows_gff3(anno: pd.Series) -> pd.DataFrame:
@@ -633,7 +633,7 @@ def read_gff3(
 
     df.loc[:, "Start"] = df.Start - 1
 
-    return mypy_ensure_pyranges(df)
+    return ensure_pyranges(df)
 
 
 def read_bigwig(f: str | Path) -> "PyRanges":
@@ -717,4 +717,4 @@ def read_bigwig(f: str | Path) -> "PyRanges":
             },
         )
 
-    return mypy_ensure_pyranges(pd.concat(dfs).reset_index(drop=True))
+    return ensure_pyranges(pd.concat(dfs).reset_index(drop=True))

@@ -5,7 +5,15 @@ Overlap-related operations
    :local:
    :depth: 2
 
+Overlap-related operations: cheatsheet
+======================================
 
+.. image:: https://raw.githubusercontent.com/pyranges/pyranges_plot/for_pyranges1_1/examples/cheatsheet_overlap.png
+   :alt: PyRanges cheatsheet
+   :target: https://raw.githubusercontent.com/pyranges/pyranges_plot/for_pyranges1_1/examples/cheatsheet_overlap.png
+
+Single and pairwise PyRanges operations
+======================================
 
 Pyranges offers many efficient methods to detect / process overlaps. We present them here split in two groups:
 
@@ -16,13 +24,13 @@ Pyranges offers many efficient methods to detect / process overlaps. We present 
     :template: custom_method_summary.rst
 
     pyranges.PyRanges.overlap
-    pyranges.PyRanges.join_ranges
-    pyranges.PyRanges.set_intersect
-    pyranges.PyRanges.set_union
-    pyranges.PyRanges.intersect
-    pyranges.PyRanges.subtract_ranges
+    pyranges.PyRanges.join_overlaps
+    pyranges.PyRanges.set_intersect_overlaps
+    pyranges.PyRanges.set_union_overlaps
+    pyranges.PyRanges.intersect_overlaps
+    pyranges.PyRanges.subtract_overlaps
     pyranges.PyRanges.count_overlaps
-    pyranges.PyRanges.nearest
+    pyranges.PyRanges.nearest_ranges
 
 2. Methods accepting a **single PyRanges** as input:
 
@@ -30,15 +38,11 @@ Pyranges offers many efficient methods to detect / process overlaps. We present 
     :toctree: _generated_hidden2
     :template: custom_method_summary.rst
 
-    pyranges.PyRanges.cluster
+    pyranges.PyRanges.cluster_overlaps
     pyranges.PyRanges.merge_overlaps
-    pyranges.PyRanges.split
-    pyranges.PyRanges.max_disjoint
+    pyranges.PyRanges.split_overlaps
+    pyranges.PyRanges.max_disjoint_overlaps
 
-Overlap-related operations: cheatsheet
-======================================
-
-.. image:: images/cheatsheet_overlap.png
 
 Methods for pairs of PyRanges
 =============================
@@ -326,10 +330,10 @@ use this column to filter the overlaps:
   Contains 1 chromosomes and 2 strands.
 
 
-The most versatile: join_ranges
---------------------------------
+The most versatile: join_overlaps
+---------------------------------
 
-The most versatile overlap-related method for pairs of PyRanges is :func:`join_ranges <pyranges.PyRanges.join_ranges>`.
+The most versatile overlap-related method for pairs of PyRanges is :func:`join_overlaps <pyranges.PyRanges.join_overlaps>`.
 This method is analogous to a SQL join operation, but rather than matching rows in two tables through a common key,
 they are matched in virtue of their overlap.
 
@@ -338,7 +342,7 @@ information related to the input intervals. The returned PyRanges object will ha
 number of overlaps found, and the columns will be the union of the columns of self and other, using a suffix
 to differentiate columns in other which are present with the same name in the self PyRanges, like Start and End:
 
-  >>> a.join_ranges(b)
+  >>> a.join_overlaps(b)
     index  |    Chromosome      Start      End  Strand      Start_b    End_b
     int64  |    object          int64    int64  object        int64    int64
   -------  ---  ------------  -------  -------  --------  ---------  -------
@@ -354,7 +358,7 @@ In contrast to :func:`overlap <pyranges.PyRanges.overlap>`, a row is returned pe
 if an interval in self overlaps with more than one interval in other, it will be reported multiple times,
 resulting in index duplicates (see below); you may call .reset_index() to correct this.
 
-  >>> b.join_ranges(a)
+  >>> b.join_overlaps(a)
     index  |    Chromosome      Start      End  Strand      Start_b    End_b
     int64  |    object          int64    int64  object        int64    int64
   -------  ---  ------------  -------  -------  --------  ---------  -------
@@ -367,11 +371,11 @@ resulting in index duplicates (see below); you may call .reset_index() to correc
   Contains 1 chromosomes and 2 strands.
 
 Like all overlap-related methods accepting two PyRanges as input,
-:func:`join_ranges <pyranges.PyRanges.join_ranges>`
+:func:`join_overlaps <pyranges.PyRanges.join_overlaps>`
 accepts the ``strand_behavior`` argument. If Strand is not used to determine overlaps, it will
 be returned for both PyRanges:
 
-  >>> a.join_ranges(b, strand_behavior="ignore")
+  >>> a.join_overlaps(b, strand_behavior="ignore")
     index  |    Chromosome      Start      End  Strand      Start_b    End_b  Strand_b
     int64  |    object          int64    int64  object        int64    int64  object
   -------  ---  ------------  -------  -------  --------  ---------  -------  ----------
@@ -386,7 +390,7 @@ be returned for both PyRanges:
 
 ``slack`` and ``match_by`` arguments are also available, e.g.:
 
-  >>> a2.join_ranges(b2, match_by='odd')
+  >>> a2.join_overlaps(b2, match_by='odd')
     index  |    Chromosome      Start      End  Strand        odd    Start_b    End_b
     int64  |    object          int64    int64  object      int64      int64    int64
   -------  ---  ------------  -------  -------  --------  -------  ---------  -------
@@ -395,7 +399,7 @@ be returned for both PyRanges:
   PyRanges with 2 rows, 7 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-  >>> a2.join_ranges(b2, match_by='odd', slack=5)
+  >>> a2.join_overlaps(b2, match_by='odd', slack=5)
     index  |    Chromosome      Start      End  Strand        odd    Start_b    End_b
     int64  |    object          int64    int64  object      int64      int64    int64
   -------  ---  ------------  -------  -------  --------  -------  ---------  -------
@@ -406,11 +410,11 @@ be returned for both PyRanges:
   Contains 1 chromosomes and 2 strands.
 
 Pyranges provides method :func:`combine_interval_columns <pyranges.PyRanges.combine_interval_columns>`
-to post-process the output of :func:`join_ranges <pyranges.PyRanges.join_ranges>`
+to post-process the output of :func:`join_overlaps <pyranges.PyRanges.join_overlaps>`
 and aggregate the coordinates of the overlapping intervals in Start and End columns.
 For example, this allows to obtain the union of the overlapping intervals:
 
-  >>> a2.join_ranges(b2, match_by='odd', slack=5).combine_interval_columns('union')
+  >>> a2.join_overlaps(b2, match_by='odd', slack=5).combine_interval_columns('union')
     index  |    Chromosome      Start      End  Strand        odd
     int64  |    object          int64    int64  object      int64
   -------  ---  ------------  -------  -------  --------  -------
@@ -420,22 +424,23 @@ For example, this allows to obtain the union of the overlapping intervals:
   PyRanges with 3 rows, 5 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-:func:`join_ranges <pyranges.PyRanges.join_ranges>` is one of most versatile methods in PyRanges, since it
+
+:func:`join_overlaps <pyranges.PyRanges.join_overlaps>` is one of most versatile methods in PyRanges, since it
 retains the full information of the two input PyRanges objects.
 Nevertheless, more efficient alternative methods are available for specific use cases, detailed below.
 
-Set operations: set_intersect, set_union
-----------------------------------------
+Set operations: set_intersect_overlaps, set_union_overlaps
+----------------------------------------------------------
 
 Pyranges offers efficient methods based on the concept of set operations in mathematics. These are useful
 when the user is interested in the intervals themselves, rather than in the full information (i.e. metadata)
 of the input intervals.
 
 
-Method :func:`set_intersect <pyranges.PyRanges.set_intersect>`, allows to obtain the genomic regions
+Method :func:`set_intersect_overlaps <pyranges.PyRanges.set_intersect_overlaps>`, allows to obtain the genomic regions
 present in both PyRanges:
 
-  >>> a.set_intersect(b)
+  >>> a.set_intersect_overlaps(b)
     index  |    Chromosome      Start      End  Strand
     int64  |    object          int64    int64  object
   -------  ---  ------------  -------  -------  --------
@@ -446,7 +451,7 @@ present in both PyRanges:
   PyRanges with 4 rows, 4 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-  >>> a.set_intersect(b, strand_behavior="ignore")
+  >>> a.set_intersect_overlaps(b, strand_behavior="ignore")
     index  |    Chromosome      Start      End
     int64  |    object          int64    int64
   -------  ---  ------------  -------  -------
@@ -460,13 +465,13 @@ present in both PyRanges:
 
 The regions reported may be part of any interval in the two PyRanges. All metadata columns are dropped:
 
-  >>> a2.set_intersect(b2).columns  # see above: a2 and b2 had the 'odd' column
+  >>> a2.set_intersect_overlaps(b2).columns  # see above: a2 and b2 had the 'odd' column
   Index(['Chromosome', 'Start', 'End', 'Strand'], dtype='object')
 
-Analogously, method :func:`set_union <pyranges.PyRanges.set_union>` allows to obtain the genomic regions that
+Analogously, method :func:`set_union_overlaps <pyranges.PyRanges.set_union_overlaps>` allows to obtain the genomic regions that
 are present in at least one of the PyRanges:
 
-  >>> a.set_union(b)
+  >>> a.set_union_overlaps(b)
     index  |    Chromosome      Start      End  Strand
     int64  |    object          int64    int64  object
   -------  ---  ------------  -------  -------  --------
@@ -480,7 +485,7 @@ are present in at least one of the PyRanges:
   PyRanges with 7 rows, 4 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-  >>> a2.set_union(b2, strand_behavior='ignore')
+  >>> a2.set_union_overlaps(b2, strand_behavior='ignore')
     index  |    Chromosome      Start      End
     int64  |    object          int64    int64
   -------  ---  ------------  -------  -------
@@ -493,16 +498,16 @@ are present in at least one of the PyRanges:
   PyRanges with 6 rows, 3 columns, and 1 index columns.
   Contains 1 chromosomes.
 
-Interval manipulation operations: intersect, subtract
------------------------------------------------------
+Interval manipulation operations: intersect_overlaps, subtract_overlaps
+-----------------------------------------------------------------------
 Set operations do not preserve input metadata.
-:func:`join_ranges <pyranges.PyRanges.join_ranges>` preserve metadata of both PyRanges, but is less efficient.
+:func:`join_overlaps <pyranges.PyRanges.join_overlaps>` preserve metadata of both PyRanges, but is less efficient.
 Pyranges also offers methods that preserve the metadata in self, but not in other.
-Specifically, method :func:`intersect <pyranges.PyRanges.intersect>` allows to obtain the intervals in self that overlap
+Specifically, method :func:`intersect_overlaps <pyranges.PyRanges.intersect_overlaps>` allows to obtain the intervals in self that overlap
 with any interval in other. It is similar to :func:`overlap <pyranges.PyRanges.overlap>`, but here coordinates
 are modified to return only the actual overlaps:
 
-  >>> a2.intersect(b)
+  >>> a2.intersect_overlaps(b)
     index  |    Chromosome      Start      End  Strand        odd
     int64  |    object          int64    int64  object      int64
   -------  ---  ------------  -------  -------  --------  -------
@@ -514,7 +519,7 @@ are modified to return only the actual overlaps:
   PyRanges with 5 rows, 5 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-  >>> a2.intersect(b2, strand_behavior='ignore', match_by='odd')
+  >>> a2.intersect_overlaps(b2, strand_behavior='ignore', match_by='odd')
     index  |    Chromosome      Start      End  Strand        odd
     int64  |    object          int64    int64  object      int64
   -------  ---  ------------  -------  -------  --------  -------
@@ -523,10 +528,10 @@ are modified to return only the actual overlaps:
   PyRanges with 2 rows, 5 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-Method :func:`subtract_ranges <pyranges.PyRanges.subtract_ranges>` allows to obtain the portions of intervals in self
+Method :func:`subtract_overlaps <pyranges.PyRanges.subtract_overlaps>` allows to obtain the portions of intervals in self
 that do not overlap any interval in other:
 
-  >>> a2.subtract_ranges(b).sort_values('Start')
+  >>> a2.subtract_overlaps(b).sort_values('Start')
     index  |    Chromosome      Start      End  Strand        odd
     int64  |    object          int64    int64  object      int64
   -------  ---  ------------  -------  -------  --------  -------
@@ -541,7 +546,7 @@ that do not overlap any interval in other:
   Contains 1 chromosomes and 2 strands.
 
 
-  >>> a2.subtract_ranges(b, strand_behavior='ignore').sort_values('Start')
+  >>> a2.subtract_overlaps(b, strand_behavior='ignore').sort_values('Start')
     index  |    Chromosome      Start      End  Strand        odd
     int64  |    object          int64    int64  object      int64
   -------  ---  ------------  -------  -------  --------  -------
@@ -608,11 +613,11 @@ Arguments ``strand_behavior`` and ``match_by`` are available:
   PyRanges with 7 rows, 6 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-  Advanced metrics (e.g. interval fraction covered by overlap)
-  can be computed using the :func:`compute_interval_metrics <pyranges.PyRanges.compute_interval_metrics>`
-  function, which is run on the output of :func:`join_range <pyranges.PyRanges.join_ranges>`:
+Advanced metrics (e.g. interval fraction covered by overlap)
+can be computed using the :func:`compute_interval_metrics <pyranges.PyRanges.compute_interval_metrics>`
+function, which is run on the output of :func:`join_overlaps <pyranges.PyRanges.join_overlaps>`:
 
-  >>> a.join_ranges(b, strand_behavior='ignore').compute_interval_metrics('fraction')
+  >>> a.join_overlaps(b, strand_behavior='ignore').compute_interval_metrics('fraction')
     index  |    Chromosome      Start      End  Strand      Start_b    End_b  Strand_b      fraction
     int64  |    object          int64    int64  object        int64    int64  object         float64
   -------  ---  ------------  -------  -------  --------  ---------  -------  ----------  ----------
@@ -626,13 +631,13 @@ Arguments ``strand_behavior`` and ``match_by`` are available:
   Contains 1 chromosomes and 2 strands.
 
 
-Find the closest interval: nearest
-----------------------------------
+Find the closest interval: nearest_ranges
+-----------------------------------------
 
-Method :func:`nearest <pyranges.PyRanges.nearest>` allows to find the closest interval in other for each interval
+Method :func:`nearest_ranges <pyranges.PyRanges.nearest_ranges>` allows to find the closest interval in other for each interval
 in self:
 
-  >>> a.nearest(b)
+  >>> a.nearest_ranges(b)
     index  |    Chromosome      Start      End  Strand    Chromosome_b      Start_b    End_b  Strand_b      Distance
     int64  |    object          int64    int64  object    object              int64    int64  object           int64
   -------  ---  ------------  -------  -------  --------  --------------  ---------  -------  ----------  ----------
@@ -646,13 +651,13 @@ in self:
   PyRanges with 7 rows, 9 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-The output format is similar to :func:`join_ranges <pyranges.PyRanges.join_ranges>`.
+The output format is similar to :func:`join_overlaps <pyranges.PyRanges.join_overlaps>`.
 Note the "Distance" column, which reports the distance between the intervals in self and other.
 
 In case you want to find the nearest interval which does not overlap with each self interval, use
 ``exclude_overlaps=True``:
 
-  >>> a.nearest(b, exclude_overlaps=True)
+  >>> a.nearest_ranges(b, exclude_overlaps=True)
     index  |    Chromosome      Start      End  Strand    Chromosome_b      Start_b    End_b  Strand_b      Distance
     int64  |    object          int64    int64  object    object              int64    int64  object           int64
   -------  ---  ------------  -------  -------  --------  --------------  ---------  -------  ----------  ----------
@@ -664,9 +669,9 @@ In case you want to find the nearest interval which does not overlap with each s
   PyRanges with 5 rows, 9 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-The :func:`nearest <pyranges.PyRanges.nearest>` method also accepts the ``strand_behavior`` argument:
+The :func:`nearest_ranges <pyranges.PyRanges.nearest_ranges>` method also accepts the ``strand_behavior`` argument:
 
-  >>> a.nearest(b, strand_behavior='ignore', exclude_overlaps=True)
+  >>> a.nearest_ranges(b, strand_behavior='ignore', exclude_overlaps=True)
     index  |    Chromosome      Start      End  Strand    Chromosome_b      Start_b    End_b  Strand_b      Distance
     int64  |    object          int64    int64  object    object              int64    int64  object           int64
   -------  ---  ------------  -------  -------  --------  --------------  ---------  -------  ----------  ----------
@@ -708,14 +713,14 @@ We will showcase them with this data:
   Contains 1 chromosomes and 2 strands.
 
 
-Grouping overlapping intervals: cluster
----------------------------------------
-The most flexible method in this category is :func:`cluster <pyranges.PyRanges.cluster>`.
+Grouping overlapping intervals: cluster_overlaps
+------------------------------------------------
+The most flexible method in this category is :func:`cluster_overlaps <pyranges.PyRanges.cluster_overlaps>`.
 This function will detect overlaps among intervals in self, and assign a cluster identifier
 to each group of overlapping intervals. The object returned is identical to the input,
 with an additional column "Cluster" containing the cluster identifier:
 
-  >>> c.cluster()
+  >>> c.cluster_overlaps()
     index  |    Chromosome      Start      End  Strand      Cluster
     int64  |    object          int64    int64  object       uint32
   -------  ---  ------------  -------  -------  --------  ---------
@@ -734,7 +739,7 @@ Note that clusters 1 and 2 are kept separated only because of strand.
 We introduce argument ``use_strand``, accepted by all overlap-related methods for single PyRanges.
 When set to False, strand is ignored for overlap detection:
 
-  >>> c.cluster(use_strand=False)
+  >>> c.cluster_overlaps(use_strand=False)
     index  |    Chromosome      Start      End  Strand      Cluster
     int64  |    object          int64    int64  object       uint32
   -------  ---  ------------  -------  -------  --------  ---------
@@ -762,7 +767,7 @@ Its default value is 0. With ``slack=1``, bookended intervals are placed in the 
 With ``slack=2``, intervals that are distant at the most 1 bp are placed in the same cluster,
 like those with index 4 and 7 above; and so on.
 
-  >>> c2 = c.cluster(slack=2, use_strand=False, cluster_column='myClust')
+  >>> c2 = c.cluster_overlaps(slack=2, use_strand=False, cluster_column='myClust')
   >>> c2
     index  |    Chromosome      Start      End  Strand      myClust
     int64  |    object          int64    int64  object       uint32
@@ -783,7 +788,7 @@ Only intervals with the same value in the specified column will be considered fo
 Let's add a gene column to the PyRanges object and compare "Cluster" results with the previous column "myClust":
 
   >>> c2['gene'] = ['abc'[s % 3] for s in c2.Start] # arbitrary gene assignment
-  >>> c2.cluster(slack=2, use_strand=False, match_by='gene')
+  >>> c2.cluster_overlaps(slack=2, use_strand=False, match_by='gene')
     index  |    Chromosome      Start      End  Strand      myClust  gene        Cluster
     int64  |    object          int64    int64  object       uint32  object       uint32
   -------  ---  ------------  -------  -------  --------  ---------  --------  ---------
@@ -799,8 +804,8 @@ Let's add a gene column to the PyRanges object and compare "Cluster" results wit
   Contains 1 chromosomes and 2 strands.
 
 
-Resolve overlaps: merge_overlaps, split, max_disjoint
------------------------------------------------------
+Resolve overlaps: merge_overlaps, split_overlaps, max_disjoint_overlaps
+-----------------------------------------------------------------------
 Various methods exists to obtain a PyRanges object without internal overlaps.
 
 Method :func:`merge_overlaps <pyranges.PyRanges.merge_overlaps>`
@@ -845,12 +850,13 @@ Note that Strand is not reported when ``use_strand`` is set to False:
   PyRanges with 3 rows, 3 columns, and 1 index columns.
   Contains 1 chromosomes.
 
-On the other hand, method :func:`split <pyranges.PyRanges.split>` allows to split intervals in self
+On the other hand, method :func:`split_overlaps <pyranges.PyRanges.split_overlaps>` allows
+to split intervals in self
 at the position of overlaps, leaving as many bookended intervals as necessary to avoid overlaps.
 This function drops metadata, too:
 
   >>> pr.options.set_option('max_rows_to_show', 12) # to see all rows
-  >>> c.split()
+  >>> c.split_overlaps()
     index  |    Chromosome      Start      End  Strand
     int64  |    object          int64    int64  object
   -------  ---  ------------  -------  -------  --------
@@ -868,14 +874,14 @@ This function drops metadata, too:
   PyRanges with 11 rows, 4 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-Function :func:`max_disjoint <pyranges.PyRanges.max_disjoint>` also returns a set of non-overlapping intervals.
+Function :func:`max_disjoint_overlaps <pyranges.PyRanges.max_disjoint_overlaps>` also returns a set of non-overlapping intervals.
 In this case, however, input intervals are not modified, just filtered.
 The intervals to return are chosen to maximize the number of intervals in the output.
 The usual arguments (e.g. ``use_strand``) are available:
 
 
   >>> pr.options.reset_options()
-  >>> c2.max_disjoint(use_strand=False) # using c2 to show that metadata is retained
+  >>> c2.max_disjoint_overlaps(use_strand=False) # using c2 to show that metadata is retained
     index  |    Chromosome      Start      End  Strand      myClust  gene
     int64  |    object          int64    int64  object       uint32  object
   -------  ---  ------------  -------  -------  --------  ---------  --------

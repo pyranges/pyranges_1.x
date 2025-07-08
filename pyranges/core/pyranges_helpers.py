@@ -114,8 +114,8 @@ def split_on_strand(gr: "PyRanges") -> tuple["PyRanges", "PyRanges"]:
 
     """
     return (
-        mypy_ensure_pyranges(gr.query(f"{STRAND_COL} == '{FORWARD_STRAND}'")),
-        mypy_ensure_pyranges(gr.query(f"{STRAND_COL} == '{REVERSE_STRAND}'")),
+        ensure_pyranges(gr.query(f"{STRAND_COL} == '{FORWARD_STRAND}'")),
+        ensure_pyranges(gr.query(f"{STRAND_COL} == '{REVERSE_STRAND}'")),
     )
 
 
@@ -189,7 +189,7 @@ def prepare_by_binary(
         _other.loc[:, STRAND_COL] = other[STRAND_COL].replace({"+": "-", "-": "+"})
     else:
         _other = other
-    return mypy_ensure_pyranges(_other), by
+    return ensure_pyranges(_other), by
 
 
 def validate_and_convert_use_strand(self: "PyRanges", use_strand: VALID_USE_STRAND_TYPE) -> bool:
@@ -328,27 +328,27 @@ def use_strand_from_validated_strand_behavior(
     return strand_behavior != STRAND_BEHAVIOR_IGNORE
 
 
-def mypy_ensure_pyranges(df: "pd.DataFrame") -> "PyRanges":
+def ensure_pyranges(df: "pd.DataFrame") -> "PyRanges":
     """Ensure df is a PyRanges.
 
-    Helps mypy.
+    Helps pyright.
     """
     from pyranges import PyRanges
 
-    if not isinstance(ret := PyRanges(df), PyRanges):
+    if not isinstance(ret := PyRanges(df, copy=False), PyRanges):
         msg = "Not a PyRanges"
         raise TypeError(msg)
     return ret
 
 
-def mypy_ensure_rangeframe(df: "pd.DataFrame") -> "RangeFrame":
+def ensure_rangeframe(df: "pd.DataFrame") -> "RangeFrame":
     """Ensure df is a rangeframe.
 
-    Helps mypy.
+    Helps pyright.
     """
     from pyranges.range_frame.range_frame import RangeFrame
 
-    if not isinstance(ret := RangeFrame(df), RangeFrame):
+    if not isinstance(ret := RangeFrame(df, copy=False), RangeFrame):
         msg = "Not a RangeFrame"
         raise TypeError(msg)
     return ret

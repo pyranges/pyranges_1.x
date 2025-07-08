@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from pyranges.core.pyranges_helpers import factorize_binary, mypy_ensure_rangeframe
+from pyranges.core.pyranges_helpers import ensure_rangeframe, factorize_binary
 
 if TYPE_CHECKING:
     from pyranges.range_frame.range_frame import RangeFrame
@@ -29,4 +29,4 @@ def _complement_overlaps(
         slack=slack or 0,
     )
 
-    return mypy_ensure_rangeframe(df.take(indices))  # type: ignore[arg-type]
+    return ensure_rangeframe(df.take(indices))  # type: ignore[arg-type]

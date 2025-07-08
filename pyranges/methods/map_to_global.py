@@ -10,21 +10,31 @@ from pyranges.core.names import (
     START_COL,
     STRAND_COL,
 )
-from pyranges.core.pyranges_helpers import factorize_binary, mypy_ensure_pyranges
+from pyranges.core.pyranges_helpers import ensure_pyranges, factorize_binary
 
 if TYPE_CHECKING:
     from pyranges import PyRanges
 
+cumsum_start = "_local_start"
+cumsum_end = "_local_end"
+out_local_start = "Start_local"
+out_local_end = "End_local"
+out_local_strand = "Strand_local"
+
 
 def _map_to_global(
-    local_gr: "PyRanges", global_gr: "PyRanges", global_on: str, *, local_on: str = "Chromosome"
+    local_gr: "PyRanges",
+    global_gr: "PyRanges",
+    global_on: str,
+    *,
+    local_on: str = "Chromosome",
+    keep_id: bool = False,
+    keep_loc: bool = False,
 ) -> "PyRanges":
     """Lift intervals from local_gr to genomic coordinates using global_gr exon annotations.
 
     Lift intervals in *local_gr* (coordinates relative to a transcript) onto absolute genomic coordinates using the exon annotation in *global_gr*.
     """
-    cumsum_start = "_local_start"
-    cumsum_end = "_local_end"
     local_has_strand = local_gr.has_strand
     global_has_strand = global_gr.has_strand
 
@@ -86,7 +96,7 @@ def _map_to_global(
     )
 
     if len(keep_idx) == 0:
-        return mypy_ensure_pyranges(local_df.head(0))
+        return ensure_pyranges(local_df.head(0))
 
     max_code = int(ex_tx_code.max()) + 1
     tx2chr_code = np.empty(max_code, dtype=ex_chr_code.dtype)
@@ -94,12 +104,20 @@ def _map_to_global(
     out_chr_code = tx2chr_code[q_tx_code[keep_idx]]
     out_chr_str = chr_table[out_chr_code]
 
-    mapped = local_gr.take(keep_idx)  # type: ignore[arg-type]
-    mapped_df = mapped.copy()
+    mapped_df = local_gr.take(keep_idx).copy()  # type: ignore[arg-type]
+
+    if keep_id:
+        mapped_df[global_on] = mapped_df[CHROM_COL].copy()
+    if keep_loc:
+        mapped_df[out_local_start] = mapped_df[START_COL].copy()
+        mapped_df[out_local_end] = mapped_df[END_COL].copy()
+        if local_has_strand and global_has_strand:
+            mapped_df[out_local_strand] = mapped_df[STRAND_COL].copy()
 
     mapped_df[CHROM_COL] = out_chr_str
     mapped_df[START_COL] = out_start
     mapped_df[END_COL] = out_end
+
     if local_has_strand or global_has_strand:
         mapped_df[STRAND_COL] = np.where(out_strand_bool, "+", "-")
 
@@ -108,4 +126,4 @@ def _map_to_global(
         if mapped_df is None:
             raise ValueError
 
-    return mypy_ensure_pyranges(mapped_df)
+    return ensure_pyranges(mapped_df)

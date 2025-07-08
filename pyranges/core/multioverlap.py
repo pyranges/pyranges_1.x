@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Optional
 
 from pyranges.core.names import VALID_STRAND_BEHAVIOR_TYPE
-from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
+from pyranges.core.pyranges_helpers import ensure_pyranges
 from pyranges.methods import concat
 
 if TYPE_CHECKING:
@@ -102,7 +102,7 @@ def count_overlaps(
     PyRanges with 12 rows, 6 columns, and 1 index columns.
     Contains 1 chromosomes.
 
-    >>> gr = pr.PyRanges({"Chromosome": ["chr1"] * 2, "Start": [0, 25], "End": [40, 35]}).tile(10)
+    >>> gr = pr.PyRanges({"Chromosome": ["chr1"] * 2, "Start": [0, 25], "End": [40, 35]}).tile_ranges(10)
     >>> gr
       index  |    Chromosome      Start      End
       int64  |    object          int64    int64
@@ -131,7 +131,7 @@ def count_overlaps(
 
     """
     concated = concat.concat(grs.values())
-    _features = concated.split(between=True) if features is None else features.copy()
+    _features = concated.split_overlaps(between=True) if features is None else features.copy()
 
     for name, gr in grs.items():
         counts = _features._count_overlaps(  # noqa: SLF001
@@ -140,4 +140,4 @@ def count_overlaps(
             strand_behavior=strand_behavior,
         )
         _features.insert(_features.shape[1], name, counts)
-    return mypy_ensure_pyranges(_features.astype(dict.fromkeys(grs, int)))
+    return ensure_pyranges(_features.astype(dict.fromkeys(grs, int)))

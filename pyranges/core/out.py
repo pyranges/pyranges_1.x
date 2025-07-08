@@ -9,7 +9,7 @@ from natsort import natsorted  # type: ignore[import]
 from pandas.core.frame import DataFrame
 
 from pyranges.core.names import BIGWIG_SCORE_COL, CHROM_COL, END_COL, PANDAS_COMPRESSION_TYPE, START_COL
-from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
+from pyranges.core.pyranges_helpers import ensure_pyranges
 from pyranges.core.pyranges_main import PyRanges
 
 GTF_COLUMNS_TO_PYRANGES = {
@@ -195,7 +195,7 @@ def _to_bigwig(
             new_pyrles[k] = v
 
         df = c.defragment().to_ranges()
-    gr = mypy_ensure_pyranges(df)
+    gr = ensure_pyranges(df)
     unique_chromosomes = gr.chromosomes
 
     gr = gr.remove_strand()

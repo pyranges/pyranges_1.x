@@ -163,7 +163,7 @@ class RangeFrame(pd.DataFrame):
     ) -> "RangeFrame":
         """Use two pairs of columns representing intervals to create a new start and end column.
 
-        The function is designed as post-processing after join_ranges to aggregate the coordinates of the two intervals.
+        The function is designed as post-processing after join_overlaps to aggregate the coordinates of the two intervals.
         By default, the new start and end columns will be the intersection of the intervals.
 
         Parameters
@@ -208,7 +208,7 @@ class RangeFrame(pd.DataFrame):
 
         return z.drop_and_return(labels=cols_to_drop, axis="columns")
 
-    def cluster(
+    def cluster_overlaps(
         self,
         *,
         match_by: VALID_BY_TYPES = None,
@@ -256,25 +256,22 @@ class RangeFrame(pd.DataFrame):
         res.insert(res.shape[1], cluster_column, cluster)
         return _mypy_ensure_rangeframe(res)
 
-    def complement_overlaps(
+    # complement_overlaps: unexpected behavior. Not sure what to do with it. Right now, not exposed in PyRanges API.
+    def _complement_overlaps(
         self: "RangeFrame",
         other: "RangeFrame",
         *,
-        match_by: VALID_BY_TYPES = None,
+        group_by: VALID_BY_TYPES = None,
         slack: int = 0,
     ) -> "RangeFrame":
-        """Return the internal complement of the intervals, i.e. its introns.
-
-        The complement of an interval is the set of intervals that are not covered by the original interval.
-        This function is useful for obtaining the introns of a set of exons, corresponding to the
-        "internal" complement, i.e. excluding the first and last portion of each chromosome not covered by intervals.
+        """Return the non-overlaps of self with other.
 
         Parameters
         ----------
         other : PyRanges
            PyRanges to find non-overlaps with.
 
-        match_by : str or list, default None
+        group_by : str or list, default None
             Column(s) to group by intervals (i.e. exons). If provided, the complement will be calculated for each group.
 
         use_strand: {"auto", True, False}, default "auto"
@@ -284,7 +281,7 @@ class RangeFrame(pd.DataFrame):
         chromsizes : dict or PyRanges or pyfaidx.Fasta
             If provided, external complement intervals will also be returned, i.e. the intervals corresponding to the
             beginning of the chromosome up to the first interval and from the last interval to the end of the
-            chromosome. If transcript_id is provided, these are returned for each group.
+            chromosome. If group_by is provided, these are returned for each group.
             Format of chromsizes: dict or PyRanges describing the lengths of the chromosomes.
             pyfaidx.Fasta object is also accepted since it conveniently loads chromosome length
 
@@ -296,7 +293,7 @@ class RangeFrame(pd.DataFrame):
         Returns
         -------
         PyRanges
-            Complement intervals, i.e. introns in the typical use case.
+            Non-overlapping intervals
 
         Notes
         -----
@@ -305,14 +302,14 @@ class RangeFrame(pd.DataFrame):
 
         See Also
         --------
-        PyRanges.subtract_ranges : report non-overlapping subintervals
-        PyRanges.boundaries : report the boundaries of groups of intervals (e.g. transcripts/genes)
+        PyRanges.subtract_overlaps : report non-overlapping subintervals
+        PyRanges.outer_ranges : report the boundaries of groups of intervals (e.g. transcripts/genes)
 
         """
-        match_by = arg_to_list(match_by)
-        return _complement_overlaps(self, other, by=match_by, slack=slack)
+        group_by = arg_to_list(group_by)
+        return _complement_overlaps(self, other, by=group_by, slack=slack)
 
-    def join_ranges(
+    def join_overlaps(
         self,
         other: "RangeFrame",
         *,
@@ -386,7 +383,7 @@ class RangeFrame(pd.DataFrame):
 
         return _mypy_ensure_rangeframe(res)
 
-    def max_disjoint(
+    def max_disjoint_overlaps(
         self,
         *,
         slack: int = 0,
@@ -415,7 +412,6 @@ class RangeFrame(pd.DataFrame):
         See Also
         --------
         RangeFrame.merge_overlaps : merge intervals into non-overlapping superintervals
-        RangeFrame.split : split intervals into non-overlapping subintervals
         RangeFrame.cluster : annotate overlapping intervals with common ID
 
         """
@@ -431,7 +427,7 @@ class RangeFrame(pd.DataFrame):
         )
         return _mypy_ensure_rangeframe(self.take(idx))  # type: ignore[arg-type]
 
-    def nearest(
+    def nearest_ranges(
         self,
         other: "RangeFrame",
         *,
@@ -477,7 +473,7 @@ class RangeFrame(pd.DataFrame):
 
         See Also
         --------
-        RangeFrame.join_ranges : Has a slack argument to find intervals within a distance.
+        RangeFrame.join_overlaps : Has a slack argument to find intervals within a distance.
 
         """
         import ruranges
@@ -612,7 +608,7 @@ class RangeFrame(pd.DataFrame):
         )
         return _mypy_ensure_rangeframe(self.take(idxs))  # type: ignore[arg-type]
 
-    def subtract_ranges(
+    def subtract_overlaps(
         self: "RangeFrame",
         other: "RangeFrame",
         match_by: VALID_BY_TYPES = None,
@@ -642,7 +638,7 @@ class RangeFrame(pd.DataFrame):
         See Also
         --------
         RangeFrame.overlap : use with invert=True to return all intervals without overlap
-        RangeFrame.complement : return the internal complement of intervals, i.e. its introns.
+        RangeFrame.complement_ranges : return the internal complement_ranges of intervals, i.e. its introns.
 
         """
         import ruranges
