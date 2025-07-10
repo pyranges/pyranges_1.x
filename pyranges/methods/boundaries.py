@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 
 from pyranges.core.names import CHROM_COL, END_COL, START_COL
-from pyranges.core.pyranges_helpers import factorize, mypy_ensure_rangeframe
+from pyranges.core.pyranges_helpers import ensure_rangeframe, factorize
 from pyranges.range_frame.range_frame import RangeFrame
 
 if TYPE_CHECKING:
@@ -30,7 +30,7 @@ def _bounds[T: ("pr.PyRanges", "pd.DataFrame")](df: T, by: list[str]) -> pd.Data
 
     result = RangeFrame({START_COL: starts, END_COL: ends} | {_by: ids[_by] for _by in by})[col_order]
 
-    return mypy_ensure_rangeframe(result.reset_index(drop=True))
+    return ensure_rangeframe(result.reset_index(drop=True))
 
 
 def _outside_bounds(df: pd.DataFrame, **kwargs) -> pd.DataFrame:

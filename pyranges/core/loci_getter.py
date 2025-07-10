@@ -7,7 +7,7 @@ import pandas as pd
 if typing.TYPE_CHECKING:
     from pyranges import PyRanges
 from pyranges.core.names import CHROM_COL, END_COL, START_COL, STRAND_COL, VALID_GENOMIC_STRAND_INFO
-from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
+from pyranges.core.pyranges_helpers import ensure_pyranges
 
 # Three types of accessors:
 # 1. Columns or columns, rows
@@ -25,7 +25,7 @@ class LociGetter:
         self,
         key: LociKeyType,
     ) -> "PyRanges":
-        return mypy_ensure_pyranges(self.pr.loc[self._matching_rows(key)])
+        return ensure_pyranges(self.pr.loc[self._matching_rows(key)])
 
     def _matching_rows(
         self,

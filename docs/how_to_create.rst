@@ -253,6 +253,8 @@ See an overview with:
   example_data.chipseq_background : Example ChIP-seq data.
   example_data.chromsizes         : Example chromsizes data (hg19).
   example_data.ensembl_gtf        : Example gtf file from Ensembl.
+  example_data.interpro_hits      : Example of InterPro protein hits.
+  example_data.rfam_hits          : Example of RNA motifs (Rfam) as 1-based dataframe.
   example_data.f1                 : Example bed file.
   example_data.f2                 : Example bed file.
   example_data.aorta              : Example ChIP-seq data.

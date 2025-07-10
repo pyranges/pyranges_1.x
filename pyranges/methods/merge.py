@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from pyranges.core.names import END_COL, START_COL
-from pyranges.core.pyranges_helpers import factorize, mypy_ensure_rangeframe
+from pyranges.core.pyranges_helpers import ensure_rangeframe, factorize
 
 if TYPE_CHECKING:
     from pyranges.range_frame.range_frame import RangeFrame
@@ -40,4 +40,4 @@ def _merge(
     if count_col:
         outpr.insert(outpr.shape[1], count_col, counts)
 
-    return mypy_ensure_rangeframe(outpr.reset_index(drop=True))
+    return ensure_rangeframe(outpr.reset_index(drop=True))

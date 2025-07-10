@@ -166,7 +166,7 @@ def test_set_intersect(gr, gr2, strand_behavior) -> None:
 
     bedtools_df = read_bedtools_result_set_op(bedtools_result, strand_behavior=strand_behavior)
 
-    result = gr.set_intersect(gr2, strand_behavior=strand_behavior)
+    result = gr.set_intersect_overlaps(gr2, strand_behavior=strand_behavior)
 
     if result.empty and bedtools_df.empty:
         return
@@ -188,7 +188,7 @@ def test_set_union(gr, gr2, strand_behavior) -> None:
 
     bedtools_df = read_bedtools_result_set_op(bedtools_result, strand_behavior)
 
-    result = gr.set_union(gr2, strand_behavior=strand_behavior)
+    result = gr.set_union_overlaps(gr2, strand_behavior=strand_behavior)
 
     assert_equal(bedtools_df, result)
 
@@ -219,7 +219,7 @@ def test_set_union(gr, gr2, strand_behavior) -> None:
 #     bedtools_df = bedtools_df[bedtools_df.Chromosome2 != "."]
 #     bedtools_df = bedtools_df.drop("Chromosome2", axis=1)
 #
-#     result = gr.nearest(gr2, strand_behavior=strand_behavior, overlap=overlap, how=nearest_how)
+#     result = gr.nearest_ranges(gr2, strand_behavior=strand_behavior, overlap=overlap, how=nearest_how)
 #
 #     print("bedtools " * 5)
 #     print(bedtools_df)
@@ -248,7 +248,7 @@ def test_subtraction(gr, gr2, strand_behavior) -> None:
         sep="\t",
     )
 
-    result = gr.subtract_ranges(gr2, strand_behavior=strand_behavior)
+    result = gr.subtract_overlaps(gr2, strand_behavior=strand_behavior)
 
     assert_equal(result, bedtools_df)
 

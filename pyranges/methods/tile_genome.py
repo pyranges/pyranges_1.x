@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 
 from pyranges.core.names import CHROM_COL, END_COL, START_COL
-from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
+from pyranges.core.pyranges_helpers import ensure_pyranges
 
 if TYPE_CHECKING:
     from pyranges import PyRanges
@@ -32,7 +32,7 @@ def tile_genome(
 
     See Also
     --------
-    pyranges.PyRanges.tile : split intervals into adjacent non-overlapping tiles.
+    pyranges.PyRanges.tile_ranges : split intervals into adjacent non-overlapping tiles.
 
     Examples
     --------
@@ -95,9 +95,9 @@ def tile_genome(
     else:
         chromsize_dict = dict(zip(chromsizes[CHROM_COL], chromsizes[END_COL], strict=True))
 
-    gr = mypy_ensure_pyranges(chromsizes).sort_ranges().tile(tile_size)
+    gr = ensure_pyranges(chromsizes).sort_ranges().tile_ranges(tile_size)
 
-    return mypy_ensure_pyranges(
+    return ensure_pyranges(
         gr.reset_index(drop=True)
         if full_last_tile
         else gr.groupby(CHROM_COL).apply(_last_tile, sizes=chromsize_dict).reset_index(drop=True),

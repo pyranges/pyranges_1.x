@@ -66,3 +66,10 @@ or if you'd like new features implemented, open an Issue at github: https://gith
 Pyranges accepts code contributions in form of pull request. 
 For details, visit https://pyranges1.readthedocs.io/developer_guide.html
 
+## Cheatsheet
+![cheatsheet](https://raw.githubusercontent.com/pyranges/pyranges_plot/for_pyranges1_1/images/pyranges_cheatsheet.png)
+(The cheatsheet above was created with pyranges_plot, a companion graphical library:  https://pyranges-plot.readthedocs.io/)
+
+
+
+

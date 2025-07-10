@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from pyranges.core.names import CHROM_COL, END_COL, START_COL
-from pyranges.core.pyranges_helpers import mypy_ensure_rangeframe
+from pyranges.core.pyranges_helpers import ensure_rangeframe
 
 if TYPE_CHECKING:
     from pyranges.range_frame.range_frame import RangeFrame
@@ -62,4 +62,4 @@ def _complement(
 
     result = RangeFrame({CHROM_COL: chrs, START_COL: start, END_COL: end} | {_by: ids[_by] for _by in by})[col_order]
 
-    return mypy_ensure_rangeframe(result.reset_index(drop=True))
+    return ensure_rangeframe(result.reset_index(drop=True))

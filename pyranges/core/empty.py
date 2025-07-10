@@ -5,7 +5,7 @@ import pandas as pd
 from pandas import Series
 
 from pyranges.core import names
-from pyranges.core.pyranges_helpers import mypy_ensure_pyranges
+from pyranges.core.pyranges_helpers import ensure_pyranges
 
 if typing.TYPE_CHECKING:
     from pyranges.core.pyranges_main import PyRanges
@@ -59,4 +59,4 @@ def empty(
         Whether to create a PyRanges with strand information.
 
     """
-    return mypy_ensure_pyranges(empty_df(with_strand=strand, columns=columns, dtype=dtype))
+    return ensure_pyranges(empty_df(with_strand=strand, columns=columns, dtype=dtype))
