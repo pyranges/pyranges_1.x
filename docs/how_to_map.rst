@@ -26,20 +26,20 @@ genomic intervals wherein coordinates refer to positions along the genome:
 
   >>> import pyranges as pr, pandas as pd
   >>> gr = pr.example_data.ncbi_gff
-  >>> gre = (gr[gr.Feature=='exon']).get_with_loc_columns('locus_tag')
+  >>> gre = (gr[gr.Feature=='exon']).get_with_loc_columns('Parent')
   >>> gre
-  index    |    Chromosome         Start    End      Strand      locus_tag
+  index    |    Chromosome         Start    End      Strand      Parent
   int64    |    category           int64    int64    category    object
-  -------  ---  -----------------  -------  -------  ----------  ---------------
-  3        |    CAJFCJ010000053.1  4882     5264     -           DGYR_LOCUS13733
-  7        |    CAJFCJ010000053.1  10474    10958    +           DGYR_LOCUS13734
-  8        |    CAJFCJ010000053.1  11028    11169    +           DGYR_LOCUS13734
-  9        |    CAJFCJ010000053.1  11227    11400    +           DGYR_LOCUS13734
+  -------  ---  -----------------  -------  -------  ----------  ---------------------
+  3        |    CAJFCJ010000053.1  4882     5264     -           rna-DGYR_LOCUS13733
+  7        |    CAJFCJ010000053.1  10474    10958    +           rna-DGYR_LOCUS13734
+  8        |    CAJFCJ010000053.1  11028    11169    +           rna-DGYR_LOCUS13734
+  9        |    CAJFCJ010000053.1  11227    11400    +           rna-DGYR_LOCUS13734
   ...      |    ...                ...      ...      ...         ...
-  141      |    CAJFCJ010000025.1  2753     2851     -           DGYR_LOCUS12552
-  142      |    CAJFCJ010000025.1  2593     2693     -           DGYR_LOCUS12552
-  143      |    CAJFCJ010000025.1  2354     2537     -           DGYR_LOCUS12552
-  144      |    CAJFCJ010000025.1  1909     2294     -           DGYR_LOCUS12552
+  141      |    CAJFCJ010000025.1  2753     2851     -           rna-DGYR_LOCUS12552-2
+  142      |    CAJFCJ010000025.1  2593     2693     -           rna-DGYR_LOCUS12552-2
+  143      |    CAJFCJ010000025.1  2354     2537     -           rna-DGYR_LOCUS12552-2
+  144      |    CAJFCJ010000025.1  1909     2294     -           rna-DGYR_LOCUS12552-2
   PyRanges with 57 rows, 5 columns, and 1 index columns.
   Contains 3 chromosomes and 2 strands.
 
@@ -49,13 +49,14 @@ transcript sequences in the ``gre`` object, using the software Infernal:
 
   >>> rh = pr.example_data.rfam_hits
   >>> rh = rh[ ['target_name', 'seq_from', 'seq_to', 'strand', 'query_name', 'mdl_from', 'mdl_to'] ]
-  >>> rh.head()
-         target_name  seq_from  seq_to strand query_name  mdl_from  mdl_to
-  0  DGYR_LOCUS12552       804     896      +        S15         1     117
-  1  DGYR_LOCUS12552       604     648      +       GAIT         1      71
-  2  DGYR_LOCUS12552       504     548      +       GAIT         1      71
-  3  DGYR_LOCUS13738      1641    1678      +    REN-SRE         1      37
-  4  DGYR_LOCUS14091       137      43      -  IFN_gamma         1     169
+  >>> rh.head() # doctest: +NORMALIZE_WHITESPACE
+               target_name  seq_from  seq_to strand query_name  mdl_from  mdl_to
+  0    rna-DGYR_LOCUS12552       267     311      +       GAIT         1      71
+  1  rna-DGYR_LOCUS12552-2       288     332      +       GAIT         1      71
+  2    rna-DGYR_LOCUS13738      1641    1678      +    REN-SRE         1      37
+  3    rna-DGYR_LOCUS14091       137      43      -  IFN_gamma         1     169
+  4    rna-DGYR_LOCUS14091       547     616      +     snoZ30         1      97
+
 
 Above, the ``target_name`` column contains the transcript IDs, which are
 the same as the ``ID`` column in the ``gre`` object. Then we have coordinates that define the alignment between
@@ -64,51 +65,49 @@ portions of those transcripts and one of the RNA motifs (query models) in the Rf
 Let's convert the ``rh`` object to a PyRanges object, taking care of switching from 1-based to 0-based coordinates:
 
   >>> rh = rh.rename(columns={'target_name':'Chromosome', 'seq_from':'Start', 'seq_to':'End', 'strand':'Strand'})
-  >>> rh = pr.PyRanges(rh).sort_ranges()
+  >>> rh = pr.PyRanges(rh)
   >>> rh['Start'] -= 1  # convert to 0-based coordinates
   >>> rh
-  index    |    Chromosome       Start    End      Strand    query_name    mdl_from    mdl_to
-  int64    |    object           int64    int64    object    object        int64       int64
-  -------  ---  ---------------  -------  -------  --------  ------------  ----------  --------
-  2        |    DGYR_LOCUS12552  503      548      +         GAIT          1           71
-  1        |    DGYR_LOCUS12552  603      648      +         GAIT          1           71
-  0        |    DGYR_LOCUS12552  803      896      +         S15           1           117
-  28       |    DGYR_LOCUS12552  1788     1703     -         psRNA6        242         333
-  ...      |    ...              ...      ...      ...       ...           ...         ...
-  24       |    DGYR_LOCUS14095  320      358      +         TtnuCD28      6           48
-  19       |    DGYR_LOCUS14095  901      816      -         IMES-3        1           149
-  22       |    DGYR_LOCUS14095  510      449      -         MESTIT1_1     60          124
-  21       |    DGYR_LOCUS14095  173      112      -         MESTIT1_1     60          124
-  PyRanges with 37 rows, 7 columns, and 1 index columns.
-  Contains 11 chromosomes and 2 strands.
+  index    |    Chromosome             Start    End      Strand    query_name    mdl_from    mdl_to
+  int64    |    object                 int64    int64    object    object        int64       int64
+  -------  ---  ---------------------  -------  -------  --------  ------------  ----------  --------
+  0        |    rna-DGYR_LOCUS12552    266      311      +         GAIT          1           71
+  1        |    rna-DGYR_LOCUS12552-2  287      332      +         GAIT          1           71
+  2        |    rna-DGYR_LOCUS13738    1640     1678     +         REN-SRE       1           37
+  3        |    rna-DGYR_LOCUS14091    136      43       -         IFN_gamma     1           169
+  ...      |    ...                    ...      ...      ...       ...           ...         ...
+  31       |    rna-DGYR_LOCUS13737    549      600      +         mir-3047      1           61
+  32       |    rna-DGYR_LOCUS13737    543      605      +         mir-3156      1           77
+  33       |    rna-DGYR_LOCUS13737    529      612      +         MIR1523       1           92
+  34       |    rna-DGYR_LOCUS13737    549      600      +         MIR8001       1           67
+  PyRanges with 35 rows, 7 columns, and 1 index columns.
+  Contains 13 chromosomes and 2 strands.
   Invalid ranges:
-    * 15 intervals are empty or negative length (end <= start). See indexes: 28, 7, 6, ...
-
+    * 15 intervals are empty or negative length (end <= start). See indexes: 3, 5, 6, ...
 
 Infernal, like other programs, reports negative stranded hits with Start and End reversed. Let's fix that:
 
   >>> rh.loc[ rh.Strand == '-', ['Start', 'End'] ] = rh.loc[ rh.Strand == '-', ['End', 'Start'] ].values
-  >>> rh
-  index    |    Chromosome       Start    End      Strand    query_name    mdl_from    mdl_to
-  int64    |    object           int64    int64    object    object        int64       int64
-  -------  ---  ---------------  -------  -------  --------  ------------  ----------  --------
-  2        |    DGYR_LOCUS12552  503      548      +         GAIT          1           71
-  1        |    DGYR_LOCUS12552  603      648      +         GAIT          1           71
-  0        |    DGYR_LOCUS12552  803      896      +         S15           1           117
-  28       |    DGYR_LOCUS12552  1703     1788     -         psRNA6        242         333
-  ...      |    ...              ...      ...      ...       ...           ...         ...
-  24       |    DGYR_LOCUS14095  320      358      +         TtnuCD28      6           48
-  19       |    DGYR_LOCUS14095  816      901      -         IMES-3        1           149
-  22       |    DGYR_LOCUS14095  449      510      -         MESTIT1_1     60          124
-  21       |    DGYR_LOCUS14095  112      173      -         MESTIT1_1     60          124
-  PyRanges with 37 rows, 7 columns, and 1 index columns.
-  Contains 11 chromosomes and 2 strands.
-
+  >>> rh # doctest: +NORMALIZE_WHITESPACE
+  index    |    Chromosome             Start    End      Strand    query_name    mdl_from    mdl_to
+  int64    |    object                 int64    int64    object    object        int64       int64
+  -------  ---  ---------------------  -------  -------  --------  ------------  ----------  --------
+  0        |    rna-DGYR_LOCUS12552    266      311      +         GAIT          1           71
+  1        |    rna-DGYR_LOCUS12552-2  287      332      +         GAIT          1           71
+  2        |    rna-DGYR_LOCUS13738    1640     1678     +         REN-SRE       1           37
+  3        |    rna-DGYR_LOCUS14091    43       136      -         IFN_gamma     1           169
+  ...      |    ...                    ...      ...      ...       ...           ...         ...
+  31       |    rna-DGYR_LOCUS13737    549      600      +         mir-3047      1           61
+  32       |    rna-DGYR_LOCUS13737    543      605      +         mir-3156      1           77
+  33       |    rna-DGYR_LOCUS13737    529      612      +         MIR1523       1           92
+  34       |    rna-DGYR_LOCUS13737    549      600      +         MIR8001       1           67
+  PyRanges with 35 rows, 7 columns, and 1 index columns.
+  Contains 13 chromosomes and 2 strands.
 
 Now we have the ``gre`` and ``rh`` objects, that represent global and local coordinate systems, respectively.
 Let's check that all ``Chromosome`` values in ``rh`` matches the ``ID`` column in ``gre``:
 
-  >>> bool( rh.Chromosome.isin(gre.locus_tag).all() )
+  >>> bool( rh.Chromosome.isin(gre.Parent).all() )
   True
 
 Mapping from local to global ranges
@@ -123,44 +122,42 @@ Besides the two PyRanges objects, we also need to specify the columns in the glo
 that contains the identifier used as the Chromosome in the local range, provided by the ``global_on`` argument.
 The resulting PyRanges object, ``rhg``, contains the Rfam hits remapped to the genome coordinates:
 
-  >>> rhg = rh.map_to_global(gre, global_on='locus_tag')
+  >>> rhg = rh.map_to_global(gre, global_on='Parent')
   >>> rhg
   index    |    Chromosome         Start    End      Strand    query_name    mdl_from    mdl_to
   int64    |    category           int64    int64    object    object        int64       int64
   -------  ---  -----------------  -------  -------  --------  ------------  ----------  --------
-  2        |    CAJFCJ010000025.1  2598     2643     -         GAIT          1           71
+  0        |    CAJFCJ010000025.1  2598     2643     -         GAIT          1           71
   1        |    CAJFCJ010000025.1  2598     2643     -         GAIT          1           71
-  0        |    CAJFCJ010000025.1  2354     2387     -         S15           1           117
-  0        |    CAJFCJ010000025.1  2477     2537     -         S15           1           117
+  2        |    CAJFCJ010000053.1  77544    77582    +         REN-SRE       1           37
+  3        |    CAJFCJ010000097.1  2291     2384     -         IFN_gamma     1           169
   ...      |    ...                ...      ...      ...       ...           ...         ...
-  19       |    CAJFCJ010000097.1  52162    52201    -         IMES-3        1           149
-  19       |    CAJFCJ010000097.1  52261    52307    -         IMES-3        1           149
-  22       |    CAJFCJ010000097.1  51795    51856    -         MESTIT1_1     60          124
-  21       |    CAJFCJ010000097.1  51458    51519    -         MESTIT1_1     60          124
-  PyRanges with 41 rows, 7 columns, and 1 index columns (with 4 index duplicates).
+  31       |    CAJFCJ010000053.1  39708    39759    +         mir-3047      1           61
+  32       |    CAJFCJ010000053.1  39702    39764    +         mir-3156      1           77
+  33       |    CAJFCJ010000053.1  39688    39771    +         MIR1523       1           92
+  34       |    CAJFCJ010000053.1  39708    39759    +         MIR8001       1           67
+  PyRanges with 38 rows, 7 columns, and 1 index columns (with 3 index duplicates).
   Contains 3 chromosomes and 2 strands.
-
 
 Note that the transcript identifiers are now missing. To keep them, we can use the ``keep_id`` argument.
 Analogously, we can record the local coordinates by using the ``keep_loc`` argument:
 
-  >>> rh.map_to_global(gre, global_on='locus_tag', keep_id=True, keep_loc=True).drop(
+  >>> rh.map_to_global(gre, global_on='Parent', keep_id=True, keep_loc=True).drop(
   ...    columns=['query_name', 'mdl_from','mdl_to']) # dropping some columns to allow display
-  index    |    Chromosome         Start    End      Strand    locus_tag        Start_local    End_local    ...
-  int64    |    category           int64    int64    object    object           int64          int64        ...
-  -------  ---  -----------------  -------  -------  --------  ---------------  -------------  -----------  -----
-  2        |    CAJFCJ010000025.1  2598     2643     -         DGYR_LOCUS12552  503            548          ...
-  1        |    CAJFCJ010000025.1  2598     2643     -         DGYR_LOCUS12552  603            648          ...
-  0        |    CAJFCJ010000025.1  2354     2387     -         DGYR_LOCUS12552  803            896          ...
-  0        |    CAJFCJ010000025.1  2477     2537     -         DGYR_LOCUS12552  803            896          ...
-  ...      |    ...                ...      ...      ...       ...              ...            ...          ...
-  19       |    CAJFCJ010000097.1  52162    52201    -         DGYR_LOCUS14095  816            901          ...
-  19       |    CAJFCJ010000097.1  52261    52307    -         DGYR_LOCUS14095  816            901          ...
-  22       |    CAJFCJ010000097.1  51795    51856    -         DGYR_LOCUS14095  449            510          ...
-  21       |    CAJFCJ010000097.1  51458    51519    -         DGYR_LOCUS14095  112            173          ...
-  PyRanges with 41 rows, 8 columns, and 1 index columns (with 4 index duplicates). (1 columns not shown: "Strand_local").
+  index    |    Chromosome         Start    End      Strand    Parent                 Start_local    End_local    ...
+  int64    |    category           int64    int64    object    object                 int64          int64        ...
+  -------  ---  -----------------  -------  -------  --------  ---------------------  -------------  -----------  -----
+  0        |    CAJFCJ010000025.1  2598     2643     -         rna-DGYR_LOCUS12552    266            311          ...
+  1        |    CAJFCJ010000025.1  2598     2643     -         rna-DGYR_LOCUS12552-2  287            332          ...
+  2        |    CAJFCJ010000053.1  77544    77582    +         rna-DGYR_LOCUS13738    1640           1678         ...
+  3        |    CAJFCJ010000097.1  2291     2384     -         rna-DGYR_LOCUS14091    43             136          ...
+  ...      |    ...                ...      ...      ...       ...                    ...            ...          ...
+  31       |    CAJFCJ010000053.1  39708    39759    +         rna-DGYR_LOCUS13737    549            600          ...
+  32       |    CAJFCJ010000053.1  39702    39764    +         rna-DGYR_LOCUS13737    543            605          ...
+  33       |    CAJFCJ010000053.1  39688    39771    +         rna-DGYR_LOCUS13737    529            612          ...
+  34       |    CAJFCJ010000053.1  39708    39759    +         rna-DGYR_LOCUS13737    549            600          ...
+  PyRanges with 38 rows, 8 columns, and 1 index columns (with 3 index duplicates). (1 columns not shown: "Strand_local").
   Contains 3 chromosomes and 2 strands.
-
 
 Let's now map intervals relative to **protein sequences** to genome coordinates.
 First, we obtain the coding sequences (CDS) from the original GFF file, and translate them to protein sequences (see
@@ -223,18 +220,18 @@ Now we're ready to map these positions to the genome coordinates. Let's also fet
   >>> genome_pos = cds_pos.map_to_global(grc, global_on='ID', keep_id=True)
   >>> genome_pos['Sequence'] = genome_pos.get_sequence(genome_file).str.upper()
   >>> genome_pos
-  index    |    Chromosome         Start    AminoAcid    End      ID                Strand    Sequence
-  int64    |    category           int64    object       int64    object            object    object
-  -------  ---  -----------------  -------  -----------  -------  ----------------  --------  ----------
-  0        |    CAJFCJ010000025.1  3114     K            3117     cds-CAD5125114.1  -         AAA
-  1        |    CAJFCJ010000025.1  2797     K            2800     cds-CAD5125114.1  -         AAG
-  2        |    CAJFCJ010000025.1  2767     K            2770     cds-CAD5125114.1  -         AAA
-  3        |    CAJFCJ010000025.1  2755     K            2758     cds-CAD5125114.1  -         AAA
-  ...      |    ...                ...      ...          ...      ...               ...       ...
-  457      |    CAJFCJ010000097.1  53008    K            53011    cds-CAD5126878.1  +         AAG
-  458      |    CAJFCJ010000097.1  53341    K            53344    cds-CAD5126878.1  +         AAA
-  459      |    CAJFCJ010000097.1  53344    K            53347    cds-CAD5126878.1  +         AAA
-  460      |    CAJFCJ010000097.1  53368    K            53371    cds-CAD5126878.1  +         AAA
+  index    |    Chromosome         Start    AminoAcid    End      ID                Strand      Sequence
+  int64    |    category           int64    object       int64    object            category    object
+  -------  ---  -----------------  -------  -----------  -------  ----------------  ----------  ----------
+  0        |    CAJFCJ010000025.1  3114     K            3117     cds-CAD5125114.1  -           AAA
+  1        |    CAJFCJ010000025.1  2797     K            2800     cds-CAD5125114.1  -           AAG
+  2        |    CAJFCJ010000025.1  2767     K            2770     cds-CAD5125114.1  -           AAA
+  3        |    CAJFCJ010000025.1  2755     K            2758     cds-CAD5125114.1  -           AAA
+  ...      |    ...                ...      ...          ...      ...               ...         ...
+  457      |    CAJFCJ010000097.1  53008    K            53011    cds-CAD5126878.1  +           AAG
+  458      |    CAJFCJ010000097.1  53341    K            53344    cds-CAD5126878.1  +           AAA
+  459      |    CAJFCJ010000097.1  53344    K            53347    cds-CAD5126878.1  +           AAA
+  460      |    CAJFCJ010000097.1  53368    K            53371    cds-CAD5126878.1  +           AAA
   PyRanges with 466 rows, 7 columns, and 1 index columns (with 5 index duplicates).
   Contains 3 chromosomes and 2 strands.
 
@@ -242,20 +239,21 @@ In the genetic code, the codons for lysine are 'AAA' or 'AAG', which fits what w
 One last important observation: note the warning above about **index duplicates**. Let's take a look at them:
 
   >>> genome_pos[genome_pos.index.duplicated(keep=False)]
-  index    |    Chromosome         Start    AminoAcid    End      ID                Strand    Sequence
-  int64    |    category           int64    object       int64    object            object    object
-  -------  ---  -----------------  -------  -----------  -------  ----------------  --------  ----------
-  234      |    CAJFCJ010000053.1  77393    K            77395    cds-CAD5126496.1  +         AA
-  234      |    CAJFCJ010000053.1  77458    K            77459    cds-CAD5126496.1  +         G
-  282      |    CAJFCJ010000053.1  89719    K            89721    cds-CAD5126498.1  -         AA
-  282      |    CAJFCJ010000053.1  89660    K            89661    cds-CAD5126498.1  -         G
-  ...      |    ...                ...      ...          ...      ...               ...       ...
-  422      |    CAJFCJ010000097.1  52381    K            52382    cds-CAD5126877.1  +         A
-  422      |    CAJFCJ010000097.1  52446    K            52448    cds-CAD5126877.1  +         AG
-  446      |    CAJFCJ010000097.1  52381    K            52382    cds-CAD5126878.1  +         A
-  446      |    CAJFCJ010000097.1  52446    K            52448    cds-CAD5126878.1  +         AG
+  index    |    Chromosome         Start    AminoAcid    End      ID                Strand      Sequence
+  int64    |    category           int64    object       int64    object            category    object
+  -------  ---  -----------------  -------  -----------  -------  ----------------  ----------  ----------
+  234      |    CAJFCJ010000053.1  77393    K            77395    cds-CAD5126496.1  +           AA
+  234      |    CAJFCJ010000053.1  77458    K            77459    cds-CAD5126496.1  +           G
+  282      |    CAJFCJ010000053.1  89719    K            89721    cds-CAD5126498.1  -           AA
+  282      |    CAJFCJ010000053.1  89660    K            89661    cds-CAD5126498.1  -           G
+  ...      |    ...                ...      ...          ...      ...               ...         ...
+  422      |    CAJFCJ010000097.1  52381    K            52382    cds-CAD5126877.1  +           A
+  422      |    CAJFCJ010000097.1  52446    K            52448    cds-CAD5126877.1  +           AG
+  446      |    CAJFCJ010000097.1  52381    K            52382    cds-CAD5126878.1  +           A
+  446      |    CAJFCJ010000097.1  52446    K            52448    cds-CAD5126878.1  +           AG
   PyRanges with 10 rows, 7 columns, and 1 index columns (with 5 index duplicates).
   Contains 2 chromosomes and 2 strands.
+
 
 This is because the codon for some amino acids are split between two exons.
 In more general terms, this is an effect of mapping local features to a global coordinate system: if
@@ -277,18 +275,18 @@ map them to transcript coordinates.
 Let's remind ourselves of the ``gre`` object, which contains the transcript coordinates:
 
   >>> gre
-  index    |    Chromosome         Start    End      Strand      locus_tag
+  index    |    Chromosome         Start    End      Strand      Parent
   int64    |    category           int64    int64    category    object
-  -------  ---  -----------------  -------  -------  ----------  ---------------
-  3        |    CAJFCJ010000053.1  4882     5264     -           DGYR_LOCUS13733
-  7        |    CAJFCJ010000053.1  10474    10958    +           DGYR_LOCUS13734
-  8        |    CAJFCJ010000053.1  11028    11169    +           DGYR_LOCUS13734
-  9        |    CAJFCJ010000053.1  11227    11400    +           DGYR_LOCUS13734
+  -------  ---  -----------------  -------  -------  ----------  ---------------------
+  3        |    CAJFCJ010000053.1  4882     5264     -           rna-DGYR_LOCUS13733
+  7        |    CAJFCJ010000053.1  10474    10958    +           rna-DGYR_LOCUS13734
+  8        |    CAJFCJ010000053.1  11028    11169    +           rna-DGYR_LOCUS13734
+  9        |    CAJFCJ010000053.1  11227    11400    +           rna-DGYR_LOCUS13734
   ...      |    ...                ...      ...      ...         ...
-  141      |    CAJFCJ010000025.1  2753     2851     -           DGYR_LOCUS12552
-  142      |    CAJFCJ010000025.1  2593     2693     -           DGYR_LOCUS12552
-  143      |    CAJFCJ010000025.1  2354     2537     -           DGYR_LOCUS12552
-  144      |    CAJFCJ010000025.1  1909     2294     -           DGYR_LOCUS12552
+  141      |    CAJFCJ010000025.1  2753     2851     -           rna-DGYR_LOCUS12552-2
+  142      |    CAJFCJ010000025.1  2593     2693     -           rna-DGYR_LOCUS12552-2
+  143      |    CAJFCJ010000025.1  2354     2537     -           rna-DGYR_LOCUS12552-2
+  144      |    CAJFCJ010000025.1  1909     2294     -           rna-DGYR_LOCUS12552-2
   PyRanges with 57 rows, 5 columns, and 1 index columns.
   Contains 3 chromosomes and 2 strands.
 
@@ -344,26 +342,26 @@ Now, we want to map these positions to the transcript coordinates. Function
 For each motif, we need to decide which transcript we want to use as reference
 coordinate system. By default, it will use all transcripts that overlap the motif:
 
-  >>> gre_matches = matches.map_to_local(gre, ref_on='locus_tag')
+  >>> gre_matches = matches.map_to_local(gre, ref_on='Parent')
   >>> gre_matches
-  index    |    Chromosome       Start    End      Strand    Sequence
-  int64    |    object           int64    int64    object    object
-  -------  ---  ---------------  -------  -------  --------  ----------
-  28       |    DGYR_LOCUS13734  1142     1148     +         AATAAA
-  29       |    DGYR_LOCUS13734  1416     1422     +         AATAAA
-  30       |    DGYR_LOCUS13734  2106     2112     +         AATAAA
-  31       |    DGYR_LOCUS13734  2232     2238     +         AATAAA
-  ...      |    ...              ...      ...      ...       ...
-  617      |    DGYR_LOCUS14091  980      986      -         AATAAA
-  618      |    DGYR_LOCUS14091  774      780      -         AATAAA
-  619      |    DGYR_LOCUS14091  265      271      -         AATAAA
-  620      |    DGYR_LOCUS14091  36       42       -         AATAAA
+  index    |    Chromosome           Start    End      Strand    Sequence
+  int64    |    object               int64    int64    object    object
+  -------  ---  -------------------  -------  -------  --------  ----------
+  28       |    rna-DGYR_LOCUS13734  1142     1148     +         AATAAA
+  29       |    rna-DGYR_LOCUS13734  1416     1422     +         AATAAA
+  30       |    rna-DGYR_LOCUS13734  2106     2112     +         AATAAA
+  31       |    rna-DGYR_LOCUS13734  2232     2238     +         AATAAA
+  ...      |    ...                  ...      ...      ...       ...
+  617      |    rna-DGYR_LOCUS14091  980      986      -         AATAAA
+  618      |    rna-DGYR_LOCUS14091  774      780      -         AATAAA
+  619      |    rna-DGYR_LOCUS14091  265      271      -         AATAAA
+  620      |    rna-DGYR_LOCUS14091  36       42       -         AATAAA
   PyRanges with 59 rows, 5 columns, and 1 index columns (with 2 index duplicates).
-  Contains 12 chromosomes and 2 strands.
+  Contains 14 chromosomes and 2 strands.
 
-As before, you have options to retain metadata, in this case from the global ranges:
+åAs before, you have options to retain metadata, in this case from the global ranges:
 
-  >>> matches.map_to_local(gre, ref_on='locus_tag', keep_chrom=True, keep_loc=True).columns
+  >>> matches.map_to_local(gre, ref_on='Parent', keep_chrom=True, keep_loc=True).columns
   Index(['Chromosome', 'Start', 'End', 'Strand', 'Sequence', 'Chromosome_global',
          'Start_global', 'End_global', 'Strand_global'],
         dtype='object')

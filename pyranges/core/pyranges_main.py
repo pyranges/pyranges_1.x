@@ -55,7 +55,7 @@ from pyranges.core.pyranges_helpers import (
 from pyranges.core.tostring import tostring
 from pyranges.methods.complement import _complement
 from pyranges.methods.interval_metrics import compute_interval_metrics
-from pyranges.methods.map_to_global import _map_to_global
+from pyranges.methods.map_to_global import _map_to_global_pandas
 from pyranges.methods.map_to_local import _map_to_local
 from pyranges.methods.sort import sort_factorize_dict
 from pyranges.range_frame.range_frame import RangeFrame
@@ -1620,10 +1620,10 @@ class PyRanges(RangeFrame):
         -------  ---  ------------  -------  -------  --------  --------
               0  |    chr1              190      200  +         q
               0  |    chr1              300      310  +         q
-              1  |    chr1             1100     1120  -         w
               1  |    chr1             1030     1050  -         w
-              2  |    chr1             1100     1150  +         e
+              1  |    chr1             1100     1120  -         w
               2  |    chr1             1030     1050  +         e
+              2  |    chr1             1100     1150  +         e
         PyRanges with 6 rows, 5 columns, and 1 index columns (with 3 index duplicates).
         Contains 1 chromosomes and 2 strands.
 
@@ -1646,8 +1646,11 @@ class PyRanges(RangeFrame):
         if (self.has_strand and not self.strand_valid) or (gr.has_strand and not gr.strand_valid):
             msg = "Invalid strands detected! map_to_global needs PyRanges with valid strands, or no Strand at all)."
             raise AssertionError(msg)
+        if not self.index.is_unique:
+            msg = "map_to_global does not support PyRanges with non-unique indices."
+            raise AssertionError(msg)
 
-        return _map_to_global(
+        return _map_to_global_pandas(
             local_gr=self, global_gr=gr, global_on=global_on, local_on=local_on, keep_id=keep_id, keep_loc=keep_loc
         )
 
@@ -4513,6 +4516,20 @@ class PyRanges(RangeFrame):
         PyRanges with 2 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
+        Note that upstream regions may extend beyond the start of the chromosome, resulting in invalid ranges.
+        See clip_ranges() to fix this.
+
+        >>> ex.downstream(50, group_by='Tx')
+          index  |    Chromosome      Start      End  Strand    Tx
+          int64  |    object          int64    int64  object    object
+        -------  ---  ------------  -------  -------  --------  --------
+              1  |    chr1               15       65  +         tx1
+              2  |    chr1              -20       30  -         tx2
+        PyRanges with 2 rows, 5 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+        Invalid ranges:
+          * 1 starts or ends are < 0. See indexes: 2
+
         """
         if length <= 0:
             msg = "`length` must be a positive integer."
@@ -4899,12 +4916,12 @@ class PyRanges(RangeFrame):
 
     def group_cumsum(
         self,
-        *,
         group_by: VALID_BY_TYPES = None,
+        *,
         use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
         cumsum_start_column: str | None = None,
         cumsum_end_column: str | None = None,
-        sort: bool = True,
+        keep_order: bool = True,
     ) -> "PyRanges":
         """Strand-aware cumulative length of every interval *within each chromosome-level group*.
 
@@ -4927,8 +4944,8 @@ class PyRanges(RangeFrame):
         use_strand: {"auto", True, False}, default: "auto"
             Whether negative strand intervals should be sliced in descending order, meaning 5' to 3'.
             The default "auto" means True if PyRanges has valid strands (see .strand_valid).
-        sort : bool, default True
-            Whether to sort the results by the original row order.
+        keep_order : bool, default True
+            Whether to output results in the original row order.
 
         Returns
         -------
@@ -4982,7 +4999,7 @@ class PyRanges(RangeFrame):
             ends=self[END_COL].to_numpy(),
             groups=group_ids,
             negative_strand=forward,
-            sort=sort,
+            sort=keep_order,
         )
 
         res = self.take(idx).copy()  # type: ignore[arg-type]

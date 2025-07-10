@@ -57,7 +57,7 @@ def _map_to_local(
             use_strand="auto",
             cumsum_start_column=cumsum_start,
             cumsum_end_column=cumsum_end,
-            sort=False,
+            keep_order=False,
         )
         .rename(columns={ref_on: fixed_idcol})
     )
