@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -20,8 +21,8 @@ def _spliced_subseq(
     *,
     by: list[str],
     force_plus_strand: bool = False,
-    start: int = 0,
-    end: int | None = None,
+    start: int | Sequence[int] | np.ndarray = 0,
+    end: int | Sequence[int] | np.ndarray | None = None,
 ) -> pd.DataFrame:
     import ruranges
 
@@ -37,8 +38,8 @@ def _spliced_subseq(
         strand_flags=(df[STRAND_COL] == FORWARD_STRAND).to_numpy()
         if (STRAND_COL in df and not force_plus_strand)
         else np.ones(len(df), dtype=bool),
-        start=start,
-        end=end,
+        start=start,  # type: ignore[type]
+        end=end,  # type: ignore[type]
         force_plus_strand=force_plus_strand,
     )
 

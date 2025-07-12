@@ -2,7 +2,7 @@
 
 import logging
 import sys
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional, cast
 
@@ -2841,55 +2841,54 @@ class PyRanges(RangeFrame):
 
     def slice_ranges(
         self,
-        start: int = 0,
-        end: int | None = None,
+        start: int | Sequence[int] | np.ndarray = 0,
+        end: int | Sequence[int] | np.ndarray | None = None,
         group_by: VALID_BY_TYPES = None,
         use_strand: VALID_USE_STRAND_TYPE = "auto",
         *,
         count_introns: bool = False,
     ) -> "PyRanges":
-        """Slice ranges into subregions, using coordinates relative to intervals or groups (e.g. transcripts).
+        """Return sub-intervals of `self`, cut according to *start* and *end*.
 
-        The returned intervals are subregions of self, cut according to specifications.
-        Start and end are relative to the 5' end: 0 means the leftmost nucleotide for + strand
-        intervals, while it means the rightmost one for - strand.
-        This method also allows to manipulate groups of intervals (e.g. exons belonging to same transcripts)
-        through the 'group_by' argument. When using it, start and end refer to the spliced transcript coordinates,
-        meaning that introns are ignored in the count.
+        The slice window can be a single pair (scalar `start`, `end`) that is
+        applied to every row, **or** one value per row supplied as a 1-D sequence
+        or NumPy array.  When vectors are used their length must equal the number
+        of rows in `self`.
+
+        A positive coordinate is counted from the 5' end (left end on plus strand,
+        right end on minus strand).  A negative coordinate is counted from the 3'
+        end (for example `-1` is the last nucleotide).  `end=None` means “up to
+        the 3' end”.
 
         Parameters
         ----------
-        start : int
-            Start of subregion, 0-based and included, counting from the 5' end.
-            Use a negative int to count from the 3'  (e.g. -1 is the last nucleotide)
-
-        end : int, default None
-            End of subregion, 0-based and excluded, counting from the 5' end.
-            Use a negative int to count from the 3'  (e.g. -1 is the last nucleotide)
-            If None, the existing 3' end is returned.
-
-        group_by : list of str, default None
-            intervals are grouped by this/these ID column(s) beforehand, e.g. exons belonging to same transcripts
-
-        use_strand: {"auto", True, False}, default: "auto"
-            Whether strand is considered when interpreting the start and end arguments of this function.
-            If True, counting is from the 5' end (the leftmost coordinate for + strand and the rightmost for - strand).
-            If False, all intervals are processed like they reside on the + strand.
-            The default "auto" means True if PyRanges has valid strands (see .strand_valid).
-
+        start : int or 1-D array-like of int, default 0
+            Inclusive start offset.
+        end : int or 1-D array-like of int or None, default None
+            Exclusive end offset.  None means the existing 3' end.
+        group_by : str or list of str, optional
+            Column name(s) that define groups (for example exons in one
+            transcript).  If given, slicing is performed on the spliced
+            transcript; introns are ignored unless *count_introns* is True.
+        use_strand : {"auto", True, False}, default "auto"
+            If True the 5'/3' logic honours the strand column.  If False every
+            interval is treated as plus strand.  "auto" selects True when the
+            PyRanges has valid strand information.
         count_introns : bool, default False
-            If False (default), the start and end arguments refer to the spliced transcript coordinates,
-            meaning that introns are ignored in the count.
-            If True, the start and end arguments refer to the unspliced transcript coordinates.
+            If False (default) `start` and `end` refer to spliced coordinates
+            (introns ignored).  If True they refer to unspliced coordinates.
 
         Returns
         -------
         PyRanges
-            Subregion of self, subsequenced as specified by arguments
+            A new PyRanges object with the requested sub-intervals.
 
-        Note
-        ----
-        If the request goes out of bounds (e.g. requesting 100 nts for a 90nt region), only the existing portion is returned
+        Notes
+        -----
+        * Out-of-bounds requests are silently truncated to the existing span.
+        * Negative offsets are resolved after the transcript length is known,
+          so they always count from the 3' end of the (spliced or unspliced)
+          interval in question.
 
         See Also
         --------
