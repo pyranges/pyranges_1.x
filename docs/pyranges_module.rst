@@ -63,3 +63,19 @@ Most of the data is in the form of PyRanges objects:
   19       |    chr8          57916061   57916086   U0        0        +
   PyRanges with 20 rows, 6 columns, and 1 index columns.
   Contains 15 chromosomes and 2 strands.
+
+.. _pyranges_assistant:
+pyranges.assistant
+~~~~~~~~~~~~~~~~~~
+The ``pyranges.assistant`` object is a helper to use AI-based assistant to code with pyranges:
+
+  >>> pr.assistant
+  Utilities to instruct a AI coding assistant for pyranges prompts.
+
+  Get a prompt to copy-paste into an AI assistant to prime it for pyranges coding tasks:
+      >>> import pyranges as pr
+      >>> pr.assistant.prompt()
+
+  Make a file with pyranges documentation to upload to the AI assistant:
+      >>> pr.assistant.export_docs("pr_docs.txt")
+
