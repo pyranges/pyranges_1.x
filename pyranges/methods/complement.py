@@ -34,16 +34,27 @@ def _complement(
     grp_dtype: np.dtype[Any] = factorized.to_numpy(copy=False).dtype
 
     if chromsizes and chromsizes_col:
-        group_to_len = (
-            pd.DataFrame(
-                {
-                    "group_id": factorized,
-                    "length": df[chromsizes_col].replace(chromsizes),
-                }
-            )
+        the_chromsizes_col = df[chromsizes_col]
+        if isinstance(the_chromsizes_col.dtype, pd.CategoricalDtype):
+            # drop the categorical metadata; cheap view, no copy
+            the_chromsizes_col = the_chromsizes_col.astype(object)
+
+        #  vectorised lookup with no FutureWarning
+        lengths = (
+            the_chromsizes_col.map(chromsizes).astype(  # faster/cleaner than replace
+                pos_dtype, copy=False
+            )  # ensure same dtype as starts/ends
+        )
+
+        group_to_len = pd.DataFrame(
+            {
+                "group_id": factorized,
+                "length": lengths,
+            }
         ).drop_duplicates()
         chrom_len_ids = group_to_len["group_id"].to_numpy(grp_dtype)
         chrom_lens = group_to_len["length"].to_numpy(pos_dtype)
+
     else:
         chrom_len_ids = np.array([], dtype=grp_dtype)
         chrom_lens = np.array([], dtype=pos_dtype)

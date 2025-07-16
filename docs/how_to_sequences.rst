@@ -16,7 +16,7 @@ represented in the PyRanges object. Let's see an example with built-in data.
   >>> genome_file = pr.example_data.files['ncbi.fasta']
   >>> sg = pr.example_data.ncbi_gff
   >>> sg = sg[sg.Feature == 'CDS'].get_with_loc_columns('ID')
-  >>> sg = sg.sort_ranges().head(20)
+  >>> sg = sg.sort_ranges().head(20).copy()
   >>> sg
   index    |    Chromosome         Start    End      Strand      ID
   int64    |    category           int64    int64    category    object

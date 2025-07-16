@@ -665,7 +665,7 @@ Let's get the clusters that have more than one interval in them, using pandas ``
 
   >>> c = clu_cds.Cluster.value_counts()
   >>> multi_clusters = c[ c > 1 ].index
-  >>> multi_clu_cds = clu_cds[ clu_cds.Cluster.isin(multi_clusters) ]
+  >>> multi_clu_cds = clu_cds[ clu_cds.Cluster.isin(multi_clusters) ].copy()
   >>> multi_clu_cds
   index    |    Chromosome         Start    End      Strand      ID                Cluster
   int64    |    category           int64    int64    category    object            uint32
@@ -887,6 +887,21 @@ Finally, let's count how many non-redundant CDS intervals overlap our target reg
         0  |    CAJFCJ010000097.1     2248    53404        10
   PyRanges with 1 rows, 4 columns, and 1 index columns.
   Contains 1 chromosomes.
+
+AI coding assistant
+~~~~~~~~~~~~~~~~~~~
+
+Nowadays, coding is greatly facilitated by AI coding assistants (ChatGPT, Copilot, etc.).
+Pyranges provides methods to streamline the use of such tools to generate or modify pyranges codes.
+There are two main functions for this purpose. The first one is :func:`export_docs <pyranges.assistant.export_docs>`.
+It generates a text file with the documentation of all pyranges functionalities:
+
+  >>> pr.assistant.export_docs("pyranges_docs.txt")
+
+The second one is :func:`prompt <pyranges.assistant.prompt>`:
+
+  >>> pr.assistant.prompt()
+  'Act as an expert bioinformatician programmer experienced in pyranges (complete documentation attached for you to learn). Next, answer my requests for code by first explaining the workflow, followed by oneliner-style code snippets, as concise as possible but elegant, preceded by the text of task as commented code. Ensure you use pyranges v1 interface that you find here, rather than the v0, from which you may have seen examples before; v1 renamed many methods. '
 
 
 This concludes our tutorial. The next pages will delve into pyranges functionalities grouped by topic.

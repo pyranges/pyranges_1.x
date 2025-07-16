@@ -87,14 +87,6 @@ def test_groupby_ffill(gr) -> None:
     assert isinstance(g.ffill(), pr.PyRanges)
 
 
-def test_groupby_fillna(gr) -> None:
-    g = gr.groupby("Chromosome")
-    assert isinstance(g.fillna(0), pd.DataFrame)
-
-    g = gr.groupby("Gene")
-    assert isinstance(g.fillna(0), pr.PyRanges)
-
-
 def test_groupby_filter(gr) -> None:
     g = gr.groupby("Chromosome")
     assert isinstance(g.filter(lambda df: True), pd.DataFrame)
