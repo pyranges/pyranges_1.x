@@ -665,7 +665,7 @@ Let's get the clusters that have more than one interval in them, using pandas ``
 
   >>> c = clu_cds.Cluster.value_counts()
   >>> multi_clusters = c[ c > 1 ].index
-  >>> multi_clu_cds = clu_cds[ clu_cds.Cluster.isin(multi_clusters) ]
+  >>> multi_clu_cds = clu_cds[ clu_cds.Cluster.isin(multi_clusters) ].copy()
   >>> multi_clu_cds
   index    |    Chromosome         Start    End      Strand      ID                Cluster
   int64    |    category           int64    int64    category    object            uint32
