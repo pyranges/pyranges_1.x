@@ -6,9 +6,15 @@ import pandas as pd
 from tabulate import tabulate
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     import pyranges as pr
 
+import html as _html
+import re
+
 from pyranges import options
+from pyranges.range_frame.range_frame_validator import InvalidRangesReason
 
 
 @dataclass
@@ -174,3 +180,89 @@ def truncate_data(data: list[list[str]], max_col_width: int | None) -> list[list
                 new_row.append(item_str)
         truncated_data.append(new_row)
     return truncated_data
+
+
+# placed at the beginning of every HTML representation
+_html_header = """<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>"""
+
+# placed at the end of every HTML representation
+_html_footer = "</div>"
+
+
+def tohtml(self: "pr.RangeFrame", **kwargs) -> str:
+    """Return HTML representation, fit for Jupyter Notebook. Kwargs are passed to pandas.DataFrame.to_html."""
+    number_index_levels = self.index.nlevels
+    number_duplicated_indices = self.index.duplicated().sum()
+    has_duplicated_index = number_duplicated_indices > 0
+
+    html_max_rows = options.get_option("html_max_rows")
+    if html_max_rows is None:
+        html_max_rows = options.get_option("max_rows_to_show")
+    html_max_cols = options.get_option("html_max_cols")
+    max_column_names_to_show = options.get_option("max_column_names_to_show")
+
+    kwargs.setdefault("max_rows", html_max_rows)
+    kwargs.setdefault("max_cols", html_max_cols)
+    h = pd.DataFrame.to_html(self, **kwargs)
+
+    missing_message = ""
+    if html_max_cols < len(self.columns):
+        ## some columns are not shown in the HTML representation, let's find out which ones.
+        # We could infer them from the DataFrame and html_max_cols, but let's interrogate the HTML representation
+        # by Pandas. The current Pandas behavior is a bit strange (if you ask for 7 columns, it will show 6)
+        # so determine it dynamically may be more robust for the future
+
+        th_raw = re.findall(r"<thead>.*?</thead>", h, flags=re.DOTALL)[0]
+        th_cells = re.findall(r"<th[^>]*>(.*?)</th>", th_raw, flags=re.DOTALL)
+
+        # Decode entities like &amp; and strip whitespace
+        header_vals = [_html.unescape(t).strip() for t in th_cells]
+        header_vals = header_vals[1:]  # drop the index column
+        displayed = {h for h in header_vals if h != "…"}  # “…” is the placeholder
+
+        # Which DataFrame columns did NOT make it into the header?
+        missing = [c for c in map(str, self.columns) if c not in displayed]
+
+        missing_message = ""
+        if missing:
+            sample = ", ".join(f'"{c}"' for c in missing[:max_column_names_to_show])
+            if len(missing) > max_column_names_to_show:
+                sample += ", ..."
+            missing_message = f" ({len(missing)} columns not shown: {sample})"
+
+    contains_duplicates_string = (
+        f" (with {number_duplicated_indices} index duplicates)." if has_duplicated_index else "."
+    )
+
+    info = (
+        f"<p>"
+        f"{self.__class__.__name__} with {self.shape[0]} rows, "
+        f"{self.shape[1]} columns, and {number_index_levels} index columns{contains_duplicates_string}{missing_message}"
+        f"</p>"
+    )
+
+    if reasons := InvalidRangesReason.formatted_reasons_list(self):
+        info += f"<p>Invalid ranges:</p><p>{reasons}</p>"
+
+    # now cowardly checking if self is a PyRanges class (rather than RangeFrame) without importing PyRanges object
+    chrom_info: Callable[[], str] | None = getattr(self, "_chrom_and_strand_info", None)
+    if chrom_info is not None:  # “callable” is implied by the annotation
+        info += f"<p>{chrom_info()}.</p>"
+        # adding something like:
+        # Contains 6 chromosomes and 2 strands.
+        # Contains 6 chromosomes and 3 strands (including non-genomic strands: asd).
+
+    return _html_header + h + info + _html_footer
