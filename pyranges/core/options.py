@@ -11,6 +11,11 @@ class PyRangesOptions:
                 "how many columns listed in PyRanges repr when not all fit the screen width",
             ),
             "console_width": (None, "console width, affecting PyRanges representation (None for auto)"),
+            "html_max_cols": (20, "max number of columns to show as HTML (e.g. Jupyter), others are hidden"),
+            "html_max_rows": (
+                None,
+                "max n. of rows shown as HTML (e.g. Jupyter). If undefined, max_rows_to_show is used",
+            ),
         }
         self.options_default = self.options_in_use.copy()
 
@@ -99,9 +104,11 @@ class PyRangesOptions:
         # the console width.
         >>> import pyranges as pr
         >>> print(pr.options.display_options())
-        max_rows_to_show         :   8 (the max number of rows to show in PyRanges repr)
-        max_column_names_to_show :   3 (how many columns listed in PyRanges repr when not all fit the screen width)
-        console_width            : 120 (console width, affecting PyRanges representation (None for auto))
+        max_rows_to_show         :    8 (the max number of rows to show in PyRanges repr)
+        max_column_names_to_show :    3 (how many columns listed in PyRanges repr when not all fit the screen width)
+        console_width            :  120 (console width, affecting PyRanges representation (None for auto))
+        html_max_cols            :   20 (max number of columns to show as HTML (e.g. Jupyter), others are hidden)
+        html_max_rows            : None (max n. of rows shown as HTML (e.g. Jupyter). If undefined, max_rows_to_show is used)
 
         """
         max_len_k = max(len(k) for k in self.options_in_use)
