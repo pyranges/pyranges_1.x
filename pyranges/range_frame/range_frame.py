@@ -24,7 +24,7 @@ from pyranges.core.names import (
     CombineIntervalColumnsOperation,
 )
 from pyranges.core.pyranges_helpers import arg_to_list, factorize, factorize_binary
-from pyranges.core.tostring import tostring
+from pyranges.core.tostring import tohtml, tostring
 from pyranges.methods.complement_overlaps import _complement_overlaps
 from pyranges.methods.join import _both_dfs
 from pyranges.methods.merge import _merge
@@ -71,6 +71,9 @@ class RangeFrame(pd.DataFrame):
 
     def __repr__(self, max_col_width: int | None = None, max_total_width: int | None = None) -> str:
         return self.__str__(max_col_width=max_col_width, max_total_width=max_total_width)
+
+    def _repr_html_(self) -> str:
+        return tohtml(self)
 
     def merge_overlaps(
         self,

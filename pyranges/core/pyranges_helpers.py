@@ -120,7 +120,13 @@ def factorize_binary(
     if not by:
         return np.zeros(len(df), dtype=np.uint8), np.zeros(len(df2), dtype=np.uint8)
     _by = arg_to_list(by)
-    factorized = pd.concat([df[_by], df2[_by]], ignore_index=True).groupby(_by).ngroup().astype(np.uint32).to_numpy()
+    factorized = (
+        pd.concat([df[_by], df2[_by]], ignore_index=True)
+        .groupby(_by, observed=False)
+        .ngroup()
+        .astype(np.uint32)
+        .to_numpy()
+    )
     return factorized[: len(df)], factorized[len(df) :]
 
 

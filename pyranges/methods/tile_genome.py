@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+import numpy as np
 import pandas as pd
 
 from pyranges.core.names import CHROM_COL, END_COL, START_COL
@@ -87,24 +88,22 @@ def tile_genome(
     Contains 25 chromosomes.
 
     """
+    # obtain a PyRanges with regular tiles
     if isinstance(chromsizes, dict):
         chromsize_dict = chromsizes
-        chromosomes, ends = list(chromsizes.keys()), list(chromsizes.values())
-        df = pd.DataFrame({CHROM_COL: chromosomes, START_COL: 0, END_COL: ends})
-        chromsizes = pd.DataFrame(df)
+        df = pd.DataFrame({CHROM_COL: list(chromsizes), START_COL: 0, END_COL: list(chromsizes.values())})
+        chromsizes = df
     else:
         chromsize_dict = dict(zip(chromsizes[CHROM_COL], chromsizes[END_COL], strict=True))
 
-    gr = ensure_pyranges(chromsizes).sort_ranges().tile_ranges(tile_size)
+    gr = ensure_pyranges(chromsizes).sort_ranges().tile_ranges(tile_size).reset_index(drop=True)
 
-    return ensure_pyranges(
-        gr.reset_index(drop=True)
-        if full_last_tile
-        else gr.groupby(CHROM_COL).apply(_last_tile, sizes=chromsize_dict).reset_index(drop=True),
-    )
+    # truncate the last tile when requested
+    if not full_last_tile:
+        # map each row to its chromosome length
+        chrom_ends = gr[CHROM_COL].map(chromsize_dict)
 
+        # clip only those End values that run past the chromosome length
+        gr.loc[:, END_COL] = np.minimum(gr[END_COL].to_numpy(), chrom_ends.to_numpy())
 
-def _last_tile(df: pd.DataFrame, sizes: dict[str, int]) -> pd.DataFrame:
-    size = sizes[df.Chromosome.iloc[0]]
-    df.iloc[-1, [*df.columns].index(END_COL)] = size
-    return df
+    return ensure_pyranges(gr)

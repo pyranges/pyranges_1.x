@@ -1479,6 +1479,7 @@ class PyRanges(RangeFrame):
         local_on: str = "Chromosome",
         keep_id: bool = False,
         keep_loc: bool = False,
+        pep_to_cds: bool = False,
     ) -> "PyRanges":
         """Map intervals from a *local* reference frame (e.g. transcript) to *global* coordinates (e.g. genomic).
 
@@ -1511,6 +1512,10 @@ class PyRanges(RangeFrame):
             If True, keep the identifier column (Chromosome in `self`) in the output.
         keep_loc : bool, default False
             If True, keep the local location columns (Start, End, Strand) in the output.
+        pep_to_cds : bool, default False
+            If True, the function will assume that the intervals in `self` are
+            peptide coordinates and those in *gr* are CDS coordinates.
+            Thus, ``self`` coordinates are multiplied by 3 before mapping to global.
 
         Returns
         -------
@@ -1643,6 +1648,50 @@ class PyRanges(RangeFrame):
         PyRanges with 2 rows, 4 columns, and 1 index columns (with 1 index duplicates).
         Contains 1 chromosomes and 1 strands.
 
+        Mapping proteins to CDS global positions. Get some protein-based features:
+
+        >>> gr = pr.example_data.ncbi_gff
+        >>> grc = gr[gr.Feature == "CDS"].get_with_loc_columns('Parent')
+        >>> genome_file = pr.example_data.files['ncbi.fasta']
+        >>> cdss = grc.get_sequence(genome_file, group_by='Parent').str.upper()
+        >>> prots = pr.seqs.translate(cdss)
+        >>> z = [(seq_id, i, 'R') for seq_id, seq in prots.items() for i, char in enumerate(seq)  if char == 'R']
+        >>> z = pd.DataFrame(z, columns=['ID', 'Start', 'AminoAcid']).assign(End=lambda df: df.Start + 1 )
+        >>> arginines_pos =  pr.PyRanges(z.rename(columns={"ID": "Chromosome"}))
+        >>> arginines_pos
+        index    |    Chromosome             Start    AminoAcid    End
+        int64    |    object                 int64    object       int64
+        -------  ---  ---------------------  -------  -----------  -------
+        0        |    rna-DGYR_LOCUS12552    7        R            8
+        1        |    rna-DGYR_LOCUS12552    15       R            16
+        2        |    rna-DGYR_LOCUS12552    25       R            26
+        3        |    rna-DGYR_LOCUS12552    89       R            90
+        ...      |    ...                    ...      ...          ...
+        158      |    rna-DGYR_LOCUS14095-2  271      R            272
+        159      |    rna-DGYR_LOCUS14095-2  309      R            310
+        160      |    rna-DGYR_LOCUS14095-2  320      R            321
+        161      |    rna-DGYR_LOCUS14095-2  327      R            328
+        PyRanges with 162 rows, 4 columns, and 1 index columns.
+        Contains 17 chromosomes.
+
+        >>> genome_arginine_pos = arginines_pos.map_to_global(grc, "Parent", pep_to_cds=True, keep_id=True)
+        >>> genome_arginine_pos['codon'] = genome_arginine_pos.get_sequence(genome_file).str.upper()
+        >>> genome_arginine_pos
+        index    |    Chromosome         Start    AminoAcid    End      Parent                 Strand      codon
+        int64    |    category           int64    object       int64    object                 category    object
+        -------  ---  -----------------  -------  -----------  -------  ---------------------  ----------  --------
+        0        |    CAJFCJ010000025.1  2671     R            2674     rna-DGYR_LOCUS12552    -           CGT
+        1        |    CAJFCJ010000025.1  2647     R            2650     rna-DGYR_LOCUS12552    -           AGA
+        2        |    CAJFCJ010000025.1  2617     R            2620     rna-DGYR_LOCUS12552    -           AGA
+        3        |    CAJFCJ010000025.1  2369     R            2372     rna-DGYR_LOCUS12552    -           AGA
+        ...      |    ...                ...      ...          ...      ...                    ...         ...
+        159      |    CAJFCJ010000097.1  52993    R            52996    rna-DGYR_LOCUS14095-2  +           AGA
+        160      |    CAJFCJ010000097.1  53026    R            53027    rna-DGYR_LOCUS14095-2  +           A
+        160      |    CAJFCJ010000097.1  53339    R            53341    rna-DGYR_LOCUS14095-2  +           GA
+        161      |    CAJFCJ010000097.1  53359    R            53362    rna-DGYR_LOCUS14095-2  +           AGA
+        PyRanges with 164 rows, 7 columns, and 1 index columns (with 2 index duplicates).
+        Contains 3 chromosomes and 2 strands.
+
         """
         if (self.has_strand and not self.strand_valid) or (gr.has_strand and not gr.strand_valid):
             msg = "Invalid strands detected! map_to_global needs PyRanges with valid strands, or no Strand at all)."
@@ -1651,8 +1700,15 @@ class PyRanges(RangeFrame):
             msg = "map_to_global does not support PyRanges with non-unique indices."
             raise AssertionError(msg)
 
+        if pep_to_cds:
+            local = self.copy()
+            local["Start"] = local.Start * 3
+            local["End"] = local.End * 3
+        else:
+            local = self
+
         return _map_to_global_pandas(
-            local_gr=self, global_gr=gr, global_on=global_on, local_on=local_on, keep_id=keep_id, keep_loc=keep_loc
+            local_gr=local, global_gr=gr, global_on=global_on, local_on=local_on, keep_id=keep_id, keep_loc=keep_loc
         )
 
     def map_to_local(

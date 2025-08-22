@@ -235,6 +235,26 @@ Now we're ready to map these positions to the genome coordinates. Let's also fet
   PyRanges with 466 rows, 7 columns, and 1 index columns (with 5 index duplicates).
   Contains 3 chromosomes and 2 strands.
 
+Because protein mapping to genome coordinates is common, map_to_:func:`map_to_global <pyranges.PyRanges.map_to_global>`
+provides a shortcut for this operation, through its ``pep_to_cds`` argument, which effectively multiplies the local
+coordinates by 3 before mapping to the global coordinates. So this is equivalent to the previous operation:
+
+  >>> aa_pos.map_to_global(grc, global_on='ID', keep_id=True, pep_to_cds=True)
+  index    |    Chromosome         Start    AminoAcid    End      ID                Strand
+  int64    |    category           int64    object       int64    object            category
+  -------  ---  -----------------  -------  -----------  -------  ----------------  ----------
+  0        |    CAJFCJ010000025.1  3114     K            3117     cds-CAD5125114.1  -
+  1        |    CAJFCJ010000025.1  2797     K            2800     cds-CAD5125114.1  -
+  2        |    CAJFCJ010000025.1  2767     K            2770     cds-CAD5125114.1  -
+  3        |    CAJFCJ010000025.1  2755     K            2758     cds-CAD5125114.1  -
+  ...      |    ...                ...      ...          ...      ...               ...
+  457      |    CAJFCJ010000097.1  53008    K            53011    cds-CAD5126878.1  +
+  458      |    CAJFCJ010000097.1  53341    K            53344    cds-CAD5126878.1  +
+  459      |    CAJFCJ010000097.1  53344    K            53347    cds-CAD5126878.1  +
+  460      |    CAJFCJ010000097.1  53368    K            53371    cds-CAD5126878.1  +
+  PyRanges with 466 rows, 6 columns, and 1 index columns (with 5 index duplicates).
+  Contains 3 chromosomes and 2 strands.
+
 In the genetic code, the codons for lysine are 'AAA' or 'AAG', which fits what we see.
 One last important observation: note the warning above about **index duplicates**. Let's take a look at them:
 
@@ -367,5 +387,97 @@ coordinate system. By default, it will use all transcripts that overlap the moti
         dtype='object')
 
 
+Let's look at another use case.
+For example, we way have CDS and exon coordinates, and we want to map the CDS coordinates to the exon coordinates.
+In other words, we want to know where CDS intervals reside along the full mRNA transcripts.
 
+Let's inspect some data inside the ``gr`` object, focusing on a single identifier:
 
+  >>> pr.options.set_option('max_rows_to_show', 20)
+  >>> some_id = 'rna-DGYR_LOCUS12552-2'
+  >>> gr[gr.Parent == some_id].get_with_loc_columns(['Feature', 'Parent'])
+    index  |    Chromosome           Start      End  Strand      Feature     Parent
+    int64  |    category             int64    int64  category    category    object
+  -------  ---  -----------------  -------  -------  ----------  ----------  ---------------------
+      140  |    CAJFCJ010000025.1     3111     3250  -           exon        rna-DGYR_LOCUS12552-2
+      141  |    CAJFCJ010000025.1     2753     2851  -           exon        rna-DGYR_LOCUS12552-2
+      142  |    CAJFCJ010000025.1     2593     2693  -           exon        rna-DGYR_LOCUS12552-2
+      143  |    CAJFCJ010000025.1     2354     2537  -           exon        rna-DGYR_LOCUS12552-2
+      144  |    CAJFCJ010000025.1     1909     2294  -           exon        rna-DGYR_LOCUS12552-2
+      145  |    CAJFCJ010000025.1     3111     3153  -           CDS         rna-DGYR_LOCUS12552-2
+      146  |    CAJFCJ010000025.1     2753     2851  -           CDS         rna-DGYR_LOCUS12552-2
+      147  |    CAJFCJ010000025.1     2593     2693  -           CDS         rna-DGYR_LOCUS12552-2
+      148  |    CAJFCJ010000025.1     2354     2537  -           CDS         rna-DGYR_LOCUS12552-2
+      149  |    CAJFCJ010000025.1     2174     2294  -           CDS         rna-DGYR_LOCUS12552-2
+  PyRanges with 10 rows, 6 columns, and 1 index columns.
+  Contains 1 chromosomes and 1 strands.
+
+You can see that CDS and exon belonging to the same transcript have the same ``Parent`` value.
+Therefore, we can easily map the CDS coordinates to the exon coordinates of the corresponding transcript,
+by pairing (overlapping) CDS and exon intervals with the same ``Parent`` value:
+
+  >>> pr.options.reset_options()
+  >>> cds = gr[gr.Feature == 'CDS'].get_with_loc_columns(['Feature', 'Parent'])
+  >>> exons = gr[gr.Feature == 'exon'].get_with_loc_columns(['Feature', 'Parent'])
+  >>> cds_local = cds.map_to_local(exons, ref_on='Parent', match_by='Parent')
+  >>> cds_local
+  index    |    Chromosome             Start    End      Strand    Feature
+  int64    |    object                 int64    int64    object    category
+  -------  ---  ---------------------  -------  -------  --------  ----------
+  0        |    rna-DGYR_LOCUS13733    1        382      +         CDS
+  1        |    rna-DGYR_LOCUS13734    258      484      +         CDS
+  2        |    rna-DGYR_LOCUS13734    484      625      +         CDS
+  3        |    rna-DGYR_LOCUS13734    625      798      +         CDS
+  ...      |    ...                    ...      ...      ...       ...
+  52       |    rna-DGYR_LOCUS12552-2  139      237      +         CDS
+  53       |    rna-DGYR_LOCUS12552-2  237      337      +         CDS
+  54       |    rna-DGYR_LOCUS12552-2  337      520      +         CDS
+  55       |    rna-DGYR_LOCUS12552-2  520      640      +         CDS
+  PyRanges with 56 rows, 5 columns, and 1 index columns.
+  Contains 17 chromosomes and 1 strands.
+
+  >>> cds_local[cds_local.Chromosome == some_id]
+    index  |    Chromosome               Start      End  Strand    Feature
+    int64  |    object                   int64    int64  object    category
+  -------  ---  ---------------------  -------  -------  --------  ----------
+       51  |    rna-DGYR_LOCUS12552-2       97      139  +         CDS
+       52  |    rna-DGYR_LOCUS12552-2      139      237  +         CDS
+       53  |    rna-DGYR_LOCUS12552-2      237      337  +         CDS
+       54  |    rna-DGYR_LOCUS12552-2      337      520  +         CDS
+       55  |    rna-DGYR_LOCUS12552-2      520      640  +         CDS
+  PyRanges with 5 rows, 5 columns, and 1 index columns.
+  Contains 1 chromosomes and 1 strands.
+
+With the similar logic, we can easily map the start and stop codon positions to the exon coordinates:
+
+  >>> cds.slice_ranges(0, 3).assign(Feature='start').map_to_local(exons, ref_on='Parent', match_by='Parent')
+  index    |    Chromosome             Start    End      Strand    Feature
+  int64    |    object                 int64    int64    object    object
+  -------  ---  ---------------------  -------  -------  --------  ---------
+  0        |    rna-DGYR_LOCUS13733    1        4        +         start
+  1        |    rna-DGYR_LOCUS13734    258      261      +         start
+  2        |    rna-DGYR_LOCUS13734    484      487      +         start
+  3        |    rna-DGYR_LOCUS13734    625      628      +         start
+  ...      |    ...                    ...      ...      ...       ...
+  52       |    rna-DGYR_LOCUS12552-2  139      142      +         start
+  53       |    rna-DGYR_LOCUS12552-2  237      240      +         start
+  54       |    rna-DGYR_LOCUS12552-2  337      340      +         start
+  55       |    rna-DGYR_LOCUS12552-2  520      523      +         start
+  PyRanges with 56 rows, 5 columns, and 1 index columns.
+  Contains 17 chromosomes and 1 strands.
+
+  >>> cds.slice_ranges(-3).assign(Feature='stop').map_to_local(exons, ref_on='Parent', match_by='Parent')
+  index    |    Chromosome             Start    End      Strand    Feature
+  int64    |    object                 int64    int64    object    object
+  -------  ---  ---------------------  -------  -------  --------  ---------
+  0        |    rna-DGYR_LOCUS13733    379      382      +         stop
+  1        |    rna-DGYR_LOCUS13734    481      484      +         stop
+  2        |    rna-DGYR_LOCUS13734    622      625      +         stop
+  3        |    rna-DGYR_LOCUS13734    795      798      +         stop
+  ...      |    ...                    ...      ...      ...       ...
+  52       |    rna-DGYR_LOCUS12552-2  234      237      +         stop
+  53       |    rna-DGYR_LOCUS12552-2  334      337      +         stop
+  54       |    rna-DGYR_LOCUS12552-2  517      520      +         stop
+  55       |    rna-DGYR_LOCUS12552-2  637      640      +         stop
+  PyRanges with 56 rows, 5 columns, and 1 index columns.
+  Contains 17 chromosomes and 1 strands.

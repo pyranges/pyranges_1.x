@@ -58,6 +58,7 @@ class PyRangesDataFrameGroupBy(pandas.core.groupby.DataFrameGroupBy):
 
     @return_pyranges_if_possible
     def apply(self, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":  # noqa: D102
+        kwargs.setdefault("include_groups", False)
         return self.pandas_groupby.apply(*args, **kwargs)
 
     @return_pyranges_if_possible
