@@ -61,6 +61,35 @@ def factorize(
     return df.groupby(_by).ngroup().to_numpy().astype(np.uint32)
 
 
+def factorize_arange(
+    df: "pd.DataFrame",
+    by: VALID_BY_TYPES,
+) -> ndarray:
+    """Factorize a DataFrame based on specified grouping columns.
+
+    This function assigns a unique integer (of type uint32) to each group in the DataFrame,
+    where groups are defined by the columns specified in ``by``. If ``by`` is empty or evaluates
+    to False, an array of zeros is returned.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The input DataFrame containing the data to be factorized.
+    by : VALID_BY_TYPES
+        Column name(s) or criteria used to group the DataFrame. If empty, no grouping is performed.
+
+    Returns
+    -------
+    ndarray
+        A NumPy array of type uint32 containing group labels for each row in the DataFrame.
+
+    """
+    if not by:
+        return np.arange(len(df), dtype=np.uint)
+    _by = arg_to_list(by)
+    return df.groupby(_by).ngroup().to_numpy().astype(np.uint32)
+
+
 def factorize_binary(
     df: "pd.DataFrame",
     df2: "pd.DataFrame",
