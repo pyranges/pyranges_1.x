@@ -45,6 +45,7 @@ from pyranges.core.pyranges_helpers import (
     arg_to_list,
     ensure_pyranges,
     factorize,
+    factorize_arange,
     prepare_by_binary,
     prepare_by_single,
     split_on_strand,
@@ -3545,6 +3546,7 @@ class PyRanges(RangeFrame):
         tile_size: int,
         *,
         use_strand: bool = False,
+        match_by: VALID_BY_TYPES = None,
         overlap_column: str | None = None,
     ) -> "PyRanges":
         """Return overlapping genomic tiles.
@@ -3563,6 +3565,14 @@ class PyRanges(RangeFrame):
         use_strand: {"auto", True, False}, default: "auto"
             Whether negative strand intervals should be windowed in reverse order.
             The default "auto" means True if PyRanges has valid strands (see .strand_valid).
+
+        match_by : str | Sequence[str] | None, default None
+            Column name(s) used to form groups when iterating rows. For `tile`,
+            grouping does **not** change which tiles are produced or their overlap
+            fractions: tiles are always taken from a fixed genomic grid with step
+            `tile_size` (boundaries at multiples of `tile_size`), and each interval is
+            intersected with that grid independently. Group boundaries only affect
+            iteration order; there is no cross-interval “carry” for `tile`.
 
         Returns
         -------
@@ -3637,6 +3647,9 @@ class PyRanges(RangeFrame):
         import ruranges
 
         use_strand = validate_and_convert_use_strand(self, use_strand)
+
+        match_by = arg_to_list(match_by)
+        factorize_arange(self, match_by)
 
         negative_strand = (self[STRAND_COL] == "-").to_numpy() if use_strand else np.zeros(len(self), dtype=bool)
         indices, starts, ends, overlap_fraction = ruranges.tile(  # type: ignore[attr-defined]
@@ -4652,6 +4665,7 @@ class PyRanges(RangeFrame):
         self,
         window_size: int,
         use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
+        match_by: VALID_BY_TYPES = None,
     ) -> "PyRanges":
         """Return non-overlapping genomic windows.
 
@@ -4665,6 +4679,12 @@ class PyRanges(RangeFrame):
         use_strand: {"auto", True, False}, default: "auto"
             Whether negative strand intervals should be sliced in descending order, meaning 5' to 3'.
             The default "auto" means True if PyRanges has valid strands (see .strand_valid).
+
+        match_by : str | Sequence[str] | None, default None
+            Column name(s) used to form groups. If provided, windowing proceeds
+            *continuously within each group*: any leftover (partial) window at the end
+            of one interval is continued at the start of the next interval with the
+            same `match_by` value. The window “phase” resets at group boundaries.
 
         Returns
         -------
@@ -4782,14 +4802,46 @@ class PyRanges(RangeFrame):
         PyRanges with 28 rows, 6 columns, and 1 index columns (with 17 index duplicates).
         Contains 1 chromosomes and 2 strands.
 
+        >>> gr3 = pr.PyRanges({'Chromosome':1, 'Strand':list('+++--'), 'Start':[10, 30, 50, 70, 90], 'End':[20, 40, 60, 80, 100], 'ID':list('aaabb')})
+        >>> gr3
+          index  |      Chromosome  Strand      Start      End  ID
+          int64  |           int64  object      int64    int64  object
+        -------  ---  ------------  --------  -------  -------  --------
+              0  |               1  +              10       20  a
+              1  |               1  +              30       40  a
+              2  |               1  +              50       60  a
+              3  |               1  -              70       80  b
+              4  |               1  -              90      100  b
+        PyRanges with 5 rows, 5 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        >>> gr3.window_ranges(8, match_by='ID')
+        index    |    Chromosome    Strand    Start    End      ID
+        int64    |    int64         object    int64    int64    object
+        -------  ---  ------------  --------  -------  -------  --------
+        0        |    1             +         10       18       a
+        0        |    1             +         18       20       a
+        1        |    1             +         30       36       a
+        1        |    1             +         36       40       a
+        ...      |    ...           ...       ...      ...      ...
+        3        |    1             -         74       80       b
+        3        |    1             -         70       74       b
+        4        |    1             -         92       100      b
+        4        |    1             -         90       92       b
+        PyRanges with 10 rows, 5 columns, and 1 index columns (with 5 index duplicates).
+        Contains 1 chromosomes and 2 strands.
+
         """
         import ruranges
 
         use_strand = validate_and_convert_use_strand(self, use_strand)
+        match_by = arg_to_list(match_by)
+        group_ids = factorize_arange(self, match_by)
 
         negative_strand = (self[STRAND_COL] == "-").to_numpy() if use_strand else np.zeros(len(self), dtype=bool)
         # assert 0, negative_strands
         idx, starts, ends = ruranges.window(  # type: ignore[attr-defined]
+            groups=group_ids,
             starts=self[START_COL].to_numpy(),
             ends=self[END_COL].to_numpy(),
             negative_strand=negative_strand,

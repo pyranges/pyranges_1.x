@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyranges1"
-version = "1.1.1"
+version = "1.1.4"
 description = "GenomicRanges for Python."
 requires-python = ">=3.12.0"
 readme = "README.md"
@@ -68,7 +68,7 @@ deps =
     pyright
     joblib
     hypothesis==6.92.1
-    ruranges >= 0.0.9
+    ruranges >= 0.0.12
     # fisher
 commands =
     python tests/run_doctest_tutorial_howto.py
