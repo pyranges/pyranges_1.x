@@ -8,9 +8,9 @@ Mapping between coordinate systems
 Mapping coordinate systems: cheatsheet
 --------------------------------------
 
-.. image:: https://raw.githubusercontent.com/pyranges/pyranges_plot/for_pyranges1_1/examples/cheatsheet_mapping.png
+.. image:: https://raw.githubusercontent.com/pyranges/pyrangeyes/for_pyranges1_1/examples/cheatsheet_mapping.png
    :alt: PyRanges cheatsheet
-   :target: https://raw.githubusercontent.com/pyranges/pyranges_plot/for_pyranges1_1/examples/cheatsheet_mapping.png
+   :target: https://raw.githubusercontent.com/pyranges/pyrangeyes/for_pyranges1_1/examples/cheatsheet_mapping.png
 
 
 :func:`overlap <pyranges.PyRanges.overlap>`.
