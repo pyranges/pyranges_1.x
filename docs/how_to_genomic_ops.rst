@@ -8,9 +8,9 @@ Operating on coordinates
 Operating on coordinates: cheatsheet
 ------------------------------------
 
-.. image:: https://raw.githubusercontent.com/pyranges/pyranges_plot/for_pyranges1_1/examples/cheatsheet_genomic_ops.png
+.. image:: https://raw.githubusercontent.com/pyranges/pyrangeyes/for_pyranges1_1/examples/cheatsheet_genomic_ops.png
    :alt: PyRanges cheatsheet
-   :target: https://raw.githubusercontent.com/pyranges/pyranges_plot/for_pyranges1_1/examples/cheatsheet_genomic_ops.png
+   :target: https://raw.githubusercontent.com/pyranges/pyrangeyes/for_pyranges1_1/examples/cheatsheet_genomic_ops.png
 
 
 
