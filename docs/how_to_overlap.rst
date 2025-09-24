@@ -8,9 +8,9 @@ Overlap-related operations
 Overlap-related operations: cheatsheet
 ======================================
 
-.. image:: https://raw.githubusercontent.com/pyranges/pyranges_plot/for_pyranges1_1/examples/cheatsheet_overlap.png
+.. image:: https://raw.githubusercontent.com/pyranges/pyrangeyes/for_pyranges1_1/examples/cheatsheet_overlap.png
    :alt: PyRanges cheatsheet
-   :target: https://raw.githubusercontent.com/pyranges/pyranges_plot/for_pyranges1_1/examples/cheatsheet_overlap.png
+   :target: https://raw.githubusercontent.com/pyranges/pyrangeyes/for_pyranges1_1/examples/cheatsheet_overlap.png
 
 Single and pairwise PyRanges operations
 ======================================
