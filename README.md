@@ -2,7 +2,7 @@
 
 ## Introduction
 
-PyRanges is a Python library with a Rust backend for efficient and intuitive manipulation of genomics data,
+Pyranges is a Python library with a Rust backend for efficient and intuitive manipulation of genomics data,
 particularly genomic intervals (like genes, genomic features, or reads).
 The library is optimized for fast querying and manipulation of genomic annotations.
 It enables intuitive and highly efficient pipelines for genomic analysis.
@@ -11,7 +11,7 @@ It enables intuitive and highly efficient pipelines for genomic analysis.
 
 ## Version 1.x
 This is version 1.x of pyranges. It is a complete rewrite of the original pyranges library, 
-that will replace the "default" (version 0) sometime in 2025. If you are a v0 user, check the migration guide 
+that will replace the "default" (version 0) at the end in 2025. If you are a v0 user, check the migration guide 
 in the documentation.
 
 ## Documentation
@@ -67,8 +67,8 @@ Pyranges accepts code contributions in form of pull request.
 For details, visit https://pyranges1.readthedocs.io/developer_guide.html
 
 ## Cheatsheet
-![cheatsheet](https://raw.githubusercontent.com/pyranges/pyranges_plot/for_pyranges1_1/images/pyranges_cheatsheet.png)
-(The cheatsheet above was created with pyranges_plot, a companion graphical library:  https://pyranges-plot.readthedocs.io/)
+![cheatsheet](https://raw.githubusercontent.com/pyranges/pyrangeyes/for_pyranges1_1/images/pyranges_cheatsheet.png)
+(The cheatsheet above was created with pyrangeyes, a companion graphical library:  https://pyrangeyes.readthedocs.io/)
 
 
 
