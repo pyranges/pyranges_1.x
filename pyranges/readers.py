@@ -3,13 +3,14 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import numpy as np
 import pandas as pd
 from natsort import natsorted  # type: ignore[import]
 
 from pyranges.core.pyranges_helpers import ensure_pyranges
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Mapping, Sequence
 
     from pyranges.core.pyranges_main import PyRanges
 
@@ -287,8 +288,8 @@ def find_first_data_line_index(file_path: Path) -> int:
 def read_gtf(
     f: str | Path,
     /,
-    nrows: bool | None = None,
     *,
+    nrows: bool | None = None,
     full: bool = True,
     duplicate_attr: bool = False,
     ignore_bad: bool = False,
@@ -515,12 +516,13 @@ def read_gtf_restricted(f: str | Path, skiprows: int | None, nrows: int | None =
     """
     dtypes: Mapping = {"Chromosome": "category", "Feature": "category", "Strand": "category"}
     path = Path(f)
+    usecols: Sequence[int] = [0, 2, 3, 4, 5, 6, 8]
 
     df_iter = pd.read_csv(
         path,
         sep="\t",
         comment="#",
-        usecols=[0, 2, 3, 4, 5, 6, 8],
+        usecols=np.array(usecols),
         header=None,
         names=["Chromosome", "Feature", "Start", "End", "Score", "Strand", "Attribute"],
         dtype=dtypes,
