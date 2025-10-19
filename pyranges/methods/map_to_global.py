@@ -46,7 +46,7 @@ def _map_to_global_pandas(
         suffixes=("_local", ""),
     )
 
-    z = m.slice_ranges(
+    z = m.slice_ranges(  # type: ignore[reportCallIssue]
         group_by="_temp_index_",
         start=m[out_local_start].to_numpy(),
         end=m[out_local_end].to_numpy(),

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyranges1"
-version = "1.1.4"
+version = "1.1.5"
 description = "GenomicRanges for Python."
 requires-python = ">=3.12.0"
 readme = "README.md"
@@ -24,11 +24,11 @@ classifiers = [
     "Topic :: Scientific/Engineering"
 ]
 keywords = ["bioinformatics", "genomicranges", "genomics"]
-dependencies = ["pandas", "tabulate", "natsort", "ruranges>=0.0.9"]
+dependencies = ["pandas", "tabulate", "natsort", "ruranges>=0.0.14"]
 
 [project.optional-dependencies]
 add-ons = ["pyrle >= 0.0.39", "bamread",  "pyfaidx", "pyBigWig", "joblib"] #"fisher",
-dev = ["tox", "ruff == 0.11.0", "pyright", "pandas-stubs", "types-tabulate", "pytest-watcher", "pytest-xdist", "hypothesis>=6.92.1"]
+dev = ["tox", "ruff == 0.14.1", "pyright", "pandas-stubs", "types-tabulate", "pytest-watcher", "pytest-xdist"]
 docs = ["sphinx", "sphinx_rtd_theme", "sphinx-autoapi", "sphinxcontrib-napoleon"]
 cli = ["fire"]
 all = ["pyranges1[add-ons]", "pyranges1[dev]", "pyranges1[docs]", "pyranges1[cli]"]
@@ -61,22 +61,21 @@ deps =
     pyBigWig
     pyfaidx
     tox
-    ruff == 0.11.0
-    pandas-stubs
+    ruff == 0.14.1
+    pandas-stubs == 2.1.4.231227
     types-tabulate
     pytest
-    pyright
+    pyright == 1.1.406
     joblib
-    hypothesis==6.92.1
-    ruranges >= 0.0.12
+    ruranges >= 0.0.14
     # fisher
 commands =
+    pyright
     python tests/run_doctest_tutorial_howto.py
     pytest --doctest-modules pyranges
     pytest tests/unit
     ruff format --check pyranges
     ruff check pyranges
-    pyright
 """
 
 [tool.mypy]
@@ -91,7 +90,7 @@ line-length = 120
 select = ["ALL"]
 ignore = [
     "E501", "ANN002", "ANN003", "ANN001", "ANN401", "PLR0913", "PLC0415",
-    "PD901", "D101", "D100", "D107", "CPY", "D105", "D104", "D203", "D211", "D213", "COM812", "ISC001"
+    "D101", "D100", "D107", "CPY", "D105", "D104", "D203", "D211", "D213", "COM812", "ISC001"
 ]
 
 [tool.pytest-watcher]
