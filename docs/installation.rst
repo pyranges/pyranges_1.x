@@ -21,7 +21,7 @@ To **install all optional dependencies**, use::
 
 Here you can see the optional dependencies grouped by functionality::
 
-    # user add-ons: to fetch sequences, read BAM files, parallelize execution ...
+    # user add-ons: to fetch sequences, read BAM files ...
     pip install pyranges1[add-ons]
 
     # command line: to use the pyranger command-line tool
