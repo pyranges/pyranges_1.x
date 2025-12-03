@@ -169,7 +169,7 @@ def _to_bigwig(
     *,
     divide: bool = False,
     rpm: bool = True,
-    dryrun: bool = False,
+    return_data: bool = False,
 ) -> PyRanges | None:
     try:
         import pyBigWig  # type: ignore[import]
@@ -202,7 +202,7 @@ def _to_bigwig(
     gr = gr.sort_ranges()
     gr = gr.get_with_loc_columns(BIGWIG_SCORE_COL)
 
-    if dryrun:
+    if return_data:
         return gr
 
     if not isinstance(chromosome_sizes, dict):
