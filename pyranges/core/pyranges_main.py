@@ -3878,23 +3878,33 @@ class PyRanges(RangeFrame):
         *,
         divide: bool = False,
         rpm: bool = True,
-        dryrun: bool = False,
-        chain: bool = False,
+        return_data=False,
     ) -> "PyRanges | None":
-        """Write regular or value coverage to bigwig.
+        """Compute coverage (interval-based, or using a numerical value column) and write to bigwig.
+
+        Computes a score per position; by default, it is the number of intervals spanning that position.
+        If value_col is provided, the score is the sum of values of all intervals spanning that position.
+        The score per position is then reduced to a minimal number of ranges with constant coverage
+        (i.e. like a run-length encoding), and written in bigwig format to the provided path.
 
         Note
         ----
-
-        To create one bigwig per strand, subset the PyRanges first.
+        To create one bigwig per strand, subset the PyRanges first into two separate objects (positive and negative strands).
 
         Parameters
         ----------
-        path : str
-            Where to write bigwig.
+        path : str | None, default None
+            Where to write bigwig. If None, return_data must be True.
 
-        chromosome_sizes : PyRanges or dict
-            If dict: map of chromosome names to chromosome length.
+        chromosome_sizes : PyRanges or dict or None, default None
+            Chromosome sizes to use. If provided, the output bigwig will span the entire chromosomes as given here.
+            If dict, it must be a map of chromosome names to chromosome length.
+            If a PyRanges, it must have 'Chromosome' and 'End' columns, where 'End' gives the chromosome length.
+            If None, the maximum end position per chromosome in the input PyRanges is used.
+
+        value_col : str, default None
+            Name of column to compute coverage of.
+            If None, compute coverage (i.e. number of intervals spanning each position).
 
         rpm : True
             Whether to normalize data by dividing by total number of intervals and multiplying by
@@ -3903,25 +3913,14 @@ class PyRanges(RangeFrame):
         divide : bool, default False
             (Only useful with value_col) Divide value coverage by regular coverage and take log2.
 
-        value_col : str, default None
-            Name of column to compute coverage of.
-
-        dryrun : bool, default False
-            Return data that would be written without writing bigwigs.
-
-        chain: bool, default False
-            Return the bigwig data created
+        return_data : bool, default False
+            Whether to return the data that would be written to bigwig as a PyRanges.
 
         Note
         ----
 
-        Requires pybigwig to be installed.
+        Requires pybigwig and pyrle to be installed.
 
-        If you require more control over the normalization process, use pyranges.to_bigwig()
-
-        See Also
-        --------
-        pyranges.to_bigwig : write pandas pd.DataFrame to bigwig.
 
         Examples
         --------
@@ -3939,7 +3938,7 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> gr.to_bigwig(dryrun=True, rpm=False)
+        >>> gr.to_bigwig(return_data=True, rpm=False)
           index  |    Chromosome      Start      End      Score
           int64  |    category        int64    int64    float64
         -------  ---  ------------  -------  -------  ---------
@@ -3951,7 +3950,7 @@ class PyRanges(RangeFrame):
         PyRanges with 5 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        >>> gr.to_bigwig(dryrun=True, rpm=False, value_col="Value")
+        >>> gr.to_bigwig(return_data=True, rpm=False, value_col="Value")
           index  |    Chromosome      Start      End      Score
           int64  |    category        int64    int64    float64
         -------  ---  ------------  -------  -------  ---------
@@ -3963,7 +3962,7 @@ class PyRanges(RangeFrame):
         PyRanges with 5 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes.
 
-        >>> gr.to_bigwig(dryrun=True, rpm=False, value_col="Value", divide=True)
+        >>> gr.to_bigwig(return_data=True, rpm=False, value_col="Value", divide=True)
           index  |    Chromosome      Start      End      Score
           int64  |    category        int64    int64    float64
         -------  ---  ------------  -------  -------  ---------
@@ -3988,14 +3987,12 @@ class PyRanges(RangeFrame):
             rpm=rpm,
             divide=divide,
             value_col=value_col,
-            dryrun=dryrun,
+            return_data=return_data,
         )
 
-        if dryrun:
+        if return_data:
             return result
 
-        if chain:
-            return self
         return None
 
     def to_gff3(
