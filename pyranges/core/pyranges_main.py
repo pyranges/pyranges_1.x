@@ -4892,15 +4892,17 @@ class PyRanges(RangeFrame):
         group_ids = factorize_arange(self, match_by)
 
         negative_strand = (self[STRAND_COL] == "-").to_numpy() if use_strand else np.zeros(len(self), dtype=bool)
-        # assert 0, negative_strands
+
+        gr = self.sort_ranges(by=match_by, use_strand=False) if match_by else self
+
         idx, starts, ends = ruranges.window(  # type: ignore[attr-defined]
             groups=group_ids,
-            starts=self[START_COL].to_numpy(),
-            ends=self[END_COL].to_numpy(),
+            starts=gr[START_COL].to_numpy(),
+            ends=gr[END_COL].to_numpy(),
             negative_strand=negative_strand,
             window_size=window_size,
         )
-        df = self.take(idx)  # type: ignore[arg-type]
+        df = gr.take(idx)  # type: ignore[arg-type]
         df.loc[:, START_COL] = starts
         df.loc[:, END_COL] = ends
 

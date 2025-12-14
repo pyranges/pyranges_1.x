@@ -19,6 +19,13 @@ in the documentation.
 The pyranges documentation, including installation instructions, API, tutorial, and how-to-pages, is 
 available at https://pyranges1.readthedocs.io/
 
+## Recent Changelog
+
+```
+# 14.12.25
+- Fix sort order issue in window_ranges when using by (#98 and #105)
+```
+
 ## Install
 
 Pyranges 1.x requires python ≥3.12. Minimal installation: 
