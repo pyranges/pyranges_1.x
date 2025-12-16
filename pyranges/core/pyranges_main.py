@@ -4718,9 +4718,11 @@ class PyRanges(RangeFrame):
         self,
         window_size: int,
         use_strand: VALID_USE_STRAND_TYPE = USE_STRAND_DEFAULT,
-        match_by: VALID_BY_TYPES = None,
+        group_by: VALID_BY_TYPES = None,
+        *,
+        add_window_id: bool = False,
     ) -> "PyRanges":
-        """Return non-overlapping genomic windows.
+        """Return intervals sliced in non-overlapping windows.
 
         Every interval is split into windows of length `window_size` starting from its 5' end.
 
@@ -4733,11 +4735,16 @@ class PyRanges(RangeFrame):
             Whether negative strand intervals should be sliced in descending order, meaning 5' to 3'.
             The default "auto" means True if PyRanges has valid strands (see .strand_valid).
 
-        match_by : str | Sequence[str] | None, default None
+        group_by : str | Sequence[str] | None, default None
             Column name(s) used to form groups. If provided, windowing proceeds
             *continuously within each group*: any leftover (partial) window at the end
             of one interval is continued at the start of the next interval with the
-            same `match_by` value. The window “phase” resets at group boundaries.
+            same `group_by` value. The window “phase” resets at group boundaries.
+
+        add_window_id : bool, default False
+            Use only in combination with group_by. If True, adds a column "window_id" with an index-like identifier
+            to link the windows split in non-contigous intervals, e.g. because a certain window spans an intron.
+            The window_id starts at 0, and resets for each group.
 
         Returns
         -------
@@ -4748,6 +4755,7 @@ class PyRanges(RangeFrame):
         Warning
         -------
         The returned Pyranges may have index duplicates. Call .reset_index(drop=True) to fix it.
+        Moreover, the input row order may not be preserved.
 
         See Also
         --------
@@ -4868,7 +4876,7 @@ class PyRanges(RangeFrame):
         PyRanges with 5 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
-        >>> gr3.window_ranges(8, match_by='ID')
+        >>> gr3.window_ranges(8, group_by='ID')
         index    |    Chromosome    Strand    Start    End      ID
         int64    |    int64         object    int64    int64    object
         -------  ---  ------------  --------  -------  -------  --------
@@ -4884,16 +4892,60 @@ class PyRanges(RangeFrame):
         PyRanges with 10 rows, 5 columns, and 1 index columns (with 5 index duplicates).
         Contains 1 chromosomes and 2 strands.
 
+        >>> gr4 = pr.PyRanges({'Chromosome':2, 'Strand':list('+++--'), 'Start':[30,10,50,90,70],
+        ...                    'End':[40,20,60,100,80], 'ID':['id1','id1','id1','id2','id2']})
+        >>> gr4
+          index  |      Chromosome  Strand      Start      End  ID
+          int64  |           int64  object      int64    int64  object
+        -------  ---  ------------  --------  -------  -------  --------
+              0  |               2  +              30       40  id1
+              1  |               2  +              10       20  id1
+              2  |               2  +              50       60  id1
+              3  |               2  -              90      100  id2
+              4  |               2  -              70       80  id2
+        PyRanges with 5 rows, 5 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        >>> gr4.window_ranges(8, group_by='ID').reset_index(drop=True).head(8)
+          index  |      Chromosome  Strand      Start      End  ID
+          int64  |           int64  object      int64    int64  object
+        -------  ---  ------------  --------  -------  -------  --------
+              0  |               2  +              10       18  id1
+              1  |               2  +              18       20  id1
+              2  |               2  +              30       36  id1
+              3  |               2  +              36       40  id1
+              4  |               2  +              50       54  id1
+              5  |               2  +              54       60  id1
+              6  |               2  -              74       80  id2
+              7  |               2  -              70       74  id2
+        PyRanges with 8 rows, 5 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
+        >>> gr4.window_ranges(8, group_by='ID', add_window_id=True).reset_index(drop=True).head(8)
+          index  |      Chromosome  Strand      Start      End  ID          window_id
+          int64  |           int64  object      int64    int64  object          int64
+        -------  ---  ------------  --------  -------  -------  --------  -----------
+              0  |               2  +              10       18  id1                 1
+              1  |               2  +              18       20  id1                 2
+              2  |               2  +              30       36  id1                 2
+              3  |               2  +              36       40  id1                 3
+              4  |               2  +              50       54  id1                 3
+              5  |               2  +              54       60  id1                 4
+              6  |               2  -              74       80  id2                 1
+              7  |               2  -              70       74  id2                 2
+        PyRanges with 8 rows, 6 columns, and 1 index columns.
+        Contains 1 chromosomes and 2 strands.
+
         """
         import ruranges
 
         use_strand = validate_and_convert_use_strand(self, use_strand)
-        match_by = arg_to_list(match_by)
-        group_ids = factorize_arange(self, match_by)
+        group_by = arg_to_list(group_by)
+        group_ids = factorize_arange(self, group_by)
 
         negative_strand = (self[STRAND_COL] == "-").to_numpy() if use_strand else np.zeros(len(self), dtype=bool)
 
-        gr = self.sort_ranges(by=match_by, use_strand=False) if match_by else self
+        gr = self.sort_ranges(by=group_by, use_strand=False) if group_by else self
 
         idx, starts, ends = ruranges.window(  # type: ignore[attr-defined]
             groups=group_ids,
@@ -4905,9 +4957,20 @@ class PyRanges(RangeFrame):
         df = gr.take(idx)  # type: ignore[arg-type]
         df.loc[:, START_COL] = starts
         df.loc[:, END_COL] = ends
+        df = ensure_pyranges(df)
+
+        if add_window_id and group_by:
+            df = (df.group_cumsum(group_by, cumsum_start_column="__cstart__", cumsum_end_column="__cend__")).drop(
+                columns="__cstart__"
+            )
+            df = cast("pd.DataFrame", df)
+            df["__is_whole__"] = (df.__cend__ % window_size) == 0
+            df["__do_increm__"] = df.groupby(group_by)["__is_whole__"].shift(fill_value=True)
+            df["window_id"] = df.groupby(group_by)["__do_increm__"].cumsum()
+            df = ensure_pyranges(df.drop(columns=["__cend__", "__is_whole__", "__do_increm__"]))
 
         # every interval can be processed individually. This may be optimized in the future.
-        return ensure_pyranges(df)
+        return df
 
     def remove_nonloc_columns(self) -> "PyRanges":
         """Remove all columns that are not genome location columns (Chromosome, Start, End, Strand).
