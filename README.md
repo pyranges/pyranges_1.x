@@ -22,8 +22,9 @@ available at https://pyranges1.readthedocs.io/
 ## Recent Changelog
 
 ```
-# 14.12.25
-- Fix sort order issue in window_ranges when using by (#98 and #105)
+# v1.1.7 (16.12.25)
+- window_ranges: fix sort order issue in  when using by (#98 and #105)
+- window_ranges: added argument add_window_id, updated documentation
 ```
 
 ## Install
