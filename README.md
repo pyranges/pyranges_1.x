@@ -22,6 +22,9 @@ available at https://pyranges1.readthedocs.io/
 ## Recent Changelog
 
 ```
+# 1.1.8 (30.12.25)
+- to_gtf and to_gff3: fix bug where 'phase' (gtf) and 'frame' (gff3) are erroneously added to attributes field
+
 # v1.1.7 (16.12.25)
 - window_ranges: fix sort order issue in  when using by (#98 and #105)
 - window_ranges: added argument add_window_id, updated documentation

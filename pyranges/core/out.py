@@ -240,12 +240,12 @@ def _pyranges_to_gtf_like(
     if out_format == "gtf":
         all_columns = _ordered_gtf_columns[:-1]
         # first: gff column to pyranges column
-        rename_columns = GFF3_COLUMNS_TO_PYRANGES.copy()
+        rename_columns = GTF_COLUMNS_TO_PYRANGES.copy()
         attribute_formatter = gtf_formatter
     elif out_format == "gff3":
         all_columns = _ordered_gff3_columns[:-1]
         # first: gff column to pyranges column
-        rename_columns = GTF_COLUMNS_TO_PYRANGES.copy()
+        rename_columns = GFF3_COLUMNS_TO_PYRANGES.copy()
         attribute_formatter = gff3_formatter
     else:
         msg = f"Invalid output format: {out_format}. Must be one of 'gtf' or 'gff3'."
