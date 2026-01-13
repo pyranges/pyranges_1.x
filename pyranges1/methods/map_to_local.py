@@ -12,7 +12,7 @@ from pyranges1.core.names import (
 from pyranges1.core.pyranges_helpers import arg_to_list
 
 if TYPE_CHECKING:
-    from pyranges import PyRanges
+    from pyranges1 import PyRanges
 
 cumsum_start = "_refcumstart"
 cumsum_end = "_refcumend"

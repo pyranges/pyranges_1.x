@@ -33,7 +33,7 @@ from pyranges1.methods.statistics import _relative_distance
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-    from pyranges import PyRanges
+    from pyranges1 import PyRanges
 
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)

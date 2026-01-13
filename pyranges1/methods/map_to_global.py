@@ -13,7 +13,7 @@ from pyranges1.core.names import (
 from pyranges1.core.pyranges_helpers import ensure_pyranges, factorize_binary
 
 if TYPE_CHECKING:
-    from pyranges import PyRanges
+    from pyranges1 import PyRanges
 
 cumsum_start = "_local_start"
 cumsum_end = "_local_end"

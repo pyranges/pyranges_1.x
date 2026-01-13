@@ -84,7 +84,7 @@ def _export_docs(
     *,
     include_df: bool = False,
 ) -> str | None:
-    pkg_root = Path(__file__).resolve().parents[1]  # …/pyranges
+    pkg_root = Path(__file__).resolve().parents[1]  # …/pyranges1
     pieces: list[str] = []
 
     # 1. RST sources
@@ -92,10 +92,10 @@ def _export_docs(
         pieces.append(f".. *** {relpath} ***\n\n{txt}")
 
     # 2. public API docstrings
-    from pyranges import PyRanges, RangeFrame
+    from pyranges1 import PyRanges, RangeFrame
 
     class_map = {"PyRanges": PyRanges, "RangeFrame": RangeFrame}
-    public_modules = ["pyranges", "pyranges.seqs", "pyranges.orfs"]
+    public_modules = ["pyranges1", "pyranges1.seqs", "pyranges1.orfs"]
 
     pieces.append("\n\n====================\nPublic API docstrings\n====================")
 

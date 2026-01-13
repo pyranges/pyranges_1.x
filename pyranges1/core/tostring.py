@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 import html as _html
 import re
 
-from pyranges import options
+from pyranges1 import options
 from pyranges1.range_frame.range_frame_validator import InvalidRangesReason
 
 
@@ -65,7 +65,7 @@ def tostring(
     number_duplicated_indices = self.index.duplicated().sum()
     has_duplicated_index = number_duplicated_indices > 0
 
-    from pyranges import options
+    from pyranges1 import options
 
     max_rows_to_show = options.get_option("max_rows_to_show")
     max_column_names_to_show = options.get_option("max_column_names_to_show")

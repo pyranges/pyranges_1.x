@@ -190,7 +190,7 @@ class PyRanges(RangeFrame):
             # find out whether to include the strand column
             # also remove the strand key from kwargs since the constructor does not expect it.
             cols_to_use = GENOME_LOC_COLS_WITH_STRAND if kwargs.pop("strand", False) else GENOME_LOC_COLS
-            # pass dict with the necessary pyranges cols to the constructor
+            # pass dict with the necessary pyranges1 cols to the constructor
             kwargs["data"] = {k: [] for k in cols_to_use}
 
         super().__init__(*args, **kwargs)
@@ -1763,7 +1763,7 @@ class PyRanges(RangeFrame):
 
         Examples
         --------
-        >>> import pandas as pd, pyranges as pr
+        >>> import pandas as pd, pyranges1 as pr
         >>> tr = pr.PyRanges(pd.DataFrame({
         ...     "Chromosome":   ["chr1","chr1","chr1","chr1"],
         ...     "Start":        [  100,   300,   1000, 1100],

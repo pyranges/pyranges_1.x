@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 if TYPE_CHECKING:
-    from pyranges import RangeFrame
+    from pyranges1 import RangeFrame
 
 
 def _relative_distance(scdf: "RangeFrame", ocdf: "RangeFrame", **_) -> "pd.Series[float]":

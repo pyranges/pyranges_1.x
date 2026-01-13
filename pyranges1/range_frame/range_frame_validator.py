@@ -8,7 +8,7 @@ from pyranges1.core.names import END_COL, RANGE_COLS, START_COL
 if TYPE_CHECKING:
     import pandas as pd
 
-    from pyranges import RangeFrame
+    from pyranges1 import RangeFrame
 
 
 class InvalidRangesReason:
@@ -68,7 +68,7 @@ class InvalidRangesReason:
         Examples
         --------
         >>> import pandas as pd
-        >>> from pyranges import RangeFrame
+        >>> from pyranges1 import RangeFrame
         >>> valid = RangeFrame({"Start": [1, 5], "End": [10, 20]})
         >>> valid.reasons_why_frame_is_invalid() is None
         True

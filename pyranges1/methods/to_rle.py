@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import contextlib
 
-    from pyranges import PyRanges
+    from pyranges1 import PyRanges
 
     with contextlib.suppress(ImportError):
         from pyrle import PyRles  # type: ignore[import-not-found]

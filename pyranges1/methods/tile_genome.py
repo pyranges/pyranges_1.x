@@ -7,7 +7,7 @@ from pyranges1.core.names import CHROM_COL, END_COL, START_COL
 from pyranges1.core.pyranges_helpers import ensure_pyranges
 
 if TYPE_CHECKING:
-    from pyranges import PyRanges
+    from pyranges1 import PyRanges
 
 
 def tile_genome(

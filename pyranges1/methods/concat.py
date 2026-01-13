@@ -69,7 +69,7 @@ def concat[T: "RangeFrame"](grs: Iterable[T], *args, **kwargs) -> T:
 
     concatenated = input_class(pd.concat([pd.DataFrame(gr) for gr in grs]), *args, **kwargs)
 
-    from pyranges import RangeFrame
+    from pyranges1 import RangeFrame
 
     if isinstance(concatenated, RangeFrame):
         return input_class(concatenated)

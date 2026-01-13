@@ -28,7 +28,7 @@ from pyranges1.core.names import (
 )
 
 if TYPE_CHECKING:
-    from pyranges import PyRanges
+    from pyranges1 import PyRanges
     from pyranges1.range_frame.range_frame import RangeFrame
 
 
@@ -368,7 +368,7 @@ def ensure_pyranges(df: "pd.DataFrame") -> "PyRanges":
 
     Helps pyright.
     """
-    from pyranges import PyRanges
+    from pyranges1 import PyRanges
 
     if not isinstance(ret := PyRanges(df, copy=False), PyRanges):
         msg = "Not a PyRanges"

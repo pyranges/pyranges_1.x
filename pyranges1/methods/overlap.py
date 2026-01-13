@@ -14,7 +14,7 @@ from pyranges1.core.names import (
 from pyranges1.core.pyranges_helpers import factorize_binary
 
 if TYPE_CHECKING:
-    from pyranges import RangeFrame
+    from pyranges1 import RangeFrame
 
 
 def _both_idxs(

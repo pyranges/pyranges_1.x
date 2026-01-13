@@ -6,7 +6,7 @@ import pandas as pd
 from tabulate import tabulate
 
 if TYPE_CHECKING:
-    from pyranges import PyRanges
+    from pyranges1 import PyRanges
 
 
 logging.basicConfig(level=logging.INFO)

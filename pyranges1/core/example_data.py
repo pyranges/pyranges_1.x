@@ -104,17 +104,7 @@ class ExampleData:
             return ExampleData._files
 
         paths = []
-        for f in files("pyranges").joinpath("data").iterdir():
-            if not isinstance(f, Path):
-                msg = f"Expected Path, got {type(f)}"
-                raise TypeError(msg)
-            if "__" not in f.name:
-                paths.append(f)
-        ExampleData._files = {f.name: Path(f) for f in paths}
-        return ExampleData._files
-
-        paths = []
-        for f in files("pyranges").joinpath("data").iterdir():
+        for f in files("pyranges1").joinpath("data").iterdir():
             if not isinstance(f, Path):
                 msg = f"Expected Path, got {type(f)}"
                 raise TypeError(msg)

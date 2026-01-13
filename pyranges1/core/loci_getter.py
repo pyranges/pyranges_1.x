@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 if typing.TYPE_CHECKING:
-    from pyranges import PyRanges
+    from pyranges1 import PyRanges
 from pyranges1.core.names import CHROM_COL, END_COL, START_COL, STRAND_COL, VALID_GENOMIC_STRAND_INFO
 from pyranges1.core.pyranges_helpers import ensure_pyranges
 

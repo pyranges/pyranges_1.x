@@ -66,8 +66,8 @@ class Assistant:
 
         Examples
         --------
-        >>> import pyranges
-        >>> pyranges.assistant.export_docs(to_file="pr_docs.txt")
+        >>> import pyranges1
+        >>> pyranges1.assistant.export_docs(to_file="pr_docs.txt")
 
         """
         from pyranges1.methods.export_docs import _export_docs
