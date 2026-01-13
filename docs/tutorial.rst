@@ -48,7 +48,7 @@ Loading and accessing pyranges objects
 Let's import libraries, and load in memory an example annotation in GFF3 format, consisting of a portion of the genome
 annotation of the worm *Dimorphilus gyrociliatus*.
 
-  >>> import pyranges as pr
+  >>> import pyranges1 as pr
   >>> ann = pr.example_data.ncbi_gff
   >>> ann
   index    |    Chromosome         Source    Feature     Start    End      Score     Strand      Frame     ...

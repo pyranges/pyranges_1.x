@@ -1,7 +1,7 @@
 import contextlib
 import os
 
-import pyranges as pr
+import pyranges1 as pr
 
 
 def test_tostring() -> None:

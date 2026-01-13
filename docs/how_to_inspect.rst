@@ -10,7 +10,7 @@ String representation
 
 Print a PyRanges object for an overview of its data:
 
-  >>> import pyranges as pr
+  >>> import pyranges1 as pr
   >>> gr = pr.example_data.chipseq
   >>> print(gr)
   index    |    Chromosome    Start      End        Name      Score    Strand

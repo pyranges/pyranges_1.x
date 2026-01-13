@@ -1,5 +1,10 @@
 [build-system]
-requires = ["setuptools>=61.0.0", "wheel", "cython", "setuptools_scm[toml]>=6.2"]
+requires = [
+    "setuptools>=61.0.0",
+    "wheel",
+    "cython",
+    "setuptools_scm[toml]>=6.2",
+]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -15,38 +20,63 @@ authors = [
 license = { text = "MIT" }
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Development Status :: 4 - Beta", "Environment :: Other Environment",
+    "Development Status :: 4 - Beta",
+    "Environment :: Other Environment",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS :: MacOS X",
-    "Topic :: Scientific/Engineering"
+    "Topic :: Scientific/Engineering",
 ]
 keywords = ["bioinformatics", "genomicranges", "genomics"]
 dependencies = ["pandas", "tabulate", "natsort", "ruranges>=0.0.14"]
 
 [project.optional-dependencies]
-add-ons = ["pyrle >= 0.0.39", "bamread",  "pyfaidx", "pyBigWig", "joblib"] #"fisher",
-dev = ["tox", "ruff == 0.14.1", "pyright", "pandas-stubs", "types-tabulate", "pytest-watcher", "pytest-xdist"]
-docs = ["sphinx", "sphinx_rtd_theme", "sphinx-autoapi", "sphinxcontrib-napoleon"]
+add-ons = [
+    "pyrle >= 0.0.39",
+    "bamread",
+    "pyfaidx",
+    "pyBigWig",
+    "joblib",
+] #"fisher",
+dev = [
+    "tox",
+    "ruff == 0.14.1",
+    "pyright",
+    "pandas-stubs",
+    "types-tabulate",
+    "pytest-watcher",
+    "pytest-xdist",
+]
+docs = [
+    "sphinx",
+    "sphinx_rtd_theme",
+    "sphinx-autoapi",
+    "sphinxcontrib-napoleon",
+]
 cli = ["fire"]
-all = ["pyranges1[add-ons]", "pyranges1[dev]", "pyranges1[docs]", "pyranges1[cli]"]
+all = [
+    "pyranges1[add-ons]",
+    "pyranges1[dev]",
+    "pyranges1[docs]",
+    "pyranges1[cli]",
+]
 
 [project.scripts]
 # <script‐name> = "<module.path>:<callable>"
-pyranger = "pyranges.cli:main"
+pyranger = "pyranges1.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
 
 [tool.pytype]
-inputs = ['pyranges']
+inputs = ['pyranges1']
 
 [project.urls]
-Homepage="http://github.com/pyranges/pyranges_1.x"
+Homepage = "http://github.com/pyranges/pyranges_1.x"
 
-[tool.tox]  # Legacy tox configuration (to be replaced with native tox.ini when supported)
+[tool.tox] # Legacy tox configuration (to be replaced with native tox.ini when supported)
 legacy_tox_ini = """
 [tox]
 envlist = py312, py313
@@ -72,10 +102,10 @@ deps =
 commands =
     pyright
     python tests/run_doctest_tutorial_howto.py
-    pytest --doctest-modules pyranges
+    pytest --doctest-modules pyranges1
     pytest tests/unit
-    ruff format --check pyranges
-    ruff check pyranges
+    ruff format --check pyranges1
+    ruff check pyranges1
 """
 
 [tool.mypy]
@@ -89,19 +119,35 @@ line-length = 120
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
-    "E501", "ANN002", "ANN003", "ANN001", "ANN401", "PLR0913", "PLC0415",
-    "D101", "D100", "D107", "CPY", "D105", "D104", "D203", "D211", "D213", "COM812", "ISC001"
+    "E501",
+    "ANN002",
+    "ANN003",
+    "ANN001",
+    "ANN401",
+    "PLR0913",
+    "PLC0415",
+    "D101",
+    "D100",
+    "D107",
+    "CPY",
+    "D105",
+    "D104",
+    "D203",
+    "D211",
+    "D213",
+    "COM812",
+    "ISC001",
 ]
 
 [tool.pytest-watcher]
 now = true
 
 [tool.pyright]
-include = ["pyranges"]
+include = ["pyranges1"]
 # typeCheckingMode = "strict"
 pythonVersion = "3.12"
 
-ignore = ["pyranges/core/pyranges_groupby.py"]
+ignore = ["pyranges1/core/pyranges_groupby.py"]
 
 # specific rules to disable
 reportUnknownParameterType = false
@@ -114,4 +160,3 @@ markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "bedtools: marks tests that require bedtools",
 ]
-

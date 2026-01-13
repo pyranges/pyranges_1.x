@@ -16,7 +16,7 @@ See the pandas documentation for details.
 Briefly, to avoid ambiguity it is best to explicitly call ``copy`` if you want an object to not be linked
 to the original object from which it was extracted. For example:
 
-  >>> import pyranges as pr
+  >>> import pyranges1 as pr
   >>> gr = pr.example_data.aorta
   >>> gr
   index    |    Chromosome    Start    End      Name      Score    Strand

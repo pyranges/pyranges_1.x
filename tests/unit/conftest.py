@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from pyranges import PyRanges
+from pyranges1 import PyRanges
 
 
 def pytest_configure(config) -> None:

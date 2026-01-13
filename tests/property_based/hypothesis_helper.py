@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from hypothesis.extra.pandas import column, data_frames, indexes
 
-import pyranges as pr
+import pyranges1 as pr
 from pyranges import PyRanges
 
 max_examples = 15

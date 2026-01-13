@@ -12,7 +12,7 @@ Fetching or writing a column
 Most column operations are analogous to pandas.
 A single PyRanges column (which are pandas Series) can be extracted through the dot notation, when reading it:
 
-  >>> import pyranges as pr
+  >>> import pyranges1 as pr
   >>> gr = pr.example_data.chipseq
   >>> gr
   index    |    Chromosome    Start      End        Name      Score    Strand

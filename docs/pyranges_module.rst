@@ -30,7 +30,7 @@ pyranges.example_data
 The ``pyranges.example_data`` object contains example data used in tests and documentation.
 Printing it shows an overview of available data:
 
-  >>> import pyranges as pr
+  >>> import pyranges1 as pr
   >>> pr.example_data
   Available example data:
   -----------------------
@@ -73,7 +73,7 @@ The ``pyranges.assistant`` object is a helper to use AI-based assistant to code 
   Utilities to instruct a AI coding assistant for pyranges prompts.
 
   Get a prompt to copy-paste into an AI assistant to prime it for pyranges coding tasks:
-      >>> import pyranges as pr
+      >>> import pyranges1 as pr
       >>> pr.assistant.prompt()
 
   Make a file with pyranges documentation to upload to the AI assistant:

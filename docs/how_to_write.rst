@@ -21,7 +21,7 @@ You can readily write them using the correspondent methods (see
 :func:`to_gtf <pyranges.PyRanges.to_gtf>`,
 :func:`to_gff3 <pyranges.PyRanges.to_gff3>`).
 
-  >>> import pyranges as pr
+  >>> import pyranges1 as pr
   >>> gr = pr.example_data.chipseq
   >>> gr.to_gtf("chipseq.gtf")
   >>> #file chipseq.gtf has been created

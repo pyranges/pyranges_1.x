@@ -1,6 +1,6 @@
 from numpy import nan
 
-import pyranges as pr
+import pyranges1 as pr
 
 
 def test_join_issue_4_right() -> None:

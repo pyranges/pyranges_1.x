@@ -24,7 +24,7 @@ are relative to the intervals in another coordinate system. This is useful for r
 Let's make an intuitive case. On the one hand, we have some global ranges, that is
 genomic intervals wherein coordinates refer to positions along the genome:
 
-  >>> import pyranges as pr, pandas as pd
+  >>> import pyranges1 as pr, pandas as pd
   >>> gr = pr.example_data.ncbi_gff
   >>> gre = (gr[gr.Feature=='exon']).get_with_loc_columns('Parent')
   >>> gre

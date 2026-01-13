@@ -28,10 +28,10 @@ def run_command(command, *, show_output: bool) -> int:
 def main() -> int:
     """Run all continuous integration checks."""
     commands = {
-        "ruff format": ["ruff", "format", "--check", "--diff", "pyranges"],
-        "ruff check": ["ruff", "check", "pyranges"],
-        "pyright": ["pyright", "pyranges"],
-        "pytest": ["pytest", "--doctest-modules", "pyranges/", "tests/unit/"],
+        "ruff format": ["ruff", "format", "--check", "--diff", "pyranges1"],
+        "ruff check": ["ruff", "check", "pyranges1"],
+        "pyright": ["pyright", "pyranges1"],
+        "pytest": ["pytest", "--doctest-modules", "pyranges1/", "tests/unit/"],
         # "more doctest": ["python", "tests/run_doctest_tutorial_howto.py"],
     }
     if show_checks:

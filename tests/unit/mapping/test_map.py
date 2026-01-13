@@ -1,5 +1,5 @@
 import pandas as pd
-import pyranges as pr
+import pyranges1 as pr
 
 def test_map_to_global() -> None:
     """Test that map_to_global works correctly with sorted/unsorted objects."""

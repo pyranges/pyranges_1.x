@@ -2,9 +2,9 @@
 
 # from io import StringIO
 
-# import pyranges as pr
+# import pyranges1 as pr
 
-# from pyranges.guessers import (parse_file, guess_columns, guess_chromosome, guess_strand, guess_start_end, guess_delim)
+# from pyranges1.guessers import (parse_file, guess_columns, guess_chromosome, guess_strand, guess_start_end, guess_delim)
 
 
 # @pytest.fixture

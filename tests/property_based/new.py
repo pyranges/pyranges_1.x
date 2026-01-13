@@ -10,7 +10,7 @@ from hypothesis import given, settings
 from hypothesis.extra.pandas import column, data_frames, indexes
 
 from pyranges import PyRanges
-from pyranges.core.names import VALID_GENOMIC_STRAND_INFO
+from pyranges1.core.names import VALID_GENOMIC_STRAND_INFO
 
 max_examples = 15
 slow_max_examples = 5

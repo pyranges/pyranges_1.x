@@ -51,7 +51,7 @@ and return a new PyRanges object with the results of the operation.
 
 We will briefly showcase them in this document. First, let's create two PyRanges objects to work with:
 
-  >>> import pyranges as pr
+  >>> import pyranges1 as pr
   >>> a = pr.PyRanges(dict(Chromosome="chr1",
   ...                      Start=[3, 13, 18, 23, 28, 32, 33],
   ...                      End=[6, 15, 21, 27, 29, 37, 36],

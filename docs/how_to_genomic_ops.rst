@@ -19,7 +19,7 @@ Modifying coordinates
 Interval coordinates (Start, End) can be directly modified like any Series in dataframes.
 Let's get some data:
 
-  >>> import pyranges as pr
+  >>> import pyranges1 as pr
   >>> ex = pr.example_data.ensembl_gtf
   >>> ex = ex[ex.Feature == "exon"].get_with_loc_columns('transcript_id')
   >>> ex = ex.sort_ranges(use_strand=False).reset_index(drop=True)

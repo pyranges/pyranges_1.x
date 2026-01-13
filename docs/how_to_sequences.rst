@@ -12,7 +12,7 @@ Fetching sequences per interval
 A common operation is to fetch the sequences corresponding to the intervals
 represented in the PyRanges object. Let's see an example with built-in data.
 
-  >>> import pyranges as pr
+  >>> import pyranges1 as pr
   >>> genome_file = pr.example_data.files['ncbi.fasta']
   >>> sg = pr.example_data.ncbi_gff
   >>> sg = sg[sg.Feature == 'CDS'].get_with_loc_columns('ID')
