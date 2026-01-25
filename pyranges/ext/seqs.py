@@ -101,7 +101,7 @@ def reverse_complement(
     >>> pr.seqs.reverse_complement(some_seqs)
     0        TCACCCAAATTTCAT
     1    GGGGGTCACCCATTTCTTT
-    dtype: object
+    dtype: str
 
     If a Series is provided, the output Series preserve its index:
 
@@ -109,7 +109,7 @@ def reverse_complement(
     >>> pr.seqs.reverse_complement(some_seqs)
     s1        TCACCCAAATTTCAT
     s2    GGGGGTCACCCATTTCTTT
-    dtype: object
+    dtype: str
 
     """
 
@@ -225,12 +225,12 @@ def translate(  # noqa: C901
     >>> pr.seqs.translate(['ACTGCATAA', 'ATGGGGTACTAG'])
     0     TA*
     1    MGY*
-    dtype: object
+    dtype: str
 
     >>> pr.seqs.translate(['AAUUUtACTGCACTACGACTAGCTAC', 'ACACTGACTGACTATCTGATCGAC'], sanitize=True)
     0    NFTALRLAX
     1     TLTDYLID
-    dtype: object
+    dtype: str
 
     When the input is a Series, the output is a Series with the same index:
 
@@ -238,7 +238,7 @@ def translate(  # noqa: C901
     >>> pr.seqs.translate(x)
     s1     TA*
     s2    MGY*
-    dtype: object
+    dtype: str
 
     Caching makes sense when translating many sequences.
     For large enough data, translate with ``cache=True`` is 3x faster than non-caching translate:

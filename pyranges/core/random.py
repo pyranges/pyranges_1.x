@@ -43,7 +43,7 @@ def random(
     >>> import pyranges as pr
     >>> pr.random(seed=12345)
     index    |    Chromosome    Start      End        Strand
-    int64    |    object        int64      int64      object
+    int64    |    str           int64      int64      str
     -------  ---  ------------  ---------  ---------  --------
     0        |    chr4          36129012   36129112   +
     1        |    chr5          177668498  177668598  -

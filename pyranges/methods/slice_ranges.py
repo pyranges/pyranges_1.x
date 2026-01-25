@@ -31,13 +31,22 @@ def _spliced_subseq(
 
     chrs = factorize(df, by) if by else np.arange(len(df), dtype=np.uint32)
 
+    starts = np.ascontiguousarray(df[START_COL].to_numpy())
+    ends = np.ascontiguousarray(df[END_COL].to_numpy())
+    if STRAND_COL in df and not force_plus_strand:
+        strand_flags = np.ascontiguousarray((df[STRAND_COL] == FORWARD_STRAND).to_numpy())
+    else:
+        strand_flags = np.ones(len(df), dtype=bool)
+    if isinstance(start, np.ndarray):
+        start = np.ascontiguousarray(start)
+    if isinstance(end, np.ndarray):
+        end = np.ascontiguousarray(end)
+
     outidx, outstarts, outends = ruranges.spliced_subsequence(
         groups=chrs,  # type: ignore[arg-type]
-        starts=df[START_COL].to_numpy(),
-        ends=df[END_COL].to_numpy(),
-        strand_flags=(df[STRAND_COL] == FORWARD_STRAND).to_numpy()
-        if (STRAND_COL in df and not force_plus_strand)
-        else np.ones(len(df), dtype=bool),
+        starts=starts,
+        ends=ends,
+        strand_flags=strand_flags,
         start=start,  # type: ignore[type]
         end=end,  # type: ignore[type]
         force_plus_strand=force_plus_strand,
@@ -66,13 +75,18 @@ def _subseq(
 
     chrs = factorize(df, by)
 
+    starts = np.ascontiguousarray(df[START_COL].to_numpy())
+    ends = np.ascontiguousarray(df[END_COL].to_numpy())
+    if STRAND_COL in df and not force_plus_strand:
+        strand_flags = np.ascontiguousarray((df[STRAND_COL] == FORWARD_STRAND).to_numpy())
+    else:
+        strand_flags = np.ones(len(df), dtype=bool)
+
     outidx, outstarts, outends = ruranges.subsequence_numpy(  # type: ignore[attr-defined]
         chrs,
-        df[START_COL].to_numpy(),
-        df[END_COL].to_numpy(),
-        (df[STRAND_COL] == FORWARD_STRAND).to_numpy()
-        if (STRAND_COL in df and not force_plus_strand)
-        else np.ones(len(df), dtype=bool),
+        starts,
+        ends,
+        strand_flags,
         start=start,
         end=end,
         force_plus_strand=force_plus_strand,

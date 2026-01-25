@@ -25,7 +25,7 @@ example_data.files              : Return a dict of basenames to file paths of av
 
 >>> pr.example_data.f1
   index  |    Chromosome      Start      End  Name         Score  Strand
-  int64  |    category        int64    int64  object       int64  category
+  int64  |    category        int64    int64  str          int64  category
 -------  ---  ------------  -------  -------  ---------  -------  ----------
       0  |    chr1                3        6  interval1        0  +
       1  |    chr1                5        7  interval2        0  -
