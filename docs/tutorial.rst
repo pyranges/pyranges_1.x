@@ -51,18 +51,18 @@ annotation of the worm *Dimorphilus gyrociliatus*.
   >>> import pyranges as pr
   >>> ann = pr.example_data.ncbi_gff
   >>> ann
-  index    |    Chromosome         Source    Feature     Start    End      Score     Strand      Frame     ...
-  int64    |    category           object    category    int64    int64    object    category    object    ...
-  -------  ---  -----------------  --------  ----------  -------  -------  --------  ----------  --------  -----
-  0        |    CAJFCJ010000053.1  EMBL      region      0        109277   .         +           .         ...
-  1        |    CAJFCJ010000053.1  EMBL      gene        4882     5264     .         -           .         ...
-  2        |    CAJFCJ010000053.1  EMBL      mRNA        4882     5264     .         -           .         ...
-  3        |    CAJFCJ010000053.1  EMBL      exon        4882     5264     .         -           .         ...
-  ...      |    ...                ...       ...         ...      ...      ...       ...         ...       ...
-  146      |    CAJFCJ010000025.1  EMBL      CDS         2753     2851     .         -           0         ...
-  147      |    CAJFCJ010000025.1  EMBL      CDS         2593     2693     .         -           1         ...
-  148      |    CAJFCJ010000025.1  EMBL      CDS         2354     2537     .         -           0         ...
-  149      |    CAJFCJ010000025.1  EMBL      CDS         2174     2294     .         -           0         ...
+  index    |    Chromosome         Source    Feature     Start    End      Score    Strand      Frame    ...
+  int64    |    category           str       category    int64    int64    str      category    str      ...
+  -------  ---  -----------------  --------  ----------  -------  -------  -------  ----------  -------  -----
+  0        |    CAJFCJ010000053.1  EMBL      region      0        109277   .        +           .        ...
+  1        |    CAJFCJ010000053.1  EMBL      gene        4882     5264     .        -           .        ...
+  2        |    CAJFCJ010000053.1  EMBL      mRNA        4882     5264     .        -           .        ...
+  3        |    CAJFCJ010000053.1  EMBL      exon        4882     5264     .        -           .        ...
+  ...      |    ...                ...       ...         ...      ...      ...      ...         ...      ...
+  146      |    CAJFCJ010000025.1  EMBL      CDS         2753     2851     .        -           0        ...
+  147      |    CAJFCJ010000025.1  EMBL      CDS         2593     2693     .        -           1        ...
+  148      |    CAJFCJ010000025.1  EMBL      CDS         2354     2537     .        -           0        ...
+  149      |    CAJFCJ010000025.1  EMBL      CDS         2174     2294     .        -           0        ...
   PyRanges with 150 rows, 21 columns, and 1 index columns. (13 columns not shown: "ID", "Dbxref", "gbkey", ...).
   Contains 6 chromosomes and 2 strands.
 
@@ -77,7 +77,7 @@ The ``ann`` object has lots of columns, most of which are not displayed because 
          'Frame', 'ID', 'Dbxref', 'gbkey', 'mol_type', 'note', 'Name',
          'gene_biotype', 'locus_tag', 'Parent', 'Note', 'standard_name',
          'product', 'protein_id'],
-        dtype='object')
+        dtype='str')
 
 
 Let's select only certain columns. We can use the method
@@ -87,7 +87,7 @@ retain the "genomic location" columns **Chromosome, Start, End**, (and **Strand*
   >>> ann = ann.get_with_loc_columns(['Feature', 'Parent', 'ID'])
   >>> ann
   index    |    Chromosome         Start    End      Strand      Feature     Parent                 ...
-  int64    |    category           int64    int64    category    category    object                 ...
+  int64    |    category           int64    int64    category    category    str                    ...
   -------  ---  -----------------  -------  -------  ----------  ----------  ---------------------  -----
   0        |    CAJFCJ010000053.1  0        109277   +           region      nan                    ...
   1        |    CAJFCJ010000053.1  4882     5264     -           gene        nan                    ...
@@ -130,14 +130,14 @@ fetch an individual column, which is technically a pandas Series:
   2        mRNA
   3        exon
   4         CDS
-          ...
+          ...  
   145       CDS
   146       CDS
   147       CDS
   148       CDS
   149       CDS
   Name: Feature, Length: 150, dtype: category
-  Categories (5, object): ['CDS', 'exon', 'gene', 'mRNA', 'region']
+  Categories (5, str): ['CDS', 'exon', 'gene', 'mRNA', 'region']
 
 
 The syntax ``ann[column_name]`` is also available, and must be used when creating or updating a column.
@@ -174,7 +174,7 @@ We showcase an alternative method for column selection: ``drop`` lets us choose 
   >>> cds = cds.drop( ['Feature', 'Parent', 'midpoint'], axis=1 )
   >>> cds
   index    |    Chromosome         Start    End      Strand      ID
-  int64    |    category           int64    int64    category    object
+  int64    |    category           int64    int64    category    str
   -------  ---  -----------------  -------  -------  ----------  ----------------
   4        |    CAJFCJ010000053.1  4882     5263     -           cds-CAD5126491.1
   11       |    CAJFCJ010000053.1  10732    10958    +           cds-CAD5126492.1
@@ -201,7 +201,7 @@ The code below will show intervals overlapping with the specified position range
   >>> reg = cds.loci['CAJFCJ010000097.1', '+', 50000:55000]
   >>> reg
   index    |    Chromosome         Start    End      Strand      ID
-  int64    |    category           int64    int64    category    object
+  int64    |    category           int64    int64    category    str
   -------  ---  -----------------  -------  -------  ----------  ----------------
   110      |    CAJFCJ010000097.1  51865    52382    +           cds-CAD5126878.1
   111      |    CAJFCJ010000097.1  52446    52826    +           cds-CAD5126878.1
@@ -221,7 +221,7 @@ We cannot see all rows because of space. We can set how many rows are displayed 
   >>> pr.options.set_option('max_rows_to_show', 10)
   >>> reg
     index  |    Chromosome           Start      End  Strand      ID
-    int64  |    category             int64    int64  category    object
+    int64  |    category             int64    int64  category    str
   -------  ---  -----------------  -------  -------  ----------  ----------------
       110  |    CAJFCJ010000097.1    51865    52382  +           cds-CAD5126878.1
       111  |    CAJFCJ010000097.1    52446    52826  +           cds-CAD5126878.1
@@ -258,7 +258,7 @@ groups of intervals. The code below derives the first codon of each CDS group; g
   >>> first=cds.slice_ranges(start=0, end=3, group_by='ID')
   >>> first
   index    |    Chromosome         Start    End      Strand      ID
-  int64    |    category           int64    int64    category    object
+  int64    |    category           int64    int64    category    str
   -------  ---  -----------------  -------  -------  ----------  ----------------
   4        |    CAJFCJ010000053.1  5260     5263     -           cds-CAD5126491.1
   11       |    CAJFCJ010000053.1  10732    10735    +           cds-CAD5126492.1
@@ -279,7 +279,7 @@ The function :func:`get_sequence <pyranges.PyRanges.get_sequence>` returns one s
   >>> first['Sequence'] = first.get_sequence(genome_file)  #genome_file defined above
   >>> first
   index    |    Chromosome         Start    End      Strand      ID                Sequence
-  int64    |    category           int64    int64    category    object            object
+  int64    |    category           int64    int64    category    str               str
   -------  ---  -----------------  -------  -------  ----------  ----------------  ----------
   4        |    CAJFCJ010000053.1  5260     5263     -           cds-CAD5126491.1  ATG
   11       |    CAJFCJ010000053.1  10732    10735    +           cds-CAD5126492.1  ATG
@@ -304,7 +304,7 @@ Let's look at those sequences, using a row selector as before:
 
   >>> first [ first.Sequence.str.len() != 3 ]
     index  |    Chromosome           Start      End  Strand      ID                Sequence
-    int64  |    category             int64    int64  category    object            object
+    int64  |    category             int64    int64  category    str               str
   -------  ---  -----------------  -------  -------  ----------  ----------------  ----------
       135  |    CAJFCJ010000025.1     2753     2755  -           cds-CAD5125115.1  at
       136  |    CAJFCJ010000025.1     2692     2693  -           cds-CAD5125115.1  g
@@ -339,7 +339,7 @@ i.e. joining exons together. The sequence is given 5' to 3'.
   cds-CAD5126876.1    ATG
   cds-CAD5126877.1    ATG
   cds-CAD5126878.1    ATG
-  Name: Sequence, dtype: object
+  Name: Sequence, dtype: str
 
 Note that, when :func:`get_sequence <pyranges.PyRanges.get_sequence>` is called with the ``group_by`` argument,
 the output is indexed by the group_by column, in this case the ``ID``. Here we confirm the sequence length is always 3:
@@ -380,7 +380,7 @@ Let's get their sequence as before:
   cds-CAD5126876.1    TGA
   cds-CAD5126877.1    TAA
   cds-CAD5126878.1    TAA
-  Name: Sequence, dtype: object
+  Name: Sequence, dtype: str
 
 
 Let's use pandas ``value_counts`` to see the usage of stop codons:
@@ -432,7 +432,7 @@ the pandas method ``head``:
 
   >>> cds.head()
     index  |    Chromosome           Start      End  Strand      ID
-    int64  |    category             int64    int64  category    object
+    int64  |    category             int64    int64  category    str
   -------  ---  -----------------  -------  -------  ----------  ----------------
         4  |    CAJFCJ010000053.1     4882     5263  -           cds-CAD5126491.1
        11  |    CAJFCJ010000053.1    10732    10958  +           cds-CAD5126492.1
@@ -451,7 +451,7 @@ interval of each group).
   >>> g = cds.extend_ranges(ext_5=300, group_by='ID')
   >>> g.head()
     index  |    Chromosome           Start      End  Strand      ID
-    int64  |    category             int64    int64  category    object
+    int64  |    category             int64    int64  category    str
   -------  ---  -----------------  -------  -------  ----------  ----------------
         4  |    CAJFCJ010000053.1     4882     5563  -           cds-CAD5126491.1
        11  |    CAJFCJ010000053.1    10432    10958  +           cds-CAD5126492.1
@@ -467,7 +467,7 @@ We can use method :func:`slice_ranges <pyranges.PyRanges.slice_ranges>`  again t
   >>> prom = g.slice_ranges(0, 300, group_by='ID')
   >>> prom.head()
     index  |    Chromosome           Start      End  Strand      ID
-    int64  |    category             int64    int64  category    object
+    int64  |    category             int64    int64  category    str
   -------  ---  -----------------  -------  -------  ----------  ----------------
         4  |    CAJFCJ010000053.1     5263     5563  -           cds-CAD5126491.1
        11  |    CAJFCJ010000053.1    10432    10732  +           cds-CAD5126492.1
@@ -485,7 +485,7 @@ In latest versions, pyranges offers a direct method to perform this operation, c
 
   >>> cds.upstream(length=300, group_by='ID').head()
     index  |    Chromosome           Start      End  Strand      ID
-    int64  |    category             int64    int64  category    object
+    int64  |    category             int64    int64  category    str
   -------  ---  -----------------  -------  -------  ----------  ----------------
         4  |    CAJFCJ010000053.1     5263     5563  -           cds-CAD5126491.1
        11  |    CAJFCJ010000053.1    10432    10732  +           cds-CAD5126492.1
@@ -506,7 +506,7 @@ is designed to correct this:
   >>> cor_prom = prom.clip_ranges(chromsizes=pyf)
   >>> cor_prom.head()
     index  |    Chromosome           Start      End  Strand      ID
-    int64  |    category             int64    int64  category    object
+    int64  |    category             int64    int64  category    str
   -------  ---  -----------------  -------  -------  ----------  ----------------
         4  |    CAJFCJ010000053.1     5263     5563  -           cds-CAD5126491.1
        11  |    CAJFCJ010000053.1    10432    10732  +           cds-CAD5126492.1
@@ -526,7 +526,7 @@ You see below that some intervals were gone out-of-bounds on the right side, and
   >>> select_diff_end = cor_prom.End != prom.End
   >>> prom[select_diff_end]
     index  |    Chromosome           Start      End  Strand      ID
-    int64  |    category             int64    int64  category    object
+    int64  |    category             int64    int64  category    str
   -------  ---  -----------------  -------  -------  ----------  ----------------
       145  |    CAJFCJ010000025.1     3153     3453  -           cds-CAD5125114.1
   PyRanges with 1 rows, 5 columns, and 1 index columns.
@@ -534,7 +534,7 @@ You see below that some intervals were gone out-of-bounds on the right side, and
 
   >>> cor_prom[select_diff_end]
     index  |    Chromosome           Start      End  Strand      ID
-    int64  |    category             int64    int64  category    object
+    int64  |    category             int64    int64  category    str
   -------  ---  -----------------  -------  -------  ----------  ----------------
       145  |    CAJFCJ010000025.1     3153     3418  -           cds-CAD5125114.1
   PyRanges with 1 rows, 5 columns, and 1 index columns.
@@ -552,7 +552,7 @@ Let's see if any of the promoter regions overlap other CDSs:
 
   >>> cor_prom.overlap(cds)
     index  |    Chromosome           Start      End  Strand      ID
-    int64  |    category             int64    int64  category    object
+    int64  |    category             int64    int64  category    str
   -------  ---  -----------------  -------  -------  ----------  ----------------
       135  |    CAJFCJ010000025.1     2755     3055  -           cds-CAD5125115.1
   PyRanges with 1 rows, 5 columns, and 1 index columns.
@@ -570,7 +570,7 @@ of the overlapping intervals, similar to a SQL join operation:
   >>> j = cor_prom.join_overlaps(cds)
   >>> j
     index  |    Chromosome           Start      End  Strand      ID                  Start_b    End_b  ID_b
-    int64  |    category             int64    int64  category    object                int64    int64  object
+    int64  |    category             int64    int64  category    str                   int64    int64  str
   -------  ---  -----------------  -------  -------  ----------  ----------------  ---------  -------  ----------------
        15  |    CAJFCJ010000025.1     2755     3055  -           cds-CAD5125115.1       2753     2851  cds-CAD5125114.1
   PyRanges with 1 rows, 8 columns, and 1 index columns.
@@ -593,7 +593,7 @@ Let's get the intersection between the overlapping intervals, using function
   >>> prom_in_cds = cor_prom.intersect_overlaps(cds)
   >>> prom_in_cds
     index  |    Chromosome           Start      End  Strand      ID
-    int64  |    category             int64    int64  category    object
+    int64  |    category             int64    int64  category    str
   -------  ---  -----------------  -------  -------  ----------  ----------------
       135  |    CAJFCJ010000025.1     2755     2851  -           cds-CAD5125115.1
   PyRanges with 1 rows, 5 columns, and 1 index columns.
@@ -607,7 +607,7 @@ identified by an integer. The intervals that overlap each other will be assigned
   >>> clu_cds = cds.cluster_overlaps()
   >>> clu_cds
   index    |    Chromosome         Start    End      Strand      ID                Cluster
-  int64    |    category           int64    int64    category    object            uint32
+  int64    |    category           int64    int64    category    str               uint32
   -------  ---  -----------------  -------  -------  ----------  ----------------  ---------
   138      |    CAJFCJ010000025.1  2174     2294     -           cds-CAD5125115.1  0
   149      |    CAJFCJ010000025.1  2174     2294     -           cds-CAD5125114.1  0
@@ -627,7 +627,7 @@ identified by an integer. The intervals that overlap each other will be assigned
   >>> clu_cds = cds.cluster_overlaps()
   >>> clu_cds
   index    |    Chromosome         Start    End      Strand      ID                Cluster
-  int64    |    category           int64    int64    category    object            uint32
+  int64    |    category           int64    int64    category    str               uint32
   -------  ---  -----------------  -------  -------  ----------  ----------------  ---------
   138      |    CAJFCJ010000025.1  2174     2294     -           cds-CAD5125115.1  0
   149      |    CAJFCJ010000025.1  2174     2294     -           cds-CAD5125114.1  0
@@ -647,7 +647,7 @@ identified by an integer. The intervals that overlap each other will be assigned
   >>> clu_cds = cds.cluster_overlaps()
   >>> clu_cds
   index    |    Chromosome         Start    End      Strand      ID                Cluster
-  int64    |    category           int64    int64    category    object            uint32
+  int64    |    category           int64    int64    category    str               uint32
   -------  ---  -----------------  -------  -------  ----------  ----------------  ---------
   138      |    CAJFCJ010000025.1  2174     2294     -           cds-CAD5125115.1  0
   149      |    CAJFCJ010000025.1  2174     2294     -           cds-CAD5125114.1  0
@@ -668,7 +668,7 @@ Let's get the clusters that have more than one interval in them, using pandas ``
   >>> multi_clu_cds = clu_cds[ clu_cds.Cluster.isin(multi_clusters) ].copy()
   >>> multi_clu_cds
   index    |    Chromosome         Start    End      Strand      ID                Cluster
-  int64    |    category           int64    int64    category    object            uint32
+  int64    |    category           int64    int64    category    str               uint32
   -------  ---  -----------------  -------  -------  ----------  ----------------  ---------
   138      |    CAJFCJ010000025.1  2174     2294     -           cds-CAD5125115.1  0
   149      |    CAJFCJ010000025.1  2174     2294     -           cds-CAD5125114.1  0
@@ -692,7 +692,7 @@ from left-most to right-most, while intervals on the negative strand are sorted 
 
   >>> multi_clu_cds.sort_ranges()
   index    |    Chromosome         Start    End      Strand      ID                Cluster
-  int64    |    category           int64    int64    category    object            uint32
+  int64    |    category           int64    int64    category    str               uint32
   -------  ---  -----------------  -------  -------  ----------  ----------------  ---------
   146      |    CAJFCJ010000025.1  2753     2851     -           cds-CAD5125114.1  3
   135      |    CAJFCJ010000025.1  2753     2755     -           cds-CAD5125115.1  3
@@ -714,7 +714,7 @@ Thus, sort by chromosome, strand, length, then interval coordinates:
   >>> multi_clu_cds['Length'] = multi_clu_cds.lengths()
   >>> multi_clu_cds.sort_ranges().sort_values(["Chromosome", "Strand", "Length"], kind="stable")
   index    |    Chromosome         Start    End      Strand      ID                Cluster    Length
-  int64    |    category           int64    int64    category    object            uint32     int64
+  int64    |    category           int64    int64    category    str               uint32     int64
   -------  ---  -----------------  -------  -------  ----------  ----------------  ---------  --------
   135      |    CAJFCJ010000025.1  2753     2755     -           cds-CAD5125115.1  3          2
   146      |    CAJFCJ010000025.1  2753     2851     -           cds-CAD5125114.1  3          98
@@ -738,7 +738,7 @@ the annotation ``ann``:
   >>> exons = ann[ ann.Feature == 'exon' ].loci['CAJFCJ010000097.1']
   >>> exons
   index    |    Chromosome         Start    End      Strand      Feature     Parent                 ...
-  int64    |    category           int64    int64    category    category    object                 ...
+  int64    |    category           int64    int64    category    category    str                    ...
   -------  ---  -----------------  -------  -------  ----------  ----------  ---------------------  -----
   86       |    CAJFCJ010000097.1  2248     3308     +           exon        rna-DGYR_LOCUS14091    ...
   90       |    CAJFCJ010000097.1  6505     6600     -           exon        rna-DGYR_LOCUS14092    ...
@@ -759,7 +759,7 @@ available in the genome annotation, let's use PyRanges to calculate them, using
   >>> mRNA_bounds = exons.outer_ranges(group_by='Parent')
   >>> mRNA_bounds
     index  |    Chromosome           Start      End  Strand      Parent
-    int64  |    category             int64    int64  category    object
+    int64  |    category             int64    int64  category    str
   -------  ---  -----------------  -------  -------  ----------  ---------------------
         0  |    CAJFCJ010000097.1     2248     3308  +           rna-DGYR_LOCUS14091
         1  |    CAJFCJ010000097.1    16697    17634  +           rna-DGYR_LOCUS14093
@@ -846,7 +846,7 @@ the CDS intervals may be redundant: different splicing isoforms may have some id
   >>> example = cds.loci['CAJFCJ010000097.1', '+', 51000:54000].sort_ranges()
   >>> example
   index    |    Chromosome         Start    End      Strand      ID
-  int64    |    category           int64    int64    category    object
+  int64    |    category           int64    int64    category    str
   -------  ---  -----------------  -------  -------  ----------  ----------------
   120      |    CAJFCJ010000097.1  51865    52201    +           cds-CAD5126877.1
   110      |    CAJFCJ010000097.1  51865    52382    +           cds-CAD5126878.1

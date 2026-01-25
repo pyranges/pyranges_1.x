@@ -29,7 +29,7 @@ genomic intervals wherein coordinates refer to positions along the genome:
   >>> gre = (gr[gr.Feature=='exon']).get_with_loc_columns('Parent')
   >>> gre
   index    |    Chromosome         Start    End      Strand      Parent
-  int64    |    category           int64    int64    category    object
+  int64    |    category           int64    int64    category    str
   -------  ---  -----------------  -------  -------  ----------  ---------------------
   3        |    CAJFCJ010000053.1  4882     5264     -           rna-DGYR_LOCUS13733
   7        |    CAJFCJ010000053.1  10474    10958    +           rna-DGYR_LOCUS13734
@@ -69,7 +69,7 @@ Let's convert the ``rh`` object to a PyRanges object, taking care of switching f
   >>> rh['Start'] -= 1  # convert to 0-based coordinates
   >>> rh
   index    |    Chromosome             Start    End      Strand    query_name    mdl_from    mdl_to
-  int64    |    object                 int64    int64    object    object        int64       int64
+  int64    |    str                    int64    int64    str       str           int64       int64
   -------  ---  ---------------------  -------  -------  --------  ------------  ----------  --------
   0        |    rna-DGYR_LOCUS12552    266      311      +         GAIT          1           71
   1        |    rna-DGYR_LOCUS12552-2  287      332      +         GAIT          1           71
@@ -90,7 +90,7 @@ Infernal, like other programs, reports negative stranded hits with Start and End
   >>> rh.loc[ rh.Strand == '-', ['Start', 'End'] ] = rh.loc[ rh.Strand == '-', ['End', 'Start'] ].values
   >>> rh # doctest: +NORMALIZE_WHITESPACE
   index    |    Chromosome             Start    End      Strand    query_name    mdl_from    mdl_to
-  int64    |    object                 int64    int64    object    object        int64       int64
+  int64    |    str                    int64    int64    str       str           int64       int64
   -------  ---  ---------------------  -------  -------  --------  ------------  ----------  --------
   0        |    rna-DGYR_LOCUS12552    266      311      +         GAIT          1           71
   1        |    rna-DGYR_LOCUS12552-2  287      332      +         GAIT          1           71
@@ -125,7 +125,7 @@ The resulting PyRanges object, ``rhg``, contains the Rfam hits remapped to the g
   >>> rhg = rh.map_to_global(gre, global_on='Parent')
   >>> rhg
   index    |    Chromosome         Start    End      Strand    query_name    mdl_from    mdl_to
-  int64    |    category           int64    int64    object    object        int64       int64
+  int64    |    category           int64    int64    str       str           int64       int64
   -------  ---  -----------------  -------  -------  --------  ------------  ----------  --------
   0        |    CAJFCJ010000025.1  2598     2643     -         GAIT          1           71
   1        |    CAJFCJ010000025.1  2598     2643     -         GAIT          1           71
@@ -145,7 +145,7 @@ Analogously, we can record the local coordinates by using the ``keep_loc`` argum
   >>> rh.map_to_global(gre, global_on='Parent', keep_id=True, keep_loc=True).drop(
   ...    columns=['query_name', 'mdl_from','mdl_to']) # dropping some columns to allow display
   index    |    Chromosome         Start    End      Strand    Parent                 Start_local    End_local    ...
-  int64    |    category           int64    int64    object    object                 int64          int64        ...
+  int64    |    category           int64    int64    str       str                    int64          int64        ...
   -------  ---  -----------------  -------  -------  --------  ---------------------  -------------  -----------  -----
   0        |    CAJFCJ010000025.1  2598     2643     -         rna-DGYR_LOCUS12552    266            311          ...
   1        |    CAJFCJ010000025.1  2598     2643     -         rna-DGYR_LOCUS12552-2  287            332          ...
@@ -174,7 +174,7 @@ First, we obtain the coding sequences (CDS) from the original GFF file, and tran
   cds-CAD5126491.1    MAKNPEKMSATKKLETINRCMGHTKRGLENGCYTKGLIKIRCFTAE...
   cds-CAD5126492.1    MKIFAIISIYFILSESCYFRNVEVEGDFYLATFLAFHTDEYCTGPI...
   cds-CAD5126493.1    MNFYRNFFNLIFCIKVSSFSPIQDYISCQEALTKTEQDGSYSIKPR...
-  Name: Sequence, dtype: object
+  Name: Sequence, dtype: str
 
 As an example of a positional feature mapped to protein sequences, let's find all instances of the
 amino acid 'K' (lysine):
@@ -194,7 +194,7 @@ Let's convert to a PyRanges object:
   >>> aa_pos = pr.PyRanges(z.rename(columns={'ID':'Chromosome'}).assign(End=lambda df: df.Start + 1 ))
   >>> aa_pos
   index    |    Chromosome        Start    AminoAcid    End
-  int64    |    object            int64    object       int64
+  int64    |    str               int64    str          int64
   -------  ---  ----------------  -------  -----------  -------
   0        |    cds-CAD5125114.1  12       K            13
   1        |    cds-CAD5125114.1  31       K            32
@@ -221,7 +221,7 @@ Now we're ready to map these positions to the genome coordinates. Let's also fet
   >>> genome_pos['Sequence'] = genome_pos.get_sequence(genome_file).str.upper()
   >>> genome_pos
   index    |    Chromosome         Start    AminoAcid    End      ID                Strand      Sequence
-  int64    |    category           int64    object       int64    object            category    object
+  int64    |    category           int64    str          int64    str               category    str
   -------  ---  -----------------  -------  -----------  -------  ----------------  ----------  ----------
   0        |    CAJFCJ010000025.1  3114     K            3117     cds-CAD5125114.1  -           AAA
   1        |    CAJFCJ010000025.1  2797     K            2800     cds-CAD5125114.1  -           AAG
@@ -241,7 +241,7 @@ coordinates by 3 before mapping to the global coordinates. So this is equivalent
 
   >>> aa_pos.map_to_global(grc, global_on='ID', keep_id=True, pep_to_cds=True)
   index    |    Chromosome         Start    AminoAcid    End      ID                Strand
-  int64    |    category           int64    object       int64    object            category
+  int64    |    category           int64    str          int64    str               category
   -------  ---  -----------------  -------  -----------  -------  ----------------  ----------
   0        |    CAJFCJ010000025.1  3114     K            3117     cds-CAD5125114.1  -
   1        |    CAJFCJ010000025.1  2797     K            2800     cds-CAD5125114.1  -
@@ -260,7 +260,7 @@ One last important observation: note the warning above about **index duplicates*
 
   >>> genome_pos[genome_pos.index.duplicated(keep=False)]
   index    |    Chromosome         Start    AminoAcid    End      ID                Strand      Sequence
-  int64    |    category           int64    object       int64    object            category    object
+  int64    |    category           int64    str          int64    str               category    str
   -------  ---  -----------------  -------  -----------  -------  ----------------  ----------  ----------
   234      |    CAJFCJ010000053.1  77393    K            77395    cds-CAD5126496.1  +           AA
   234      |    CAJFCJ010000053.1  77458    K            77459    cds-CAD5126496.1  +           G
@@ -296,7 +296,7 @@ Let's remind ourselves of the ``gre`` object, which contains the transcript coor
 
   >>> gre
   index    |    Chromosome         Start    End      Strand      Parent
-  int64    |    category           int64    int64    category    object
+  int64    |    category           int64    int64    category    str
   -------  ---  -----------------  -------  -------  ----------  ---------------------
   3        |    CAJFCJ010000053.1  4882     5264     -           rna-DGYR_LOCUS13733
   7        |    CAJFCJ010000053.1  10474    10958    +           rna-DGYR_LOCUS13734
@@ -342,7 +342,7 @@ strand and one for minus strand; and let's load their sequence in memory:
   >>> matches['Sequence'] = matches.get_sequence(genome_file).str.upper() # fetch seq as control
   >>> matches
   index    |    Chromosome         Start    End      Strand    Sequence
-  int64    |    object             int64    int64    object    object
+  int64    |    str                int64    int64    str       str
   -------  ---  -----------------  -------  -------  --------  ----------
   0        |    CAJFCJ010000025.1  81       87       +         AATAAA
   1        |    CAJFCJ010000025.1  90       96       +         AATAAA
@@ -365,7 +365,7 @@ coordinate system. By default, it will use all transcripts that overlap the moti
   >>> gre_matches = matches.map_to_local(gre, ref_on='Parent')
   >>> gre_matches
   index    |    Chromosome           Start    End      Strand    Sequence
-  int64    |    object               int64    int64    object    object
+  int64    |    str                  int64    int64    str       str
   -------  ---  -------------------  -------  -------  --------  ----------
   28       |    rna-DGYR_LOCUS13734  1142     1148     +         AATAAA
   29       |    rna-DGYR_LOCUS13734  1416     1422     +         AATAAA
@@ -384,7 +384,7 @@ coordinate system. By default, it will use all transcripts that overlap the moti
   >>> matches.map_to_local(gre, ref_on='Parent', keep_chrom=True, keep_loc=True).columns
   Index(['Chromosome', 'Start', 'End', 'Strand', 'Sequence', 'Chromosome_global',
          'Start_global', 'End_global', 'Strand_global'],
-        dtype='object')
+        dtype='str')
 
 
 Let's look at another use case.
@@ -397,7 +397,7 @@ Let's inspect some data inside the ``gr`` object, focusing on a single identifie
   >>> some_id = 'rna-DGYR_LOCUS12552-2'
   >>> gr[gr.Parent == some_id].get_with_loc_columns(['Feature', 'Parent'])
     index  |    Chromosome           Start      End  Strand      Feature     Parent
-    int64  |    category             int64    int64  category    category    object
+    int64  |    category             int64    int64  category    category    str
   -------  ---  -----------------  -------  -------  ----------  ----------  ---------------------
       140  |    CAJFCJ010000025.1     3111     3250  -           exon        rna-DGYR_LOCUS12552-2
       141  |    CAJFCJ010000025.1     2753     2851  -           exon        rna-DGYR_LOCUS12552-2
@@ -422,7 +422,7 @@ by pairing (overlapping) CDS and exon intervals with the same ``Parent`` value:
   >>> cds_local = cds.map_to_local(exons, ref_on='Parent', match_by='Parent')
   >>> cds_local
   index    |    Chromosome             Start    End      Strand    Feature
-  int64    |    object                 int64    int64    object    category
+  int64    |    str                    int64    int64    str       category
   -------  ---  ---------------------  -------  -------  --------  ----------
   0        |    rna-DGYR_LOCUS13733    1        382      +         CDS
   1        |    rna-DGYR_LOCUS13734    258      484      +         CDS
@@ -438,7 +438,7 @@ by pairing (overlapping) CDS and exon intervals with the same ``Parent`` value:
 
   >>> cds_local[cds_local.Chromosome == some_id]
     index  |    Chromosome               Start      End  Strand    Feature
-    int64  |    object                   int64    int64  object    category
+    int64  |    str                      int64    int64  str       category
   -------  ---  ---------------------  -------  -------  --------  ----------
        51  |    rna-DGYR_LOCUS12552-2       97      139  +         CDS
        52  |    rna-DGYR_LOCUS12552-2      139      237  +         CDS
@@ -452,7 +452,7 @@ With the similar logic, we can easily map the start and stop codon positions to 
 
   >>> cds.slice_ranges(0, 3).assign(Feature='start').map_to_local(exons, ref_on='Parent', match_by='Parent')
   index    |    Chromosome             Start    End      Strand    Feature
-  int64    |    object                 int64    int64    object    object
+  int64    |    str                    int64    int64    str       str
   -------  ---  ---------------------  -------  -------  --------  ---------
   0        |    rna-DGYR_LOCUS13733    1        4        +         start
   1        |    rna-DGYR_LOCUS13734    258      261      +         start
@@ -468,7 +468,7 @@ With the similar logic, we can easily map the start and stop codon positions to 
 
   >>> cds.slice_ranges(-3).assign(Feature='stop').map_to_local(exons, ref_on='Parent', match_by='Parent')
   index    |    Chromosome             Start    End      Strand    Feature
-  int64    |    object                 int64    int64    object    object
+  int64    |    str                    int64    int64    str       str
   -------  ---  ---------------------  -------  -------  --------  ---------
   0        |    rna-DGYR_LOCUS13733    379      382      +         stop
   1        |    rna-DGYR_LOCUS13734    481      484      +         stop

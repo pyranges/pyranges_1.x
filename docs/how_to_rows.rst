@@ -20,7 +20,7 @@ to the original object from which it was extracted. For example:
   >>> gr = pr.example_data.aorta
   >>> gr
   index    |    Chromosome    Start    End      Name      Score    Strand
-  int64    |    category      int64    int64    object    int64    category
+  int64    |    category      int64    int64    str       int64    category
   -------  ---  ------------  -------  -------  --------  -------  ----------
   0        |    chr1          9916     10115    H3K27me3  5        -
   1        |    chr1          9939     10138    H3K27me3  7        +
@@ -37,7 +37,7 @@ to the original object from which it was extracted. For example:
   >>> sgr = gr.iloc[0:3].copy()
   >>> sgr
     index  |    Chromosome      Start      End  Name        Score  Strand
-    int64  |    category        int64    int64  object      int64  category
+    int64  |    category        int64    int64  str         int64  category
   -------  ---  ------------  -------  -------  --------  -------  ----------
         0  |    chr1             9916    10115  H3K27me3        5  -
         1  |    chr1             9939    10138  H3K27me3        7  +
@@ -48,7 +48,7 @@ to the original object from which it was extracted. For example:
   >>> sgr['Score'] = 100  # does not modify gr
   >>> gr.head(3)
     index  |    Chromosome      Start      End  Name        Score  Strand
-    int64  |    category        int64    int64  object      int64  category
+    int64  |    category        int64    int64  str         int64  category
   -------  ---  ------------  -------  -------  --------  -------  ----------
         0  |    chr1             9916    10115  H3K27me3        5  -
         1  |    chr1             9939    10138  H3K27me3        7  +
@@ -62,7 +62,7 @@ use ``loc`` (label-based indexing) or ``iloc`` (positional indexing) on the whol
   >>> gr.loc[0:2, 'Score'] = 100  # modifies gr
   >>> gr.head(5)
     index  |    Chromosome      Start      End  Name        Score  Strand
-    int64  |    category        int64    int64  object      int64  category
+    int64  |    category        int64    int64  str         int64  category
   -------  ---  ------------  -------  -------  --------  -------  ----------
         0  |    chr1             9916    10115  H3K27me3      100  -
         1  |    chr1             9939    10138  H3K27me3      100  +
@@ -80,7 +80,7 @@ In PyRanges, boolean indexers work analogously as in pandas, as already seen in 
   >>> sel = (gr['Score'] == 100)
   >>> gr[sel]
     index  |    Chromosome      Start      End  Name        Score  Strand
-    int64  |    category        int64    int64  object      int64  category
+    int64  |    category        int64    int64  str         int64  category
   -------  ---  ------------  -------  -------  --------  -------  ----------
         0  |    chr1             9916    10115  H3K27me3      100  -
         1  |    chr1             9939    10138  H3K27me3      100  +
@@ -90,7 +90,7 @@ In PyRanges, boolean indexers work analogously as in pandas, as already seen in 
 
   >>> gr[gr.Score==5]
     index  |    Chromosome      Start      End  Name        Score  Strand
-    int64  |    category        int64    int64  object      int64  category
+    int64  |    category        int64    int64  str         int64  category
   -------  ---  ------------  -------  -------  --------  -------  ----------
         3  |    chr1             9953    10152  H3K27me3        5  +
         5  |    chr1            10001    10200  H3K27me3        5  -
@@ -102,7 +102,7 @@ Combined with ``loc``, boolean indexers can be used to add or update column valu
   >>> gr.loc[gr['Score'] < 6, 'Score'] = -10  # modifies gr
   >>> gr.head(5)
     index  |    Chromosome      Start      End  Name        Score  Strand
-    int64  |    category        int64    int64  object      int64  category
+    int64  |    category        int64    int64  str         int64  category
   -------  ---  ------------  -------  -------  --------  -------  ----------
         0  |    chr1             9916    10115  H3K27me3      100  -
         1  |    chr1             9939    10138  H3K27me3      100  +
@@ -125,7 +125,7 @@ Let's get the + intervals with Score<8 starting before 10,000 or ending after 10
   >>> gr[ (gr.Score<8) & (gr.Strand=='+') &
   ...     ((gr.Start<10000) | (gr.End>100000)) ]
     index  |    Chromosome      Start      End  Name        Score  Strand
-    int64  |    category        int64    int64  object      int64  category
+    int64  |    category        int64    int64  str         int64  category
   -------  ---  ------------  -------  -------  --------  -------  ----------
         3  |    chr1             9953    10152  H3K27me3      -10  +
        10  |    chr1           110246   110445  H3K27me3      -10  +
@@ -137,7 +137,7 @@ Let's invert the selection:
   ...      (gr.Score<8) & (gr.Strand=='+') &
   ...      ((gr.Start<10000) | (gr.End>100000)) )]
   index    |    Chromosome    Start    End      Name      Score    Strand
-  int64    |    category      int64    int64    object    int64    category
+  int64    |    category      int64    int64    str       int64    category
   -------  ---  ------------  -------  -------  --------  -------  ----------
   0        |    chr1          9916     10115    H3K27me3  100      -
   1        |    chr1          9939     10138    H3K27me3  100      +
@@ -159,66 +159,66 @@ to select rows by genomic region:
 
   >>> gr2 = pr.example_data.aorta2.sort_ranges()
   >>> gr2
-  index    |    Chromosome    Start    End      Name      Score    Strand
-  int64    |    category      int64    int64    object    int64    category
-  -------  ---  ------------  -------  -------  --------  -------  ----------
-  1        |    chr1          10073    10272    Input     1        +
-  5        |    chr1          10280    10479    Input     1        +
-  6        |    chr1          16056    16255    Input     1        +
-  7        |    chr1          16064    16263    Input     1        +
-  ...      |    ...           ...      ...      ...       ...      ...
-  4        |    chr1          10149    10348    Input     1        -
-  3        |    chr1          10082    10281    Input     1        -
-  2        |    chr1          10079    10278    Input     1        -
-  0        |    chr1          9988     10187    Input     1        -
+  index    |    Chromosome    Start    End      Name    Score    Strand
+  int64    |    category      int64    int64    str     int64    category
+  -------  ---  ------------  -------  -------  ------  -------  ----------
+  1        |    chr1          10073    10272    Input   1        +
+  5        |    chr1          10280    10479    Input   1        +
+  6        |    chr1          16056    16255    Input   1        +
+  7        |    chr1          16064    16263    Input   1        +
+  ...      |    ...           ...      ...      ...     ...      ...
+  4        |    chr1          10149    10348    Input   1        -
+  3        |    chr1          10082    10281    Input   1        -
+  2        |    chr1          10079    10278    Input   1        -
+  0        |    chr1          9988     10187    Input   1        -
   PyRanges with 10 rows, 6 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
 Various syntaxes are accepted, see its API. For example:
 
   >>> gr2.loci['-'] # get all rows with strand '-'
-    index  |    Chromosome      Start      End  Name        Score  Strand
-    int64  |    category        int64    int64  object      int64  category
-  -------  ---  ------------  -------  -------  --------  -------  ----------
-        9  |    chr1            19958    20157  Input           1  -
-        4  |    chr1            10149    10348  Input           1  -
-        3  |    chr1            10082    10281  Input           1  -
-        2  |    chr1            10079    10278  Input           1  -
-        0  |    chr1             9988    10187  Input           1  -
+    index  |    Chromosome      Start      End  Name      Score  Strand
+    int64  |    category        int64    int64  str       int64  category
+  -------  ---  ------------  -------  -------  ------  -------  ----------
+        9  |    chr1            19958    20157  Input         1  -
+        4  |    chr1            10149    10348  Input         1  -
+        3  |    chr1            10082    10281  Input         1  -
+        2  |    chr1            10079    10278  Input         1  -
+        0  |    chr1             9988    10187  Input         1  -
   PyRanges with 5 rows, 6 columns, and 1 index columns.
   Contains 1 chromosomes and 1 strands.
 
   >>> gr2.loci['chr1', '+'] # get all rows with chromosome 'chr1' and strand '+'
-    index  |    Chromosome      Start      End  Name        Score  Strand
-    int64  |    category        int64    int64  object      int64  category
-  -------  ---  ------------  -------  -------  --------  -------  ----------
-        1  |    chr1            10073    10272  Input           1  +
-        5  |    chr1            10280    10479  Input           1  +
-        6  |    chr1            16056    16255  Input           1  +
-        7  |    chr1            16064    16263  Input           1  +
-        8  |    chr1            16109    16308  Input           1  +
+    index  |    Chromosome      Start      End  Name      Score  Strand
+    int64  |    category        int64    int64  str       int64  category
+  -------  ---  ------------  -------  -------  ------  -------  ----------
+        1  |    chr1            10073    10272  Input         1  +
+        5  |    chr1            10280    10479  Input         1  +
+        6  |    chr1            16056    16255  Input         1  +
+        7  |    chr1            16064    16263  Input         1  +
+        8  |    chr1            16109    16308  Input         1  +
   PyRanges with 5 rows, 6 columns, and 1 index columns.
   Contains 1 chromosomes and 1 strands.
 
   >>> gr2.loci['chr1', 10000:11000] # get all rows on 'chr1' and overlapping 10000:11000
-    index  |    Chromosome      Start      End  Name        Score  Strand
-    int64  |    category        int64    int64  object      int64  category
-  -------  ---  ------------  -------  -------  --------  -------  ----------
-        1  |    chr1            10073    10272  Input           1  +
-        5  |    chr1            10280    10479  Input           1  +
-        4  |    chr1            10149    10348  Input           1  -
-        3  |    chr1            10082    10281  Input           1  -
-        2  |    chr1            10079    10278  Input           1  -
-        0  |    chr1             9988    10187  Input           1  -
+    index  |    Chromosome      Start      End  Name      Score  Strand
+    int64  |    category        int64    int64  str       int64  category
+  -------  ---  ------------  -------  -------  ------  -------  ----------
+        1  |    chr1            10073    10272  Input         1  +
+        5  |    chr1            10280    10479  Input         1  +
+        4  |    chr1            10149    10348  Input         1  -
+        3  |    chr1            10082    10281  Input         1  -
+        2  |    chr1            10079    10278  Input         1  -
+        0  |    chr1             9988    10187  Input         1  -
   PyRanges with 6 rows, 6 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
   >>> gr2.loci['chr1', '+', 10000:11000] # get all rows on 'chr1', strand '+', and overlapping 10000:11000
-    index  |    Chromosome      Start      End  Name        Score  Strand
-    int64  |    category        int64    int64  object      int64  category
-  -------  ---  ------------  -------  -------  --------  -------  ----------
-        1  |    chr1            10073    10272  Input           1  +
-        5  |    chr1            10280    10479  Input           1  +
+    index  |    Chromosome      Start      End  Name      Score  Strand
+    int64  |    category        int64    int64  str       int64  category
+  -------  ---  ------------  -------  -------  ------  -------  ----------
+        1  |    chr1            10073    10272  Input         1  +
+        5  |    chr1            10280    10479  Input         1  +
   PyRanges with 2 rows, 6 columns, and 1 index columns.
   Contains 1 chromosomes and 1 strands.
 
@@ -226,11 +226,11 @@ Various syntaxes are accepted, see its API. For example:
 
   >>> gr2.loci['chr1', '+', 10000:11000] = gr2.loci['chr1', '+', 10000:11000].copy().assign(Score=100)
   >>> gr2.loci['chr1', '+', 10000:11000]  # see below that the Score was altered
-    index  |    Chromosome      Start      End  Name        Score  Strand
-    int64  |    category        int64    int64  object      int64  category
-  -------  ---  ------------  -------  -------  --------  -------  ----------
-        1  |    chr1            10073    10272  Input         100  +
-        5  |    chr1            10280    10479  Input         100  +
+    index  |    Chromosome      Start      End  Name      Score  Strand
+    int64  |    category        int64    int64  str       int64  category
+  -------  ---  ------------  -------  -------  ------  -------  ----------
+        1  |    chr1            10073    10272  Input       100  +
+        5  |    chr1            10280    10479  Input       100  +
   PyRanges with 2 rows, 6 columns, and 1 index columns.
   Contains 1 chromosomes and 1 strands.
 
@@ -239,18 +239,18 @@ Various syntaxes are accepted, see its API. For example:
   >>> sindex=gr2.loci['chr1', '+', 16000:17000].index
   >>> gr2.loc[sindex, "Score"]=150
   >>> gr2
-  index    |    Chromosome    Start    End      Name      Score    Strand
-  int64    |    category      int64    int64    object    int64    category
-  -------  ---  ------------  -------  -------  --------  -------  ----------
-  1        |    chr1          10073    10272    Input     100      +
-  5        |    chr1          10280    10479    Input     100      +
-  6        |    chr1          16056    16255    Input     150      +
-  7        |    chr1          16064    16263    Input     150      +
-  ...      |    ...           ...      ...      ...       ...      ...
-  4        |    chr1          10149    10348    Input     1        -
-  3        |    chr1          10082    10281    Input     1        -
-  2        |    chr1          10079    10278    Input     1        -
-  0        |    chr1          9988     10187    Input     1        -
+  index    |    Chromosome    Start    End      Name    Score    Strand
+  int64    |    category      int64    int64    str     int64    category
+  -------  ---  ------------  -------  -------  ------  -------  ----------
+  1        |    chr1          10073    10272    Input   100      +
+  5        |    chr1          10280    10479    Input   100      +
+  6        |    chr1          16056    16255    Input   150      +
+  7        |    chr1          16064    16263    Input   150      +
+  ...      |    ...           ...      ...      ...     ...      ...
+  4        |    chr1          10149    10348    Input   1        -
+  3        |    chr1          10082    10281    Input   1        -
+  2        |    chr1          10079    10278    Input   1        -
+  0        |    chr1          9988     10187    Input   1        -
   PyRanges with 10 rows, 6 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
@@ -378,6 +378,3 @@ To use a different priorization of genomic location columns, specify them in the
   5        |    chr21         40099618   40099643   +           64
   PyRanges with 20 rows, 5 columns, and 1 index columns.
   Contains 15 chromosomes and 2 strands.
-
-
-

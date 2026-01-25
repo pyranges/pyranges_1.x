@@ -58,7 +58,7 @@ We will briefly showcase them in this document. First, let's create two PyRanges
   ...                      Strand=["+", "+", "-", "-", "-", "+", "+"]))
   >>> a
     index  |    Chromosome      Start      End  Strand
-    int64  |    object          int64    int64  object
+    int64  |    str             int64    int64  str
   -------  ---  ------------  -------  -------  --------
         0  |    chr1                3        6  +
         1  |    chr1               13       15  +
@@ -76,7 +76,7 @@ We will briefly showcase them in this document. First, let's create two PyRanges
   ...                      Strand=["+", "+", "+", "-", "+"]))
   >>> b
     index  |    Chromosome      Start      End  Strand
-    int64  |    object          int64    int64  object
+    int64  |    str             int64    int64  str
   -------  ---  ------------  -------  -------  --------
         0  |    chr1                6        8  +
         1  |    chr1               12       14  +
@@ -95,7 +95,7 @@ This is simply a filter of the intervals in self, so that only those overlapping
 
   >>> a.overlap(b)
     index  |    Chromosome      Start      End  Strand
-    int64  |    object          int64    int64  object
+    int64  |    str             int64    int64  str
   -------  ---  ------------  -------  -------  --------
         1  |    chr1               13       15  +
         3  |    chr1               23       27  -
@@ -109,7 +109,7 @@ Let's now filter the rows of the other PyRanges object:
 
   >>> b.overlap(a)
     index  |    Chromosome      Start      End  Strand
-    int64  |    object          int64    int64  object
+    int64  |    str             int64    int64  str
   -------  ---  ------------  -------  -------  --------
         1  |    chr1               12       14  +
         3  |    chr1               25       29  -
@@ -124,7 +124,7 @@ To get the self intervals **without overlap** in other, use ``invert=True``:
 
   >>> a.overlap(b, invert=True)
     index  |    Chromosome      Start      End  Strand
-    int64  |    object          int64    int64  object
+    int64  |    str             int64    int64  str
   -------  ---  ------------  -------  -------  --------
 	0  |    chr1                3        6  +
 	2  |    chr1               18       21  -
@@ -138,7 +138,7 @@ the end of the first is equal of the start of the second. These are called **"bo
 
   >>> a.head(1)
     index  |    Chromosome      Start      End  Strand
-    int64  |    object          int64    int64  object
+    int64  |    str             int64    int64  str
   -------  ---  ------------  -------  -------  --------
         0  |    chr1                3        6  +
   PyRanges with 1 rows, 4 columns, and 1 index columns.
@@ -146,7 +146,7 @@ the end of the first is equal of the start of the second. These are called **"bo
 
   >>> b.head(1)
     index  |    Chromosome      Start      End  Strand
-    int64  |    object          int64    int64  object
+    int64  |    str             int64    int64  str
   -------  ---  ------------  -------  -------  --------
         0  |    chr1                6        8  +
   PyRanges with 1 rows, 4 columns, and 1 index columns.
@@ -164,7 +164,7 @@ A value of 1 will report bookended intervals, previously not considered overlapp
 
   >>> b.overlap(a, slack=1)
     index  |    Chromosome      Start      End  Strand
-    int64  |    object          int64    int64  object
+    int64  |    str             int64    int64  str
   -------  ---  ------------  -------  -------  --------
 	0  |    chr1                6        8  +
 	1  |    chr1               12       14  +
@@ -181,7 +181,7 @@ The value 'same' results in the intuitive behavior, i.e. two intervals overlap o
 
   >>> b.overlap(a, strand_behavior="same")  # the result here is the same as: a.overlap(b)
     index  |    Chromosome      Start      End  Strand
-    int64  |    object          int64    int64  object
+    int64  |    str             int64    int64  str
   -------  ---  ------------  -------  -------  --------
         1  |    chr1               12       14  +
         3  |    chr1               25       29  -
@@ -193,7 +193,7 @@ On the other hand, value 'ignore' will define overlaps regardless of strands:
 
   >>> a.overlap(b, strand_behavior="ignore")
     index  |    Chromosome      Start      End  Strand
-    int64  |    object          int64    int64  object
+    int64  |    str             int64    int64  str
   -------  ---  ------------  -------  -------  --------
 	1  |    chr1               13       15  +
 	2  |    chr1               18       21  -
@@ -208,7 +208,7 @@ Value 'opposite' will require two intervals to be on the opposite strands to be 
 
   >>> a.overlap(b, strand_behavior="opposite")
     index  |    Chromosome      Start      End  Strand
-    int64  |    object          int64    int64  object
+    int64  |    str             int64    int64  str
   -------  ---  ------------  -------  -------  --------
 	2  |    chr1               18       21  -
   PyRanges with 1 rows, 4 columns, and 1 index columns.
@@ -220,7 +220,7 @@ valid strand information, i.e. the Strand column is present and all its values a
   >>> b_unstranded = b.remove_strand()
   >>> b_unstranded
     index  |    Chromosome      Start      End
-    int64  |    object          int64    int64
+    int64  |    str             int64    int64
   -------  ---  ------------  -------  -------
         0  |    chr1                6        8
         1  |    chr1               12       14
@@ -259,7 +259,7 @@ When leading to potentially non-intuitive behavior, a warning is printed:
   >>> a_invalid.loc[2, 'Strand'] = "."
   >>> a_invalid
     index  |    Chromosome      Start      End  Strand
-    int64  |    object          int64    int64  object
+    int64  |    str             int64    int64  str
   -------  ---  ------------  -------  -------  --------
         0  |    chr1                3        6  +
         1  |    chr1               13       15  +
@@ -274,7 +274,7 @@ When leading to potentially non-intuitive behavior, a warning is printed:
   >>> a_invalid.overlap(b)  # doctest: +SKIP
   <input>:1: UserWarning: overlap: 'auto' strand_behavior treated as ignore due to invalid Strand values. Please use strand_behavior=ignore
     index  |    Chromosome      Start      End  Strand
-    int64  |    object          int64    int64  object
+    int64  |    str             int64    int64  str
   -------  ---  ------------  -------  -------  --------
         1  |    chr1               13       15  +
         2  |    chr1               18       21  .
@@ -294,7 +294,7 @@ use this column to filter the overlaps:
   >>> a2 = a.assign(odd = lambda x:x.Start % 2 )
   >>> a2
     index  |    Chromosome      Start      End  Strand        odd
-    int64  |    object          int64    int64  object      int64
+    int64  |    str             int64    int64  str         int64
   -------  ---  ------------  -------  -------  --------  -------
         0  |    chr1                3        6  +               1
         1  |    chr1               13       15  +               1
@@ -309,7 +309,7 @@ use this column to filter the overlaps:
   >>> b2 = b.assign(odd = lambda x:x.Start % 2 )
   >>> b2
     index  |    Chromosome      Start      End  Strand        odd
-    int64  |    object          int64    int64  object      int64
+    int64  |    str             int64    int64  str         int64
   -------  ---  ------------  -------  -------  --------  -------
         0  |    chr1                6        8  +               0
         1  |    chr1               12       14  +               0
@@ -322,7 +322,7 @@ use this column to filter the overlaps:
 
   >>> a2.overlap(b2, match_by='odd')
     index  |    Chromosome      Start      End  Strand        odd
-    int64  |    object          int64    int64  object      int64
+    int64  |    str             int64    int64  str         int64
   -------  ---  ------------  -------  -------  --------  -------
         3  |    chr1               23       27  -               1
         5  |    chr1               32       37  +               0
@@ -344,7 +344,7 @@ to differentiate columns in other which are present with the same name in the se
 
   >>> a.join_overlaps(b)
     index  |    Chromosome      Start      End  Strand      Start_b    End_b
-    int64  |    object          int64    int64  object        int64    int64
+    int64  |    str             int64    int64  str           int64    int64
   -------  ---  ------------  -------  -------  --------  ---------  -------
         1  |    chr1               13       15  +                12       14
         3  |    chr1               23       27  -                25       29
@@ -360,7 +360,7 @@ resulting in index duplicates (see below); you may call .reset_index() to correc
 
   >>> b.join_overlaps(a)
     index  |    Chromosome      Start      End  Strand      Start_b    End_b
-    int64  |    object          int64    int64  object        int64    int64
+    int64  |    str             int64    int64  str           int64    int64
   -------  ---  ------------  -------  -------  --------  ---------  -------
         1  |    chr1               12       14  +                13       15
         3  |    chr1               25       29  -                23       27
@@ -377,7 +377,7 @@ be returned for both PyRanges:
 
   >>> a.join_overlaps(b, strand_behavior="ignore")
     index  |    Chromosome      Start      End  Strand      Start_b    End_b  Strand_b
-    int64  |    object          int64    int64  object        int64    int64  object
+    int64  |    str             int64    int64  str           int64    int64  str
   -------  ---  ------------  -------  -------  --------  ---------  -------  ----------
         1  |    chr1               13       15  +                12       14  +
         2  |    chr1               18       21  -                19       20  +
@@ -392,7 +392,7 @@ be returned for both PyRanges:
 
   >>> a2.join_overlaps(b2, match_by='odd')
     index  |    Chromosome      Start      End  Strand        odd    Start_b    End_b
-    int64  |    object          int64    int64  object      int64      int64    int64
+    int64  |    str             int64    int64  str         int64      int64    int64
   -------  ---  ------------  -------  -------  --------  -------  ---------  -------
         3  |    chr1               23       27  -               1         25       29
         5  |    chr1               32       37  +               0         34       36
@@ -401,7 +401,7 @@ be returned for both PyRanges:
 
   >>> a2.join_overlaps(b2, match_by='odd', slack=5)
     index  |    Chromosome      Start      End  Strand        odd    Start_b    End_b
-    int64  |    object          int64    int64  object      int64      int64    int64
+    int64  |    str             int64    int64  str         int64      int64    int64
   -------  ---  ------------  -------  -------  --------  -------  ---------  -------
         1  |    chr1               13       15  +               1         19       20
         3  |    chr1               23       27  -               1         25       29
@@ -416,7 +416,7 @@ For example, this allows to obtain the union of the overlapping intervals:
 
   >>> a2.join_overlaps(b2, match_by='odd', slack=5).combine_interval_columns('union')
     index  |    Chromosome      Start      End  Strand        odd
-    int64  |    object          int64    int64  object      int64
+    int64  |    str             int64    int64  str         int64
   -------  ---  ------------  -------  -------  --------  -------
         1  |    chr1               13       20  +               1
         3  |    chr1               23       29  -               1
@@ -442,7 +442,7 @@ present in both PyRanges:
 
   >>> a.set_intersect_overlaps(b)
     index  |    Chromosome      Start      End  Strand
-    int64  |    object          int64    int64  object
+    int64  |    str             int64    int64  str
   -------  ---  ------------  -------  -------  --------
         0  |    chr1               13       14  +
         1  |    chr1               34       36  +
@@ -453,7 +453,7 @@ present in both PyRanges:
 
   >>> a.set_intersect_overlaps(b, strand_behavior="ignore")
     index  |    Chromosome      Start      End
-    int64  |    object          int64    int64
+    int64  |    str             int64    int64
   -------  ---  ------------  -------  -------
         0  |    chr1               13       14
         1  |    chr1               19       20
@@ -466,14 +466,14 @@ present in both PyRanges:
 The regions reported may be part of any interval in the two PyRanges. All metadata columns are dropped:
 
   >>> a2.set_intersect_overlaps(b2).columns  # see above: a2 and b2 had the 'odd' column
-  Index(['Chromosome', 'Start', 'End', 'Strand'], dtype='object')
+  Index(['Chromosome', 'Start', 'End', 'Strand'], dtype='str')
 
 Analogously, method :func:`set_union_overlaps <pyranges.PyRanges.set_union_overlaps>` allows to obtain the genomic regions that
 are present in at least one of the PyRanges:
 
   >>> a.set_union_overlaps(b)
     index  |    Chromosome      Start      End  Strand
-    int64  |    object          int64    int64  object
+    int64  |    str             int64    int64  str
   -------  ---  ------------  -------  -------  --------
         0  |    chr1                3        6  +
         1  |    chr1                6        8  +
@@ -487,7 +487,7 @@ are present in at least one of the PyRanges:
 
   >>> a2.set_union_overlaps(b2, strand_behavior='ignore')
     index  |    Chromosome      Start      End
-    int64  |    object          int64    int64
+    int64  |    str             int64    int64
   -------  ---  ------------  -------  -------
         0  |    chr1                3        6
         1  |    chr1                6        8
@@ -509,7 +509,7 @@ are modified to return only the actual overlaps:
 
   >>> a2.intersect_overlaps(b)
     index  |    Chromosome      Start      End  Strand        odd
-    int64  |    object          int64    int64  object      int64
+    int64  |    str             int64    int64  str         int64
   -------  ---  ------------  -------  -------  --------  -------
         1  |    chr1               13       14  +               1
         3  |    chr1               25       27  -               1
@@ -521,7 +521,7 @@ are modified to return only the actual overlaps:
 
   >>> a2.intersect_overlaps(b2, strand_behavior='ignore', match_by='odd')
     index  |    Chromosome      Start      End  Strand        odd
-    int64  |    object          int64    int64  object      int64
+    int64  |    str             int64    int64  str         int64
   -------  ---  ------------  -------  -------  --------  -------
         3  |    chr1               25       27  -               1
         5  |    chr1               34       36  +               0
@@ -533,7 +533,7 @@ that do not overlap any interval in other:
 
   >>> a2.subtract_overlaps(b).sort_values('Start')
     index  |    Chromosome      Start      End  Strand        odd
-    int64  |    object          int64    int64  object      int64
+    int64  |    str             int64    int64  str         int64
   -------  ---  ------------  -------  -------  --------  -------
         0  |    chr1                3        6  +               1
         1  |    chr1               14       15  +               1
@@ -548,7 +548,7 @@ that do not overlap any interval in other:
 
   >>> a2.subtract_overlaps(b, strand_behavior='ignore').sort_values('Start')
     index  |    Chromosome      Start      End  Strand        odd
-    int64  |    object          int64    int64  object      int64
+    int64  |    str             int64    int64  str         int64
   -------  ---  ------------  -------  -------  --------  -------
         0  |    chr1                3        6  +               1
         1  |    chr1               14       15  +               1
@@ -570,7 +570,7 @@ Input coordinates are not modified, and a new column is added:
 
   >>> a2.count_overlaps(b) # using a2 to show the 'odd' column is preserved
     index  |    Chromosome      Start      End  Strand        odd     Count
-    int64  |    object          int64    int64  object      int64    uint32
+    int64  |    str             int64    int64  str         int64    uint32
   -------  ---  ------------  -------  -------  --------  -------  --------
 	0  |    chr1                3        6  +               1         0
 	1  |    chr1               13       15  +               1         1
@@ -586,7 +586,7 @@ Arguments ``strand_behavior`` and ``match_by`` are available:
 
   >>> a.count_overlaps(b, strand_behavior='ignore')
     index  |    Chromosome      Start      End  Strand       Count
-    int64  |    object          int64    int64  object      uint32
+    int64  |    str             int64    int64  str         uint32
   -------  ---  ------------  -------  -------  --------  --------
 	0  |    chr1                3        6  +                0
 	1  |    chr1               13       15  +                1
@@ -601,7 +601,7 @@ Arguments ``strand_behavior`` and ``match_by`` are available:
 
   >>> a2.count_overlaps(b2, strand_behavior='ignore', match_by='odd')
     index  |    Chromosome      Start      End  Strand        odd     Count
-    int64  |    object          int64    int64  object      int64    uint32
+    int64  |    str             int64    int64  str         int64    uint32
   -------  ---  ------------  -------  -------  --------  -------  --------
 	0  |    chr1                3        6  +               1         0
 	1  |    chr1               13       15  +               1         0
@@ -619,7 +619,7 @@ function, which is run on the output of :func:`join_overlaps <pyranges.PyRanges.
 
   >>> a.join_overlaps(b, strand_behavior='ignore').compute_interval_metrics('fraction')
     index  |    Chromosome      Start      End  Strand      Start_b    End_b  Strand_b      fraction
-    int64  |    object          int64    int64  object        int64    int64  object         float64
+    int64  |    str             int64    int64  str           int64    int64  str            float64
   -------  ---  ------------  -------  -------  --------  ---------  -------  ----------  ----------
 	1  |    chr1               13       15  +                12       14  +             0.5
 	2  |    chr1               18       21  -                19       20  +             0.333333
@@ -639,7 +639,7 @@ in self:
 
   >>> a.nearest_ranges(b)
     index  |    Chromosome      Start      End  Strand    Chromosome_b      Start_b    End_b  Strand_b      Distance
-    int64  |    object          int64    int64  object    object              int64    int64  object           int64
+    int64  |    str             int64    int64  str       str                 int64    int64  str              int64
   -------  ---  ------------  -------  -------  --------  --------------  ---------  -------  ----------  ----------
 	0  |    chr1                3        6  +         chr1                    6        8  +                    1
 	1  |    chr1               13       15  +         chr1                   12       14  +                    0
@@ -659,7 +659,7 @@ In case you want to find the nearest interval which does not overlap with each s
 
   >>> a.nearest_ranges(b, exclude_overlaps=True)
     index  |    Chromosome      Start      End  Strand    Chromosome_b      Start_b    End_b  Strand_b      Distance
-    int64  |    object          int64    int64  object    object              int64    int64  object           int64
+    int64  |    str             int64    int64  str       str                 int64    int64  str              int64
   -------  ---  ------------  -------  -------  --------  --------------  ---------  -------  ----------  ----------
 	0  |    chr1                3        6  +         chr1                    6        8  +                    1
 	1  |    chr1               13       15  +         chr1                   19       20  +                    5
@@ -673,7 +673,7 @@ The :func:`nearest_ranges <pyranges.PyRanges.nearest_ranges>` method also accept
 
   >>> a.nearest_ranges(b, strand_behavior='ignore', exclude_overlaps=True)
     index  |    Chromosome      Start      End  Strand    Chromosome_b      Start_b    End_b  Strand_b      Distance
-    int64  |    object          int64    int64  object    object              int64    int64  object           int64
+    int64  |    str             int64    int64  str       str                 int64    int64  str              int64
   -------  ---  ------------  -------  -------  --------  --------------  ---------  -------  ----------  ----------
 	0  |    chr1                3        6  +         chr1                    6        8  +                    1
 	1  |    chr1               13       15  +         chr1                   19       20  +                    5
@@ -699,7 +699,7 @@ We will showcase them with this data:
   ...                      Strand=["+", "+", "+", "-", "+", "+", "+", "+"]))
   >>> c
     index  |    Chromosome      Start      End  Strand
-    int64  |    object          int64    int64  object
+    int64  |    str             int64    int64  str
   -------  ---  ------------  -------  -------  --------
         0  |    chr1                1        5  +
         1  |    chr1                4        7  +
@@ -722,7 +722,7 @@ with an additional column "Cluster" containing the cluster identifier:
 
   >>> c.cluster_overlaps()
     index  |    Chromosome      Start      End  Strand      Cluster
-    int64  |    object          int64    int64  object       uint32
+    int64  |    str             int64    int64  str          uint32
   -------  ---  ------------  -------  -------  --------  ---------
 	0  |    chr1                1        5  +                 0
 	1  |    chr1                4        7  +                 0
@@ -741,7 +741,7 @@ When set to False, strand is ignored for overlap detection:
 
   >>> c.cluster_overlaps(use_strand=False)
     index  |    Chromosome      Start      End  Strand      Cluster
-    int64  |    object          int64    int64  object       uint32
+    int64  |    str             int64    int64  str          uint32
   -------  ---  ------------  -------  -------  --------  ---------
 	0  |    chr1                1        5  +                 0
 	1  |    chr1                4        7  +                 0
@@ -770,7 +770,7 @@ like those with index 4 and 7 above; and so on.
   >>> c2 = c.cluster_overlaps(slack=2, use_strand=False, cluster_column='myClust')
   >>> c2
     index  |    Chromosome      Start      End  Strand      myClust
-    int64  |    object          int64    int64  object       uint32
+    int64  |    str             int64    int64  str          uint32
   -------  ---  ------------  -------  -------  --------  ---------
 	0  |    chr1                1        5  +                 0
 	1  |    chr1                4        7  +                 0
@@ -789,17 +789,17 @@ Let's add a gene column to the PyRanges object and compare "Cluster" results wit
 
   >>> c2['gene'] = ['abc'[s % 3] for s in c2.Start] # arbitrary gene assignment
   >>> c2.cluster_overlaps(slack=2, use_strand=False, match_by='gene')
-    index  |    Chromosome      Start      End  Strand      myClust  gene        Cluster
-    int64  |    object          int64    int64  object       uint32  object       uint32
-  -------  ---  ------------  -------  -------  --------  ---------  --------  ---------
-	3  |    chr1               12       16  -                 1  a                 0
-	6  |    chr1               24       25  +                 2  a                 1
-	0  |    chr1                1        5  +                 0  b                 3
-	1  |    chr1                4        7  +                 0  b                 3
-	2  |    chr1               10       14  +                 1  b                 4
-	4  |    chr1               19       27  +                 2  b                 5
-	7  |    chr1               28       30  +                 2  b                 5
-	5  |    chr1               20       22  +                 2  c                 7
+    index  |    Chromosome      Start      End  Strand      myClust  gene      Cluster
+    int64  |    str             int64    int64  str          uint32  str        uint32
+  -------  ---  ------------  -------  -------  --------  ---------  ------  ---------
+        3  |    chr1               12       16  -                 1  a               0
+        6  |    chr1               24       25  +                 2  a               1
+        0  |    chr1                1        5  +                 0  b               3
+        1  |    chr1                4        7  +                 0  b               3
+        2  |    chr1               10       14  +                 1  b               4
+        4  |    chr1               19       27  +                 2  b               5
+        7  |    chr1               28       30  +                 2  b               5
+        5  |    chr1               20       22  +                 2  c               7
   PyRanges with 8 rows, 7 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
@@ -815,7 +815,7 @@ All metadata columns are dropped:
 
   >>> c.merge_overlaps()
     index  |    Chromosome      Start      End  Strand
-    int64  |    object          int64    int64  object
+    int64  |    str             int64    int64  str
   -------  ---  ------------  -------  -------  --------
         0  |    chr1                1        7  +
         1  |    chr1               10       14  +
@@ -829,7 +829,7 @@ As before, both ``slack`` and ``use_strand`` are supported:
 
   >>> c.merge_overlaps(slack=2)
     index  |    Chromosome      Start      End  Strand
-    int64  |    object          int64    int64  object
+    int64  |    str             int64    int64  str
   -------  ---  ------------  -------  -------  --------
         0  |    chr1                1        7  +
         1  |    chr1               10       14  +
@@ -842,7 +842,7 @@ Note that Strand is not reported when ``use_strand`` is set to False:
 
   >>> c.merge_overlaps(slack=2, use_strand=False)
     index  |    Chromosome      Start      End
-    int64  |    object          int64    int64
+    int64  |    str             int64    int64
   -------  ---  ------------  -------  -------
         0  |    chr1                1        7
         1  |    chr1               10       16
@@ -858,7 +858,7 @@ This function drops metadata, too:
   >>> pr.options.set_option('max_rows_to_show', 12) # to see all rows
   >>> c.split_overlaps()
     index  |    Chromosome      Start      End  Strand
-    int64  |    object          int64    int64  object
+    int64  |    str             int64    int64  str
   -------  ---  ------------  -------  -------  --------
 	0  |    chr1                1        4  +
 	1  |    chr1                4        5  +
@@ -883,12 +883,11 @@ The usual arguments (e.g. ``use_strand``) are available:
   >>> pr.options.reset_options()
   >>> c2.max_disjoint_overlaps(use_strand=False) # using c2 to show that metadata is retained
     index  |    Chromosome      Start      End  Strand      myClust  gene
-    int64  |    object          int64    int64  object       uint32  object
-  -------  ---  ------------  -------  -------  --------  ---------  --------
+    int64  |    str             int64    int64  str          uint32  str
+  -------  ---  ------------  -------  -------  --------  ---------  ------
         0  |    chr1                1        5  +                 0  b
         2  |    chr1               10       14  +                 1  b
         4  |    chr1               19       27  +                 2  b
         7  |    chr1               28       30  +                 2  b
   PyRanges with 4 rows, 6 columns, and 1 index columns.
   Contains 1 chromosomes and 1 strands.
-

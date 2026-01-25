@@ -13,18 +13,18 @@ Print a PyRanges object for an overview of its data:
   >>> import pyranges as pr
   >>> gr = pr.example_data.chipseq
   >>> print(gr)
-  index    |    Chromosome    Start      End        Name      Score    Strand
-  int64    |    category      int64      int64      object    int64    category
-  -------  ---  ------------  ---------  ---------  --------  -------  ----------
-  0        |    chr8          28510032   28510057   U0        0        -
-  1        |    chr7          107153363  107153388  U0        0        -
-  2        |    chr5          135821802  135821827  U0        0        -
-  3        |    chr14         19418999   19419024   U0        0        -
-  ...      |    ...           ...        ...        ...       ...      ...
-  16       |    chr9          120803448  120803473  U0        0        +
-  17       |    chr6          89296757   89296782   U0        0        -
-  18       |    chr1          194245558  194245583  U0        0        +
-  19       |    chr8          57916061   57916086   U0        0        +
+  index    |    Chromosome    Start      End        Name    Score    Strand
+  int64    |    category      int64      int64      str     int64    category
+  -------  ---  ------------  ---------  ---------  ------  -------  ----------
+  0        |    chr8          28510032   28510057   U0      0        -
+  1        |    chr7          107153363  107153388  U0      0        -
+  2        |    chr5          135821802  135821827  U0      0        -
+  3        |    chr14         19418999   19419024   U0      0        -
+  ...      |    ...           ...        ...        ...     ...      ...
+  16       |    chr9          120803448  120803473  U0      0        +
+  17       |    chr6          89296757   89296782   U0      0        -
+  18       |    chr1          194245558  194245583  U0      0        +
+  19       |    chr8          57916061   57916086   U0      0        +
   PyRanges with 20 rows, 6 columns, and 1 index columns.
   Contains 15 chromosomes and 2 strands.
 
@@ -32,18 +32,18 @@ To obtain this representation, you can invoke the ``str`` builtin, e.g. with ``s
 
   >>> a = str(gr)
   >>> print(a)
-  index    |    Chromosome    Start      End        Name      Score    Strand
-  int64    |    category      int64      int64      object    int64    category
-  -------  ---  ------------  ---------  ---------  --------  -------  ----------
-  0        |    chr8          28510032   28510057   U0        0        -
-  1        |    chr7          107153363  107153388  U0        0        -
-  2        |    chr5          135821802  135821827  U0        0        -
-  3        |    chr14         19418999   19419024   U0        0        -
-  ...      |    ...           ...        ...        ...       ...      ...
-  16       |    chr9          120803448  120803473  U0        0        +
-  17       |    chr6          89296757   89296782   U0        0        -
-  18       |    chr1          194245558  194245583  U0        0        +
-  19       |    chr8          57916061   57916086   U0        0        +
+  index    |    Chromosome    Start      End        Name    Score    Strand
+  int64    |    category      int64      int64      str     int64    category
+  -------  ---  ------------  ---------  ---------  ------  -------  ----------
+  0        |    chr8          28510032   28510057   U0      0        -
+  1        |    chr7          107153363  107153388  U0      0        -
+  2        |    chr5          135821802  135821827  U0      0        -
+  3        |    chr14         19418999   19419024   U0      0        -
+  ...      |    ...           ...        ...        ...     ...      ...
+  16       |    chr9          120803448  120803473  U0      0        +
+  17       |    chr6          89296757   89296782   U0      0        -
+  18       |    chr1          194245558  194245583  U0      0        +
+  19       |    chr8          57916061   57916086   U0      0        +
   PyRanges with 20 rows, 6 columns, and 1 index columns.
   Contains 15 chromosomes and 2 strands.
 
@@ -52,29 +52,29 @@ You can change the number of rows displayed in any PyRanges using :func:`pyrange
 
   >>> pr.options.set_option('max_rows_to_show', 20)
   >>> gr
-    index  |    Chromosome        Start        End  Name        Score  Strand
-    int64  |    category          int64      int64  object      int64  category
-  -------  ---  ------------  ---------  ---------  --------  -------  ----------
-        0  |    chr8           28510032   28510057  U0              0  -
-        1  |    chr7          107153363  107153388  U0              0  -
-        2  |    chr5          135821802  135821827  U0              0  -
-        3  |    chr14          19418999   19419024  U0              0  -
-        4  |    chr12         106679761  106679786  U0              0  -
-        5  |    chr21          40099618   40099643  U0              0  +
-        6  |    chr8           22714402   22714427  U0              0  -
-        7  |    chr19          19571102   19571127  U0              0  +
-        8  |    chr3          140986358  140986383  U0              0  -
-        9  |    chr10          35419784   35419809  U0              0  -
-       10  |    chr4           98488749   98488774  U0              0  +
-       11  |    chr11          22225193   22225218  U0              0  +
-       12  |    chr1           38457520   38457545  U0              0  +
-       13  |    chr1           80668132   80668157  U0              0  -
-       14  |    chr2          152562484  152562509  U0              0  -
-       15  |    chr4          153155301  153155326  U0              0  +
-       16  |    chr9          120803448  120803473  U0              0  +
-       17  |    chr6           89296757   89296782  U0              0  -
-       18  |    chr1          194245558  194245583  U0              0  +
-       19  |    chr8           57916061   57916086  U0              0  +
+    index  |    Chromosome        Start        End  Name      Score  Strand
+    int64  |    category          int64      int64  str       int64  category
+  -------  ---  ------------  ---------  ---------  ------  -------  ----------
+        0  |    chr8           28510032   28510057  U0            0  -
+        1  |    chr7          107153363  107153388  U0            0  -
+        2  |    chr5          135821802  135821827  U0            0  -
+        3  |    chr14          19418999   19419024  U0            0  -
+        4  |    chr12         106679761  106679786  U0            0  -
+        5  |    chr21          40099618   40099643  U0            0  +
+        6  |    chr8           22714402   22714427  U0            0  -
+        7  |    chr19          19571102   19571127  U0            0  +
+        8  |    chr3          140986358  140986383  U0            0  -
+        9  |    chr10          35419784   35419809  U0            0  -
+       10  |    chr4           98488749   98488774  U0            0  +
+       11  |    chr11          22225193   22225218  U0            0  +
+       12  |    chr1           38457520   38457545  U0            0  +
+       13  |    chr1           80668132   80668157  U0            0  -
+       14  |    chr2          152562484  152562509  U0            0  -
+       15  |    chr4          153155301  153155326  U0            0  +
+       16  |    chr9          120803448  120803473  U0            0  +
+       17  |    chr6           89296757   89296782  U0            0  -
+       18  |    chr1          194245558  194245583  U0            0  +
+       19  |    chr8           57916061   57916086  U0            0  +
   PyRanges with 20 rows, 6 columns, and 1 index columns.
   Contains 15 chromosomes and 2 strands.
 
@@ -93,7 +93,7 @@ For example, intervals may have invalid lengths. Note that message at the bottom
 
   >>> pr.PyRanges(dict(Chromosome='chr1', Start=[1, 10], End=[0, 20]))
     index  |    Chromosome      Start      End
-    int64  |    object          int64    int64
+    int64  |    str             int64    int64
   -------  ---  ------------  -------  -------
         0  |    chr1                1        0
         1  |    chr1               10       20
@@ -106,7 +106,7 @@ Intervals may also be invalid because of NaN in their Start or End values:
 
   >>> pr.PyRanges(dict(Chromosome='chr1', Start=[None, 10], End=[0, 20]))
     index  |    Chromosome        Start      End
-    int64  |    object          float64    int64
+    int64  |    str             float64    int64
   -------  ---  ------------  ---------  -------
         0  |    chr1                nan        0
         1  |    chr1                 10       20
@@ -120,7 +120,7 @@ function :func:`clip_ranges <pyranges.PyRanges.clip_ranges>`.
 
   >>> pr.PyRanges(dict(Chromosome='chr1', Start=[1, -10], End=[11, 20]))
     index  |    Chromosome      Start      End
-    int64  |    object          int64    int64
+    int64  |    str             int64    int64
   -------  ---  ------------  -------  -------
         0  |    chr1                1       11
         1  |    chr1              -10       20
@@ -135,7 +135,7 @@ Note the warning in the last line of the string representation:
   >>> g = pr.PyRanges(dict(Chromosome='chr1', Start=[1, 1], End=[11, 20], Strand=['-', '#']))
   >>> g
     index  |    Chromosome      Start      End  Strand
-    int64  |    object          int64    int64  object
+    int64  |    str             int64    int64  str
   -------  ---  ------------  -------  -------  --------
         0  |    chr1                1       11  -
         1  |    chr1                1       20  #
@@ -150,7 +150,7 @@ Indeed, see that this subregion is calculated from the left limit, even for the 
 
   >>> g.slice_ranges(0, 3)
     index  |    Chromosome      Start      End  Strand
-    int64  |    object          int64    int64  object
+    int64  |    str             int64    int64  str
   -------  ---  ------------  -------  -------  --------
         0  |    chr1                1        4  -
         1  |    chr1                1        4  #
@@ -176,7 +176,7 @@ use method :func:`make_strand_valid <pyranges.PyRanges.make_strand_valid>`:
   >>> g2 = g.make_strand_valid()
   >>> g2
     index  |    Chromosome      Start      End  Strand
-    int64  |    object          int64    int64  object
+    int64  |    str             int64    int64  str
   -------  ---  ------------  -------  -------  --------
         0  |    chr1                1       11  -
         1  |    chr1                1       20  +
@@ -191,7 +191,7 @@ penultimate line of the string representation:
   >>> gr3 = gr1.subtract_overlaps(gr2)
   >>> gr3
     index  |    Chromosome      Start      End
-    int64  |    object          int64    int64
+    int64  |    str             int64    int64
   -------  ---  ------------  -------  -------
         0  |    chr1                1       20
         0  |    chr1               30       50
@@ -204,7 +204,7 @@ To remedy this, use pandas method ``reset_index``:
   >>> gr3 = gr3.reset_index(drop=True)
   >>> gr3
     index  |    Chromosome      Start      End
-    int64  |    object          int64    int64
+    int64  |    str             int64    int64
   -------  ---  ------------  -------  -------
         0  |    chr1                1       20
         1  |    chr1               30       50
@@ -222,7 +222,7 @@ To see them all, use property ``dtypes`` like you do for dataframes:
   Chromosome    category
   Start            int64
   End              int64
-  Name            object
+  Name               str
   Score            int64
   Strand        category
   dtype: object
@@ -230,19 +230,19 @@ To see them all, use property ``dtypes`` like you do for dataframes:
 There are convenient methods inherited from pandas dataframes to inspect PyRanges objects, such as ``info``:
 
   >>> gr.info() # doctest: +NORMALIZE_WHITESPACE
-  <class 'pyranges.core.pyranges_main.PyRanges'>
+  <class 'pyranges1.core.pyranges_main.PyRanges'>
   RangeIndex: 20 entries, 0 to 19
   Data columns (total 6 columns):
-   #   Column      Non-Null Count  Dtype
-  ---  ------      --------------  -----
+   #   Column      Non-Null Count  Dtype   
+  ---  ------      --------------  -----   
    0   Chromosome  20 non-null     category
-   1   Start       20 non-null     int64
-   2   End         20 non-null     int64
-   3   Name        20 non-null     object
-   4   Score       20 non-null     int64
+   1   Start       20 non-null     int64   
+   2   End         20 non-null     int64   
+   3   Name        20 non-null     str     
+   4   Score       20 non-null     int64   
    5   Strand      20 non-null     category
-  dtypes: category(2), int64(3), object(1)
-  memory usage: 1.6+ KB
+  dtypes: category(2), int64(3), str(1)
+  memory usage: 1.6 KB
 
 On the other hand, ``describe`` reports aggregate metrics of numerical columns:
 

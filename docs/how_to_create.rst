@@ -24,7 +24,7 @@ If you instantiate a PyRanges object from a dataframe, it should at least contai
 Coordinates follow the python standard (0-based, start included, end excluded). A column called Strand is optional.
 Any other columns in the dataframe are carried over as metadata.
 
-  >>> import pandas as pd, pyranges as pr, numpy as np
+  >>> import pandas as pd, pyranges1 as pr, numpy as np
   >>> df=pd.DataFrame(
   ... {'Chromosome':['chr1', 'chr1', 'chr1', 'chr3'],
   ...  'Start': [5, 20, 80, 10],
@@ -45,15 +45,14 @@ To instantiate PyRanges from a dataframe, provide it as argument to the PyRanges
   >>> p=pr.PyRanges(df)
   >>> p
     index  |    Chromosome      Start      End  Strand    title
-    int64  |    object          int64    int64  object    object
-  -------  ---  ------------  -------  -------  --------  --------
+    int64  |    str             int64    int64  str       str
+  -------  ---  ------------  -------  -------  --------  -------
         0  |    chr1                5       10  +         a
         1  |    chr1               20       28  +         b
         2  |    chr1               80       95  -         c
         3  |    chr3               10       38  +         d
   PyRanges with 4 rows, 5 columns, and 1 index columns.
   Contains 2 chromosomes and 2 strands.
-
 
 From a Dictionary
 -----------------
@@ -67,8 +66,8 @@ You can instantiate a PyRanges object using a dictionary:
   ...                   'title': ['a', 'b', 'c', 'd']})
   >>> gr
     index  |    Chromosome      Start      End  Strand    title
-    int64  |    object          int64    int64  object    object
-  -------  ---  ------------  -------  -------  --------  --------
+    int64  |    str             int64    int64  str       str
+  -------  ---  ------------  -------  -------  --------  -------
         0  |    chr1                5       10  +         a
         1  |    chr1               20       28  +         b
         2  |    chr1               80       95  -         c
@@ -83,7 +82,7 @@ Both the ``{}`` and the ``dict`` constructors can be used to create a dictionary
   ...                       End=[150, 258, 95, 380]))
   >>> gr2
     index  |    Chromosome      Start      End
-    int64  |    object          int64    int64
+    int64  |    str             int64    int64
   -------  ---  ------------  -------  -------
         0  |    chr10              55      150
         1  |    chr10             250      258
@@ -103,7 +102,7 @@ Alternatively, if a string or scalar is provided, it is broadcasted to the lengt
   ...                       Strand='+'))
   >>> gr3
     index  |    Chromosome      Start      End  Strand
-    int64  |    object          int64    int64  object
+    int64  |    str             int64    int64  str
   -------  ---  ------------  -------  -------  --------
         0  |    chr10              55      150  +
         1  |    chr10             250      258  +
@@ -126,18 +125,18 @@ When instancing a PyRanges object they are converted to the python convention.
   >>> ensembl_path = pr.example_data.files['ensembl.gtf']  # example file
   >>> gr = pr.read_gtf(ensembl_path)
   >>> gr
-  index    |    Chromosome    Source    Feature     Start    End      Score     Strand      Frame     gene_id          ...
-  int64    |    category      object    category    int64    int64    object    category    object    object           ...
-  -------  ---  ------------  --------  ----------  -------  -------  --------  ----------  --------  ---------------  -----
-  0        |    1             havana    gene        11868    14409    .         +           .         ENSG00000223972  ...
-  1        |    1             havana    transcript  11868    14409    .         +           .         ENSG00000223972  ...
-  2        |    1             havana    exon        11868    12227    .         +           .         ENSG00000223972  ...
-  3        |    1             havana    exon        12612    12721    .         +           .         ENSG00000223972  ...
-  ...      |    ...           ...       ...         ...      ...      ...       ...         ...       ...              ...
-  8        |    1             ensembl   transcript  120724   133723   .         -           .         ENSG00000238009  ...
-  9        |    1             ensembl   exon        133373   133723   .         -           .         ENSG00000238009  ...
-  10       |    1             ensembl   exon        129054   129223   .         -           .         ENSG00000238009  ...
-  11       |    1             ensembl   exon        120873   120932   .         -           .         ENSG00000238009  ...
+  index    |    Chromosome    Source    Feature     Start    End      Score    Strand      Frame    gene_id          ...
+  int64    |    category      str       category    int64    int64    str      category    str      str              ...
+  -------  ---  ------------  --------  ----------  -------  -------  -------  ----------  -------  ---------------  -----
+  0        |    1             havana    gene        11868    14409    .        +           .        ENSG00000223972  ...
+  1        |    1             havana    transcript  11868    14409    .        +           .        ENSG00000223972  ...
+  2        |    1             havana    exon        11868    12227    .        +           .        ENSG00000223972  ...
+  3        |    1             havana    exon        12612    12721    .        +           .        ENSG00000223972  ...
+  ...      |    ...           ...       ...         ...      ...      ...      ...         ...      ...              ...
+  8        |    1             ensembl   transcript  120724   133723   .        -           .        ENSG00000238009  ...
+  9        |    1             ensembl   exon        133373   133723   .        -           .        ENSG00000238009  ...
+  10       |    1             ensembl   exon        129054   129223   .        -           .        ENSG00000238009  ...
+  11       |    1             ensembl   exon        120873   120932   .        -           .        ENSG00000238009  ...
   PyRanges with 12 rows, 23 columns, and 1 index columns. (14 columns not shown: "gene_version", "gene_name", "gene_source", ...).
   Contains 1 chromosomes and 2 strands.
 
@@ -172,19 +171,19 @@ are fetched. Setting ``sparse=False`` additionally gives you the columns
 ``['QueryStart', 'QueryEnd', 'QuerySequence', 'Name', 'Cigar', 'Quality']``, but is more time and memory-consuming:
 
   >>> pr.read_bam(bam_path, sparse=False)
-  index    |    Chromosome    Start     End       Strand      Flag      QueryStart    QueryEnd    QuerySequence    ...
-  int64    |    category      int64     int64     category    uint16    int64         int64       object           ...
-  -------  ---  ------------  --------  --------  ----------  --------  ------------  ----------  ---------------  -----
-  0        |    chr1          887771    887796    -           16        0             25          None             ...
-  1        |    chr1          994660    994685    -           16        0             25          None             ...
-  2        |    chr1          1041102   1041127   +           0         0             25          None             ...
-  3        |    chr1          1770383   1770408   -           16        0             25          None             ...
-  ...      |    ...           ...       ...       ...         ...       ...           ...         ...              ...
-  96       |    chr1          18800901  18800926  +           0         0             25          None             ...
-  97       |    chr1          18800901  18800926  +           0         0             25          None             ...
-  98       |    chr1          18855123  18855148  -           16        0             25          None             ...
-  99       |    chr1          19373470  19373495  +           0         0             25          None             ...
-  PyRanges with 100 rows, 11 columns, and 1 index columns. (3 columns not shown: "Name", "Cigar", "Quality").
+  index    |    Chromosome    Start     End       Strand      Flag      QueryStart    QueryEnd    QuerySequence    Name    ...
+  int64    |    category      int64     int64     category    uint16    int64         int64       object           str     ...
+  -------  ---  ------------  --------  --------  ----------  --------  ------------  ----------  ---------------  ------  -----
+  0        |    chr1          887771    887796    -           16        0             25          None             U0      ...
+  1        |    chr1          994660    994685    -           16        0             25          None             U0      ...
+  2        |    chr1          1041102   1041127   +           0         0             25          None             U0      ...
+  3        |    chr1          1770383   1770408   -           16        0             25          None             U0      ...
+  ...      |    ...           ...       ...       ...         ...       ...           ...         ...              ...     ...
+  96       |    chr1          18800901  18800926  +           0         0             25          None             U0      ...
+  97       |    chr1          18800901  18800926  +           0         0             25          None             U0      ...
+  98       |    chr1          18855123  18855148  -           16        0             25          None             U0      ...
+  99       |    chr1          19373470  19373495  +           0         0             25          None             U0      ...
+  PyRanges with 100 rows, 11 columns, and 1 index columns. (2 columns not shown: "Cigar", "Quality").
   Contains 1 chromosomes and 2 strands.
 
 To load tabular file in any format, you can use pandas ``read_csv`` method and then pass the resulting dataframe to the
@@ -210,8 +209,8 @@ stack rows of two or more PyRanges to create a new PyRanges object.
   >>> gr3 = pr.concat([gr1, gr2])
   >>> gr3
     index  |    Chromosome      Start      End  Strand    title
-    int64  |    object          int64    int64  object    object
-  -------  ---  ------------  -------  -------  --------  --------
+    int64  |    str             int64    int64  str       str
+  -------  ---  ------------  -------  -------  --------  -------
         0  |    chr1                5       10  +         a
         1  |    chr1               20       28  +         b
         2  |    chr1               80       95  -         c
@@ -227,8 +226,8 @@ Note that this may result in index duplicates, which can be remedied by pandas `
 
   >>> pr.concat([gr1, gr2]).reset_index(drop=True)
     index  |    Chromosome      Start      End  Strand    title
-    int64  |    object          int64    int64  object    object
-  -------  ---  ------------  -------  -------  --------  --------
+    int64  |    str             int64    int64  str       str
+  -------  ---  ------------  -------  -------  --------  -------
         0  |    chr1                5       10  +         a
         1  |    chr1               20       28  +         b
         2  |    chr1               80       95  -         c
@@ -267,18 +266,18 @@ You can load the data with this syntax:
 
   >>> cs = pr.example_data.chipseq
   >>> cs
-  index    |    Chromosome    Start      End        Name      Score    Strand
-  int64    |    category      int64      int64      object    int64    category
-  -------  ---  ------------  ---------  ---------  --------  -------  ----------
-  0        |    chr8          28510032   28510057   U0        0        -
-  1        |    chr7          107153363  107153388  U0        0        -
-  2        |    chr5          135821802  135821827  U0        0        -
-  3        |    chr14         19418999   19419024   U0        0        -
-  ...      |    ...           ...        ...        ...       ...      ...
-  16       |    chr9          120803448  120803473  U0        0        +
-  17       |    chr6          89296757   89296782   U0        0        -
-  18       |    chr1          194245558  194245583  U0        0        +
-  19       |    chr8          57916061   57916086   U0        0        +
+  index    |    Chromosome    Start      End        Name    Score    Strand
+  int64    |    category      int64      int64      str     int64    category
+  -------  ---  ------------  ---------  ---------  ------  -------  ----------
+  0        |    chr8          28510032   28510057   U0      0        -
+  1        |    chr7          107153363  107153388  U0      0        -
+  2        |    chr5          135821802  135821827  U0      0        -
+  3        |    chr14         19418999   19419024   U0      0        -
+  ...      |    ...           ...        ...        ...     ...      ...
+  16       |    chr9          120803448  120803473  U0      0        +
+  17       |    chr6          89296757   89296782   U0      0        -
+  18       |    chr1          194245558  194245583  U0      0        +
+  19       |    chr8          57916061   57916086   U0      0        +
   PyRanges with 20 rows, 6 columns, and 1 index columns.
   Contains 15 chromosomes and 2 strands.
 
@@ -287,7 +286,7 @@ By default, the data refers to the human genome (hg19):
 
   >>> pr.random(n=5, length=50, seed=123)
     index  |    Chromosome        Start        End  Strand
-    int64  |    object            int64      int64  object
+    int64  |    str               int64      int64  str
   -------  ---  ------------  ---------  ---------  --------
         0  |    chr12         108700348  108700398  +
         1  |    chr1          230144267  230144317  -
