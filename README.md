@@ -84,7 +84,7 @@ or if you'd like new features implemented, open an Issue at github: https://gith
 ## Contributing to pyranges
 
 Pyranges accepts code contributions in form of pull request. 
-For details, visit https://pyranges1.readthedocs.io/developer_guide.html
+For details, visit [https://pyranges1.readthedocs.io/developer_guide.html](https://pyranges1.readthedocs.io/en/latest/developer_guide.html)
 
 ## Cheatsheet
 ![cheatsheet](https://raw.githubusercontent.com/pyranges/pyrangeyes/for_pyranges1_1/images/pyranges_cheatsheet.png)
