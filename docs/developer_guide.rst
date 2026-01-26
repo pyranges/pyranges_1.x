@@ -163,6 +163,7 @@ fixed. To run the compulsory **doctest** and **unit tests**, run:
 
         pytest --doctest-modules pyranges1
         pytest tests/unit
+		python tests/run_doctest_tutorial_howto.py
 
 If you modified core Pyranges functions, you may want to also run the non-compulsory **property-based tests**:
 
