@@ -4,7 +4,7 @@ Stats: statistics
 
 Utilities for calculating statistics about genomic intervals.
 
-.. automodule:: pyranges.stats
+.. automodule:: pyranges1.stats
     :members:
     :imported-members:
 

@@ -7,8 +7,8 @@ Get a prompt to copy-paste into an AI assistant to prime it for pyranges coding 
 Make a file with pyranges documentation to upload to the AI assistant:
     >>> pr.assistant.export_docs("pr_docs.txt")"""
 
-prompt_default = """Act as an expert bioinformatician programmer experienced in pyranges (complete documentation attached for you to learn). Next, answer my requests for code by first explaining the workflow, followed by oneliner-style code snippets, as concise as possible but elegant, preceded by the text of task as commented code. Ensure you use pyranges v1 interface that you find here, rather than the v0, from which you may have seen examples before; v1 renamed many methods. """
-prompt_add_concise = """Output code that is as concise as possible but elegant. Assume pyranges is fully installed. No import statements. Use aptly named variables, no need to declare them. """
+prompt_default = """Act as an expert bioinformatician programmer experienced in pyranges1 (complete documentation attached for you to learn). Next, answer my requests for code by first explaining the workflow, followed by oneliner-style code snippets, as concise as possible but elegant, preceded by the text of task as commented code. Ensure you use pyranges1 v1 interface that you find here, rather than the v0, from which you may have seen examples before; v1 renamed many methods. """
+prompt_add_concise = """Output code that is as concise as possible but elegant. Assume pyranges1 is fully installed. No import statements. Use aptly named variables, no need to declare them. """
 
 
 class Assistant:

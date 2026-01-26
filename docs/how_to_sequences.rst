@@ -33,10 +33,10 @@ represented in the PyRanges object. Let's see an example with built-in data.
   PyRanges with 20 rows, 5 columns, and 1 index columns.
   Contains 2 chromosomes and 2 strands.
 
-Function :func:`get_sequence <pyranges.PyRanges.get_sequence>`
+Function :func:`get_sequence <pyranges1.PyRanges.get_sequence>`
 takes the path to a fasta file, and returns a Series containing those sequences, with the same index as the PyRanges object.
 It requires the package pyfaidx (see :doc:`add-ons installation <./installation>`.
-:func:`get_sequence <pyranges.PyRanges.get_sequence>` will treat each interval independently. The Series returned
+:func:`get_sequence <pyranges1.PyRanges.get_sequence>` will treat each interval independently. The Series returned
 is typically used to create a new column in the PyRanges object:
 
   >>> sg['Sequence'] = sg.get_sequence(genome_file)
@@ -80,7 +80,7 @@ Fetching sequences per mRNA
 ---------------------------
 
 Often we're interested in the sequence of a transcript, i.e. the concatenation of the exons.
-Using the argument ``group_by`` in function :func:`get_sequence <pyranges.PyRanges.get_sequence>` allows to get just
+Using the argument ``group_by`` in function :func:`get_sequence <pyranges1.PyRanges.get_sequence>` allows to get just
 that, by concatenating the sequences of the intervals in the PyRanges object in the correct order:
 
   >>> mrna_seq = sg.get_sequence(genome_file, group_by='ID')
@@ -167,7 +167,7 @@ Now let's filter the original PyRanges object to get all interval groups with th
 Translation and reverse complement
 ----------------------------------
 
-The submodule :mod:`pyranges.seqs` contains functions to translate sequences and reverse complement them.
+The submodule :mod:`pyranges1.seqs` contains functions to translate sequences and reverse complement them.
 They can operate on a single sequence, or a Series of sequences as below:
 
   >>> sg['Protein'] = pr.seqs.translate(sg.Sequence)

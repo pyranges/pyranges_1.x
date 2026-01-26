@@ -1,82 +1,82 @@
 v0	v1	caveats
 **Module methods:**		
- :mslink:`pr.from_dict(d) <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.from_dict>` 	:func:`pr.PyRanges(d) <pyranges.PyRanges>`	
- :mslink:`pr.from_string <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.from_string>` 	:func:`pr.from_string <pyranges.from_string>`	string representation has changed
- :mslink:`pr.genomicfeatures.genome_bounds(g, ...) <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/genomicfeatures/index.html#pyranges.genomicfeatures.genome_bounds>` 	:func:`g.genome_bounds <pyranges.PyRanges.genome_bounds>`	
- :mslink:`pr.genomicfeatures.tile_genome <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/genomicfeatures/index.html#pyranges.genomicfeatures.tile_genome>` 	:func:`pr.tile_genome <pyranges.PyRanges.tile_genome>`	
- :mslink:`pr.get_fasta.get_sequence(g, ...) <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/get_fasta/index.html#pyranges.get_fasta.get_sequence>` 	:func:`g.get_sequence <pyranges.PyRanges.get_sequence>`	
- :mslink:`pr.get_fasta(g, ...) <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/get_fasta/index.html#pyranges.get_fasta.get_fasta>` 	:func:`g.get_sequence <pyranges.PyRanges.get_sequence>`	
- :mslink:`pr.get_sequence(g, ...) <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/get_fasta/index.html#pyranges.get_fasta.get_sequence>` 	:func:`g.get_sequence <pyranges.PyRanges.get_sequence>`	
- :mslink:`pr.get_transcript_sequence(g, ...) <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/get_fasta/index.html#pyranges.get_fasta.get_transcript_sequence>` 	:func:`g.get_transcript_sequence <pyranges.PyRanges.get_transcript_sequence>`	
- :mslink:`pr.itergrs <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.itergrs>` 	``REMOVED``	
- :mslink:`pr.multioverlap.count_overlaps <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/multioverlap/index.html#pyranges.multioverlap.count_overlaps>` 	:func:`pr.count_overlaps <pyranges.count_overlaps>`	
- :mslink:`pr.statistics.fdr <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/statistics/index.html#pyranges.statistics.fdr>` 	:func:`pr.stats.fdr <pyranges.stats.fdr>`	
- :mslink:`pr.statistics.fisher_exact <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/statistics/index.html#pyranges.statistics.fisher_exact>` 	:func:`pr.stats.fisher_exact <pyranges.stats.fisher_exact>`	
- :mslink:`pr.statistics.mcc <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/statistics/index.html#pyranges.statistics.mcc>` 	:func:`pr.stats.mcc <pyranges.stats.mcc>`	
- :mslink:`pr.statistics.rowbased_pearson <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/statistics/index.html#pyranges.statistics.rowbased_pearson>` 	:func:`pr.stats.rowbased_pearson <pyranges.stats.rowbased_pearson>`	
- :mslink:`pr.statistics.rowbased_rankdata <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/statistics/index.html#pyranges.statistics.rowbased_rankdata>` 	:func:`pr.stats.rowbased_rankdata <pyranges.stats.rowbased_rankdata>`	
- :mslink:`pr.statistics.rowbased_spearman <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/statistics/index.html#pyranges.statistics.rowbased_spearman>` 	:func:`pr.stats.rowbased_spearman <pyranges.stats.rowbased_spearman>`	
- :mslink:`pr.statistics.simes <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/statistics/index.html#pyranges.statistics.simes>` 	:func:`pr.stats.simes <pyranges.stats.simes>`	
- :mslink:`pr.to_bigwig <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.to_bigwig>` 	:func:`g.to_bigwig <pyranges.to_bigwig>`	
+ :mslink:`pr.from_dict(d) <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.from_dict>` 	:func:`pr.PyRanges(d) <pyranges1.PyRanges>`	
+ :mslink:`pr.from_string <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.from_string>` 	:func:`pr.from_string <pyranges1.from_string>`	string representation has changed
+ :mslink:`pr.genomicfeatures.genome_bounds(g, ...) <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/genomicfeatures/index.html#pyranges1.genomicfeatures.genome_bounds>` 	:func:`g.genome_bounds <pyranges1.PyRanges.genome_bounds>`	
+ :mslink:`pr.genomicfeatures.tile_genome <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/genomicfeatures/index.html#pyranges1.genomicfeatures.tile_genome>` 	:func:`pr.tile_genome <pyranges1.PyRanges.tile_genome>`	
+ :mslink:`pr.get_fasta.get_sequence(g, ...) <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/get_fasta/index.html#pyranges1.get_fasta.get_sequence>` 	:func:`g.get_sequence <pyranges1.PyRanges.get_sequence>`	
+ :mslink:`pr.get_fasta(g, ...) <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/get_fasta/index.html#pyranges1.get_fasta.get_fasta>` 	:func:`g.get_sequence <pyranges1.PyRanges.get_sequence>`	
+ :mslink:`pr.get_sequence(g, ...) <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/get_fasta/index.html#pyranges1.get_fasta.get_sequence>` 	:func:`g.get_sequence <pyranges1.PyRanges.get_sequence>`	
+ :mslink:`pr.get_transcript_sequence(g, ...) <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/get_fasta/index.html#pyranges1.get_fasta.get_transcript_sequence>` 	:func:`g.get_transcript_sequence <pyranges1.PyRanges.get_transcript_sequence>`	
+ :mslink:`pr.itergrs <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.itergrs>` 	``REMOVED``	
+ :mslink:`pr.multioverlap.count_overlaps <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/multioverlap/index.html#pyranges1.multioverlap.count_overlaps>` 	:func:`pr.count_overlaps <pyranges1.count_overlaps>`	
+ :mslink:`pr.statistics.fdr <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/statistics/index.html#pyranges1.statistics.fdr>` 	:func:`pr.stats.fdr <pyranges1.stats.fdr>`	
+ :mslink:`pr.statistics.fisher_exact <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/statistics/index.html#pyranges1.statistics.fisher_exact>` 	:func:`pr.stats.fisher_exact <pyranges1.stats.fisher_exact>`	
+ :mslink:`pr.statistics.mcc <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/statistics/index.html#pyranges1.statistics.mcc>` 	:func:`pr.stats.mcc <pyranges1.stats.mcc>`	
+ :mslink:`pr.statistics.rowbased_pearson <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/statistics/index.html#pyranges1.statistics.rowbased_pearson>` 	:func:`pr.stats.rowbased_pearson <pyranges1.stats.rowbased_pearson>`	
+ :mslink:`pr.statistics.rowbased_rankdata <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/statistics/index.html#pyranges1.statistics.rowbased_rankdata>` 	:func:`pr.stats.rowbased_rankdata <pyranges1.stats.rowbased_rankdata>`	
+ :mslink:`pr.statistics.rowbased_spearman <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/statistics/index.html#pyranges1.statistics.rowbased_spearman>` 	:func:`pr.stats.rowbased_spearman <pyranges1.stats.rowbased_spearman>`	
+ :mslink:`pr.statistics.simes <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/statistics/index.html#pyranges1.statistics.simes>` 	:func:`pr.stats.simes <pyranges1.stats.simes>`	
+ :mslink:`pr.to_bigwig <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.to_bigwig>` 	:func:`g.to_bigwig <pyranges1.to_bigwig>`	
 **PyRanges properties:**		
- :mslink:`g.as_df <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.as_df>` 	:func:`g.copy() <pyranges.PyRanges.copy>`	
- :mslink:`g.df <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.df>` 	:func:`g.copy() <pyranges.PyRanges.copy>`	
- :mslink:`g.dfs <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.dfs>` 	``REMOVED``	
- :mslink:`g.features <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.features>` 	``REMOVED``	functions retained and moved: pr.tile_genome (same name) and pr.genome_bounds --> g.clip_ranges (now it clips by default instead of removing)
- :mslink:`g.stats <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.stats>` 	:func:`pr.stats <pyranges.stats>`	g.stats.func_name() now becomes pr.stats.func_name(g)
- :mslink:`g.stranded <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.stranded>` 	:func:`g.strand_valid <pyranges.PyRanges.strand_valid>`	
- :mslink:`g.strands <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.strands>` 	``g.Strand.drop_duplicates()``	
+ :mslink:`g.as_df <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.as_df>` 	:func:`g.copy() <pyranges1.PyRanges.copy>`	
+ :mslink:`g.df <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.df>` 	:func:`g.copy() <pyranges1.PyRanges.copy>`	
+ :mslink:`g.dfs <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.dfs>` 	``REMOVED``	
+ :mslink:`g.features <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.features>` 	``REMOVED``	functions retained and moved: pr.tile_genome (same name) and pr.genome_bounds --> g.clip_ranges (now it clips by default instead of removing)
+ :mslink:`g.stats <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.stats>` 	:func:`pr.stats <pyranges1.stats>`	g.stats.func_name() now becomes pr.stats.func_name(g)
+ :mslink:`g.stranded <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.stranded>` 	:func:`g.strand_valid <pyranges1.PyRanges.strand_valid>`	
+ :mslink:`g.strands <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.strands>` 	``g.Strand.drop_duplicates()``	
 **Get/set syntaxes:**		
- :mslink:`g.COLNAME <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.__getitem__>` 	``g['COLNAME']``	inherited by pandas DataFrame
- :mslink:`g.COLNAME = ...  <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.__setattr__>` 	``g['COLNAME'] = ...``	inherited by pandas DataFrame
- :mslink:`g[ [COL1, COL2] ] <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.__getitem__>` 	:func:`g.get_with_loc_columns([COL1, COL2]) <pyranges.PyRanges.get_with_loc_columns>`	old syntax triggers pandas behavior: will only return requested columns
- :mslink:`g[chrom, strand, slice]  <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.__getitem__>` 	:func:`g.loci[chrom, strand, slice] <pyranges.PyRanges.loci>`	flexible syntax
- :mslink:`for k in g: ... <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.__iter__>` 	``REMOVED``	
+ :mslink:`g.COLNAME <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.__getitem__>` 	``g['COLNAME']``	inherited by pandas DataFrame
+ :mslink:`g.COLNAME = ...  <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.__setattr__>` 	``g['COLNAME'] = ...``	inherited by pandas DataFrame
+ :mslink:`g[ [COL1, COL2] ] <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.__getitem__>` 	:func:`g.get_with_loc_columns([COL1, COL2]) <pyranges1.PyRanges.get_with_loc_columns>`	old syntax triggers pandas behavior: will only return requested columns
+ :mslink:`g[chrom, strand, slice]  <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.__getitem__>` 	:func:`g.loci[chrom, strand, slice] <pyranges1.PyRanges.loci>`	flexible syntax
+ :mslink:`for k in g: ... <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.__iter__>` 	``REMOVED``	
 **PyRanges methods:**		
- :mslink:`g,set_intersect <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.set_intersect>` 	:func:`g,set_intersect_overlaps <pyranges.PyRanges.set_intersect_overlaps>`	args changed
- :mslink:`g.apply <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.apply>` 	:func:`g.apply_single <pyranges.PyRanges.apply_single>`	args changed; and old syntax triggers pandas method
- :mslink:`g.apply_chunks <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.apply_chunks>` 	``REMOVED``	
- :mslink:`g.apply_pair <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.apply_pair>` 	:func:`g.apply_pair <pyranges.PyRanges.apply_pair>`	args changed
- :mslink:`g.assign <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.assign>` 	``g.assign``	inherited by pandas DataFrame
- :mslink:`g.calculate_frame <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.calculate_frame>` 	:func:`pr.orfs.calculate_frame <pyranges.orfs.calculate_frame>`	now a copy is returned
- :mslink:`g.cluster <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.cluster>` 	:func:`g.cluster_overlaps <pyranges.PyRanges.cluster_overlaps>`	args changed; and use slack +1 for old behavior
- :mslink:`g.count_overlaps <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.count_overlaps>` 	:func:`g.count_overlaps <pyranges.PyRanges.count_overlaps>`	args changed
- :mslink:`g.coverage <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.coverage>` 	:func:`g.count_overlaps(..., calculate_coverage=True) <pyranges.PyRanges.count_overlaps>`	args changed
- :mslink:`g.drop_duplicate_positions <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.drop_duplicate_positions>` 	``g.drop_duplicates( g.loc_columns+['Start', 'End'])``	
- :mslink:`g.drop(cols) <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.drop(cols)>` 	``g.drop(columns=cols)``	inherited by pandas DataFrame
- :mslink:`g.extend <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.extend>` 	:func:`g.extend_ranges <pyranges.PyRanges.extend_ranges>`	args changed
- :mslink:`g.insert <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.insert>` 	``g.insert``	inherited by pandas DataFrame
- :mslink:`g.intersect <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.intersect>` 	:func:`g.intersect_overlaps <pyranges.PyRanges.intersect_overlaps>`	args changed
- :mslink:`g.items <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.items>` 	``REMOVED``	
- :mslink:`g.join <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.join>` 	:func:`g.join_overlaps <pyranges.PyRanges.join_overlaps>`	args changed; and old syntax triggers unrelated pandas method
- :mslink:`g.k_nearest <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.k_nearest>` 	:func:`g.nearest_ranges <pyranges.PyRanges.nearest_ranges>`	args changed; and only k=1 now supported
- :mslink:`g.keys <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.keys>` 	``REMOVED``	
- :mslink:`g.max_disjoint <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.max_disjoint>` 	:func:`g.max_disjoint_overlaps <pyranges.PyRanges.max_disjoint_overlaps>`	args changed; and use slack +1 for old behavior
- :mslink:`g.merge <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.merge>` 	:func:`g.merge_overlaps <pyranges.PyRanges.merge_overlaps>`	args changed; and use slack +1 for old behavior
- :mslink:`g.mp <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.mp>` 	``REMOVED``	
- :mslink:`g.mpc <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.mpc>` 	``REMOVED``	
- :mslink:`g.msp <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.msp>` 	``REMOVED``	
- :mslink:`g.mspc <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.mspc>` 	``REMOVED``	
- :mslink:`g.nearest <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.nearest>` 	:func:`g.nearest_ranges <pyranges.PyRanges.nearest_ranges>`	args changed
- :mslink:`g.new_position <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.new_position>` 	:func:`g.combine_interval_columns <pyranges.PyRanges.combine_interval_columns>`	args changed
- :mslink:`g.overlap <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.overlap>` 	:func:`g.overlap <pyranges.PyRanges.overlap>`	args changed
- :mslink:`g.pc <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.pc>` 	``REMOVED``	
- :mslink:`g.print <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.print>` 	``REMOVED``	
- :mslink:`g.rp <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.rp>` 	``REMOVED``	
- :mslink:`g.rpc <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.rpc>` 	``REMOVED``	
- :mslink:`g.sample <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.sample>` 	``g.sample``	inherited by pandas DataFrame
- :mslink:`g.set_union <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.set_union>` 	:func:`g.set_union_overlaps <pyranges.PyRanges.set_union_overlaps>`	args changed
- :mslink:`g.sort <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.sort>` 	:func:`g,sort_ranges <pyranges.PyRanges.sort_ranges>`	args changed
- :mslink:`g.sp <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.sp>` 	``REMOVED``	
- :mslink:`g.spc <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.spc>` 	``REMOVED``	
- :mslink:`g.spliced_subsequence <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.spliced_subsequence>` 	:func:`g.slice_ranges <pyranges.PyRanges.slice_ranges>`	args changed;
- :mslink:`g.split <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.split>` 	:func:`g.split_overlaps <pyranges.PyRanges.split_overlaps>`	args changed
- :mslink:`g.subsequence <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.subsequence>` 	:func:`g.slice_ranges <pyranges.PyRanges.slice_ranges>`	with count_introns=True
- :mslink:`g.subset(fn) <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.subset(fn)>` 	``g[fn]``	
- :mslink:`g.subtract <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.subtract>` 	:func:`g.subtract_overlaps <pyranges.PyRanges.subtract_overlaps>`	args changed; and old syntax triggers unrelated pandas method
- :mslink:`g.tile <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.tile>` 	:func:`g.tile_ranges <pyranges.PyRanges.tile_ranges>`	args changed
- :mslink:`g.to_csv <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.to_csv>` 	``g.to_csv``	inherited by pandas DataFrame
- :mslink:`g.to_example <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.to_example>` 	``REMOVED``	
- :mslink:`g.unstrand <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.unstrand>` 	:func:`g.remove_strand <pyranges.PyRanges.remove_strand>`	
- :mslink:`g.values <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.values>` 	``REMOVED``	
- :mslink:`g.window <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges/index.html#pyranges.PyRanges.window>` 	:func:`g.window_ranges <pyranges.PyRanges.window_ranges>`	args change
+ :mslink:`g,set_intersect <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.set_intersect>` 	:func:`g,set_intersect_overlaps <pyranges1.PyRanges.set_intersect_overlaps>`	args changed
+ :mslink:`g.apply <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.apply>` 	:func:`g.apply_single <pyranges1.PyRanges.apply_single>`	args changed; and old syntax triggers pandas method
+ :mslink:`g.apply_chunks <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.apply_chunks>` 	``REMOVED``	
+ :mslink:`g.apply_pair <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.apply_pair>` 	:func:`g.apply_pair <pyranges1.PyRanges.apply_pair>`	args changed
+ :mslink:`g.assign <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.assign>` 	``g.assign``	inherited by pandas DataFrame
+ :mslink:`g.calculate_frame <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.calculate_frame>` 	:func:`pr.orfs.calculate_frame <pyranges1.orfs.calculate_frame>`	now a copy is returned
+ :mslink:`g.cluster <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.cluster>` 	:func:`g.cluster_overlaps <pyranges1.PyRanges.cluster_overlaps>`	args changed; and use slack +1 for old behavior
+ :mslink:`g.count_overlaps <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.count_overlaps>` 	:func:`g.count_overlaps <pyranges1.PyRanges.count_overlaps>`	args changed
+ :mslink:`g.coverage <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.coverage>` 	:func:`g.count_overlaps(..., calculate_coverage=True) <pyranges1.PyRanges.count_overlaps>`	args changed
+ :mslink:`g.drop_duplicate_positions <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.drop_duplicate_positions>` 	``g.drop_duplicates( g.loc_columns+['Start', 'End'])``	
+ :mslink:`g.drop(cols) <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.drop(cols)>` 	``g.drop(columns=cols)``	inherited by pandas DataFrame
+ :mslink:`g.extend <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.extend>` 	:func:`g.extend_ranges <pyranges1.PyRanges.extend_ranges>`	args changed
+ :mslink:`g.insert <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.insert>` 	``g.insert``	inherited by pandas DataFrame
+ :mslink:`g.intersect <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.intersect>` 	:func:`g.intersect_overlaps <pyranges1.PyRanges.intersect_overlaps>`	args changed
+ :mslink:`g.items <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.items>` 	``REMOVED``	
+ :mslink:`g.join <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.join>` 	:func:`g.join_overlaps <pyranges1.PyRanges.join_overlaps>`	args changed; and old syntax triggers unrelated pandas method
+ :mslink:`g.k_nearest <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.k_nearest>` 	:func:`g.nearest_ranges <pyranges1.PyRanges.nearest_ranges>`	args changed; and only k=1 now supported
+ :mslink:`g.keys <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.keys>` 	``REMOVED``	
+ :mslink:`g.max_disjoint <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.max_disjoint>` 	:func:`g.max_disjoint_overlaps <pyranges1.PyRanges.max_disjoint_overlaps>`	args changed; and use slack +1 for old behavior
+ :mslink:`g.merge <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.merge>` 	:func:`g.merge_overlaps <pyranges1.PyRanges.merge_overlaps>`	args changed; and use slack +1 for old behavior
+ :mslink:`g.mp <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.mp>` 	``REMOVED``	
+ :mslink:`g.mpc <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.mpc>` 	``REMOVED``	
+ :mslink:`g.msp <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.msp>` 	``REMOVED``	
+ :mslink:`g.mspc <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.mspc>` 	``REMOVED``	
+ :mslink:`g.nearest <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.nearest>` 	:func:`g.nearest_ranges <pyranges1.PyRanges.nearest_ranges>`	args changed
+ :mslink:`g.new_position <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.new_position>` 	:func:`g.combine_interval_columns <pyranges1.PyRanges.combine_interval_columns>`	args changed
+ :mslink:`g.overlap <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.overlap>` 	:func:`g.overlap <pyranges1.PyRanges.overlap>`	args changed
+ :mslink:`g.pc <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.pc>` 	``REMOVED``	
+ :mslink:`g.print <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.print>` 	``REMOVED``	
+ :mslink:`g.rp <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.rp>` 	``REMOVED``	
+ :mslink:`g.rpc <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.rpc>` 	``REMOVED``	
+ :mslink:`g.sample <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.sample>` 	``g.sample``	inherited by pandas DataFrame
+ :mslink:`g.set_union <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.set_union>` 	:func:`g.set_union_overlaps <pyranges1.PyRanges.set_union_overlaps>`	args changed
+ :mslink:`g.sort <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.sort>` 	:func:`g,sort_ranges <pyranges1.PyRanges.sort_ranges>`	args changed
+ :mslink:`g.sp <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.sp>` 	``REMOVED``	
+ :mslink:`g.spc <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.spc>` 	``REMOVED``	
+ :mslink:`g.spliced_subsequence <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.spliced_subsequence>` 	:func:`g.slice_ranges <pyranges1.PyRanges.slice_ranges>`	args changed;
+ :mslink:`g.split <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.split>` 	:func:`g.split_overlaps <pyranges1.PyRanges.split_overlaps>`	args changed
+ :mslink:`g.subsequence <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.subsequence>` 	:func:`g.slice_ranges <pyranges1.PyRanges.slice_ranges>`	with count_introns=True
+ :mslink:`g.subset(fn) <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.subset(fn)>` 	``g[fn]``	
+ :mslink:`g.subtract <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.subtract>` 	:func:`g.subtract_overlaps <pyranges1.PyRanges.subtract_overlaps>`	args changed; and old syntax triggers unrelated pandas method
+ :mslink:`g.tile <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.tile>` 	:func:`g.tile_ranges <pyranges1.PyRanges.tile_ranges>`	args changed
+ :mslink:`g.to_csv <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.to_csv>` 	``g.to_csv``	inherited by pandas DataFrame
+ :mslink:`g.to_example <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.to_example>` 	``REMOVED``	
+ :mslink:`g.unstrand <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.unstrand>` 	:func:`g.remove_strand <pyranges1.PyRanges.remove_strand>`	
+ :mslink:`g.values <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.values>` 	``REMOVED``	
+ :mslink:`g.window <https://pyranges.readthedocs.io/en/v0/autoapi/pyranges1/index.html#pyranges1.PyRanges.window>` 	:func:`g.window_ranges <pyranges1.PyRanges.window_ranges>`	args change

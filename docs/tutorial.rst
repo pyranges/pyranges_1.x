@@ -1,7 +1,7 @@
 Tutorial
 ========
 
-:class:`PyRanges <pyranges.PyRanges>` objects represent sequence intervals ("ranges") such as genomic regions.
+:class:`PyRanges <pyranges1.PyRanges>` objects represent sequence intervals ("ranges") such as genomic regions.
 Examples include gene annotations, mapped reads, protein domains, and results from
 Blast or analogous software. Pyranges provides convenient methods to load data in
 GFF, GTF, BED, BAM format. In this tutorial, we refer to PyRanges objects for their
@@ -34,7 +34,7 @@ Getting started
 ~~~~~~~~~~~~~~~
 
 We recommend using `ipython <https://ipython.readthedocs.io/>`_ or `Jupyter <https://jupyter.org/>`_ for this tutorial.
-Besides pyranges and pandas, we will use optional modules (e.g. **pyfaidx**).
+Besides pyranges1 and pandas, we will use optional modules (e.g. **pyfaidx**).
 If you haven't already, install the optional add-ons with:
 
 .. code-block:: shell
@@ -42,7 +42,7 @@ If you haven't already, install the optional add-ons with:
       pip install pyranges1[add-ons]
 
 
-Loading and accessing pyranges objects
+Loading and accessing pyranges1 objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Let's import libraries, and load in memory an example annotation in GFF3 format, consisting of a portion of the genome
@@ -67,7 +67,7 @@ annotation of the worm *Dimorphilus gyrociliatus*.
   Contains 6 chromosomes and 2 strands.
 
 Above, we leveraged the builtin example data. In real use cases, you would load data from a file, using methods like
-:func:`read_gtf <pyranges.read_gtf>`, :func:`read_bed <pyranges.read_bed>` and others (see all readers in
+:func:`read_gtf <pyranges1.read_gtf>`, :func:`read_bed <pyranges1.read_bed>` and others (see all readers in
 :doc:`pyranges_module`).
 
 The ``ann`` object has lots of columns, most of which are not displayed because of space. Here's the full list:
@@ -81,7 +81,7 @@ The ``ann`` object has lots of columns, most of which are not displayed because 
 
 
 Let's select only certain columns. We can use the method
-:func:`get_with_loc_columns <pyranges.PyRanges.get_with_loc_columns>` to select columns by name, and
+:func:`get_with_loc_columns <pyranges1.PyRanges.get_with_loc_columns>` to select columns by name, and
 retain the "genomic location" columns **Chromosome, Start, End**, (and **Strand** if present):
 
   >>> ann = ann.get_with_loc_columns(['Feature', 'Parent', 'ID'])
@@ -121,7 +121,7 @@ line (i.e. those starting with ">"). Let's peek the assembly fasta file availabl
 
 
 Genomic annotations often contain information for diverse entities, such as genes, mRNAs, exons, CDS, etc.
-In GFF files, the entity type is encoded in the Feature column. In pyranges, you use the dot notation to
+In GFF files, the entity type is encoded in the Feature column. In pyranges1, you use the dot notation to
 fetch an individual column, which is technically a pandas Series:
 
   >>> ann.Feature # or ann['Feature']
@@ -194,7 +194,7 @@ Whenever a pandas methods is applied to a PyRanges object, if the returned objec
 then it is returned as a PyRanges object. Otherwise, a dataframe is returned.
 
 We already seen a boolean selector to filter rows. The ``loc`` and ``iloc`` pandas operators are also available.
-Besides, pyranges offers the :func:`loci <pyranges.PyRanges.loci>` operator for selecting intervals in a
+Besides, pyranges1 offers the :func:`loci <pyranges1.PyRanges.loci>` operator for selecting intervals in a
 genomic region of interest. It accepts various syntaxes.
 The code below will show intervals overlapping with the specified position range in the requested chromosome:
 
@@ -216,7 +216,7 @@ The code below will show intervals overlapping with the specified position range
   Contains 1 chromosomes and 1 strands.
 
 We cannot see all rows because of space. We can set how many rows are displayed using
-:func:`pyranges.options.set_option`:
+:func:`pyranges1.options.set_option`:
 
   >>> pr.options.set_option('max_rows_to_show', 10)
   >>> reg
@@ -252,7 +252,7 @@ Various PyRanges methods are available to work with groups of intervals, accepti
 Next, we will examine the first and last codon of annotated CDSs.
 We will obtain their genomic coordinate, then fetch their sequence.
 
-Method :func:`slice_ranges <pyranges.PyRanges.slice_ranges>` allows to obtain a subregion of
+Method :func:`slice_ranges <pyranges1.PyRanges.slice_ranges>` allows to obtain a subregion of
 groups of intervals. The code below derives the first codon of each CDS group; grouping is defined by their ID:
 
   >>> first=cds.slice_ranges(start=0, end=3, group_by='ID')
@@ -274,7 +274,7 @@ groups of intervals. The code below derives the first codon of each CDS group; g
 
 Let's **fetch the sequence** for each of these intervals from our genome fasta file.
 
-The function :func:`get_sequence <pyranges.PyRanges.get_sequence>` returns one sequence per interval, which we assign to a new column of our pyranges object:
+The function :func:`get_sequence <pyranges1.PyRanges.get_sequence>` returns one sequence per interval, which we assign to a new column of our pyranges1 object:
 
   >>> first['Sequence'] = first.get_sequence(genome_file)  #genome_file defined above
   >>> first
@@ -315,7 +315,7 @@ Let's look at those sequences, using a row selector as before:
 In some cases the starting codon is split between two exons. This is uncommon, but expected at least in a few genes
 in a genome. How do we get the full codon sequence?
 
-Function :func:`get_sequence <pyranges.PyRanges.get_sequence>` can accept a ``group_by`` argument,
+Function :func:`get_sequence <pyranges1.PyRanges.get_sequence>` can accept a ``group_by`` argument,
 thus returning the concatenated sequence of a group of intervals,
 i.e. joining exons together. The sequence is given 5' to 3'.
 
@@ -341,7 +341,7 @@ i.e. joining exons together. The sequence is given 5' to 3'.
   cds-CAD5126878.1    ATG
   Name: Sequence, dtype: object
 
-Note that, when :func:`get_sequence <pyranges.PyRanges.get_sequence>` is called with the ``group_by`` argument,
+Note that, when :func:`get_sequence <pyranges1.PyRanges.get_sequence>` is called with the ``group_by`` argument,
 the output is indexed by the group_by column, in this case the ``ID``. Here we confirm the sequence length is always 3:
 
   >>> bool( (seq_first.str.len()==3).all() )
@@ -351,8 +351,8 @@ the output is indexed by the group_by column, in this case the ``ID``. Here we c
 Ok, so far we got the coordinates and sequences of the first codon of each CDS.
 
 Now let's look at  stop codons.
-First, we get the a pyranges object of the last codon of each CDS.
-Conveniently, :func:`slice_ranges <pyranges.PyRanges.slice_ranges>` accepts negative arguments
+First, we get the a pyranges1 object of the last codon of each CDS.
+Conveniently, :func:`slice_ranges <pyranges1.PyRanges.slice_ranges>` accepts negative arguments
 to count from the 3', so we can obtain the last three nucleotides of CDSs with:
 
   >>> last = cds.slice_ranges(start=-3, group_by='ID')
@@ -405,8 +405,8 @@ Writing coordinates and sequences to the disk
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 We obtained a custom genome annotation, consisting of CDS with a TAA stop codon.
-We can now write this :class:`PyRanges <pyranges.PyRanges>`
-object to a file, for example in GTF format using method :func:`to_gtf <pyranges.PyRanges.to_gtf>`:
+We can now write this :class:`PyRanges <pyranges1.PyRanges>`
+object to a file, for example in GTF format using method :func:`to_gtf <pyranges1.PyRanges.to_gtf>`:
 
   >>> taa_stop_cds.to_gtf('Dgyro.taa_CDS.gtf')
 
@@ -442,7 +442,7 @@ the pandas method ``head``:
   PyRanges with 5 rows, 5 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-First, we use the method  :func:`extend_ranges <pyranges.PyRanges.extend_ranges>`
+First, we use the method  :func:`extend_ranges <pyranges1.PyRanges.extend_ranges>`
 to obtain intervals which include the CDS and the promoter defined as above.
 We will group by the ID column, so that the extension is applied to each CDS group
 (i.e. in this case only the 5' most
@@ -462,7 +462,7 @@ interval of each group).
   Contains 1 chromosomes and 2 strands.
 
 In the object we obtained, the promoter corresponds to the first 300 bp of every interval group.
-We can use method :func:`slice_ranges <pyranges.PyRanges.slice_ranges>`  again to get it:
+We can use method :func:`slice_ranges <pyranges1.PyRanges.slice_ranges>`  again to get it:
 
   >>> prom = g.slice_ranges(0, 300, group_by='ID')
   >>> prom.head()
@@ -477,11 +477,11 @@ We can use method :func:`slice_ranges <pyranges.PyRanges.slice_ranges>`  again t
   PyRanges with 5 rows, 5 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-So far we applied :func:`extend_ranges <pyranges.PyRanges.extend_ranges>` and
-:func:`slice_ranges <pyranges.PyRanges.slice_ranges>` to obtain the regions immediately upstream of each CDS group.
-In latest versions, pyranges offers a direct method to perform this operation, called
-:func:`upstream <pyranges.PyRanges.upstream>` (as well as its 3' analog
-:func:`downstream <pyranges.PyRanges.downstream>`):
+So far we applied :func:`extend_ranges <pyranges1.PyRanges.extend_ranges>` and
+:func:`slice_ranges <pyranges1.PyRanges.slice_ranges>` to obtain the regions immediately upstream of each CDS group.
+In latest versions, pyranges1 offers a direct method to perform this operation, called
+:func:`upstream <pyranges1.PyRanges.upstream>` (as well as its 3' analog
+:func:`downstream <pyranges1.PyRanges.downstream>`):
 
   >>> cds.upstream(length=300, group_by='ID').head()
     index  |    Chromosome           Start      End  Strand      ID
@@ -498,7 +498,7 @@ In latest versions, pyranges offers a direct method to perform this operation, c
 
 Because we extended intervals, some may have gone out-of-bounds on the left or on the right side:
 they may have a Start smaller than 0, or an End greater than the length of its chromosome, respectively.
-The function :func:`clip_ranges <pyranges.PyRanges.clip_ranges>`
+The function :func:`clip_ranges <pyranges1.PyRanges.clip_ranges>`
 is designed to correct this:
 
   >>> import pyfaidx
@@ -516,7 +516,7 @@ is designed to correct this:
   PyRanges with 5 rows, 5 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-To detect cases of out-of-bounds on the right side, :func:`clip_ranges <pyranges.PyRanges.clip_ranges>`
+To detect cases of out-of-bounds on the right side, :func:`clip_ranges <pyranges1.PyRanges.clip_ranges>`
 needs to know chromosome sizes.
 Various input types are accepted for the ``chromsizes`` argument; above, we used a ``pyfaidx.Fasta``
 object, which derives it from a fasta file.
@@ -545,7 +545,7 @@ Detecting overlaps among intervals
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Pyranges offers many efficient methods to detect overlaps, such as
-:func:`overlap <pyranges.PyRanges.overlap>`.
+:func:`overlap <pyranges1.PyRanges.overlap>`.
 This method returns the rows in self that overlap with another PyRanges object.
 
 Let's see if any of the promoter regions overlap other CDSs:
@@ -561,10 +561,10 @@ Let's see if any of the promoter regions overlap other CDSs:
 As many PyRanges methods, the Strand (if present) is taken into account in the comparison, so that
 the overlap between intervals is reported only if they are on the same strand.
 Argument ``strand_behavior`` is available in many functions to control how strand is handled in overlap comparisons
-(see :func:`overlap <pyranges.PyRanges.overlap>`).
+(see :func:`overlap <pyranges1.PyRanges.overlap>`).
 
 Above, we obtained the promoter region that overlaps another CDS, but we don't know what CDS it is.
-Function :func:`join_overlaps <pyranges.PyRanges.join_overlaps>` will find overlaps and combine the columns
+Function :func:`join_overlaps <pyranges1.PyRanges.join_overlaps>` will find overlaps and combine the columns
 of the overlapping intervals, similar to a SQL join operation:
 
   >>> j = cor_prom.join_overlaps(cds)
@@ -588,7 +588,7 @@ Above, we used a pandas syntax to select columns. Because the returned object do
 columns, it is a pandas DataFrame.
 
 Let's get the intersection between the overlapping intervals, using function
-:func:`intersect_overlaps <pyranges.PyRanges.intersect_overlaps>`:
+:func:`intersect_overlaps <pyranges1.PyRanges.intersect_overlaps>`:
 
   >>> prom_in_cds = cor_prom.intersect_overlaps(cds)
   >>> prom_in_cds
@@ -601,7 +601,7 @@ Let's get the intersection between the overlapping intervals, using function
 
 
 Let's go back to the ``cds`` object and see if any of its intervals overlap each other.
-We can use :func:`cluster_overlaps <pyranges.PyRanges.cluster_overlaps>`. This will assign each interval to a cluster,
+We can use :func:`cluster_overlaps <pyranges1.PyRanges.cluster_overlaps>`. This will assign each interval to a cluster,
 identified by an integer. The intervals that overlap each other will be assigned to the same cluster.
 
   >>> clu_cds = cds.cluster_overlaps()
@@ -686,7 +686,7 @@ Sorting intervals
 ~~~~~~~~~~~~~~~~~
 Above, it is not apparent that there are overlaps among the intervals in the object ``multi_clu_cds``. This is due to
 the order of rows. We could sort rows using pandas ``sort_values``, but Pyranges offers something
-better: the method :func:`sort_ranges <pyranges.PyRanges.sort_ranges>` sorts by chromosome, strand, then by
+better: the method :func:`sort_ranges <pyranges1.PyRanges.sort_ranges>` sorts by chromosome, strand, then by
 coordinates. By default, intervals are sorted 5' to 3', meaning that intervals on the positive strand are sorted
 from left-most to right-most, while intervals on the negative strand are sorted in the opposite direction.
 
@@ -707,7 +707,7 @@ from left-most to right-most, while intervals on the negative strand are sorted 
   Contains 2 chromosomes and 2 strands.
 
 
-:func:`sort_ranges <pyranges.PyRanges.sort_ranges>` can be combined by Pandas ``sort_values`` to customize the sorting.
+:func:`sort_ranges <pyranges1.PyRanges.sort_ranges>` can be combined by Pandas ``sort_values`` to customize the sorting.
 For example, let's add a columns with the lengths of each interval.
 Thus, sort by chromosome, strand, length, then interval coordinates:
 
@@ -754,7 +754,7 @@ the annotation ``ann``:
 
 Let's define the boundaries of each mRNA, e.g. the left and right limits of its exons. While this may be readily
 available in the genome annotation, let's use PyRanges to calculate them, using
-:func:`outer_ranges <pyranges.PyRanges.outer_ranges>`:
+:func:`outer_ranges <pyranges1.PyRanges.outer_ranges>`:
 
   >>> mRNA_bounds = exons.outer_ranges(group_by='Parent')
   >>> mRNA_bounds
@@ -771,8 +771,8 @@ available in the genome annotation, let's use PyRanges to calculate them, using
   Contains 1 chromosomes and 2 strands.
 
 To get the intergenic regions, let's define the maximum and minimum coordinates of any mRNA in this region,
-using :func:`outer_ranges <pyranges.PyRanges.outer_ranges>` again without ``group_by``. Because we want our result to
-not depend on strand, we remove it using :func:`remove_strand <pyranges.PyRanges.remove_strand>`:
+using :func:`outer_ranges <pyranges1.PyRanges.outer_ranges>` again without ``group_by``. Because we want our result to
+not depend on strand, we remove it using :func:`remove_strand <pyranges1.PyRanges.remove_strand>`:
 
   >>> all_mRNA_bounds = mRNA_bounds.remove_strand().outer_ranges()
   >>> all_mRNA_bounds
@@ -783,7 +783,7 @@ not depend on strand, we remove it using :func:`remove_strand <pyranges.PyRanges
   PyRanges with 1 rows, 3 columns, and 1 index columns.
   Contains 1 chromosomes.
 
-Now we can get the intergenic regions using :func:`subtract_overlaps <pyranges.PyRanges.subtract_overlaps>`:
+Now we can get the intergenic regions using :func:`subtract_overlaps <pyranges1.PyRanges.subtract_overlaps>`:
 
   >>> intergenic = all_mRNA_bounds.subtract_overlaps(mRNA_bounds)
   >>> intergenic
@@ -797,7 +797,7 @@ Now we can get the intergenic regions using :func:`subtract_overlaps <pyranges.P
   PyRanges with 4 rows, 3 columns, and 1 index columns (with 3 index duplicates).
   Contains 1 chromosomes.
 
-Note that pyranges indicates that the object has duplicate indices, because all come from the same row in
+Note that pyranges1 indicates that the object has duplicate indices, because all come from the same row in
 ``all_mRNA_bounds``, broken into subintervals by the subtraction operation.
 We can use pandas ``reset_index`` to remedy:
 
@@ -819,7 +819,7 @@ Counting overlaps
 
 Often, one wants to count the number of overlaps between two PyRanges objects, e.g. to count reads in specific regions.
 Here, let's count the number of CDS intervals that overlap our previously computed objects ``intergenic``
-and  ``all_mRNA_bounds``, using  method :func:`count_overlaps <pyranges.PyRanges.count_overlaps>` :
+and  ``all_mRNA_bounds``, using  method :func:`count_overlaps <pyranges1.PyRanges.count_overlaps>` :
 
   >>> intergenic.count_overlaps(cds)
     index  |    Chromosome           Start      End     Count
@@ -862,7 +862,7 @@ the CDS intervals may be redundant: different splicing isoforms may have some id
 
 
 If we want to calculate the intervals that are annotated as CDS in any of the isoforms, we can use
-method :func:`merge_overlaps <pyranges.PyRanges.merge_overlaps>` :
+method :func:`merge_overlaps <pyranges1.PyRanges.merge_overlaps>` :
 
   >>> example.merge_overlaps()
     index  |    Chromosome           Start      End  Strand
@@ -876,7 +876,7 @@ method :func:`merge_overlaps <pyranges.PyRanges.merge_overlaps>` :
   Contains 1 chromosomes and 1 strands.
 
 Various methods are available to obtain non-overlapping intervals, depending on the desired output. See
-:func:`split_overlaps <pyranges.PyRanges.split_overlaps>`, :func:`max_disjoint_overlaps <pyranges.PyRanges.max_disjoint_overlaps>`.
+:func:`split_overlaps <pyranges1.PyRanges.split_overlaps>`, :func:`max_disjoint_overlaps <pyranges1.PyRanges.max_disjoint_overlaps>`.
 
 Finally, let's count how many non-redundant CDS intervals overlap our target region:
 
@@ -892,16 +892,16 @@ AI coding assistant
 ~~~~~~~~~~~~~~~~~~~
 
 Nowadays, coding is greatly facilitated by AI coding assistants (ChatGPT, Copilot, etc.).
-Pyranges provides methods to streamline the use of such tools to generate or modify pyranges codes.
-There are two main functions for this purpose. The first one is :func:`export_docs <pyranges.assistant.export_docs>`.
-It generates a text file with the documentation of all pyranges functionalities:
+Pyranges provides methods to streamline the use of such tools to generate or modify pyranges1 codes.
+There are two main functions for this purpose. The first one is :func:`export_docs <pyranges1.assistant.export_docs>`.
+It generates a text file with the documentation of all pyranges1 functionalities:
 
   >>> pr.assistant.export_docs("pyranges_docs.txt")
 
-The second one is :func:`prompt <pyranges.assistant.prompt>`:
+The second one is :func:`prompt <pyranges1.assistant.prompt>`:
 
   >>> pr.assistant.prompt()
-  'Act as an expert bioinformatician programmer experienced in pyranges (complete documentation attached for you to learn). Next, answer my requests for code by first explaining the workflow, followed by oneliner-style code snippets, as concise as possible but elegant, preceded by the text of task as commented code. Ensure you use pyranges v1 interface that you find here, rather than the v0, from which you may have seen examples before; v1 renamed many methods. '
+  'Act as an expert bioinformatician programmer experienced in pyranges1 (complete documentation attached for you to learn). Next, answer my requests for code by first explaining the workflow, followed by oneliner-style code snippets, as concise as possible but elegant, preceded by the text of task as commented code. Ensure you use pyranges1 v1 interface that you find here, rather than the v0, from which you may have seen examples before; v1 renamed many methods. '
 
 
-This concludes our tutorial. The next pages will delve into pyranges functionalities grouped by topic.
+This concludes our tutorial. The next pages will delve into pyranges1 functionalities grouped by topic.

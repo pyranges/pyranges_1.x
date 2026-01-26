@@ -14,7 +14,7 @@ PyRanges are created in the following ways:
 
 #. from a pandas dataframe
 #. from a dictionary with the column names as keys and iterables as values
-#. from a file, using pyranges readers
+#. from a file, using pyranges1 readers
 #. concatenating existing PyRanges objects
 
 From a DataFrame
@@ -24,7 +24,7 @@ If you instantiate a PyRanges object from a dataframe, it should at least contai
 Coordinates follow the python standard (0-based, start included, end excluded). A column called Strand is optional.
 Any other columns in the dataframe are carried over as metadata.
 
-  >>> import pandas as pd, pyranges as pr, numpy as np
+  >>> import pandas as pd, pyranges1 as pr, numpy as np
   >>> df=pd.DataFrame(
   ... {'Chromosome':['chr1', 'chr1', 'chr1', 'chr3'],
   ...  'Start': [5, 20, 80, 10],
@@ -116,10 +116,10 @@ Alternatively, if a string or scalar is provided, it is broadcasted to the lengt
 Loading from a file
 -------------------
 
-The pyranges library can create PyRanges from gff3 common file formats, namely gtf/gff, gff3, bed and bam (see
-:func:`read_bed <pyranges.read_bed>`, :func:`read_gtf <pyranges.read_gtf>`,
-:func:`read_gff3 <pyranges.read_gff3>`, :func:`read_bam <pyranges.read_bam>`).
-The documentation of readers is available in the :doc:`pyranges module <pyranges_module>`.
+The pyranges1 library can create PyRanges from gff3 common file formats, namely gtf/gff, gff3, bed and bam (see
+:func:`read_bed <pyranges1.read_bed>`, :func:`read_gtf <pyranges1.read_gtf>`,
+:func:`read_gff3 <pyranges1.read_gff3>`, :func:`read_bam <pyranges1.read_bam>`).
+The documentation of readers is available in the :doc:`pyranges1 module <pyranges_module>`.
 Note that these files may encode coordinates with different conventions (e.g. GTF: 1-based, start and end included).
 When instancing a PyRanges object they are converted to the python convention.
 
@@ -194,7 +194,7 @@ dataframe has aptly named columns.
 Concatenating PyRanges
 ----------------------
 
-Analogously to ``pandas.concat``, :func:`pyranges.concat` can be used to concatenate PyRanges objects, i.e.
+Analogously to ``pandas.concat``, :func:`pyranges1.concat` can be used to concatenate PyRanges objects, i.e.
 stack rows of two or more PyRanges to create a new PyRanges object.
 
   >>> gr1 = pr.PyRanges({'Chromosome': ['chr1', 'chr1', 'chr1', 'chr3'],
@@ -243,7 +243,7 @@ Note that this may result in index duplicates, which can be remedied by pandas `
 Data for testing
 ----------------
 
-For testing purposes, pyranges provides some data in :ref:`pr.example_data <pyranges_example_data>`.
+For testing purposes, pyranges1 provides some data in :ref:`pr.example_data <pyranges_example_data>`.
 See an overview with:
 
   >>> pr.example_data
@@ -282,7 +282,7 @@ You can load the data with this syntax:
   PyRanges with 20 rows, 6 columns, and 1 index columns.
   Contains 15 chromosomes and 2 strands.
 
-On the on other hand, you can create random intervals using :func:`pyranges.random`.
+On the on other hand, you can create random intervals using :func:`pyranges1.random`.
 By default, the data refers to the human genome (hg19):
 
   >>> pr.random(n=5, length=50, seed=123)

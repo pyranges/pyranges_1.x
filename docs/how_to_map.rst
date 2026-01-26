@@ -8,12 +8,12 @@ Mapping between coordinate systems
 Mapping coordinate systems: cheatsheet
 --------------------------------------
 
-.. image:: https://raw.githubusercontent.com/pyranges/pyrangeyes/for_pyranges1_1/examples/cheatsheet_mapping.png
+.. image:: https://raw.githubusercontent.com/pyranges1/pyrangeyes/for_pyranges1_1/examples/cheatsheet_mapping.png
    :alt: PyRanges cheatsheet
-   :target: https://raw.githubusercontent.com/pyranges/pyrangeyes/for_pyranges1_1/examples/cheatsheet_mapping.png
+   :target: https://raw.githubusercontent.com/pyranges1/pyrangeyes/for_pyranges1_1/examples/cheatsheet_mapping.png
 
 
-:func:`overlap <pyranges.PyRanges.overlap>`.
+:func:`overlap <pyranges1.PyRanges.overlap>`.
 
 Nested coordinate systems
 -------------------------
@@ -117,7 +117,7 @@ Next, we want to take the Rfam hits in ``rh``, which are relative (local) to the
 and remap them to the genome (global) coordinates. To do so, we make use of the information in the ``gre`` object,
 which defines the coordinates of each transcript, often split in exons, relative to the genome.
 
-For this operation, we use the :func:`map_to_global <pyranges.PyRanges.map_to_global>` method.
+For this operation, we use the :func:`map_to_global <pyranges1.PyRanges.map_to_global>` method.
 Besides the two PyRanges objects, we also need to specify the columns in the global range
 that contains the identifier used as the Chromosome in the local range, provided by the ``global_on`` argument.
 The resulting PyRanges object, ``rhg``, contains the Rfam hits remapped to the genome coordinates:
@@ -235,7 +235,7 @@ Now we're ready to map these positions to the genome coordinates. Let's also fet
   PyRanges with 466 rows, 7 columns, and 1 index columns (with 5 index duplicates).
   Contains 3 chromosomes and 2 strands.
 
-Because protein mapping to genome coordinates is common, map_to_:func:`map_to_global <pyranges.PyRanges.map_to_global>`
+Because protein mapping to genome coordinates is common, map_to_:func:`map_to_global <pyranges1.PyRanges.map_to_global>`
 provides a shortcut for this operation, through its ``pep_to_cds`` argument, which effectively multiplies the local
 coordinates by 3 before mapping to the global coordinates. So this is equivalent to the previous operation:
 
@@ -358,7 +358,7 @@ strand and one for minus strand; and let's load their sequence in memory:
 
 The object ``matches`` contains the positions of the motif in the genome.
 Now, we want to map these positions to the transcript coordinates. Function
-:func:`map_to_local <pyranges.PyRanges.map_to_local>` does exactly this.
+:func:`map_to_local <pyranges1.PyRanges.map_to_local>` does exactly this.
 For each motif, we need to decide which transcript we want to use as reference
 coordinate system. By default, it will use all transcripts that overlap the motif:
 

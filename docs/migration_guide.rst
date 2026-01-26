@@ -26,7 +26,7 @@ Below, we provide a cheatsheet to help you migrate your code from v0 to v1.
 The most problematic aspects are the get/set item methods, since the v0 syntax is not compatible with dataframes.
 See `here a discussion on the topic <https://github.com/pyranges/pyranges/discussions/357#discussioncomment-7274998>`_.
 
-In the table below, ``pr`` refers to the pyranges module, and ``g`` to a PyRanges object. Most items are linked
+In the table below, ``pr`` refers to the pyranges1 module, and ``g`` to a PyRanges object. Most items are linked
 to the corresponding documentation page.
 
 .. csv-table:: Migration cheatsheet

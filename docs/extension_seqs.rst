@@ -4,7 +4,7 @@ Seqs: sequences
 
 Utilities to process nucleotide or protein sequences.
 
-.. automodule:: pyranges.seqs
+.. automodule:: pyranges1.seqs
     :members:
     :imported-members:
 

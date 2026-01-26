@@ -1,7 +1,7 @@
 How-to pages
 ============
 
-These pages explain pyranges functionalities grouped by topic:
+These pages explain pyranges1 functionalities grouped by topic:
 
 .. toctree::
    :maxdepth: 3

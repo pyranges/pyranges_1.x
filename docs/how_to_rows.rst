@@ -154,7 +154,7 @@ Let's invert the selection:
 Using PyRanges .loci
 ---------------------
 
-PyRanges provides the method :func:`loci <pyranges.PyRanges.loci>`
+PyRanges provides the method :func:`loci <pyranges1.PyRanges.loci>`
 to select rows by genomic region:
 
   >>> gr2 = pr.example_data.aorta2.sort_ranges()
@@ -260,7 +260,7 @@ Sorting PyRanges
 ----------------
 
 PyRanges objects can be sorted (i.e. altering the order of rows) by calling the pandas dataframe method ``sort_values``,
-or the PyRanges method :func:`sort_ranges <pyranges.PyRanges.sort_ranges>`.
+or the PyRanges method :func:`sort_ranges <pyranges1.PyRanges.sort_ranges>`.
 
   >>> import random; random.seed(1)
   >>> c = pr.example_data.chipseq.remove_nonloc_columns()
@@ -302,9 +302,9 @@ For example, let's sort by column ``peak``:
   Contains 15 chromosomes and 2 strands.
 
 
-PyRanges :func:`sort_ranges <pyranges.PyRanges.sort_ranges>` is designed for genomic ranges.
+PyRanges :func:`sort_ranges <pyranges1.PyRanges.sort_ranges>` is designed for genomic ranges.
 By default, it sorts by Chromosome, Strand, then interval coordinates. If Strands are valid (
-see :func:`strand_valid <pyranges.PyRanges.strand_valid>`), then intervals on the reverse strand are
+see :func:`strand_valid <pyranges1.PyRanges.strand_valid>`), then intervals on the reverse strand are
 sorted in reverse order:
 
   >>> c.sort_ranges()
