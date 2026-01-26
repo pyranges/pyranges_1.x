@@ -9,7 +9,7 @@ import pytest
 from hypothesis import given, settings
 from hypothesis.extra.pandas import column, data_frames, indexes
 
-from pyranges import PyRanges
+from pyranges1 import PyRanges
 from pyranges1.core.names import VALID_GENOMIC_STRAND_INFO
 
 max_examples = 15

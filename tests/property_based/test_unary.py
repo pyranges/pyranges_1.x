@@ -255,7 +255,7 @@ def test_init(gr, strand) -> None:
         pr.PyRanges(chromosomes=c, starts=s, ends=e)
 
 
-chipseq = pr.example_data.chipseq()
+chipseq = pr.example_data.chipseq
 
 
 @settings(

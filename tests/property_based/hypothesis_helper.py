@@ -4,7 +4,7 @@ import pandas as pd
 from hypothesis.extra.pandas import column, data_frames, indexes
 
 import pyranges1 as pr
-from pyranges import PyRanges
+from pyranges1 import PyRanges
 
 max_examples = 15
 slow_max_examples = 5

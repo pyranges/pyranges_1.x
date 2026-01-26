@@ -109,8 +109,8 @@ to the project, then clone your fork inside it:
 
 .. code:: bash
 
-	mkdir mypyranges
-	cd mypyranges
+	mkdir mypyranges1
+	cd mypyranges1
 	git clone PASTE_GITHUB_HTTPS
 
 2. Set up your developer environment and install Pyranges
@@ -141,7 +141,7 @@ most of Pyranges configuration, is found in the pyproject.toml file. You can ins
 
 .. code:: bash
 
-	pip install .[all]
+	pip install -e '.[all]'
 
 
 3. Edit the code

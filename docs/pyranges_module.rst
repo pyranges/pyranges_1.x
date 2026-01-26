@@ -19,7 +19,7 @@ pyranges1.options
 The ``pyranges1.options`` object is used to configure aspects of how PyRanges is represented.
 Below are the methods available on this object.
 
-.. automodule:: pyranges1.options
+.. autoclass:: pyranges1.core.options.PyRangesOptions
    :members:
    :show-inheritance:
    :exclude-members: __init__
