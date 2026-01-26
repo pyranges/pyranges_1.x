@@ -22,6 +22,9 @@ available at https://pyranges1.readthedocs.io/
 ## Recent Changelog
 
 ```
+# 1.1.9 (26.01.26)
+- pandas dependency bound to v2. This is in response to pandas 3.0.0 being released, breaking our doctests.
+
 # 1.1.8 (30.12.25)
 - to_gtf and to_gff3: fix bug where 'phase' (gtf) and 'frame' (gff3) are erroneously added to attributes field
 
@@ -81,7 +84,7 @@ or if you'd like new features implemented, open an Issue at github: https://gith
 ## Contributing to pyranges
 
 Pyranges accepts code contributions in form of pull request. 
-For details, visit https://pyranges1.readthedocs.io/developer_guide.html
+For details, visit [https://pyranges1.readthedocs.io/developer_guide.html](https://pyranges1.readthedocs.io/en/latest/developer_guide.html)
 
 ## Cheatsheet
 ![cheatsheet](https://raw.githubusercontent.com/pyranges/pyrangeyes/for_pyranges1_1/images/pyranges_cheatsheet.png)
