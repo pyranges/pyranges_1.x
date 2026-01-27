@@ -15,7 +15,7 @@ Pyranges is open source, and hosted at github: https://github.com/pyranges/pyran
 Pyranges is developed by Endre Bakken Stovner and by
 `Marco Mariotti's lab <https://www.mariottigenomicslab.com/>`_.
 
-**This documentation refers to the version 1 of pyranges1**, which introduces a new API and a new data structure
+**This documentation refers to the version 1 of pyranges**, which introduces a new API and a new data structure
 compared to version 0, still the 'default', soon to be deprecated. If you are a pyranges1 v0 user,
 check :doc:`this guide to migrate to v1 <./migration_guide>`.
 
