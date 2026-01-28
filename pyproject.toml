@@ -34,7 +34,7 @@ dependencies = ["pandas<3.0.0", "tabulate", "natsort", "ruranges>=0.0.14"]
 
 [project.optional-dependencies]
 add-ons = [
-    "pyrle >= 0.0.39",
+    "pyrle >= 0.0.43",
     "bamread",
     "pyfaidx",
     "pyBigWig",
