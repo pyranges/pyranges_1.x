@@ -27,8 +27,7 @@ Tests are an essential part of continuous integration. Briefly, they ensure that
 break existing functions. Various layers of tests are implemented in Pyranges:
 
 - **unit tests**: quick and compulsory tests about the main Pyranges functionalities
-- **doctest**: quick and compulsory tests that ensures that the code in the documentation (tutorial and how-to-pages) gives the expected results
-- **property based tests**: time-consuming tests that involve the generation of random data to check that the results of Pyranges functions match that of other reference bioinformatic tools. These tests are not compulsory: the core development team runs them when the code backbone is edited.
+- **doctest**: quick and compulsory tests that ensures that the code in the documentation (docstrings examples, tutorial and how-to-pages) gives the expected results
 
 If the code submitted to Pyranges does not pass the compulsory tests, it will not be integrated.
 Therefore, we highly recommend developers to run tests before code submissions, as explained
@@ -156,23 +155,18 @@ imports pyranges1, making sure you're in the prdev conda environment.
 4. Run tests
 ------------
 
-For each of the commands below, inspect the output of pytest: warnings are acceptable, but errors must be
-fixed. To run the compulsory **doctest** and **unit tests**, run:
+For each of the test commands, inspect their output: warnings are acceptable, but errors must be
+fixed. At the time of writing, the test commands are these 
+(omitting formatting, linting, and type-checking tests by ruff and pyright):
 
 .. code:: bash
 
-        pytest --doctest-modules pyranges1
-        pytest tests/unit
-		python tests/run_doctest_tutorial_howto.py
+	    python tests/run_doctest_tutorial_howto.py
+	    pytest --doctest-modules pyranges1
+	    pytest tests/unit
 
-If you modified core Pyranges functions, you may want to also run the non-compulsory **property-based tests**:
-
-.. code:: bash
-
-	pytest tests/property_based/
-
-If any of the tests fail, you must amend them before proceeding. 
-
+The up-to-date test commands can be found in the tox section of the repo 
+`pyproject.toml <https://github.com/pyranges/pyranges_1.x/blob/master/pyproject.toml>`_ configuration file. 
 
 
 5. Format, lint, type-checking code
@@ -193,7 +187,9 @@ Then, let's lint code, also with ruff:
 
 If the ruff check above shows any error, you must fix them before you proceed. 
 If errors are deemed 'fixable', you may simply run ``ruff check --fix pyranges1``. 
-If not, you must delve into the code -- note, ChatGPT/Copilot are your friends!
+If not, you must delve into the code. Note, ChatGPT/Copilot are your friends!
+
+After fixing any errors, the corresponding tests (see pyproject.toml file content) should pass.
 
 Lastly, let's use pyright to ensure correct type-checking:
 
@@ -204,6 +200,7 @@ Lastly, let's use pyright to ensure correct type-checking:
 
 Again, any error in the pyright must be amended before proceeding. Note that if you edit the code, 
 you may want to format and lint code again with ruff.
+
 
 6. Test on all supported python and package versions
 -----------------------------------------------------
@@ -245,11 +242,15 @@ At this stage, you are ready to submit your code for integration into the
 main Pyranges repository; that is to say, to open a "pull request". Before you can do that, you
 have to update your remote repository, i.e. your Pyranges fork at github.
 
-First, bump the version number in the file pyproject.toml. Then, it's essential to document your changes
+First, bump the version number in the file pyproject.toml. 
+
+Then, it's essential to document your changes
 in the CHANGE_LOG.txt file. This log should provide a clear and
 concise summary of the modifications, additions, and fixes made in each version of your project. Include
 relevant details such as feature enhancements, bug fixes, and any other notable alterations to help
 maintain a transparent and informative record of your project's evolution.
+
+Also, edit the README.md file to add the most recent changes in the corresponding section.
 
 9. Commit and push to your remote repository
 ---------------------------------------------
