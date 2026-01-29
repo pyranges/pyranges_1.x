@@ -11,7 +11,7 @@ It enables intuitive and highly efficient pipelines for genomic analysis.
 
 ## Version 1.x
 This is version 1.x of pyranges. It is a complete rewrite of the original pyranges library, 
-that will replace the "default" (version 0) at the end in 2025. If you are a v0 user, check the migration guide 
+soon to replace the "default" original one (version 0). If you are a v0 user, check the migration guide 
 in the documentation.
 
 ## Documentation
@@ -22,6 +22,9 @@ available at https://pyranges1.readthedocs.io/
 ## Recent Changelog
 
 ```
+# 1.2.0 (29.01.26)
+- module name changed from pyranges to pyranges1, to allow co-existing with pyranges (v0) in same env
+
 # 1.1.9 (26.01.26)
 - pandas dependency bound to v2. This is in response to pandas 3.0.0 being released, breaking our doctests.
 

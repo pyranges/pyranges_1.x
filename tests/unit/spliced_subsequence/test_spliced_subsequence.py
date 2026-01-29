@@ -1,6 +1,6 @@
 import pandas as pd
 
-import pyranges as pr
+import pyranges1 as pr
 
 
 def test_spliced_subsequence_use_strand_false() -> None:

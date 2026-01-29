@@ -32,3 +32,4 @@ dist/
 
 pyranges-*/
 *.bw
+!pyranges1/data/bigwig.bw

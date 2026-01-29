@@ -1,4 +1,4 @@
-import pyranges as pr
+import pyranges1 as pr
 from tests.helpers import assert_df_equal
 
 a = """Chromosome Start End Strand

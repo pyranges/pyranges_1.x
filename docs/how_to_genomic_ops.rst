@@ -19,7 +19,7 @@ Modifying coordinates
 Interval coordinates (Start, End) can be directly modified like any Series in dataframes.
 Let's get some data:
 
-  >>> import pyranges as pr
+  >>> import pyranges1 as pr
   >>> ex = pr.example_data.ensembl_gtf
   >>> ex = ex[ex.Feature == "exon"].get_with_loc_columns('transcript_id')
   >>> ex = ex.sort_ranges(use_strand=False).reset_index(drop=True)
@@ -94,14 +94,14 @@ Or use a boolean index:
   Contains 1 chromosomes and 2 strands.
 
 
-On the other hand, pyranges offer convenient and intuitive methods to modify coordinates, which deal
+On the other hand, pyranges1 offer convenient and intuitive methods to modify coordinates, which deal
 with the complexity of intervals and strands.
 Next, we will showcase some of its functionalities, using the ``e`` object above as starting point.
 
 
 Extending intervals
 -------------------
-The :func:`extend_ranges <pyranges.PyRanges.extend_ranges>` method allows to extend the intervals in a PyRanges object.
+The :func:`extend_ranges <pyranges1.PyRanges.extend_ranges>` method allows to extend the intervals in a PyRanges object.
 The ``ext`` parameter implies an extension in both directions of all intervals:
 
   >>> e.extend_ranges(ext=5)
@@ -201,7 +201,7 @@ Slicing operations
 Slicing operations are operations that cut the intervals in a PyRanges object to obtain smaller intervals.
 Intervals may be treated independently (default) or grouped in transcripts.
 
-Method :func:`slice_ranges <pyranges.PyRanges.slice_ranges>` allows to
+Method :func:`slice_ranges <pyranges1.PyRanges.slice_ranges>` allows to
 obtain slices by specifying the ``start`` and ``end`` position, in python notation.
 So, to get the first 10 bases of each interval, we can do:
 
@@ -294,7 +294,7 @@ This returns intervals without their first and last 3 bases:
 
 Above, each interval is treated independently. Alternatively, you can consider transcripts,
 grouping intervals (i.e. exons) by a column, specified with the ``group_by`` argument.
-When provided, :func:`slice_ranges <pyranges.PyRanges.slice_ranges>` arguments are relative to the transcript, not the
+When provided, :func:`slice_ranges <pyranges1.PyRanges.slice_ranges>` arguments are relative to the transcript, not the
 interval. Note that using ``group_by`` assumes that exons belonging to the same transcript have no overlap; on the other
 hand, it does not assume presorting of intervals.
 
@@ -381,8 +381,8 @@ This will obtain the 100 bases downstream of each transcript:
   PyRanges with 3 rows, 5 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-However, pyranges provides more convenients functions to this purpose: :func:`upstream <pyranges.PyRanges.upstream>`
-and :func:`downstream <pyranges.PyRanges.downstream>` allow  to obtain regions upstream or
+However, pyranges1 provides more convenients functions to this purpose: :func:`upstream <pyranges1.PyRanges.upstream>`
+and :func:`downstream <pyranges1.PyRanges.downstream>` allow  to obtain regions upstream or
 downstream of intervals. They allow to specify the length, as well as any optional gap between
 the returned intervals and the input ones:
 
@@ -407,7 +407,7 @@ the returned intervals and the input ones:
   Contains 1 chromosomes and 2 strands.
 
 Sometimes, you may want to slice ranges according to non-spliced coordinates. This can be done with
-:func:`slice_ranges <pyranges.PyRanges.slice_ranges>` setting the ``count_introns`` argument to ``True``.
+:func:`slice_ranges <pyranges1.PyRanges.slice_ranges>` setting the ``count_introns`` argument to ``True``.
 So, the following will get the subintervals included in the first 1500 bases of each unspliced transcript:
 
   >>> e.slice_ranges(0, 1500, group_by='transcript_id', count_introns=True)
@@ -456,7 +456,7 @@ Interval complement
 
 Another useful operation is to obtain the complement of intervals in a PyRanges object, that is,
 all the bases that are not covered by any of the intervals.
-This can be done with the :func:`complement_ranges <pyranges.PyRanges.complement_ranges>` method.
+This can be done with the :func:`complement_ranges <pyranges1.PyRanges.complement_ranges>` method.
 Let's revise our ``e`` object:
 
   >>> e
@@ -555,7 +555,7 @@ Other slicing operations
 ------------------------
 
 Many genomic analyses involve running a sliding window over the genome or subregions of it.
-Method :func:`window_ranges <pyranges.PyRanges.window_ranges>` allows to obtain adjacent windows of a specified size and step that
+Method :func:`window_ranges <pyranges1.PyRanges.window_ranges>` allows to obtain adjacent windows of a specified size and step that
 span each interval in a PyRanges object.
 
   >>> g = pr.PyRanges(dict(Chromosome=1, Start=[4, 60, 100], End=[11, 66, 107],
@@ -639,8 +639,8 @@ To may retain the old index as column, with:
   PyRanges with 8 rows, 6 columns, and 1 index columns.
   Contains 1 chromosomes and 2 strands.
 
-To 'window' a whole genome (e.g. to then quantify reads in each window), pyranges offers
-:func:`pyranges.tile_genome`. Here, you must provide chromosome sizes, with various syntaxes accepted, and again a
+To 'window' a whole genome (e.g. to then quantify reads in each window), pyranges1 offers
+:func:`pyranges1.tile_genome`. Here, you must provide chromosome sizes, with various syntaxes accepted, and again a
 window size. This function will return windows to cover all the chromosomes:
 
   >>> cs={'chr1':323, 'chr2':125} # creating a dictionary with chromosome sizes
@@ -674,7 +674,7 @@ To ensure tile size consistency, use the ``full_last_tile`` parameter:
   Contains 2 chromosomes.
 
 
-A related operation is :func:`tile_ranges <pyranges.PyRanges.tile_ranges>`, whose rationale is to obtain only the genome tiles (of
+A related operation is :func:`tile_ranges <pyranges1.PyRanges.tile_ranges>`, whose rationale is to obtain only the genome tiles (of
 a defined size) that overlap the intervals in a PyRanges object:
 
 
@@ -701,9 +701,9 @@ a defined size) that overlap the intervals in a PyRanges object:
   PyRanges with 6 rows, 5 columns, and 1 index columns (with 4 index duplicates).
   Contains 1 chromosomes and 2 strands.
 
-Note that, in contrast with :func:`window_ranges <pyranges.PyRanges.window_ranges>`, the function
-:func:`tile_ranges <pyranges.PyRanges.tile_ranges>` returns intervals anchored to genome positions: their Start will always be
-a multiple of the tile size, like :func:`pyranges.tile_genome`, and regardless of the strand of the original intervals.
+Note that, in contrast with :func:`window_ranges <pyranges1.PyRanges.window_ranges>`, the function
+:func:`tile_ranges <pyranges1.PyRanges.tile_ranges>` returns intervals anchored to genome positions: their Start will always be
+a multiple of the tile size, like :func:`pyranges1.tile_genome`, and regardless of the strand of the original intervals.
 Argument ``overlap_column`` can be used to add a column indicating how much of the original interval
 overlaps with the tile returned:
 

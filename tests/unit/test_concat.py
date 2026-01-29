@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import pyranges as pr
+import pyranges1 as pr
 
 
 def assert_equal_length_before_after(gr1, gr2) -> None:

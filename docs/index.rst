@@ -1,10 +1,10 @@
-.. pyranges documentation master file, created by
+.. pyranges1 documentation master file, created by
    sphinx-quickstart.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
 
-The pyranges documentation
+The pyranges1 documentation
 ==========================
 Pyranges is a Python library specifically designed for efficient and intuitive manipulation of genomics data,
 particularly genomic intervals (like genes, genomic features, or reads).
@@ -16,11 +16,11 @@ Pyranges is developed by Endre Bakken Stovner and by
 `Marco Mariotti's lab <https://www.mariottigenomicslab.com/>`_.
 
 **This documentation refers to the version 1 of pyranges**, which introduces a new API and a new data structure
-compared to version 0, still the 'default', soon to be deprecated. If you are a pyranges v0 user,
+compared to version 0, still the 'default', soon to be deprecated. If you are a pyranges1 v0 user,
 check :doc:`this guide to migrate to v1 <./migration_guide>`.
 
 
-While we recommend using pyranges as Python library, alternatively, the
+While we recommend using pyranges1 as Python library, alternatively, the
 :doc:`pyranger command-line tool <./pyranger_cli>` allows you to access the same functionalities from the command line,
 without writing any Python code.
 

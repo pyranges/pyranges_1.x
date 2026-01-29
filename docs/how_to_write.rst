@@ -17,11 +17,11 @@ Writing genomic formats
 
 Pyranges supports the most popular for genomic annotations, such as bed, gtf and gff3.
 You can readily write them using the correspondent methods (see
-:func:`to_bed <pyranges.PyRanges.to_bed>`,
-:func:`to_gtf <pyranges.PyRanges.to_gtf>`,
-:func:`to_gff3 <pyranges.PyRanges.to_gff3>`).
+:func:`to_bed <pyranges1.PyRanges.to_bed>`,
+:func:`to_gtf <pyranges1.PyRanges.to_gtf>`,
+:func:`to_gff3 <pyranges1.PyRanges.to_gff3>`).
 
-  >>> import pyranges as pr
+  >>> import pyranges1 as pr
   >>> gr = pr.example_data.chipseq
   >>> gr.to_gtf("chipseq.gtf")
   >>> #file chipseq.gtf has been created
@@ -44,7 +44,7 @@ The `bigwig <http://genome.ucsc.edu/goldenPath/help/bigWig.html>`_ format differ
 the formats above. Bigwig is a binary format, and it is typically used for large continuous quantitative
 data along a genome sequence.
 
-The pyranges library can also create bigwigs, but it needs the library pybigwig and pyrle which are not installed by default.
+The pyranges1 library can also create bigwigs, but it needs the library pybigwig and pyrle which are not installed by default.
 
 Use this to install it::
 

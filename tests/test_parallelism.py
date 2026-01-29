@@ -1,7 +1,7 @@
 import pandas.testing
 import pytest
 
-import pyranges as pr
+import pyranges1 as pr
 
 
 def test_split_chunks() -> None:

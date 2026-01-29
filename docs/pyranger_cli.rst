@@ -2,7 +2,7 @@ Command-line interface: pyranger
 ================================
 
 Pyranger lets you access core functionalities directly from your shell:
-build a pyranges-based pipeline in one command, without writing any
+build a pyranges1-based pipeline in one command, without writing any
 Python code.
 
 Installation
@@ -36,11 +36,11 @@ Readers
 
 Every pyranger command line must begin with one of these possible readers:
 
-- :func:`read_bed <pyranges.read_bed>` <path> [<options>]
-- :func:`read_gtf <pyranges.read_gtf>` <path> [<options>]
-- :func:`read_gff3 <pyranges.read_gff3>` <path> [<options>]
-- :func:`read_bam <pyranges.read_bam>` <path> [<options>]
-- :func:`read_bigwig <pyranges.read_bigwig>` <path> [<options>]
+- :func:`read_bed <pyranges1.read_bed>` <path> [<options>]
+- :func:`read_gtf <pyranges1.read_gtf>` <path> [<options>]
+- :func:`read_gff3 <pyranges1.read_gff3>` <path> [<options>]
+- :func:`read_bam <pyranges1.read_bam>` <path> [<options>]
+- :func:`read_bigwig <pyranges1.read_bigwig>` <path> [<options>]
 - read_csv  <path> [<options>]   # wrapped from Pandas
 
 
@@ -78,7 +78,7 @@ As before, the separator is a comma surrounded by spaces (:literal:` , `)::
 
    pyranger read_bed a.bed , head
 
-Methods available include all those implemented by :class:`PyRanges <pyranges.PyRanges>` objects,
+Methods available include all those implemented by :class:`PyRanges <pyranges1.PyRanges>` objects,
 as well as those from Pandas DataFrames, which are inherited.
 
 Arguments
@@ -91,8 +91,8 @@ Arguments can be passed to readers/methods either positionally or by name::
    pyranger read_bed sample1.bed , b=read_bed sample2.bed , intersect_overlaps b --multiple first
 
 Typically, the last method in a pipeline will be the one that outputs the result
-(e.g., :func:`to_bed <pyranges.PyRanges.to_bed>`, :func:`to_csv <pyranges.PyRanges.to_csv>`,
-:func:`to_gtf <pyranges.PyRanges.to_gtf>`, :func:`to_gff3 <pyranges.PyRanges.to_csv>`)::
+(e.g., :func:`to_bed <pyranges1.PyRanges.to_bed>`, :func:`to_csv <pyranges1.PyRanges.to_csv>`,
+:func:`to_gtf <pyranges1.PyRanges.to_gtf>`, :func:`to_gff3 <pyranges1.PyRanges.to_csv>`)::
 
    pyranger read_bed sample1.bed , downstream 10 --gap=5 , to_bed output.bed
    pyranger read_bed sample1.bed , b=read_bed sample2.bed , intersect_overlaps b , to_csv output.tsv --sep $'\t'
@@ -148,12 +148,12 @@ Final notes
 -----------
 
 To discover the functionalities available in pyranger,
-we recommend reading the rest of the pyranges documentation, especially the
+we recommend reading the rest of the pyranges1 documentation, especially the
 :doc:`tutorial <./tutorial>` and :doc:`how-to pages <./how_to_pages>`.
 While these are written in Python, the same concepts and methods are
 accessible through pyranger.
 
 Note that some cases may not be fully supported in pyranger.
 If you struggle to express a specific operation,
-consider building a custom Python script using pyranges instead.
+consider building a custom Python script using pyranges1 instead.
 

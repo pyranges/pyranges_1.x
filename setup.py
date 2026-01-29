@@ -3,7 +3,7 @@
 from setuptools import find_packages, setup
 
 setup(
-    package_data={"pyranges": ["data/*.bam", "data/ncbi.*", "data/bigwig.bw"]},
+    package_data={"pyranges1": ["data/*.bam", "data/ncbi.*", "data/bigwig.bw"]},
     include_package_data=True,
     packages=find_packages(),
 )

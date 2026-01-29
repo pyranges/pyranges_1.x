@@ -27,8 +27,7 @@ Tests are an essential part of continuous integration. Briefly, they ensure that
 break existing functions. Various layers of tests are implemented in Pyranges:
 
 - **unit tests**: quick and compulsory tests about the main Pyranges functionalities
-- **doctest**: quick and compulsory tests that ensures that the code in the documentation (tutorial and how-to-pages) gives the expected results
-- **property based tests**: time-consuming tests that involve the generation of random data to check that the results of Pyranges functions match that of other reference bioinformatic tools. These tests are not compulsory: the core development team runs them when the code backbone is edited.
+- **doctest**: quick and compulsory tests that ensures that the code in the documentation (docstrings examples, tutorial and how-to-pages) gives the expected results
 
 If the code submitted to Pyranges does not pass the compulsory tests, it will not be integrated.
 Therefore, we highly recommend developers to run tests before code submissions, as explained
@@ -41,8 +40,8 @@ Documentation: docstrings
 
 Python docstrings are widely used to document the rationale, input arguments, and returned values of
 all functions and methods. The use of a consistent docstring style allows the automatic generation
-of API documentation, as seen in Pyranges documentation at `https://pyranges.readthedocs.io/
-<https://pyranges.readthedocs.io/>`_, built through the Sphynx software.
+of API documentation, as seen in Pyranges documentation at `https://pyranges1.readthedocs.io/
+<https://pyranges1.readthedocs.io/>`_, built through the Sphynx software.
 
 Pyranges adopts the NumPy/SciPy-style: `https://numpydoc.readthedocs.io/en/latest/format.html
 <https://numpydoc.readthedocs.io/en/latest/format.html>`_. It is important that code contributors
@@ -109,14 +108,14 @@ to the project, then clone your fork inside it:
 
 .. code:: bash
 
-	mkdir mypyranges
-	cd mypyranges
+	mkdir mypyranges1
+	cd mypyranges1
 	git clone PASTE_GITHUB_HTTPS
 
 2. Set up your developer environment and install Pyranges
 ---------------------------------------------------------
 
-We recommend creating an environment dedicated to the development of pyranges:
+We recommend creating an environment dedicated to the development of pyranges1:
 
 .. code:: bash
 
@@ -124,15 +123,15 @@ We recommend creating an environment dedicated to the development of pyranges:
 	conda activate prdev
 
 
-Next, let's install pyranges and its dependencies: cd into your pyranges fork, 
+Next, let's install pyranges1 and its dependencies: cd into your pyranges1 fork, 
 and install it locally with pip as shown below. By using pip
-option ``-e``, your installation is in "editable" mode: any changes you make to your pyranges code
+option ``-e``, your installation is in "editable" mode: any changes you make to your pyranges1 code
 will be immediately reflected in your environment. In other words, you won't need to re-run pip
 install every time you change something in the code. 
 
 .. code:: bash
 
-	cd pyranges
+	cd pyranges1
 	pip install -e .
 
 Next, let's install optional dependencies (necessary to run certain functions and thus required to 
@@ -141,37 +140,33 @@ most of Pyranges configuration, is found in the pyproject.toml file. You can ins
 
 .. code:: bash
 
-	pip install .[all]
+	pip install -e '.[all]'
 
 
 3. Edit the code
 ----------------
 
-Now, you're ready to edit the code in the pyranges/ folder.
+Now, you're ready to edit the code in the pyranges1/ folder.
 
 To run your code to see that it behaves as intended, we recommend using a separate script that
-imports pyranges, making sure you're in the prdev conda environment.
+imports pyranges1, making sure you're in the prdev conda environment.
 
 
 4. Run tests
 ------------
 
-For each of the commands below, inspect the output of pytest: warnings are acceptable, but errors must be
-fixed. To run the compulsory **doctest** and **unit tests**, run:
+For each of the test commands, inspect their output: warnings are acceptable, but errors must be
+fixed. At the time of writing, the test commands are these 
+(omitting formatting, linting, and type-checking tests by ruff and pyright):
 
 .. code:: bash
 
-        pytest --doctest-modules pyranges
-        pytest tests/unit
+	    python tests/run_doctest_tutorial_howto.py
+	    pytest --doctest-modules pyranges1
+	    pytest tests/unit
 
-If you modified core Pyranges functions, you may want to also run the non-compulsory **property-based tests**:
-
-.. code:: bash
-
-	pytest tests/property_based/
-
-If any of the tests fail, you must amend them before proceeding. 
-
+The up-to-date test commands can be found in the tox section of the repo 
+`pyproject.toml <https://github.com/pyranges/pyranges_1.x/blob/master/pyproject.toml>`_ configuration file. 
 
 
 5. Format, lint, type-checking code
@@ -181,18 +176,20 @@ Next, let's format code with ruff:
 
 .. code:: bash
 
-        ruff format pyranges
+        ruff format pyranges1
 
 Then, let's lint code, also with ruff:
 
 .. code:: bash
 
-        ruff check pyranges
+        ruff check pyranges1
 
 
 If the ruff check above shows any error, you must fix them before you proceed. 
-If errors are deemed 'fixable', you may simply run ``ruff check --fix pyranges``. 
-If not, you must delve into the code -- note, ChatGPT/Copilot are your friends!
+If errors are deemed 'fixable', you may simply run ``ruff check --fix pyranges1``. 
+If not, you must delve into the code. Note, ChatGPT/Copilot are your friends!
+
+After fixing any errors, the corresponding tests (see pyproject.toml file content) should pass.
 
 Lastly, let's use pyright to ensure correct type-checking:
 
@@ -203,6 +200,7 @@ Lastly, let's use pyright to ensure correct type-checking:
 
 Again, any error in the pyright must be amended before proceeding. Note that if you edit the code, 
 you may want to format and lint code again with ruff.
+
 
 6. Test on all supported python and package versions
 -----------------------------------------------------
@@ -222,7 +220,7 @@ If any errors emerge, correct them (or ask us for help).
 
 Your code edits may warrant edits in the Pyranges docstrings. In this case, it is compelling to
 locally check that the automatically generated documentation is built appropriately. Inside the
-pyranges/ folder, run these commands:
+pyranges1/ folder, run these commands:
 
 .. code:: bash
 
@@ -230,8 +228,8 @@ pyranges/ folder, run these commands:
 	make html
 	cd -
 
-If the "make" command has no major errors, it will generate the full pyranges documentation in the
-form of html pages, identical to `https://pyranges.readthedocs.io/ <https://pyranges.readthedocs.io/>`_.
+If the "make" command has no major errors, it will generate the full pyranges1 documentation in the
+form of html pages, identical to `https://pyranges1.readthedocs.io/ <https://pyranges1.readthedocs.io/>`_.
 Open the file docs/build/html/index.html with a browser to inspect all the parts that may have
 been affected by your changes, and fix any potential problems. To know more about its inner workings,
 read about the Sphynx system.
@@ -244,11 +242,15 @@ At this stage, you are ready to submit your code for integration into the
 main Pyranges repository; that is to say, to open a "pull request". Before you can do that, you
 have to update your remote repository, i.e. your Pyranges fork at github.
 
-First, bump the version number in the file pyproject.toml. Then, it's essential to document your changes
+First, bump the version number in the file pyproject.toml. 
+
+Then, it's essential to document your changes
 in the CHANGE_LOG.txt file. This log should provide a clear and
 concise summary of the modifications, additions, and fixes made in each version of your project. Include
 relevant details such as feature enhancements, bug fixes, and any other notable alterations to help
 maintain a transparent and informative record of your project's evolution.
+
+Also, edit the README.md file to add the most recent changes in the corresponding section.
 
 9. Commit and push to your remote repository
 ---------------------------------------------
@@ -302,7 +304,7 @@ Pyranges fork on github, then find the "Contribute" button (near the **<> Code**
 it, and select **Open pull request**.
 
 In the newly opened page, carefully check that source and destination are correctly selected. The
-Base repository should be pyranges/pyranges (i.e. the main pyranges repo), and the Head repository
+Base repository should be pyranges1/pyranges1 (i.e. the main pyranges1 repo), and the Head repository
 should be your fork. If you worked on non-master git branches, select them here.
 
 In the comments, write a summary of the introduced changes and their rationale, tagging any related
@@ -317,28 +319,28 @@ Pyranges administrators will inspect the pull request, comment it if necessary, 
 11. Core team only: upload to PyPI
 ----------------------------------
 
-Every now and then, the core development team considers that a new pyranges version should be
+Every now and then, the core development team considers that a new pyranges1 version should be
 released. To do so:
 
 - Update the version number in the pyproject.toml file
 - Find the "Build and upload to PyPI" workflow in the left menu of the github actions at `https://github.com/pyranges/pyranges_1.x/actions/ <https://github.com/pyranges/pyranges_1.x/actions/>`_
 - Click the "Run workflow" button on the right
 
-Next, check that everything worked correctly, by confirming that a new pyranges installation via
+Next, check that everything worked correctly, by confirming that a new pyranges1 installation via
 pip selects the new version.
 
-Finally, the pyranges conda package at Bioconda is updated automatically upon pip upload. Check
+Finally, the pyranges1 conda package at Bioconda is updated automatically upon pip upload. Check
 that this is updated correctly.
 
 12. Assorted tips and recommended tools
 ---------------------------------------
 
 While developing you might want to autorerun all the unittests and doctests if the contents of the
-pyranges folder changes. You can do this with:
+pyranges1 folder changes. You can do this with:
 
 .. code:: bash
 
-    ptw pyranges -- --doctest-modules pyranges/ tests/unit/
+    ptw pyranges1 -- --doctest-modules pyranges1/ tests/unit/
 
 If you want to run tests in parallel, use the -n flag (only gives a speedup for the long-running
 property-based tests):

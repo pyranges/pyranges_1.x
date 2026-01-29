@@ -12,7 +12,7 @@ Fetching or writing a column
 Most column operations are analogous to pandas.
 A single PyRanges column (which are pandas Series) can be extracted through the dot notation, when reading it:
 
-  >>> import pyranges as pr
+  >>> import pyranges1 as pr
   >>> gr = pr.example_data.chipseq
   >>> gr
   index    |    Chromosome    Start      End        Name      Score    Strand
@@ -108,7 +108,7 @@ a PyRanges is returned:
   PyRanges with 5 rows, 4 columns, and 1 index columns.
   Contains 5 chromosomes.
 
-The method :func:`get_with_loc_columns <pyranges.PyRanges.get_with_loc_columns>` is a shortcut to extract
+The method :func:`get_with_loc_columns <pyranges1.PyRanges.get_with_loc_columns>` is a shortcut to extract
 any column together with the genomic location columns:
 
   >>> gr.get_with_loc_columns('Name').head()
@@ -166,7 +166,7 @@ Again, a PyRanges object is returned only if genomic location columns are mainta
   3   19418999   19419024      0      -
   4  106679761  106679786      0      -
 
-The PyRanges method :func:`remove_strand <pyranges.PyRanges.remove_strand>` is a shortcut to remove the Strand column:
+The PyRanges method :func:`remove_strand <pyranges1.PyRanges.remove_strand>` is a shortcut to remove the Strand column:
 
   >>> gr.remove_strand().head()
     index  |    Chromosome        Start        End  Name        Score    newchr
