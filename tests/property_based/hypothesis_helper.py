@@ -3,8 +3,8 @@ import numpy as np
 import pandas as pd
 from hypothesis.extra.pandas import column, data_frames, indexes
 
-import pyranges as pr
-from pyranges import PyRanges
+import pyranges1 as pr
+from pyranges1 import PyRanges
 
 max_examples = 15
 slow_max_examples = 5

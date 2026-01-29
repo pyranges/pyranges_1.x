@@ -10,7 +10,7 @@ String representation
 
 Print a PyRanges object for an overview of its data:
 
-  >>> import pyranges as pr
+  >>> import pyranges1 as pr
   >>> gr = pr.example_data.chipseq
   >>> print(gr)
   index    |    Chromosome    Start      End        Name      Score    Strand
@@ -48,7 +48,7 @@ To obtain this representation, you can invoke the ``str`` builtin, e.g. with ``s
   Contains 15 chromosomes and 2 strands.
 
 Only a limited number of rows are displayed, which are taken from the top and bottom of the table.
-You can change the number of rows displayed in any PyRanges using :func:`pyranges.options.set_options` as such:
+You can change the number of rows displayed in any PyRanges using :func:`pyranges1.options.set_options` as such:
 
   >>> pr.options.set_option('max_rows_to_show', 20)
   >>> gr
@@ -116,7 +116,7 @@ Intervals may also be invalid because of NaN in their Start or End values:
     * 1 starts or ends are nan. See indexes: 0
 
 Or because they have negative Start/End values, see below. This can be remedied with
-function :func:`clip_ranges <pyranges.PyRanges.clip_ranges>`.
+function :func:`clip_ranges <pyranges1.PyRanges.clip_ranges>`.
 
   >>> pr.PyRanges(dict(Chromosome='chr1', Start=[1, -10], End=[11, 20]))
     index  |    Chromosome      Start      End
@@ -143,8 +143,8 @@ Note the warning in the last line of the string representation:
   Contains 1 chromosomes and 2 strands (including non-genomic strands: #).
 
 Non-valid strands can affect the functioning of many methods that have a ``use_strand`` parameter
-(e.g. :func:`slice_ranges <pyranges.PyRanges.slice_ranges>`) or
-a ``strand_behavior`` parameter (e.g. :func:`overlap <pyranges.PyRanges.overlap>`), because these parameters
+(e.g. :func:`slice_ranges <pyranges1.PyRanges.slice_ranges>`) or
+a ``strand_behavior`` parameter (e.g. :func:`overlap <pyranges1.PyRanges.overlap>`), because these parameters
 by default are set to ``auto``, meaning that strand is considered only if it is valid.
 Indeed, see that this subregion is calculated from the left limit, even for the interval on  the '-' strand:
 
@@ -165,13 +165,13 @@ When running the code above, you should get a warning message like this:
     g.slice_ranges(0, 3)
 
 You can check whether a PyRanges object has valid Strand information with property
-:func:`strand_valid <pyranges.PyRanges.strand_valid>`:
+:func:`strand_valid <pyranges1.PyRanges.strand_valid>`:
 
   >>> g.strand_valid
   False
 
 To fix the invalid strands by turning them to '+',
-use method :func:`make_strand_valid <pyranges.PyRanges.make_strand_valid>`:
+use method :func:`make_strand_valid <pyranges1.PyRanges.make_strand_valid>`:
 
   >>> g2 = g.make_strand_valid()
   >>> g2
@@ -230,7 +230,7 @@ To see them all, use property ``dtypes`` like you do for dataframes:
 There are convenient methods inherited from pandas dataframes to inspect PyRanges objects, such as ``info``:
 
   >>> gr.info() # doctest: +NORMALIZE_WHITESPACE
-  <class 'pyranges.core.pyranges_main.PyRanges'>
+  <class 'pyranges1.core.pyranges_main.PyRanges'>
   RangeIndex: 20 entries, 0 to 19
   Data columns (total 6 columns):
    #   Column      Non-Null Count  Dtype

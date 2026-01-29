@@ -1,4 +1,4 @@
-# import pyranges as pr
+# import pyranges1 as pr
 # import pandas as pd
 
 # import pytest

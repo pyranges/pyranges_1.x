@@ -4,8 +4,8 @@ import pandas as pd
 import pandas.core.groupby
 import pytest
 
-import pyranges as pr
-from pyranges.core.pyranges_groupby import PyRangesDataFrameGroupBy
+import pyranges1 as pr
+from pyranges1.core.pyranges_groupby import PyRangesDataFrameGroupBy
 
 
 def test_getitem() -> None:

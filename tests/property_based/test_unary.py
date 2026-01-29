@@ -13,7 +13,7 @@ from hypothesis import (
 )
 from natsort import natsorted  # type: ignore
 
-import pyranges as pr
+import pyranges1 as pr
 from tests.helpers import assert_df_equal
 from tests.property_based.hypothesis_helper import (
     deadline,
@@ -255,7 +255,7 @@ def test_init(gr, strand) -> None:
         pr.PyRanges(chromosomes=c, starts=s, ends=e)
 
 
-chipseq = pr.example_data.chipseq()
+chipseq = pr.example_data.chipseq
 
 
 @settings(

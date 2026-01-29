@@ -16,13 +16,13 @@ from docutils import nodes, utils
 
 # sys.path.insert(0, os.path.abspath('..'))  # Adjust this as necessary
 #
-# sys.path.insert(0, os.path.abspath('../pyranges'))  # Adjust this as necessary
+# sys.path.insert(0, os.path.abspath('../pyranges1'))  # Adjust this as necessary
 #
 # sys.path.insert(0, os.path.abspath('.'))  # Adjust this as necessary
 
 # -- Project information -----------------------------------------------------
 
-project = "pyranges"
+project = "pyranges1"
 copyright = "2024, Endre Bakken Stovner, Marco Mariotti"
 author = "Endre Bakken Stovner, Marco Mariotti"
 

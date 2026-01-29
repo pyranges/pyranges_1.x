@@ -1,36 +1,36 @@
-The pyranges module
+The pyranges1 module
 -------------------
 
-The pyranges module exposes the class :class:`PyRanges <pyranges.PyRanges>` (omitted in this page)
+The pyranges1 module exposes the class :class:`PyRanges <pyranges1.PyRanges>` (omitted in this page)
 as well as a number of functions for reading data from commonly used file formats.
-You also have an :ref:`pyranges.options <pyranges_options>` interface to
-configure how PyRanges objects are represented, and an :ref:`pyranges.example_data <pyranges_example_data>` object used in tests and documentation.
+You also have an :ref:`pyranges1.options <pyranges_options>` interface to
+configure how PyRanges objects are represented, and an :ref:`pyranges1.example_data <pyranges_example_data>` object used in tests and documentation.
 
 
-.. automodule:: pyranges
+.. automodule:: pyranges1
     :members:
     :imported-members:  # Ensure this is set to include imported members
     :exclude-members: PyRanges, RangeFrame
 
 .. _pyranges_options:
-pyranges.options
+pyranges1.options
 ~~~~~~~~~~~~~~~~
 
-The ``pyranges.options`` object is used to configure aspects of how PyRanges is represented.
+The ``pyranges1.options`` object is used to configure aspects of how PyRanges is represented.
 Below are the methods available on this object.
 
-.. automodule:: pyranges.options
+.. autoclass:: pyranges1.core.options.PyRangesOptions
    :members:
    :show-inheritance:
    :exclude-members: __init__
 
 .. _pyranges_example_data:
-pyranges.example_data
+pyranges1.example_data
 ~~~~~~~~~~~~~~~~~~~~~
-The ``pyranges.example_data`` object contains example data used in tests and documentation.
+The ``pyranges1.example_data`` object contains example data used in tests and documentation.
 Printing it shows an overview of available data:
 
-  >>> import pyranges as pr
+  >>> import pyranges1 as pr
   >>> pr.example_data
   Available example data:
   -----------------------
@@ -65,17 +65,17 @@ Most of the data is in the form of PyRanges objects:
   Contains 15 chromosomes and 2 strands.
 
 .. _pyranges_assistant:
-pyranges.assistant
+pyranges1.assistant
 ~~~~~~~~~~~~~~~~~~
-The ``pyranges.assistant`` object is a helper to use AI-based assistant to code with pyranges:
+The ``pyranges1.assistant`` object is a helper to use AI-based assistant to code with pyranges1:
 
   >>> pr.assistant
-  Utilities to instruct a AI coding assistant for pyranges prompts.
+  Utilities to instruct a AI coding assistant for pyranges1 prompts.
 
-  Get a prompt to copy-paste into an AI assistant to prime it for pyranges coding tasks:
-      >>> import pyranges as pr
+  Get a prompt to copy-paste into an AI assistant to prime it for pyranges1 coding tasks:
+      >>> import pyranges1 as pr
       >>> pr.assistant.prompt()
 
-  Make a file with pyranges documentation to upload to the AI assistant:
+  Make a file with pyranges1 documentation to upload to the AI assistant:
       >>> pr.assistant.export_docs("pr_docs.txt")
 
