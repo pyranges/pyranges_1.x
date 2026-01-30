@@ -4,6 +4,8 @@ on:
   workflow_dispatch:
   issue_comment:
     types: [created]
+  schedule:
+    - cron: "0 5 1 * *"   # 05:00 UTC on day 1 each month    
 
 concurrency:
   group: check-${{ github.ref }}
@@ -25,7 +27,7 @@ jobs:
           - "3.13"
         os:
           - ubuntu-latest
-          # - macos-latest
+          - macos-latest
     steps:
       - uses: actions/checkout@v3
         with:
