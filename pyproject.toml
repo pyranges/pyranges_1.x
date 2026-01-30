@@ -88,7 +88,7 @@ basepython =
 deps =
     pyrle >= 0.0.41
     bamread
-    pyBigWig
+    pyBigWig; sys_platform != "win32"
     pyfaidx
     tox
     ruff == 0.14.1
