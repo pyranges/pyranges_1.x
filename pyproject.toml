@@ -87,7 +87,7 @@ basepython =
     py313: python3.13
 deps =
     pyrle >= 0.0.41
-    bamread
+    bamread; sys_platform != "win32"
     pyBigWig; sys_platform != "win32"
     pyfaidx
     tox
