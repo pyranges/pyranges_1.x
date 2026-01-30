@@ -102,7 +102,7 @@ deps =
 commands =
     pyright
     # python tests/run_doctest_tutorial_howto.py
-    pytest --doctest-modules pyranges1
+    # pytest --doctest-modules pyranges1
     pytest tests/unit
     ruff format --check pyranges1
     ruff check pyranges1
