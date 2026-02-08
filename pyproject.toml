@@ -30,7 +30,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 keywords = ["bioinformatics", "genomicranges", "genomics"]
-dependencies = ["pandas<3.0.0", "tabulate", "natsort", "ruranges>=0.0.14"]
+dependencies = ["pandas<3.0.0", "tabulate", "natsort", "ruranges-py>=0.2.0"]
 
 [project.optional-dependencies]
 add-ons = [
@@ -97,7 +97,7 @@ deps =
     pytest
     pyright == 1.1.406
     joblib
-    ruranges >= 0.0.14
+    ruranges-py >= 0.2.0
     # fisher
 commands =
     pyright
