@@ -19,7 +19,7 @@ def _complement(
     chromsizes: "dict[str | int, int] | None" = None,
     include_first_interval: bool = False,
 ) -> "RangeFrame":
-    import ruranges
+    import ruranges_py
 
     from pyranges1.range_frame.range_frame import RangeFrame
 
@@ -59,7 +59,7 @@ def _complement(
         chrom_len_ids = np.array([], dtype=grp_dtype)
         chrom_lens = np.array([], dtype=pos_dtype)
 
-    chrs, start, end, idxs = ruranges.complement(
+    chrs, start, end, idxs = ruranges_py.complement(
         groups=factorized.to_numpy(),
         starts=df.Start.to_numpy(),
         ends=df.End.to_numpy(),

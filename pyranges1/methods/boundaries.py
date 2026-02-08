@@ -16,11 +16,11 @@ def _bounds[T: ("pr.PyRanges", "pd.DataFrame")](df: T, by: list[str]) -> pd.Data
 
     col_order = [*dict.fromkeys([col for col in df if col in [*by, START_COL, END_COL]]).keys()]
 
-    import ruranges
+    import ruranges_py
 
     group_ids = factorize(df, by=by)
 
-    idxs, starts, ends, _counts = ruranges.boundary(  # type: ignore[attr-defined]
+    idxs, starts, ends, _counts = ruranges_py.boundary(  # type: ignore[attr-defined]
         groups=group_ids,
         starts=df[START_COL].to_numpy(),
         ends=df[END_COL].to_numpy(),

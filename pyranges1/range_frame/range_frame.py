@@ -140,11 +140,11 @@ class RangeFrame(pd.DataFrame):
             for the corresponding interval in self.
 
         """
-        import ruranges
+        import ruranges_py
 
         f1, f2 = factorize_binary(self, other, match_by)
 
-        return ruranges.count_overlaps(  # type: ignore[attr-defined]
+        return ruranges_py.count_overlaps(  # type: ignore[attr-defined]
             self[START_COL].to_numpy(),
             self[END_COL].to_numpy(),
             other[START_COL].to_numpy(),
@@ -243,12 +243,12 @@ class RangeFrame(pd.DataFrame):
         RangeFrame.merge: combine overlapping intervals into one
 
         """
-        import ruranges
+        import ruranges_py
 
         match_by = arg_to_list(match_by)
 
         factorized = factorize(self, match_by)
-        cluster, idx = ruranges.cluster(  # type: ignore[attr-defined]
+        cluster, idx = ruranges_py.cluster(  # type: ignore[attr-defined]
             self[START_COL].to_numpy(),
             self[END_COL].to_numpy(),
             factorized,
@@ -418,11 +418,11 @@ class RangeFrame(pd.DataFrame):
         RangeFrame.cluster : annotate overlapping intervals with common ID
 
         """
-        import ruranges
+        import ruranges_py
 
         factorized = factorize(self, match_by)
 
-        idx = ruranges.max_disjoint(  # type: ignore[attr-defined]
+        idx = ruranges_py.max_disjoint(  # type: ignore[attr-defined]
             starts=self[START_COL].to_numpy(),
             ends=self[END_COL].to_numpy(),
             groups=factorized,
@@ -479,10 +479,10 @@ class RangeFrame(pd.DataFrame):
         RangeFrame.join_overlaps : Has a slack argument to find intervals within a distance.
 
         """
-        import ruranges
+        import ruranges_py
 
         f1, f2 = factorize_binary(self, other, match_by)
-        idx1, idx2, dist = ruranges.nearest(  # type: ignore[attr-defined]
+        idx1, idx2, dist = ruranges_py.nearest(  # type: ignore[attr-defined]
             groups=f1,
             starts=self[START_COL].to_numpy(),
             ends=self[END_COL].to_numpy(),
@@ -599,11 +599,11 @@ class RangeFrame(pd.DataFrame):
             Sorted RangeFrame. The index is preserved. Use .reset_index(drop=True) to reset the index.
 
         """
-        import ruranges
+        import ruranges_py
 
         by = arg_to_list(by)
         by_sort_order_as_int = sort_factorize_dict(self, by, use_natsort=natsort)
-        idxs = ruranges.sort_intervals(  # type: ignore[attr-defined]
+        idxs = ruranges_py.sort_intervals(  # type: ignore[attr-defined]
             by_sort_order_as_int,
             self[START_COL].to_numpy(),
             self[END_COL].to_numpy(),
@@ -644,11 +644,11 @@ class RangeFrame(pd.DataFrame):
         RangeFrame.complement_ranges : return the internal complement_ranges of intervals, i.e. its introns.
 
         """
-        import ruranges
+        import ruranges_py
 
         f1, f2 = factorize_binary(self, other, match_by)
 
-        idx, start, end = ruranges.subtract(  # type: ignore[attr-defined]
+        idx, start, end = ruranges_py.subtract(  # type: ignore[attr-defined]
             self[START_COL].to_numpy(),
             self[END_COL].to_numpy(),
             other[START_COL].to_numpy(),
