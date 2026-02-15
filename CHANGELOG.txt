@@ -1,3 +1,9 @@
+# 1.3.1 (15.02.26)
+- require `ruranges>=0.1.1`
+- remove fallback compatibility hack for old `ruranges` installs that lacked `ruranges.numpy`
+- add runtime guard with clear error for incompatible/too-old `ruranges`
+- improve coverage with tests for unsigned/integer dtype paths used by Rust-backed overlap kernels
+
 # 1.1.9 (26.01.26)
 - pandas dependency bound to v2. This is in response to pandas 3.0.0 being released, breaking our doctests.
 

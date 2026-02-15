@@ -24,14 +24,15 @@ def _spliced_subseq(
     start: int | Sequence[int] | np.ndarray = 0,
     end: int | Sequence[int] | np.ndarray | None = None,
 ) -> pd.DataFrame:
-    import ruranges_py
+    from pyranges1._ruranges import require_ruranges
+    ruranges = require_ruranges()
 
     if df.empty:
         return df
 
     chrs = factorize(df, by) if by else np.arange(len(df), dtype=np.uint32)
 
-    outidx, outstarts, outends = ruranges_py.spliced_subsequence(
+    outidx, outstarts, outends = ruranges.numpy.spliced_subsequence(
         groups=chrs,  # type: ignore[arg-type]
         starts=df[START_COL].to_numpy(),
         ends=df[END_COL].to_numpy(),
@@ -59,14 +60,15 @@ def _subseq(
     end: int | None = None,
     force_plus_strand: bool = False,
 ) -> pd.DataFrame:
-    import ruranges_py
+    from pyranges1._ruranges import require_ruranges
+    ruranges = require_ruranges()
 
     if df.empty:
         return df
 
     chrs = factorize(df, by)
 
-    outidx, outstarts, outends = ruranges_py.subsequence_numpy(  # type: ignore[attr-defined]
+    outidx, outstarts, outends = ruranges.numpy.subsequence_numpy(  # type: ignore[attr-defined]
         chrs,
         df[START_COL].to_numpy(),
         df[END_COL].to_numpy(),

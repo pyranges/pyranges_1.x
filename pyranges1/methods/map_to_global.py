@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-import ruranges_py  # Rust extension
+from pyranges1._ruranges import require_ruranges
 
 from pyranges1.core.names import (
     CHROM_COL,
@@ -14,6 +14,8 @@ from pyranges1.core.pyranges_helpers import ensure_pyranges, factorize_binary
 
 if TYPE_CHECKING:
     from pyranges1 import PyRanges
+
+ruranges = require_ruranges()
 
 cumsum_start = "_local_start"
 cumsum_end = "_local_end"
@@ -146,7 +148,7 @@ def _map_to_global_ruranges(
         else np.ones(len(local_df), dtype=bool)
     )
 
-    keep_idx, out_start, out_end, out_strand_bool = ruranges_py.map_to_global(
+    keep_idx, out_start, out_end, out_strand_bool = ruranges.numpy.map_to_global(
         groups=ex_tx_code,
         starts=ex_local_start,
         ends=ex_local_end,

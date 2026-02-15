@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyranges1"
-version = "1.2.0"
+version = "1.3.0"
 description = "GenomicRanges for Python."
 requires-python = ">=3.12.0"
 readme = "README.md"
@@ -30,7 +30,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 keywords = ["bioinformatics", "genomicranges", "genomics"]
-dependencies = ["pandas<3.0.0", "tabulate", "natsort", "ruranges-py>=0.2.0"]
+dependencies = ["pandas<3.0.0", "tabulate", "natsort", "ruranges>=0.1.1"]
 
 [project.optional-dependencies]
 add-ons = [
@@ -97,7 +97,7 @@ deps =
     pytest
     pyright == 1.1.406
     joblib
-    ruranges-py >= 0.2.0
+    ruranges >= 0.1.1
     # fisher
 commands =
     pyright
