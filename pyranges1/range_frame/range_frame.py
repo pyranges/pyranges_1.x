@@ -141,6 +141,7 @@ class RangeFrame(pd.DataFrame):
 
         """
         from pyranges1._ruranges import require_ruranges
+
         ruranges = require_ruranges()
 
         f1, f2 = factorize_binary(self, other, match_by)
@@ -245,6 +246,7 @@ class RangeFrame(pd.DataFrame):
 
         """
         from pyranges1._ruranges import require_ruranges
+
         ruranges = require_ruranges()
 
         match_by = arg_to_list(match_by)
@@ -421,6 +423,7 @@ class RangeFrame(pd.DataFrame):
 
         """
         from pyranges1._ruranges import require_ruranges
+
         ruranges = require_ruranges()
 
         factorized = factorize(self, match_by)
@@ -483,6 +486,7 @@ class RangeFrame(pd.DataFrame):
 
         """
         from pyranges1._ruranges import require_ruranges
+
         ruranges = require_ruranges()
 
         f1, f2 = factorize_binary(self, other, match_by)
@@ -604,6 +608,7 @@ class RangeFrame(pd.DataFrame):
 
         """
         from pyranges1._ruranges import require_ruranges
+
         ruranges = require_ruranges()
 
         by = arg_to_list(by)
@@ -650,6 +655,7 @@ class RangeFrame(pd.DataFrame):
 
         """
         from pyranges1._ruranges import require_ruranges
+
         ruranges = require_ruranges()
 
         f1, f2 = factorize_binary(self, other, match_by)

@@ -25,6 +25,7 @@ def _spliced_subseq(
     end: int | Sequence[int] | np.ndarray | None = None,
 ) -> pd.DataFrame:
     from pyranges1._ruranges import require_ruranges
+
     ruranges = require_ruranges()
 
     if df.empty:
@@ -61,6 +62,7 @@ def _subseq(
     force_plus_strand: bool = False,
 ) -> pd.DataFrame:
     from pyranges1._ruranges import require_ruranges
+
     ruranges = require_ruranges()
 
     if df.empty:

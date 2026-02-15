@@ -17,6 +17,7 @@ def _bounds[T: ("pr.PyRanges", "pd.DataFrame")](df: T, by: list[str]) -> pd.Data
     col_order = [*dict.fromkeys([col for col in df if col in [*by, START_COL, END_COL]]).keys()]
 
     from pyranges1._ruranges import require_ruranges
+
     ruranges = require_ruranges()
 
     group_ids = factorize(df, by=by)

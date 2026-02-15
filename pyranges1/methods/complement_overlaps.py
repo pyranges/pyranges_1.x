@@ -13,6 +13,7 @@ def _complement_overlaps(
     slack: int | None = None,
 ) -> "RangeFrame":
     from pyranges1._ruranges import require_ruranges
+
     ruranges = require_ruranges()
 
     if df.empty:

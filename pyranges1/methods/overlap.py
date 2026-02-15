@@ -27,6 +27,7 @@ def _both_idxs(
     slack: int = 0,
 ) -> tuple[NDArray[np.int_], NDArray[np.int_]]:
     from pyranges1._ruranges import require_ruranges
+
     ruranges = require_ruranges()
 
     f1, f2 = factorize_binary(df, df2, by)

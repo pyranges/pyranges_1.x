@@ -1009,6 +1009,7 @@ class PyRanges(RangeFrame):
 
         """
         from pyranges1._ruranges import require_ruranges
+
         ruranges = require_ruranges()
 
         if ext is not None == (ext_3 is not None or ext_5 is not None):
@@ -2879,6 +2880,7 @@ class PyRanges(RangeFrame):
 
         """
         from pyranges1._ruranges import require_ruranges
+
         ruranges = require_ruranges()
 
         by = arg_to_list(by)
@@ -3280,6 +3282,7 @@ class PyRanges(RangeFrame):
 
         """
         from pyranges1._ruranges import require_ruranges
+
         ruranges = require_ruranges()
 
         use_strand = validate_and_convert_use_strand(self, use_strand=use_strand)
@@ -3704,6 +3707,7 @@ class PyRanges(RangeFrame):
 
         """
         from pyranges1._ruranges import require_ruranges
+
         ruranges = require_ruranges()
 
         use_strand = validate_and_convert_use_strand(self, use_strand)
@@ -4942,6 +4946,7 @@ class PyRanges(RangeFrame):
 
         """
         from pyranges1._ruranges import require_ruranges
+
         ruranges = require_ruranges()
 
         use_strand = validate_and_convert_use_strand(self, use_strand)
@@ -6055,6 +6060,7 @@ class PyRanges(RangeFrame):
 
         """
         from pyranges1._ruranges import require_ruranges
+
         ruranges = require_ruranges()
 
         if isinstance(chromsizes, pd.DataFrame):

@@ -2,8 +2,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-from pyranges1._ruranges import require_ruranges
 
+from pyranges1._ruranges import require_ruranges
 from pyranges1.core.names import (
     CHROM_COL,
     END_COL,

@@ -14,6 +14,7 @@ def _merge(
     slack: int | None = None,
 ) -> "RangeFrame":
     from pyranges1._ruranges import require_ruranges
+
     ruranges = require_ruranges()
 
     from pyranges1.range_frame.range_frame import RangeFrame

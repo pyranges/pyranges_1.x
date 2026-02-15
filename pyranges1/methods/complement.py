@@ -20,6 +20,7 @@ def _complement(
     include_first_interval: bool = False,
 ) -> "RangeFrame":
     from pyranges1._ruranges import require_ruranges
+
     ruranges = require_ruranges()
 
     from pyranges1.range_frame.range_frame import RangeFrame

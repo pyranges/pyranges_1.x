@@ -22,10 +22,7 @@ def require_ruranges() -> Any:
         raise ImportError(msg) from exc
 
     if _version_tuple(installed) < _version_tuple(MIN_RURANGES_VERSION):
-        msg = (
-            f"pyranges1 requires ruranges>={MIN_RURANGES_VERSION}; "
-            f"found {installed}."
-        )
+        msg = f"pyranges1 requires ruranges>={MIN_RURANGES_VERSION}; found {installed}."
         raise ImportError(msg)
 
     if not hasattr(ruranges, "numpy"):
