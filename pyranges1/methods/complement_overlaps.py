@@ -12,14 +12,16 @@ def _complement_overlaps(
     by: list[str],
     slack: int | None = None,
 ) -> "RangeFrame":
-    import ruranges
+    from pyranges1._ruranges import require_ruranges
+
+    ruranges = require_ruranges()
 
     if df.empty:
         return df
 
     factorized, factorized2 = factorize_binary(df, df2, by)
 
-    indices = ruranges.complement_overlaps(
+    indices = ruranges.numpy.complement_overlaps(
         groups=factorized,  # type: ignore[arg-type]
         starts=df.Start.to_numpy(),
         ends=df.End.to_numpy(),

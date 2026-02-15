@@ -26,11 +26,12 @@ def _both_idxs(
     contained: bool = False,
     slack: int = 0,
 ) -> tuple[NDArray[np.int_], NDArray[np.int_]]:
-    import ruranges
+    from pyranges1._ruranges import require_ruranges
+
+    ruranges = require_ruranges()
 
     f1, f2 = factorize_binary(df, df2, by)
-
-    idx1, idx2 = ruranges.overlaps(
+    idx1, idx2 = ruranges.numpy.overlaps(
         groups=f1,
         starts=df.Start.to_numpy(),
         ends=df.End.to_numpy(),

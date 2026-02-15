@@ -22,6 +22,11 @@ available at https://pyranges1.readthedocs.io/
 ## Recent Changelog
 
 ```
+# 1.3.1 (15.02.26)
+- require ruranges>=0.1.1
+- remove fallback compatibility hack for old ruranges versions lacking `ruranges.numpy`
+- add dtype support tests for unsigned/integer interval inputs (e.g. uint32 issue case)
+
 # 1.2.0 (29.01.26)
 - module name changed from pyranges to pyranges1, to allow co-existing with pyranges (v0) in same env
 
@@ -43,6 +48,8 @@ Pyranges 1.x requires python ≥3.12. Minimal installation:
 ```bash
 pip install pyranges1
 ```
+
+This installs and requires `ruranges>=0.1.1` automatically.
 
 Installation including all optional dependencies:
 
@@ -92,7 +99,5 @@ For details, visit [https://pyranges1.readthedocs.io/developer_guide.html](https
 ## Cheatsheet
 ![cheatsheet](https://raw.githubusercontent.com/pyranges/pyrangeyes/for_pyranges1_1/images/pyranges_cheatsheet.png)
 (The cheatsheet above was created with pyrangeyes, a companion graphical library:  https://pyrangeyes.readthedocs.io/)
-
-
 
 

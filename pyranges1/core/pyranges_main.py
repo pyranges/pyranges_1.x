@@ -1008,7 +1008,9 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         """
-        import ruranges
+        from pyranges1._ruranges import require_ruranges
+
+        ruranges = require_ruranges()
 
         if ext is not None == (ext_3 is not None or ext_5 is not None):
             msg = "Must use at least one and not both of ext and ext3 or ext5."
@@ -1023,7 +1025,7 @@ class PyRanges(RangeFrame):
 
         groups = factorize(self, group_by) if group_by is not None else np.arange(len(self), dtype=np.uint32)
 
-        starts, ends = ruranges.extend(
+        starts, ends = ruranges.numpy.extend(
             groups=groups,  # type: ignore[arg-type]
             starts=self[START_COL].to_numpy(),
             ends=self[END_COL].to_numpy(),
@@ -1314,9 +1316,9 @@ class PyRanges(RangeFrame):
           index  |    Chromosome      Start      End  ID          Start_b    End_b  ID_b
           int64  |    object          int64    int64  object        int64    int64  object
         -------  ---  ------------  -------  -------  --------  ---------  -------  --------
-              0  |    chr1                1        3  a                 1       10  c
               0  |    chr1                1        3  a                 2        3  a
               0  |    chr1                1        3  a                 2        9  b
+              0  |    chr1                1        3  a                 1       10  c
         PyRanges with 3 rows, 7 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes.
 
@@ -2877,7 +2879,9 @@ class PyRanges(RangeFrame):
         Contains 3 chromosomes and 2 strands.
 
         """
-        import ruranges
+        from pyranges1._ruranges import require_ruranges
+
+        ruranges = require_ruranges()
 
         by = arg_to_list(by)
 
@@ -2886,7 +2890,7 @@ class PyRanges(RangeFrame):
         by = ([CHROM_COL] if STRAND_COL not in self else CHROM_AND_STRAND_COLS) + by
 
         by_sort_order_as_int = sort_factorize_dict(self, by, use_natsort=natsort)
-        idxs = ruranges.sort_intervals(  # type: ignore[attr-defined]
+        idxs = ruranges.numpy.sort_intervals(  # type: ignore[attr-defined]
             self[START_COL].to_numpy(),
             self[END_COL].to_numpy(),
             by_sort_order_as_int,
@@ -3277,13 +3281,15 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes.
 
         """
-        import ruranges
+        from pyranges1._ruranges import require_ruranges
+
+        ruranges = require_ruranges()
 
         use_strand = validate_and_convert_use_strand(self, use_strand=use_strand)
         by = prepare_by_single(self, use_strand=use_strand, match_by=match_by)
         groups = factorize(self, by)
 
-        idxs, starts, ends = ruranges.split(
+        idxs, starts, ends = ruranges.numpy.split(
             groups=groups,
             starts=self[START_COL].to_numpy(),
             ends=self[END_COL].to_numpy(),
@@ -3700,7 +3706,9 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         """
-        import ruranges
+        from pyranges1._ruranges import require_ruranges
+
+        ruranges = require_ruranges()
 
         use_strand = validate_and_convert_use_strand(self, use_strand)
 
@@ -3708,7 +3716,7 @@ class PyRanges(RangeFrame):
         factorize_arange(self, match_by)
 
         negative_strand = (self[STRAND_COL] == "-").to_numpy() if use_strand else np.zeros(len(self), dtype=bool)
-        indices, starts, ends, overlap_fraction = ruranges.tile(  # type: ignore[attr-defined]
+        indices, starts, ends, overlap_fraction = ruranges.numpy.tile(  # type: ignore[attr-defined]
             starts=self[START_COL].to_numpy(),
             ends=self[END_COL].to_numpy(),
             negative_strand=negative_strand,
@@ -4937,7 +4945,9 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         """
-        import ruranges
+        from pyranges1._ruranges import require_ruranges
+
+        ruranges = require_ruranges()
 
         use_strand = validate_and_convert_use_strand(self, use_strand)
         group_by = arg_to_list(group_by)
@@ -4947,7 +4957,7 @@ class PyRanges(RangeFrame):
 
         gr = self.sort_ranges(by=group_by, use_strand=False) if group_by else self
 
-        idx, starts, ends = ruranges.window(  # type: ignore[attr-defined]
+        idx, starts, ends = ruranges.numpy.window(  # type: ignore[attr-defined]
             groups=group_ids,
             starts=gr[START_COL].to_numpy(),
             ends=gr[END_COL].to_numpy(),
@@ -5155,7 +5165,9 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         """
-        import ruranges  # local import reduces start-up time
+        from pyranges1._ruranges import require_ruranges
+
+        ruranges = require_ruranges()
 
         strand = validate_and_convert_use_strand(self, use_strand)
         group_by = arg_to_list(group_by)
@@ -5163,7 +5175,7 @@ class PyRanges(RangeFrame):
 
         forward = (self[STRAND_COL] == FORWARD_STRAND).to_numpy() if strand else np.ones(self.shape[0], dtype=np.bool_)
 
-        idx, cumsum_start, cumsum_end = ruranges.group_cumsum(  # type: ignore[attr-defined]
+        idx, cumsum_start, cumsum_end = ruranges.numpy.group_cumsum(  # type: ignore[attr-defined]
             starts=self[START_COL].to_numpy(),
             ends=self[END_COL].to_numpy(),
             groups=group_ids,
@@ -6047,7 +6059,9 @@ class PyRanges(RangeFrame):
           * 1 starts or ends are < 0. See indexes: 0
 
         """
-        import ruranges
+        from pyranges1._ruranges import require_ruranges
+
+        ruranges = require_ruranges()
 
         if isinstance(chromsizes, pd.DataFrame):
             chromsizes = dict(zip(chromsizes[CHROM_COL], chromsizes[END_COL], strict=True))
@@ -6081,7 +6095,7 @@ class PyRanges(RangeFrame):
 
         chrom_lengths_vec = lengths_per_code[codes]
 
-        idxs, starts, ends = ruranges.genome_bounds(
+        idxs, starts, ends = ruranges.numpy.genome_bounds(
             groups=codes,  # type: ignore[arg-type]
             starts=self[START_COL].to_numpy(),
             ends=self[END_COL].to_numpy(),
