@@ -27,9 +27,10 @@ without writing any Python code.
 Citation
 ~~~~~~~~
 
-Stovner EB, Sætrom P (2020) PyRanges: efficient comparison of genomic intervals in Python. *Bioinformatics 36(3):918-919*  http://dx.doi.org/10.1093/bioinformatics/btz615
+Stovner EB, Ticó M, Muñoz del Campo E, Pallarès-Albanell J, Chawla K, Sætrom P, Mariotti M (2025) Pyranges v1: a Python framework for ultrafast sequence interval operations.
+*bioRxiv* 2025.12.11.693639; doi: https://doi.org/10.64898/2025.12.11.693639
 
-Coming soon: a paper for v1!
+Stovner EB, Sætrom P (2020) PyRanges: efficient comparison of genomic intervals in Python. *Bioinformatics 36(3):918-919*  http://dx.doi.org/10.1093/bioinformatics/btz615
 
 
 Documentation outline
