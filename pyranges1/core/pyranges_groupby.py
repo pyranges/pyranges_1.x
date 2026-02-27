@@ -175,7 +175,25 @@ class PyRangesDataFrameGroupBy(pandas.core.groupby.DataFrameGroupBy):
 
     @return_pyranges_if_possible
     def prod(self, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":  # noqa: D102
-        return self.pandas_groupby.prod(*args, **kwargs)
+        if args and "numeric_only" not in kwargs and not isinstance(args[0], bool):
+            # pandas<3 tolerated truthy non-bool positional values for numeric_only.
+            kwargs["numeric_only"] = bool(args[0])
+            args = args[1:]
+        try:
+            return self.pandas_groupby.prod(*args, **kwargs)
+        except TypeError:
+            if "numeric_only" in kwargs:
+                raise
+
+            # pandas 3's string dtype can error on prod(). Emulate pandas 2 behavior by
+            # keeping non-numeric columns from first() and applying prod() to numeric columns.
+            first_result = self.pandas_groupby.first()
+            numeric_result = self.pandas_groupby.prod(*args, numeric_only=True, **kwargs)
+
+            if isinstance(first_result, pd.DataFrame) and isinstance(numeric_result, pd.DataFrame):
+                first_result.loc[:, numeric_result.columns] = numeric_result
+                return first_result
+            return numeric_result
 
     @return_pyranges_if_possible
     def quantile(self, *args, **kwargs) -> "pr.PyRanges | pd.DataFrame | pd.Series":  # noqa: D102

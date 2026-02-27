@@ -134,7 +134,7 @@ def reverse_complement(
                 )
                 raise ValueError(msg)
 
-        return seqs.str.translate(transtable).str[::-1]
+        return seqs.str.translate(transtable).str[::-1].astype(object)
 
     transtable = complement if not is_rna else rnacomplement
     return (
@@ -295,7 +295,7 @@ def translate(  # noqa: C901
             seqs.apply(_translate_noncached)
             if not cache  # above: no cache
             else seqs.apply(_translate_cached)
-        )
+        ).astype(object)
 
     if isinstance(genetic_code, dict):
         codon_table = genetic_code

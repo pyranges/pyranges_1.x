@@ -384,7 +384,7 @@ coordinate system. By default, it will use all transcripts that overlap the moti
   >>> matches.map_to_local(gre, ref_on='Parent', keep_chrom=True, keep_loc=True).columns
   Index(['Chromosome', 'Start', 'End', 'Strand', 'Sequence', 'Chromosome_global',
          'Start_global', 'End_global', 'Strand_global'],
-        dtype='object')
+        dtype='str')
 
 
 Let's look at another use case.

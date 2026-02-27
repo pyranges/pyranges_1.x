@@ -30,7 +30,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 keywords = ["bioinformatics", "genomicranges", "genomics"]
-dependencies = ["pandas<3.0.0", "tabulate", "natsort", "ruranges>=0.1.1"]
+dependencies = ["pandas", "tabulate", "natsort", "ruranges>=0.1.1"]
 
 [project.optional-dependencies]
 add-ons = [
@@ -86,13 +86,14 @@ basepython =
     py312: python3.12
     py313: python3.13
 deps =
+    pandas
     pyrle >= 0.0.41
     bamread
     pyBigWig
     pyfaidx
     tox
     ruff == 0.14.1
-    pandas-stubs == 2.1.4.231227
+    pandas-stubs
     types-tabulate
     pytest
     pyright == 1.1.406

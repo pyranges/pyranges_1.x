@@ -34,7 +34,7 @@ def concat[T: "RangeFrame"](grs: Iterable[T], *args, **kwargs) -> T:
     >>> gr2 = pr.example_data.f1
     >>> pr.concat([gr1, gr2])
       index  |    Chromosome      Start      End  Name         Score  Strand
-      int64  |    category        int64    int64  object       int64  category
+      int64  |    category        int64    int64  str          int64  category
     -------  ---  ------------  -------  -------  ---------  -------  ----------
           0  |    chr1                1        2  a                0  +
           1  |    chr1                6        7  b                0  -
@@ -46,7 +46,7 @@ def concat[T: "RangeFrame"](grs: Iterable[T], *args, **kwargs) -> T:
 
     >>> pr.concat([gr1, gr2.remove_strand()])
       index  |    Chromosome      Start      End  Name         Score  Strand
-      int64  |    category        int64    int64  object       int64  category
+      int64  |    category        int64    int64  str          int64  category
     -------  ---  ------------  -------  -------  ---------  -------  ----------
           0  |    chr1                1        2  a                0  +
           1  |    chr1                6        7  b                0  -

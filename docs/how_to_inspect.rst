@@ -222,7 +222,7 @@ To see them all, use property ``dtypes`` like you do for dataframes:
   Chromosome    category
   Start            int64
   End              int64
-  Name            object
+  Name               str
   Score            int64
   Strand        category
   dtype: object
@@ -238,11 +238,11 @@ There are convenient methods inherited from pandas dataframes to inspect PyRange
    0   Chromosome  20 non-null     category
    1   Start       20 non-null     int64
    2   End         20 non-null     int64
-   3   Name        20 non-null     object
+   3   Name        20 non-null     str
    4   Score       20 non-null     int64
    5   Strand      20 non-null     category
-  dtypes: category(2), int64(3), object(1)
-  memory usage: 1.6+ KB
+  dtypes: category(2), int64(3), str(1)
+  memory usage: 1.7 KB
 
 On the other hand, ``describe`` reports aggregate metrics of numerical columns:
 

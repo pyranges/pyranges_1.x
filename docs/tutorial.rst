@@ -77,7 +77,7 @@ The ``ann`` object has lots of columns, most of which are not displayed because 
          'Frame', 'ID', 'Dbxref', 'gbkey', 'mol_type', 'note', 'Name',
          'gene_biotype', 'locus_tag', 'Parent', 'Note', 'standard_name',
          'product', 'protein_id'],
-        dtype='object')
+        dtype='str')
 
 
 Let's select only certain columns. We can use the method
@@ -124,7 +124,7 @@ Genomic annotations often contain information for diverse entities, such as gene
 In GFF files, the entity type is encoded in the Feature column. In pyranges1, you use the dot notation to
 fetch an individual column, which is technically a pandas Series:
 
-  >>> ann.Feature # or ann['Feature']
+  >>> ann.Feature # or ann['Feature']  # doctest: +NORMALIZE_WHITESPACE
   0      region
   1        gene
   2        mRNA
@@ -137,7 +137,7 @@ fetch an individual column, which is technically a pandas Series:
   148       CDS
   149       CDS
   Name: Feature, Length: 150, dtype: category
-  Categories (5, object): ['CDS', 'exon', 'gene', 'mRNA', 'region']
+  Categories (5, str): ['CDS', 'exon', 'gene', 'mRNA', 'region']
 
 
 The syntax ``ann[column_name]`` is also available, and must be used when creating or updating a column.

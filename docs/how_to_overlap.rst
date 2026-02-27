@@ -466,7 +466,7 @@ present in both PyRanges:
 The regions reported may be part of any interval in the two PyRanges. All metadata columns are dropped:
 
   >>> a2.set_intersect_overlaps(b2).columns  # see above: a2 and b2 had the 'odd' column
-  Index(['Chromosome', 'Start', 'End', 'Strand'], dtype='object')
+  Index(['Chromosome', 'Start', 'End', 'Strand'], dtype='str')
 
 Analogously, method :func:`set_union_overlaps <pyranges1.PyRanges.set_union_overlaps>` allows to obtain the genomic regions that
 are present in at least one of the PyRanges:
@@ -891,4 +891,3 @@ The usual arguments (e.g. ``use_strand``) are available:
         7  |    chr1               28       30  +                 2  b
   PyRanges with 4 rows, 6 columns, and 1 index columns.
   Contains 1 chromosomes and 1 strands.
-

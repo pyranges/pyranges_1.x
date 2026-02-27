@@ -39,7 +39,7 @@ def from_string(s: str) -> "PyRanges":
 
     >>> pr.from_string(s)
       index  |    Chromosome        Start        End  Strand
-      int64  |    object            int64      int64  object
+      int64  |    str               int64      int64  str
     -------  ---  ------------  ---------  ---------  --------
           0  |    chr1          246719402  246719502  +
           1  |    chr5           15400908   15401008  +
@@ -90,7 +90,7 @@ def read_bed(f: Path, /, nrows: int | None = None) -> "PyRanges":
     >>> path = pr.example_data.files["aorta.bed"]
     >>> pr.read_bed(path, nrows=5)
       index  |    Chromosome      Start      End  Name        Score  Strand
-      int64  |    category        int64    int64  object      int64  category
+      int64  |    category        int64    int64  str         int64  category
     -------  ---  ------------  -------  -------  --------  -------  ----------
           0  |    chr1             9916    10115  H3K27me3        5  -
           1  |    chr1             9939    10138  H3K27me3        7  +
@@ -338,11 +338,11 @@ def read_gtf(
     >>> _bytes_written = f.write("\n".join(contents))
     >>> f.flush()
     >>> pr.read_gtf(f.name)
-      index  |      Chromosome  Source    Feature       Start      End  Score     Strand      Frame     gene_id          ...
-      int64  |        category  object    category      int64    int64  object    category    object    object           ...
-    -------  ---  ------------  --------  ----------  -------  -------  --------  ----------  --------  ---------------  -----
-          0  |               1  havana    gene          11868    14409  .         +           .         ENSG00000223972  ...
-          1  |               1  havana    transcript    11868    14409  .         +           .         ENSG00000223972  ...
+      index  |      Chromosome  Source    Feature       Start      End  Score    Strand      Frame    gene_id          ...
+      int64  |        category  str       category      int64    int64  str      category    str      str              ...
+    -------  ---  ------------  --------  ----------  -------  -------  -------  ----------  -------  ---------------  -----
+          0  |               1  havana    gene          11868    14409  .        +           .        ENSG00000223972  ...
+          1  |               1  havana    transcript    11868    14409  .        +           .        ENSG00000223972  ...
     PyRanges with 2 rows, 20 columns, and 1 index columns. (11 columns not shown: "gene_version", "gene_name", "gene_source", ...).
     Contains 1 chromosomes and 1 strands.
 
@@ -660,7 +660,7 @@ def read_bigwig(f: str | Path) -> "PyRanges":
     >>> path = pr.example_data.files["bigwig.bw"]
     >>> pr.read_bigwig(path)
       index  |      Chromosome    Start      End      Value
-      int64  |          object    int64    int64    float64
+      int64  |             str    int64    int64    float64
     -------  ---  ------------  -------  -------  ---------
           0  |               1        0        1        0.1
           1  |               1        1        2        0.2

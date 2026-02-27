@@ -37,7 +37,7 @@ A single PyRanges column (which are pandas Series) can be extracted through the 
   3    chr14
   4    chr12
   Name: Chromosome, dtype: category
-  Categories (15, object): ['chr1', 'chr10', 'chr11', 'chr12', ..., 'chr6', 'chr7', 'chr8', 'chr9']
+  Categories (15, str): ['chr1', 'chr10', 'chr11', 'chr12', ..., 'chr6', 'chr7', 'chr8', 'chr9']
 
 
   >>> ( (gr.End + gr.Start)/2 ).head()
@@ -58,7 +58,7 @@ The ``gr[column_name]`` syntax also extracts a column from a PyRanges object:
   3    chr14
   4    chr12
   Name: Chromosome, dtype: category
-  Categories (15, object): ['chr1', 'chr10', 'chr11', 'chr12', ..., 'chr6', 'chr7', 'chr8', 'chr9']
+  Categories (15, str): ['chr1', 'chr10', 'chr11', 'chr12', ..., 'chr6', 'chr7', 'chr8', 'chr9']
 
 
 The ``gr[column_name]`` syntax is the only one accepted for assignment (i.e. create or edit a column):
