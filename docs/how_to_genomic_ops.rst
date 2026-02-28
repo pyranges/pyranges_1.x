@@ -25,7 +25,7 @@ Let's get some data:
   >>> ex = ex.sort_ranges(use_strand=False).reset_index(drop=True)
   >>> ex
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         0  |               1    11868    12227  +           ENST00000456328
         1  |               1    12612    12721  +           ENST00000456328
@@ -43,7 +43,7 @@ We can modify a whole column at once:
   >>> ex['Start'] += 5
   >>> ex
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         0  |               1    11873    12227  +           ENST00000456328
         1  |               1    12617    12721  +           ENST00000456328
@@ -61,7 +61,7 @@ Or we can modify a slice of the column:
   >>> ex.loc[2:5, 'Start'] -= 5
   >>> ex
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         0  |               1    11873    12227  +           ENST00000456328
         1  |               1    12617    12721  +           ENST00000456328
@@ -80,7 +80,7 @@ Or use a boolean index:
   >>> e=ex.copy()
   >>> e
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         0  |               1    11878    12227  +           ENST00000456328
         1  |               1    12622    12721  +           ENST00000456328
@@ -106,7 +106,7 @@ The ``ext`` parameter implies an extension in both directions of all intervals:
 
   >>> e.extend_ranges(ext=5)
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         0  |               1    11873    12232  +           ENST00000456328
         1  |               1    12617    12726  +           ENST00000456328
@@ -127,7 +127,7 @@ Let's extend upstream by 10 bases:
 
   >>> e.extend_ranges(ext_5=10)
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         0  |               1    11868    12227  +           ENST00000456328
         1  |               1    12612    12721  +           ENST00000456328
@@ -144,7 +144,7 @@ Let's extend by 12 bases on the 5' end, and 6 bases on the 3' end:
 
   >>> e.extend_ranges(ext_5=12, ext_3=6)
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         0  |               1    11866    12233  +           ENST00000456328
         1  |               1    12610    12727  +           ENST00000456328
@@ -161,7 +161,7 @@ To ignore strand (i.e. treat all intervals as if on the positive strand), use ``
 
   >>> e.extend_ranges(ext_5=12, ext_3=6, use_strand=False)
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         0  |               1    11866    12233  +           ENST00000456328
         1  |               1    12610    12727  +           ENST00000456328
@@ -181,7 +181,7 @@ exons of each transcript may be extended:
 
   >>> e.extend_ranges(ext_5=10, group_by='transcript_id')
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         0  |               1    11868    12227  +           ENST00000456328
         1  |               1    12622    12721  +           ENST00000456328
@@ -207,7 +207,7 @@ So, to get the first 10 bases of each interval, we can do:
 
   >>> e.slice_ranges(start=0, end=10)
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         0  |               1    11878    11888  +           ENST00000456328
         1  |               1    12622    12632  +           ENST00000456328
@@ -226,7 +226,7 @@ You can ignore strand using ``use_strand=False``:
 
   >>> e.slice_ranges(start=0, end=10, use_strand=False)
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         0  |               1    11878    11888  +           ENST00000456328
         1  |               1    12622    12632  +           ENST00000456328
@@ -247,7 +247,7 @@ Note that intervals that were <200 bp have no row in output:
 
   >>> e.slice_ranges(200)
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         0  |               1    12078    12227  +           ENST00000456328
         2  |               1    13425    14409  +           ENST00000456328
@@ -262,7 +262,7 @@ To get the last 10 bases of each interval, we can do:
 
   >>> e.slice_ranges(-10)
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         0  |               1    12217    12227  +           ENST00000456328
         1  |               1    12711    12721  +           ENST00000456328
@@ -279,7 +279,7 @@ This returns intervals without their first and last 3 bases:
 
   >>> e.slice_ranges(3, -3)
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         0  |               1    11881    12224  +           ENST00000456328
         1  |               1    12625    12718  +           ENST00000456328
@@ -307,7 +307,7 @@ exons are counted to sum up to that length, and introns are ignored:
 
   >>> e.slice_ranges(0, 1500, group_by='transcript_id')
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         0  |               1    11878    12227  +           ENST00000456328
         1  |               1    12622    12721  +           ENST00000456328
@@ -325,7 +325,7 @@ Compare it with the result above, noting that its third exon has been shortened:
 
   >>> e
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         0  |               1    11878    12227  +           ENST00000456328
         1  |               1    12622    12721  +           ENST00000456328
@@ -344,7 +344,7 @@ So, this will get the first and last 10 bases of each spliced transcript:
   >>> last10 = e.slice_ranges(-10, group_by='transcript_id')
   >>> pr.concat([first10, last10])
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         0  |               1    11878    11888  +           ENST00000456328
         4  |               1   112794   112804  -           ENST00000471248
@@ -360,7 +360,7 @@ For example, this will obtain the 100 bases upstream of each transcript:
 
   >>> e.extend_ranges(ext_5=100, group_by='transcript_id').slice_ranges(0, 100, group_by='transcript_id')
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         0  |               1    11778    11878  +           ENST00000456328
         4  |               1   112804   112904  -           ENST00000471248
@@ -373,7 +373,7 @@ This will obtain the 100 bases downstream of each transcript:
 
   >>> e.extend_ranges(ext_3=100, group_by='transcript_id').slice_ranges(-100, group_by='transcript_id')
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         2  |               1    14409    14509  +           ENST00000456328
         3  |               1   110852   110952  -           ENST00000471248
@@ -388,7 +388,7 @@ the returned intervals and the input ones:
 
   >>> e.downstream(100, group_by='transcript_id')
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         2  |               1    14409    14509  +           ENST00000456328
         3  |               1   110852   110952  -           ENST00000471248
@@ -398,7 +398,7 @@ the returned intervals and the input ones:
 
   >>> e.downstream(100, gap=10, group_by='transcript_id')
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         2  |               1    14419    14519  +           ENST00000456328
         3  |               1   110842   110942  -           ENST00000471248
@@ -412,7 +412,7 @@ So, the following will get the subintervals included in the first 1500 bases of 
 
   >>> e.slice_ranges(0, 1500, group_by='transcript_id', count_introns=True)
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         0  |               1    11878    12227  +           ENST00000456328
         1  |               1    12622    12721  +           ENST00000456328
@@ -429,7 +429,7 @@ that overlap with the first 1500 bases of the boundaries of each transcript:
   >>> b = e.outer_ranges('transcript_id')
   >>> b
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         0  |               1    11878    14409  +           ENST00000456328
         1  |               1   110952   112804  -           ENST00000471248
@@ -439,7 +439,7 @@ that overlap with the first 1500 bases of the boundaries of each transcript:
 
   >>> e.intersect_overlaps( b.slice_ranges(0, 1500) )
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         0  |               1    11878    12227  +           ENST00000456328
         1  |               1    12622    12721  +           ENST00000456328
@@ -461,7 +461,7 @@ Let's revise our ``e`` object:
 
   >>> e
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         0  |               1    11878    12227  +           ENST00000456328
         1  |               1    12622    12721  +           ENST00000456328
@@ -540,7 +540,7 @@ This can be done with the ``group_by`` argument:
   >>> introns = e.complement_ranges(group_by='transcript_id')
   >>> introns
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         0  |               1    12227    12622  +           ENST00000456328
         1  |               1    12721    13225  +           ENST00000456328
@@ -562,8 +562,8 @@ span each interval in a PyRanges object.
   ...                      Strand=['+', '+', '-'], Name=['a', 'a', 'b']))
   >>> g
     index  |      Chromosome    Start      End  Strand    Name
-    int64  |           int64    int64    int64  object    object
-  -------  ---  ------------  -------  -------  --------  --------
+    int64  |           int64    int64    int64  str       str
+  -------  ---  ------------  -------  -------  --------  ------
         0  |               1        4       11  +         a
         1  |               1       60       66  +         a
         2  |               1      100      107  -         b
@@ -574,8 +574,8 @@ For example, let's get windows of size 3:
 
   >>> g.window_ranges(3)
     index  |      Chromosome    Start      End  Strand    Name
-    int64  |           int64    int64    int64  object    object
-  -------  ---  ------------  -------  -------  --------  --------
+    int64  |           int64    int64    int64  str       str
+  -------  ---  ------------  -------  -------  --------  ------
         0  |               1        4        7  +         a
         0  |               1        7       10  +         a
         0  |               1       10       11  +         a
@@ -592,8 +592,8 @@ end. To ignore strand, use ``use_strand=False``:
 
   >>> g.window_ranges(3, use_strand=False)
     index  |      Chromosome    Start      End  Strand    Name
-    int64  |           int64    int64    int64  object    object
-  -------  ---  ------------  -------  -------  --------  --------
+    int64  |           int64    int64    int64  str       str
+  -------  ---  ------------  -------  -------  --------  ------
         0  |               1        4        7  +         a
         0  |               1        7       10  +         a
         0  |               1       10       11  +         a
@@ -609,8 +609,8 @@ To avoid duplicated indices, run pandas dataframe method ``reset_index`` on the 
 
   >>> g.window_ranges(3).reset_index(drop=True)
     index  |      Chromosome    Start      End  Strand    Name
-    int64  |           int64    int64    int64  object    object
-  -------  ---  ------------  -------  -------  --------  --------
+    int64  |           int64    int64    int64  str       str
+  -------  ---  ------------  -------  -------  --------  ------
         0  |               1        4        7  +         a
         1  |               1        7       10  +         a
         2  |               1       10       11  +         a
@@ -626,8 +626,8 @@ To may retain the old index as column, with:
 
   >>> g.window_ranges(3).reset_index(names='g_index')
     index  |      g_index    Chromosome    Start      End  Strand    Name
-    int64  |        int64         int64    int64    int64  object    object
-  -------  ---  ---------  ------------  -------  -------  --------  --------
+    int64  |        int64         int64    int64    int64  str       str
+  -------  ---  ---------  ------------  -------  -------  --------  ------
         0  |            0             1        4        7  +         a
         1  |            0             1        7       10  +         a
         2  |            0             1       10       11  +         a
@@ -646,7 +646,7 @@ window size. This function will return windows to cover all the chromosomes:
   >>> cs={'chr1':323, 'chr2':125} # creating a dictionary with chromosome sizes
   >>> pr.tile_genome(cs, 100)
     index  |    Chromosome      Start      End
-    int64  |    object          int64    int64
+    int64  |    str             int64    int64
   -------  ---  ------------  -------  -------
         0  |    chr1                0      100
         1  |    chr1              100      200
@@ -662,7 +662,7 @@ To ensure tile size consistency, use the ``full_last_tile`` parameter:
 
   >>> pr.tile_genome(cs, 100, full_last_tile=True)
     index  |    Chromosome      Start      End
-    int64  |    object          int64    int64
+    int64  |    str             int64    int64
   -------  ---  ------------  -------  -------
         0  |    chr1                0      100
         1  |    chr1              100      200
@@ -681,7 +681,7 @@ a defined size) that overlap the intervals in a PyRanges object:
   >>> se = e.loc[[0,7],:]
   >>> se
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         0  |               1    11878    12227  +           ENST00000456328
         7  |               1   133378   133723  -           ENST00000610542
@@ -690,7 +690,7 @@ a defined size) that overlap the intervals in a PyRanges object:
 
   >>> se.tile_ranges(200)
     index  |      Chromosome    Start      End  Strand      transcript_id
-    int64  |        category    int64    int64  category    object
+    int64  |        category    int64    int64  category    str
   -------  ---  ------------  -------  -------  ----------  ---------------
         0  |               1    11800    12000  +           ENST00000456328
         0  |               1    12000    12200  +           ENST00000456328
@@ -709,7 +709,7 @@ overlaps with the tile returned:
 
   >>> se.tile_ranges(200, overlap_column='nts')
     index  |      Chromosome    Start      End  Strand      transcript_id          nts
-    int64  |        category    int64    int64  category    object             float64
+    int64  |        category    int64    int64  category    str                float64
   -------  ---  ------------  -------  -------  ----------  ---------------  ---------
         0  |               1    11800    12000  +           ENST00000456328      0.61
         0  |               1    12000    12200  +           ENST00000456328      1

@@ -60,7 +60,7 @@ def count_overlaps(
     ...     print(v)
     Name: a
       index  |    Chromosome      Start      End
-      int64  |    object          int64    int64
+      int64  |    str             int64    int64
     -------  ---  ------------  -------  -------
           0  |    chr1                6       12
           1  |    chr1               10       20
@@ -70,7 +70,7 @@ def count_overlaps(
     Contains 1 chromosomes.
     Name: b
       index  |    Chromosome      Start      End
-      int64  |    object          int64    int64
+      int64  |    str             int64    int64
     -------  ---  ------------  -------  -------
           0  |    chr1               12       32
           1  |    chr1               14       30
@@ -78,7 +78,7 @@ def count_overlaps(
     Contains 1 chromosomes.
     Name: c
       index  |    Chromosome      Start      End
-      int64  |    object          int64    int64
+      int64  |    str             int64    int64
     -------  ---  ------------  -------  -------
           0  |    chr1                8       15
           1  |    chr1               10       14
@@ -88,7 +88,7 @@ def count_overlaps(
 
     >>> pr.count_overlaps(grs)
     index    |    Chromosome    Start    End      a        b        c
-    int64    |    object        int64    int64    int64    int64    int64
+    int64    |    str           int64    int64    int64    int64    int64
     -------  ---  ------------  -------  -------  -------  -------  -------
     0        |    chr1          6        8        1        0        0
     1        |    chr1          8        10       1        0        1
@@ -105,7 +105,7 @@ def count_overlaps(
     >>> gr = pr.PyRanges({"Chromosome": ["chr1"] * 2, "Start": [0, 25], "End": [40, 35]}).tile_ranges(10)
     >>> gr
       index  |    Chromosome      Start      End
-      int64  |    object          int64    int64
+      int64  |    str             int64    int64
     -------  ---  ------------  -------  -------
           0  |    chr1                0       10
           0  |    chr1               10       20
@@ -118,7 +118,7 @@ def count_overlaps(
 
     >>> pr.count_overlaps(grs, gr)
       index  |    Chromosome      Start      End        a        b        c
-      int64  |    object          int64    int64    int64    int64    int64
+      int64  |    str             int64    int64    int64    int64    int64
     -------  ---  ------------  -------  -------  -------  -------  -------
           0  |    chr1                0       10        1        0        1
           0  |    chr1               10       20        2        2        2

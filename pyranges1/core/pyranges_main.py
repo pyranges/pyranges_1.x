@@ -126,7 +126,7 @@ class PyRanges(RangeFrame):
     1       chr2    200  201
     >>> pr.PyRanges(df)
       index  |    Chromosome      Start      End
-      int64  |    object          int64    int64
+      int64  |    str             int64    int64
     -------  ---  ------------  -------  -------
           0  |    chr1              100      150
           1  |    chr2              200      201
@@ -139,7 +139,7 @@ class PyRanges(RangeFrame):
     ...                    "TP": [0, 1], "FP": [12, 11], "TN": [10, 9], "FN": [2, 3]})
     >>> gr
       index  |      Chromosome  Strand      Start      End       TP       FP       TN       FN
-      int64  |           int64  object      int64    int64    int64    int64    int64    int64
+      int64  |           int64  str         int64    int64    int64    int64    int64    int64
     -------  ---  ------------  --------  -------  -------  -------  -------  -------  -------
           0  |               1  +               1        2        0       12       10        2
           1  |               1  -               4       27        1       11        9        3
@@ -155,7 +155,7 @@ class PyRanges(RangeFrame):
 
     >>> pr.PyRanges(dict(Chromosome=["chr1", "chr2"], Start=[1, 2], End=[2, 3]))
       index  |    Chromosome      Start      End
-      int64  |    object          int64    int64
+      int64  |    str             int64    int64
     -------  ---  ------------  -------  -------
           0  |    chr1                1        2
           1  |    chr2                2        3
@@ -236,7 +236,7 @@ class PyRanges(RangeFrame):
         >>> gr = pr.example_data.ensembl_gtf.get_with_loc_columns(["gene_id", "gene_name"])
         >>> gr
         index    |    Chromosome    Start    End      Strand      gene_id          gene_name
-        int64    |    category      int64    int64    category    object           object
+        int64    |    category      int64    int64    category    str              str
         -------  ---  ------------  -------  -------  ----------  ---------------  -----------
         0        |    1             11868    14409    +           ENSG00000223972  DDX11L1
         1        |    1             11868    14409    +           ENSG00000223972  DDX11L1
@@ -252,7 +252,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.loci[1, "+", 12227:13000]
           index  |      Chromosome    Start      End  Strand      gene_id          gene_name
-          int64  |        category    int64    int64  category    object           object
+          int64  |        category    int64    int64  category    str              str
         -------  ---  ------------  -------  -------  ----------  ---------------  -----------
               0  |               1    11868    14409  +           ENSG00000223972  DDX11L1
               1  |               1    11868    14409  +           ENSG00000223972  DDX11L1
@@ -262,7 +262,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.loci[1, 14408:120000]
           index  |      Chromosome    Start      End  Strand      gene_id          gene_name
-          int64  |        category    int64    int64  category    object           object
+          int64  |        category    int64    int64  category    str              str
         -------  ---  ------------  -------  -------  ----------  ---------------  -----------
               0  |               1    11868    14409  +           ENSG00000223972  DDX11L1
               1  |               1    11868    14409  +           ENSG00000223972  DDX11L1
@@ -274,7 +274,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.loci[1, "-"]
           index  |      Chromosome    Start      End  Strand      gene_id          gene_name
-          int64  |        category    int64    int64  category    object           object
+          int64  |        category    int64    int64  category    str              str
         -------  ---  ------------  -------  -------  ----------  ---------------  -----------
               5  |               1   112699   112804  -           ENSG00000238009  AL627309.1
               6  |               1   110952   111357  -           ENSG00000238009  AL627309.1
@@ -287,7 +287,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.loci["+"]
           index  |      Chromosome    Start      End  Strand      gene_id          gene_name
-          int64  |        category    int64    int64  category    object           object
+          int64  |        category    int64    int64  category    str              str
         -------  ---  ------------  -------  -------  ----------  ---------------  -----------
               0  |               1    11868    14409  +           ENSG00000223972  DDX11L1
               1  |               1    11868    14409  +           ENSG00000223972  DDX11L1
@@ -299,7 +299,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.loci[11000:12000]
           index  |      Chromosome    Start      End  Strand      gene_id          gene_name
-          int64  |        category    int64    int64  category    object           object
+          int64  |        category    int64    int64  category    str              str
         -------  ---  ------------  -------  -------  ----------  ---------------  -----------
               0  |               1    11868    14409  +           ENSG00000223972  DDX11L1
               1  |               1    11868    14409  +           ENSG00000223972  DDX11L1
@@ -311,7 +311,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.loci["1", 11000:12000]
           index  |      Chromosome    Start      End  Strand      gene_id          gene_name
-          int64  |        category    int64    int64  category    object           object
+          int64  |        category    int64    int64  category    str              str
         -------  ---  ------------  -------  -------  ----------  ---------------  -----------
               0  |               1    11868    14409  +           ENSG00000223972  DDX11L1
               1  |               1    11868    14409  +           ENSG00000223972  DDX11L1
@@ -323,7 +323,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.loci["3"]
         index    |    Chromosome    Start    End      Strand      gene_id    gene_name
-        int64    |    category      int64    int64    category    object     object
+        int64    |    category      int64    int64    category    str        str
         -------  ---  ------------  -------  -------  ----------  ---------  -----------
         PyRanges with 0 rows, 6 columns, and 1 index columns.
         Contains 0 chromosomes and 0 strands.
@@ -332,8 +332,8 @@ class PyRanges(RangeFrame):
         ...                    "Strand": [".", "+"], "Score":[10, 12], "Id":["a", "b"]})
         >>> gr2.loci["chr2"]
           index  |    Chromosome      Start      End  Strand      Score  Id
-          int64  |    object          int64    int64  object      int64  object
-        -------  ---  ------------  -------  -------  --------  -------  --------
+          int64  |    str             int64    int64  str         int64  str
+        -------  ---  ------------  -------  -------  --------  -------  -----
               1  |    chr2                2        5  +              12  b
         PyRanges with 1 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 1 strands.
@@ -343,8 +343,8 @@ class PyRanges(RangeFrame):
         >>> gr2.loci["chr2"] = gr2.loci["chr2"].copy().assign(Chromosome="xxx")
         >>> gr2
           index  |    Chromosome      Start      End  Strand      Score  Id
-          int64  |    object          int64    int64  object      int64  object
-        -------  ---  ------------  -------  -------  --------  -------  --------
+          int64  |    str             int64    int64  str         int64  str
+        -------  ---  ------------  -------  -------  --------  -------  -----
               0  |    chr1                1        4  .              10  a
               1  |    xxx                 2        5  +              12  b
         PyRanges with 2 rows, 6 columns, and 1 index columns.
@@ -356,8 +356,8 @@ class PyRanges(RangeFrame):
         >>> gr2.loc[c.index, "Score"] = 100
         >>> gr2
           index  |    Chromosome      Start      End  Strand      Score  Id
-          int64  |    object          int64    int64  object      int64  object
-        -------  ---  ------------  -------  -------  --------  -------  --------
+          int64  |    str             int64    int64  str         int64  str
+        -------  ---  ------------  -------  -------  --------  -------  -----
               0  |    chr1                1        4  .             100  a
               1  |    xxx                 2        5  +              12  b
         PyRanges with 2 rows, 6 columns, and 1 index columns.
@@ -367,16 +367,16 @@ class PyRanges(RangeFrame):
 
         >>> gr2.loci['+']
           index  |    Chromosome      Start      End  Strand      Score  Id
-          int64  |    object          int64    int64  object      int64  object
-        -------  ---  ------------  -------  -------  --------  -------  --------
+          int64  |    str             int64    int64  str         int64  str
+        -------  ---  ------------  -------  -------  --------  -------  -----
               1  |    xxx                 2        5  +              12  b
         PyRanges with 1 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 1 strands.
 
         >>> gr2.loci['.']
         index    |    Chromosome    Start    End      Strand    Score    Id
-        int64    |    object        int64    int64    object    int64    object
-        -------  ---  ------------  -------  -------  --------  -------  --------
+        int64    |    str           int64    int64    str       int64    str
+        -------  ---  ------------  -------  -------  --------  -------  -----
         PyRanges with 0 rows, 6 columns, and 1 index columns.
         Contains 0 chromosomes and 0 strands.
 
@@ -384,8 +384,8 @@ class PyRanges(RangeFrame):
 
         >>> gr2.loci[None, '.']
           index  |    Chromosome      Start      End  Strand      Score  Id
-          int64  |    object          int64    int64  object      int64  object
-        -------  ---  ------------  -------  -------  --------  -------  --------
+          int64  |    str             int64    int64  str         int64  str
+        -------  ---  ------------  -------  -------  --------  -------  -----
               0  |    chr1                1        4  .             100  a
         PyRanges with 1 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 1 strands (including non-genomic strands: .).
@@ -394,8 +394,8 @@ class PyRanges(RangeFrame):
 
         >>> gr2.loci["Score"]
         index    |    Chromosome    Start    End      Strand    Score    Id
-        int64    |    object        int64    int64    object    int64    object
-        -------  ---  ------------  -------  -------  --------  -------  --------
+        int64    |    str           int64    int64    str       int64    str
+        -------  ---  ------------  -------  -------  --------  -------  -----
         PyRanges with 0 rows, 6 columns, and 1 index columns.
         Contains 0 chromosomes and 0 strands.
 
@@ -446,7 +446,7 @@ class PyRanges(RangeFrame):
         >>> gr.insert(3, "Strand", ["+", "-", "+"])
         >>> gr
           index  |      Chromosome    Start      End  Strand
-          int64  |           int64    int64    int64  object
+          int64  |           int64    int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |               3        0       10  +
               1  |               2      100      125  -
@@ -457,7 +457,7 @@ class PyRanges(RangeFrame):
         >>> gr.loc[:, "Strand"] = [".", "^", "/"]
         >>> gr
           index  |      Chromosome    Start      End  Strand
-          int64  |           int64    int64    int64  object
+          int64  |           int64    int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |               3        0       10  .
               1  |               2      100      125  ^
@@ -475,7 +475,7 @@ class PyRanges(RangeFrame):
         >>> gr = pr.concat([gr2, gr, gr])
         >>> gr  # If a PyRanges has more than eight rows the repr is truncated in the middle.
         index    |    Chromosome    Start    End      Strand
-        int64    |    int64         int64    int64    object
+        int64    |    int64         int64    int64    str
         -------  ---  ------------  -------  -------  --------
         0        |    3             0        10       +
         1        |    2             100      125      -
@@ -494,7 +494,7 @@ class PyRanges(RangeFrame):
         # The index is shown separated from the columns with |
         >>> gr.set_index(["gene_id"], append=True)
           level_0  gene_id          |      Chromosome    Start      End  Strand    Name                short_gene_name    ...
-            int64  object           |           int64    int64    int64  object    object              object             ...
+            int64  str              |           int64    int64    int64  str       str                 str                ...
         ---------  ---------------  ---  ------------  -------  -------  --------  ------------------  -----------------  -----
                 0  ENSG00000188976  |               1        1        2  +         Sonic The Hedgehog  SHH                ...
         PyRanges with 1 rows, 7 columns, and 2 index columns. (1 columns not shown: "type").
@@ -503,7 +503,7 @@ class PyRanges(RangeFrame):
         >>> str_repr = gr.__str__(max_col_width=10, max_total_width=80)
         >>> print(str_repr)  # using print to show \\n as actual newlines
           index  |      Chromosome    Start      End  Strand    Name        gene_id     ...
-          int64  |           int64    int64    int64  object    object      object      ...
+          int64  |           int64    int64    int64  str       str         str         ...
         -------  ---  ------------  -------  -------  --------  ----------  ----------  -----
               0  |               1        1        2  +         Sonic T...  ENSG000...  ...
         PyRanges with 1 rows, 8 columns, and 1 index columns. (2 columns not shown: "short_gene_name", "type").
@@ -514,7 +514,7 @@ class PyRanges(RangeFrame):
         >>> str_repr = gr.__str__(max_col_width=10, max_total_width=80)
         >>> print(str_repr)
           index  |      Chromosome    Start      End  Strand    Name        gene_id     ...
-          int64  |           int64    int64    int64  object    object      object      ...
+          int64  |           int64    int64    int64  str       str         str         ...
         -------  ---  ------------  -------  -------  --------  ----------  ----------  -----
               0  |               1        1        2  +         Sonic T...  ENSG000...  ...
         PyRanges with 1 rows, 10 columns, and 1 index columns. (4 columns not shown: "short_gene_name", "type", "Score", ...).
@@ -564,18 +564,18 @@ class PyRanges(RangeFrame):
         >>>
         >>> gr["Length"] = gr.lengths()
         >>> gr
-          index  |      Chromosome    Start      End  transcript_id    meta        Length
-          int64  |           int64    int64    int64  object           object       int64
-        -------  ---  ------------  -------  -------  ---------------  --------  --------
-              0  |               1        1       40  tr1              a               39
-              1  |               1       60       68  tr1              b                8
-              2  |               1      110      130  tr2              c               20
+          index  |      Chromosome    Start      End  transcript_id    meta      Length
+          int64  |           int64    int64    int64  str              str        int64
+        -------  ---  ------------  -------  -------  ---------------  ------  --------
+              0  |               1        1       40  tr1              a             39
+              1  |               1       60       68  tr1              b              8
+              2  |               1      110      130  tr2              c             20
         PyRanges with 3 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes.
 
         >>> gr.outer_ranges("transcript_id")
           index  |      Chromosome    Start      End  transcript_id
-          int64  |           int64    int64    int64  object
+          int64  |           int64    int64    int64  str
         -------  ---  ------------  -------  -------  ---------------
               0  |               1        1       68  tr1
               1  |               1      110      130  tr2
@@ -857,7 +857,7 @@ class PyRanges(RangeFrame):
         >>> reads = pr.random(1000, chromsizes={'1':150000}, strand=False, seed=123)
         >>> annotation.count_overlaps(reads, overlap_col="NumberOverlaps")
         index    |    Chromosome    Start    End      Strand      transcript_id    Feature     NumberOverlaps
-        int64    |    category      int64    int64    category    object           category    uint32
+        int64    |    category      int64    int64    category    str              category    uint32
         -------  ---  ------------  -------  -------  ----------  ---------------  ----------  ----------------
         0        |    1             11868    14409    +           nan              gene        17
         1        |    1             11868    14409    +           ENST00000456328  transcript  17
@@ -927,7 +927,7 @@ class PyRanges(RangeFrame):
         >>> gr = pr.PyRanges(d)
         >>> gr
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                3        6  +
               1  |    chr1                8        9  +
@@ -937,7 +937,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.extend_ranges(3)
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                0        9  +
               1  |    chr1                5       12  +
@@ -948,7 +948,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.extend_ranges(ext_3=1, ext_5=2)
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                1        7  +
               1  |    chr1                6       10  +
@@ -958,7 +958,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.extend_ranges(ext_3=1, ext_5=2, use_strand=False)
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                1        7  +
               1  |    chr1                6       10  +
@@ -970,7 +970,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.extend_ranges(-1)
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                4        5  +
               1  |    chr1                9        8  +
@@ -985,7 +985,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.extend_ranges(4)
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1               -1       10  +
               1  |    chr1                4       13  +
@@ -999,7 +999,7 @@ class PyRanges(RangeFrame):
         >>> gr['transcript_id']=['a', 'a', 'b']
         >>> gr.extend_ranges(group_by='transcript_id', ext_3=3)
           index  |    Chromosome      Start      End  Strand    transcript_id
-          int64  |    object          int64    int64  object    object
+          int64  |    str             int64    int64  str       str
         -------  ---  ------------  -------  -------  --------  ---------------
               0  |    chr1                3        6  +         a
               1  |    chr1                8       12  +         a
@@ -1087,8 +1087,8 @@ class PyRanges(RangeFrame):
         ...                    'Strand': ["+", "+", "-"], 'Name': ['a', 'a', 'b']})
         >>> gr
           index  |    Chromosome      Start      End  Strand    Name
-          int64  |    object          int64    int64  object    object
-        -------  ---  ------------  -------  -------  --------  --------
+          int64  |    str             int64    int64  str       str
+        -------  ---  ------------  -------  -------  --------  ------
               0  |    chr1                3        9  +         a
               1  |    chr1               10       14  +         a
               2  |    chr1                5        7  -         b
@@ -1097,8 +1097,8 @@ class PyRanges(RangeFrame):
 
         >>> gr.five_end()
           index  |    Chromosome      Start      End  Strand    Name
-          int64  |    object          int64    int64  object    object
-        -------  ---  ------------  -------  -------  --------  --------
+          int64  |    str             int64    int64  str       str
+        -------  ---  ------------  -------  -------  --------  ------
               0  |    chr1                3        4  +         a
               1  |    chr1               10       11  +         a
               2  |    chr1                6        7  -         b
@@ -1107,8 +1107,8 @@ class PyRanges(RangeFrame):
 
         >>> gr.five_end(group_by='Name')
           index  |    Chromosome      Start      End  Strand    Name
-          int64  |    object          int64    int64  object    object
-        -------  ---  ------------  -------  -------  --------  --------
+          int64  |    str             int64    int64  str       str
+        -------  ---  ------------  -------  -------  --------  ------
               0  |    chr1                3        4  +         a
               2  |    chr1                6        7  -         b
         PyRanges with 2 rows, 5 columns, and 1 index columns.
@@ -1116,8 +1116,8 @@ class PyRanges(RangeFrame):
 
         >>> gr.five_end(group_by='Name', ext=1)
           index  |    Chromosome      Start      End  Strand    Name
-          int64  |    object          int64    int64  object    object
-        -------  ---  ------------  -------  -------  --------  --------
+          int64  |    str             int64    int64  str       str
+        -------  ---  ------------  -------  -------  --------  ------
               0  |    chr1                2        5  +         a
               2  |    chr1                5        8  -         b
         PyRanges with 2 rows, 5 columns, and 1 index columns.
@@ -1229,7 +1229,7 @@ class PyRanges(RangeFrame):
         ...                   'Name': ['interval1', 'interval3', 'interval2']})
         >>> f1
           index  |    Chromosome      Start      End  Name
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  ---------
               0  |    chr1                3        6  interval1
               1  |    chr1                8        9  interval3
@@ -1243,8 +1243,8 @@ class PyRanges(RangeFrame):
         ...                   'Name': ['a', 'b']})
         >>> f2
           index  |    Chromosome      Start      End  Name
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  ------
               0  |    chr1                1        2  a
               1  |    chr1                6        7  b
         PyRanges with 2 rows, 4 columns, and 1 index columns.
@@ -1252,7 +1252,7 @@ class PyRanges(RangeFrame):
 
         >>> f1.join_overlaps(f2)
           index  |    Chromosome      Start      End  Name         Start_b    End_b  Name_b
-          int64  |    object          int64    int64  object         int64    int64  object
+          int64  |    str             int64    int64  str            int64    int64  str
         -------  ---  ------------  -------  -------  ---------  ---------  -------  --------
               2  |    chr1                5        7  interval2          6        7  b
         PyRanges with 1 rows, 7 columns, and 1 index columns.
@@ -1262,7 +1262,7 @@ class PyRanges(RangeFrame):
 
         >>> f1.join_overlaps(f2, join_type="left")
           index  |    Chromosome      Start      End  Name         Start_b      End_b  Name_b
-          int64  |    object          int64    int64  object       float64    float64  object
+          int64  |    str             int64    int64  str          float64    float64  str
         -------  ---  ------------  -------  -------  ---------  ---------  ---------  --------
               2  |    chr1                5        7  interval2          6          7  b
               0  |    chr1                3        6  interval1        nan        nan  nan
@@ -1272,7 +1272,7 @@ class PyRanges(RangeFrame):
 
         >>> f1.join_overlaps(f2, join_type="outer")
           index  |    Chromosome        Start        End  Name         Start_b      End_b  Name_b
-          int64  |    object          float64    float64  object       float64    float64  object
+          int64  |    str             float64    float64  str          float64    float64  str
         -------  ---  ------------  ---------  ---------  ---------  ---------  ---------  --------
               1  |    chr1                  5          7  interval2          6          7  b
               0  |    chr1                  3          6  interval1        nan        nan  nan
@@ -1289,8 +1289,8 @@ class PyRanges(RangeFrame):
         ...                   'ID': ['a', 'b', 'c', 'd']})
         >>> gr
           index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
               0  |    chr1                1        3  a
               1  |    chr2                4        9  b
               2  |    chr1               10       11  c
@@ -1304,8 +1304,8 @@ class PyRanges(RangeFrame):
         ...                    'ID': ['a', 'b', 'c']})
         >>> gr2
           index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
               0  |    chr1                2        3  a
               1  |    chr1                2        9  b
               2  |    chr1                1       10  c
@@ -1313,27 +1313,27 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes.
 
         >>> gr.join_overlaps(gr2)
-          index  |    Chromosome      Start      End  ID          Start_b    End_b  ID_b
-          int64  |    object          int64    int64  object        int64    int64  object
-        -------  ---  ------------  -------  -------  --------  ---------  -------  --------
-              0  |    chr1                1        3  a                 2        3  a
-              0  |    chr1                1        3  a                 2        9  b
-              0  |    chr1                1        3  a                 1       10  c
+          index  |    Chromosome      Start      End  ID       Start_b    End_b  ID_b
+          int64  |    str             int64    int64  str        int64    int64  str
+        -------  ---  ------------  -------  -------  -----  ---------  -------  ------
+              0  |    chr1                1        3  a              2        3  a
+              0  |    chr1                1        3  a              2        9  b
+              0  |    chr1                1        3  a              1       10  c
         PyRanges with 3 rows, 7 columns, and 1 index columns (with 2 index duplicates).
         Contains 1 chromosomes.
 
         >>> gr.join_overlaps(gr2, match_by="ID")
-          index  |    Chromosome      Start      End  ID          Start_b    End_b
-          int64  |    object          int64    int64  object        int64    int64
-        -------  ---  ------------  -------  -------  --------  ---------  -------
-              0  |    chr1                1        3  a                 2        3
+          index  |    Chromosome      Start      End  ID       Start_b    End_b
+          int64  |    str             int64    int64  str        int64    int64
+        -------  ---  ------------  -------  -------  -----  ---------  -------
+              0  |    chr1                1        3  a              2        3
         PyRanges with 1 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes.
 
         >>> bad = f1.join_overlaps(f2, join_type="right")
         >>> bad
           index  |    Chromosome        Start        End  Name         Start_b    End_b  Name_b
-          int64  |    object          float64    float64  object         int64    int64  object
+          int64  |    str             float64    float64  str            int64    int64  str
         -------  ---  ------------  ---------  ---------  ---------  ---------  -------  --------
               1  |    chr1                  5          7  interval2          6        7  b
               0  |    nan                 nan        nan  nan                1        2  a
@@ -1346,7 +1346,7 @@ class PyRanges(RangeFrame):
 
         >>> f1.join_overlaps(f2, slack=1)
           index  |    Chromosome      Start      End  Name         Start_b    End_b  Name_b
-          int64  |    object          int64    int64  object         int64    int64  object
+          int64  |    str             int64    int64  str            int64    int64  str
         -------  ---  ------------  -------  -------  ---------  ---------  -------  --------
               0  |    chr1                3        6  interval1          6        7  b
               2  |    chr1                5        7  interval2          6        7  b
@@ -1355,7 +1355,7 @@ class PyRanges(RangeFrame):
 
         >>> f1.join_overlaps(f2, report_overlap_column="Overlap")
           index  |    Chromosome      Start      End  Name         Start_b    End_b  Name_b      Overlap
-          int64  |    object          int64    int64  object         int64    int64  object        int64
+          int64  |    str             int64    int64  str            int64    int64  str           int64
         -------  ---  ------------  -------  -------  ---------  ---------  -------  --------  ---------
               2  |    chr1                5        7  interval2          6        7  b                 1
         PyRanges with 1 rows, 8 columns, and 1 index columns.
@@ -1365,7 +1365,7 @@ class PyRanges(RangeFrame):
 
         >>> f1.join_overlaps(f2, report_overlap_column="Overlap", slack=2)
           index  |    Chromosome      Start      End  Name         Start_b    End_b  Name_b      Overlap
-          int64  |    object          int64    int64  object         int64    int64  object        int64
+          int64  |    str             int64    int64  str            int64    int64  str           int64
         -------  ---  ------------  -------  -------  ---------  ---------  -------  --------  ---------
               0  |    chr1                3        6  interval1          1        2  a                -1
               0  |    chr1                3        6  interval1          6        7  b                 0
@@ -1408,7 +1408,7 @@ class PyRanges(RangeFrame):
         >>> gr = pr.example_data.f1
         >>> gr
           index  |    Chromosome      Start      End  Name         Score  Strand
-          int64  |    category        int64    int64  object       int64  category
+          int64  |    category        int64    int64  str          int64  category
         -------  ---  ------------  -------  -------  ---------  -------  ----------
               0  |    chr1                3        6  interval1        0  +
               1  |    chr1                5        7  interval2        0  -
@@ -1445,7 +1445,7 @@ class PyRanges(RangeFrame):
         >>> gr = pr.example_data.f1
         >>> gr
           index  |    Chromosome      Start      End  Name         Score  Strand
-          int64  |    category        int64    int64  object       int64  category
+          int64  |    category        int64    int64  str          int64  category
         -------  ---  ------------  -------  -------  ---------  -------  ----------
               0  |    chr1                3        6  interval1        0  +
               1  |    chr1                5        7  interval2        0  -
@@ -1462,7 +1462,7 @@ class PyRanges(RangeFrame):
         >>> gr["Length"] = gr.lengths()
         >>> gr
           index  |    Chromosome      Start      End  Name         Score  Strand        Length
-          int64  |    category        int64    int64  object       int64  category       int64
+          int64  |    category        int64    int64  str          int64  category       int64
         -------  ---  ------------  -------  -------  ---------  -------  ----------  --------
               0  |    chr1                3        6  interval1        0  +                  3
               1  |    chr1                5        7  interval2        0  -                  2
@@ -1550,7 +1550,7 @@ class PyRanges(RangeFrame):
         ... }))
         >>> gr
           index  |    Chromosome      Start      End  Strand    transcript_id
-          int64  |    object          int64    int64  object    object
+          int64  |    str             int64    int64  str       str
         -------  ---  ------------  -------  -------  --------  ---------------
               0  |    chr1              100      200  +         tx1
               1  |    chr1              300      400  +         tx1
@@ -1561,8 +1561,8 @@ class PyRanges(RangeFrame):
 
         >>> tr
           index  |    Chromosome      Start      End  Strand    label
-          int64  |    object          int64    int64  object    object
-        -------  ---  ------------  -------  -------  --------  --------
+          int64  |    str             int64    int64  str       str
+        -------  ---  ------------  -------  -------  --------  -------
               0  |    tx1                 0       80  -         a
               1  |    tx1               120      140  -         b
               2  |    tx1               160      170  +         c
@@ -1573,8 +1573,8 @@ class PyRanges(RangeFrame):
 
         >>> tr.map_to_global(gr, "transcript_id")
           index  |    Chromosome      Start      End  Strand    label
-          int64  |    object          int64    int64  object    object
-        -------  ---  ------------  -------  -------  --------  --------
+          int64  |    str             int64    int64  str       str
+        -------  ---  ------------  -------  -------  --------  -------
               0  |    chr1              100      180  -         a
               1  |    chr1              320      340  -         b
               2  |    chr1              360      370  +         c
@@ -1584,26 +1584,26 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         >>> tr.map_to_global(gr, "transcript_id", keep_id=True)
-          index  |    Chromosome      Start      End  Strand    label     transcript_id
-          int64  |    object          int64    int64  object    object    object
-        -------  ---  ------------  -------  -------  --------  --------  ---------------
-              0  |    chr1              100      180  -         a         tx1
-              1  |    chr1              320      340  -         b         tx1
-              2  |    chr1              360      370  +         c         tx1
-              3  |    chr1             1180     1200  -         d         tx2
-              4  |    chr1             1020     1050  -         e         tx2
+          index  |    Chromosome      Start      End  Strand    label    transcript_id
+          int64  |    str             int64    int64  str       str      str
+        -------  ---  ------------  -------  -------  --------  -------  ---------------
+              0  |    chr1              100      180  -         a        tx1
+              1  |    chr1              320      340  -         b        tx1
+              2  |    chr1              360      370  +         c        tx1
+              3  |    chr1             1180     1200  -         d        tx2
+              4  |    chr1             1020     1050  -         e        tx2
         PyRanges with 5 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
         >>> tr.map_to_global(gr, "transcript_id", keep_loc=True)
-          index  |    Chromosome      Start      End  Strand    label       Start_local    End_local  Strand_local
-          int64  |    object          int64    int64  object    object            int64        int64  object
-        -------  ---  ------------  -------  -------  --------  --------  -------------  -----------  --------------
-              0  |    chr1              100      180  -         a                     0           80  -
-              1  |    chr1              320      340  -         b                   120          140  -
-              2  |    chr1              360      370  +         c                   160          170  +
-              3  |    chr1             1180     1200  -         d                     0           20  +
-              4  |    chr1             1020     1050  -         e                   100          130  +
+          index  |    Chromosome      Start      End  Strand    label      Start_local    End_local  Strand_local
+          int64  |    str             int64    int64  str       str              int64        int64  str
+        -------  ---  ------------  -------  -------  --------  -------  -------------  -----------  --------------
+              0  |    chr1              100      180  -         a                    0           80  -
+              1  |    chr1              320      340  -         b                  120          140  -
+              2  |    chr1              360      370  +         c                  160          170  +
+              3  |    chr1             1180     1200  -         d                    0           20  +
+              4  |    chr1             1020     1050  -         e                  100          130  +
         PyRanges with 5 rows, 8 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
@@ -1624,8 +1624,8 @@ class PyRanges(RangeFrame):
         ... }))
         >>> tr2.map_to_global(gr, "transcript_id")
           index  |    Chromosome      Start      End  Strand    label
-          int64  |    object          int64    int64  object    object
-        -------  ---  ------------  -------  -------  --------  --------
+          int64  |    str             int64    int64  str       str
+        -------  ---  ------------  -------  -------  --------  -------
               0  |    chr1              190      200  +         q
               0  |    chr1              300      310  +         q
               1  |    chr1             1030     1050  -         w
@@ -1643,7 +1643,7 @@ class PyRanges(RangeFrame):
         ... }))
         >>> tr3.map_to_global(gr, "transcript_id")
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1              120      200  +
               0  |    chr1              300      400  +
@@ -1662,7 +1662,7 @@ class PyRanges(RangeFrame):
         >>> arginines_pos =  pr.PyRanges(z.rename(columns={"ID": "Chromosome"}))
         >>> arginines_pos
         index    |    Chromosome             Start    AminoAcid    End
-        int64    |    object                 int64    object       int64
+        int64    |    str                    int64    str          int64
         -------  ---  ---------------------  -------  -----------  -------
         0        |    rna-DGYR_LOCUS12552    7        R            8
         1        |    rna-DGYR_LOCUS12552    15       R            16
@@ -1680,7 +1680,7 @@ class PyRanges(RangeFrame):
         >>> genome_arginine_pos['codon'] = genome_arginine_pos.get_sequence(genome_file).str.upper()
         >>> genome_arginine_pos
         index    |    Chromosome         Start    AminoAcid    End      Parent                 Strand      codon
-        int64    |    category           int64    object       int64    object                 category    object
+        int64    |    category           int64    str          int64    str                    category    object
         -------  ---  -----------------  -------  -----------  -------  ---------------------  ----------  --------
         0        |    CAJFCJ010000025.1  2671     R            2674     rna-DGYR_LOCUS12552    -           CGT
         1        |    CAJFCJ010000025.1  2647     R            2650     rna-DGYR_LOCUS12552    -           AGA
@@ -1784,7 +1784,7 @@ class PyRanges(RangeFrame):
 
         >>> tr
           index  |    Chromosome      Start      End  Strand    transcript_id
-          int64  |    object          int64    int64  object    object
+          int64  |    str             int64    int64  str       str
         -------  ---  ------------  -------  -------  --------  ---------------
               0  |    chr1              100      200  +         tx1
               1  |    chr1              300      400  +         tx1
@@ -1795,7 +1795,7 @@ class PyRanges(RangeFrame):
 
         >>> g1
           index  |    Chromosome      Start      End  Strand    label
-          int64  |    object          int64    int64  object    object
+          int64  |    str             int64    int64  str       str
         -------  ---  ------------  -------  -------  --------  ---------------------
               0  |    chr1              110      180  +         a
               1  |    chr1              220      240  +         no_overlap_intronic
@@ -1809,8 +1809,8 @@ class PyRanges(RangeFrame):
 
         >>> g1.map_to_local(tr, "transcript_id")
           index  |    Chromosome      Start      End  Strand    label
-          int64  |    object          int64    int64  object    object
-        -------  ---  ------------  -------  -------  --------  --------
+          int64  |    str             int64    int64  str       str
+        -------  ---  ------------  -------  -------  --------  -------
               0  |    tx1                10       80  +         a
               2  |    tx1               120      140  +         b
               3  |    tx1               140      160  -         c
@@ -1826,8 +1826,8 @@ class PyRanges(RangeFrame):
         ...     "Strand":["+"], "label":["q"]}))
         >>> g2.map_to_local(tr, "transcript_id")
           index  |    Chromosome      Start      End  Strand    label
-          int64  |    object          int64    int64  object    object
-        -------  ---  ------------  -------  -------  --------  --------
+          int64  |    str             int64    int64  str       str
+        -------  ---  ------------  -------  -------  --------  -------
               0  |    tx1                80      100  +         q
               0  |    tx1               100      130  +         q
         PyRanges with 2 rows, 5 columns, and 1 index columns (with 1 index duplicates).
@@ -1848,28 +1848,28 @@ class PyRanges(RangeFrame):
 
         >>> g3.map_to_local(tr2, "transcript_id")
           index  |    Chromosome      Start      End  Strand    label
-          int64  |    object          int64    int64  object    object
-        -------  ---  ------------  -------  -------  --------  --------
+          int64  |    str             int64    int64  str       str
+        -------  ---  ------------  -------  -------  --------  -------
               0  |    tx1.1              50       80  +         x
               0  |    tx1.2             100      130  -         x
         PyRanges with 2 rows, 5 columns, and 1 index columns (with 1 index duplicates).
         Contains 2 chromosomes and 2 strands.
 
         >>> g3.map_to_local(tr2, "transcript_id", keep_chrom=True)
-          index  |    Chromosome      Start      End  Strand    label     Chromosome_global
-          int64  |    object          int64    int64  object    object    object
-        -------  ---  ------------  -------  -------  --------  --------  -------------------
-              0  |    tx1.1              50       80  +         x         chr1
-              0  |    tx1.2             100      130  -         x         chr1
+          index  |    Chromosome      Start      End  Strand    label    Chromosome_global
+          int64  |    str             int64    int64  str       str      str
+        -------  ---  ------------  -------  -------  --------  -------  -------------------
+              0  |    tx1.1              50       80  +         x        chr1
+              0  |    tx1.2             100      130  -         x        chr1
         PyRanges with 2 rows, 6 columns, and 1 index columns (with 1 index duplicates).
         Contains 2 chromosomes and 2 strands.
 
         >>> g3.map_to_local(tr2, "transcript_id", keep_loc=True)
-          index  |    Chromosome      Start      End  Strand    label       Start_global    End_global  Strand_global
-          int64  |    object          int64    int64  object    object             int64         int64  object
-        -------  ---  ------------  -------  -------  --------  --------  --------------  ------------  ---------------
-              0  |    tx1.1              50       80  +         x                    100           200  +
-              0  |    tx1.2             100      130  -         x                    110           200  -
+          index  |    Chromosome      Start      End  Strand    label      Start_global    End_global  Strand_global
+          int64  |    str             int64    int64  str       str               int64         int64  str
+        -------  ---  ------------  -------  -------  --------  -------  --------------  ------------  ---------------
+              0  |    tx1.1              50       80  +         x                   100           200  +
+              0  |    tx1.2             100      130  -         x                   110           200  -
         PyRanges with 2 rows, 8 columns, and 1 index columns (with 1 index duplicates).
         Contains 2 chromosomes and 2 strands.
 
@@ -1878,8 +1878,8 @@ class PyRanges(RangeFrame):
         >>> g4 = g3.assign(transcript_id="tx1.1")
         >>> g4.map_to_local(tr2, "transcript_id", match_by="transcript_id")
           index  |    Chromosome      Start      End  Strand    label
-          int64  |    object          int64    int64  object    object
-        -------  ---  ------------  -------  -------  --------  --------
+          int64  |    str             int64    int64  str       str
+        -------  ---  ------------  -------  -------  --------  -------
               0  |    tx1.1              50       80  +         x
         PyRanges with 1 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes and 1 strands.
@@ -1887,10 +1887,10 @@ class PyRanges(RangeFrame):
         >>> tr3 = tr2.copy()
         >>> tr3["label"] = ["x", "b", "c", "d"]
         >>> g4.map_to_local(tr3, "transcript_id", match_by="label")
-          index  |    Chromosome      Start      End  Strand    label     transcript_id
-          int64  |    object          int64    int64  object    object    object
-        -------  ---  ------------  -------  -------  --------  --------  ---------------
-              0  |    tx1.1              50       80  +         x         tx1.1
+          index  |    Chromosome      Start      End  Strand    label    transcript_id
+          int64  |    str             int64    int64  str       str      str
+        -------  ---  ------------  -------  -------  --------  -------  ---------------
+              0  |    tx1.1              50       80  +         x        tx1.1
         PyRanges with 1 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 1 strands.
 
@@ -1952,7 +1952,7 @@ class PyRanges(RangeFrame):
         >>> gr = pr.example_data.f1
         >>> gr
           index  |    Chromosome      Start      End  Name         Score  Strand
-          int64  |    category        int64    int64  object       int64  category
+          int64  |    category        int64    int64  str          int64  category
         -------  ---  ------------  -------  -------  ---------  -------  ----------
               0  |    chr1                3        6  interval1        0  +
               1  |    chr1                5        7  interval2        0  -
@@ -1962,7 +1962,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.max_disjoint_overlaps(use_strand=False)
           index  |    Chromosome      Start      End  Name         Score  Strand
-          int64  |    category        int64    int64  object       int64  category
+          int64  |    category        int64    int64  str          int64  category
         -------  ---  ------------  -------  -------  ---------  -------  ----------
               0  |    chr1                3        6  interval1        0  +
               2  |    chr1                8        9  interval3        0  +
@@ -1979,7 +1979,7 @@ class PyRanges(RangeFrame):
         ... ))
         >>> c
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                1        5  +
               1  |    chr1                4        7  +
@@ -1994,7 +1994,7 @@ class PyRanges(RangeFrame):
 
         >>> c.max_disjoint_overlaps(use_strand=True)
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                1        5  +
               2  |    chr1               10       14  +
@@ -2010,8 +2010,8 @@ class PyRanges(RangeFrame):
         >>> c3["label"] = [f"x{i}" for i in range(len(c3))]
         >>> c3.max_disjoint_overlaps(match_by="label")
           index  |    Chromosome      Start      End  Strand    label
-          int64  |    object          int64    int64  object    object
-        -------  ---  ------------  -------  -------  --------  --------
+          int64  |    str             int64    int64  str       str
+        -------  ---  ------------  -------  -------  --------  -------
               0  |    chr1                1        5  +         x0
               1  |    chr1                4        7  +         x1
               2  |    chr1               10       14  +         x2
@@ -2083,7 +2083,7 @@ class PyRanges(RangeFrame):
         >>> gr = pr.example_data.ensembl_gtf.get_with_loc_columns(["Feature", "gene_name"])
         >>> gr
         index    |    Chromosome    Start    End      Strand      Feature     gene_name
-        int64    |    category      int64    int64    category    category    object
+        int64    |    category      int64    int64    category    category    str
         -------  ---  ------------  -------  -------  ----------  ----------  -----------
         0        |    1             11868    14409    +           gene        DDX11L1
         1        |    1             11868    14409    +           transcript  DDX11L1
@@ -2110,7 +2110,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.merge_overlaps(count_col="Count", match_by="gene_name")
           index  |      Chromosome    Start      End  Strand      gene_name       Count
-          int64  |        category    int64    int64  category    object         uint32
+          int64  |        category    int64    int64  category    str            uint32
         -------  ---  ------------  -------  -------  ----------  -----------  --------
               0  |               1    11868    14409  +           DDX11L1             5
               1  |               1   110952   111357  -           AL627309.1          1
@@ -2199,7 +2199,7 @@ class PyRanges(RangeFrame):
         >>> f2 = pr.PyRanges(dict(Chromosome="chr1", Start=[1, 6, 20], End=[2, 7, 22], Strand=["+", "-", "+"]))
         >>> f2
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                1        2  +
               1  |    chr1                6        7  -
@@ -2209,7 +2209,7 @@ class PyRanges(RangeFrame):
 
         >>> f1.nearest_ranges(f2)
           index  |    Chromosome      Start      End  Strand      Chromosome_b      Start_b    End_b  Strand_b      Distance
-          int64  |    category        int64    int64  category    object              int64    int64  object           int64
+          int64  |    category        int64    int64  category    str                 int64    int64  str              int64
         -------  ---  ------------  -------  -------  ----------  --------------  ---------  -------  ----------  ----------
               0  |    chr1                3        6  +           chr1                    1        2  +                    2
               1  |    chr1                5        7  -           chr1                    6        7  -                    0
@@ -2219,7 +2219,7 @@ class PyRanges(RangeFrame):
 
         >>> f1.nearest_ranges(f2, strand_behavior='ignore')
           index  |    Chromosome      Start      End  Strand      Chromosome_b      Start_b    End_b  Strand_b      Distance
-          int64  |    category        int64    int64  category    object              int64    int64  object           int64
+          int64  |    category        int64    int64  category    str                 int64    int64  str              int64
         -------  ---  ------------  -------  -------  ----------  --------------  ---------  -------  ----------  ----------
               0  |    chr1                3        6  +           chr1                    6        7  -                    1
               1  |    chr1                5        7  -           chr1                    6        7  -                    0
@@ -2229,7 +2229,7 @@ class PyRanges(RangeFrame):
 
         >>> f1.nearest_ranges(f2, k=2, strand_behavior='ignore')
           index  |    Chromosome      Start      End  Strand      Chromosome_b      Start_b    End_b  Strand_b      Distance
-          int64  |    category        int64    int64  category    object              int64    int64  object           int64
+          int64  |    category        int64    int64  category    str                 int64    int64  str              int64
         -------  ---  ------------  -------  -------  ----------  --------------  ---------  -------  ----------  ----------
               0  |    chr1                3        6  +           chr1                    6        7  -                    1
               0  |    chr1                3        6  +           chr1                    1        2  +                    2
@@ -2242,7 +2242,7 @@ class PyRanges(RangeFrame):
 
         >>> f1.nearest_ranges(f2, strand_behavior='ignore', exclude_overlaps=True)
           index  |    Chromosome      Start      End  Strand      Chromosome_b      Start_b    End_b  Strand_b      Distance
-          int64  |    category        int64    int64  category    object              int64    int64  object           int64
+          int64  |    category        int64    int64  category    str                 int64    int64  str              int64
         -------  ---  ------------  -------  -------  ----------  --------------  ---------  -------  ----------  ----------
               0  |    chr1                3        6  +           chr1                    6        7  -                    1
               1  |    chr1                5        7  -           chr1                    1        2  +                    4
@@ -2252,7 +2252,7 @@ class PyRanges(RangeFrame):
 
         >>> f1.nearest_ranges(f2, direction='downstream')
           index  |    Chromosome      Start      End  Strand      Chromosome_b      Start_b    End_b  Strand_b      Distance
-          int64  |    category        int64    int64  category    object              int64    int64  object           int64
+          int64  |    category        int64    int64  category    str                 int64    int64  str              int64
         -------  ---  ------------  -------  -------  ----------  --------------  ---------  -------  ----------  ----------
               0  |    chr1                3        6  +           chr1                   20       22  +                   15
               2  |    chr1                8        9  +           chr1                   20       22  +                   12
@@ -2264,7 +2264,7 @@ class PyRanges(RangeFrame):
 
         >>> f1.nearest_ranges(f2, direction='upstream', exclude_overlaps=True)
           index  |    Chromosome      Start      End  Strand      Chromosome_b      Start_b    End_b  Strand_b      Distance
-          int64  |    category        int64    int64  category    object              int64    int64  object           int64
+          int64  |    category        int64    int64  category    str                 int64    int64  str              int64
         -------  ---  ------------  -------  -------  ----------  --------------  ---------  -------  ----------  ----------
               0  |    chr1                3        6  +           chr1                    1        2  +                    2
               2  |    chr1                8        9  +           chr1                    1        2  +                    7
@@ -2396,8 +2396,8 @@ class PyRanges(RangeFrame):
         >>> gr2 = pr.PyRanges({"Chromosome": ["chr1", "chr1", "chr2"], "Start": [2, 2, 1], "End": [3, 9, 10]})
         >>> gr
           index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
               0  |    chr1                1        3  A
               1  |    chr1                1        3  a
               2  |    chr2                4        9  b
@@ -2408,7 +2408,7 @@ class PyRanges(RangeFrame):
 
         >>> gr2
           index  |    Chromosome      Start      End
-          int64  |    object          int64    int64
+          int64  |    str             int64    int64
         -------  ---  ------------  -------  -------
               0  |    chr1                2        3
               1  |    chr1                2        9
@@ -2418,8 +2418,8 @@ class PyRanges(RangeFrame):
 
         >>> gr.overlap(gr2)
           index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
               0  |    chr1                1        3  A
               1  |    chr1                1        3  a
               2  |    chr2                4        9  b
@@ -2428,8 +2428,8 @@ class PyRanges(RangeFrame):
 
         >>> gr.overlap(gr2, multiple=True)
           index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
               0  |    chr1                1        3  A
               0  |    chr1                1        3  A
               1  |    chr1                1        3  a
@@ -2440,8 +2440,8 @@ class PyRanges(RangeFrame):
 
         >>> gr.overlap(gr2, invert=True)
           index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
               3  |    chr1               10       11  c
               4  |    chr3                0        1  d
         PyRanges with 2 rows, 4 columns, and 1 index columns.
@@ -2449,8 +2449,8 @@ class PyRanges(RangeFrame):
 
         >>> gr.overlap(gr2, slack=2)
           index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
               0  |    chr1                1        3  A
               1  |    chr1                1        3  a
               2  |    chr2                4        9  b
@@ -2460,24 +2460,24 @@ class PyRanges(RangeFrame):
 
         >>> gr.overlap(gr2, slack=2, invert=True)
           index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
               4  |    chr3                0        1  d
         PyRanges with 1 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes.
 
         >>> gr.overlap(gr2, contained_intervals_only=True)
           index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
               2  |    chr2                4        9  b
         PyRanges with 1 rows, 4 columns, and 1 index columns.
         Contains 1 chromosomes.
 
         >>> gr.overlap(gr2, contained_intervals_only=True, invert=True)
           index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
               0  |    chr1                1        3  A
               1  |    chr1                1        3  a
               3  |    chr1               10       11  c
@@ -2487,8 +2487,8 @@ class PyRanges(RangeFrame):
 
         >>> gr.overlap(gr2, contained_intervals_only=True, slack=-2)
           index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
               0  |    chr1                1        3  A
               1  |    chr1                1        3  a
               2  |    chr2                4        9  b
@@ -2498,7 +2498,7 @@ class PyRanges(RangeFrame):
         >>> gr3 = pr.PyRanges({"Chromosome": 1, "Start": [2, 4], "End": [3, 5], "Strand": ["+", "-"]})
         >>> gr3
           index  |      Chromosome    Start      End  Strand
-          int64  |           int64    int64    int64  object
+          int64  |           int64    int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |               1        2        3  +
               1  |               1        4        5  -
@@ -2508,7 +2508,7 @@ class PyRanges(RangeFrame):
         >>> gr4 = pr.PyRanges({"Chromosome": 1, "Start": [0], "End": [10], "Strand": ["-"]})
         >>> gr3.overlap(gr4, strand_behavior="opposite")
           index  |      Chromosome    Start      End  Strand
-          int64  |           int64    int64    int64  object
+          int64  |           int64    int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |               1        2        3  +
         PyRanges with 1 rows, 4 columns, and 1 index columns.
@@ -2575,8 +2575,8 @@ class PyRanges(RangeFrame):
         >>> r1 = pr.PyRanges({"Chromosome": ["chr1"] * 3, "Start": [5, 20, 40],"End": [10, 30, 50], "ID": ["a", "b", "c"]})
         >>> r1
           index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
               0  |    chr1                5       10  a
               1  |    chr1               20       30  b
               2  |    chr1               40       50  c
@@ -2587,7 +2587,7 @@ class PyRanges(RangeFrame):
         >>> r2 = pr.PyRanges({"Chromosome": ["chr1"] * 4, "Start": [7, 18, 25, 28], "End": [9, 22, 33, 32]})
         >>> r2
           index  |    Chromosome      Start      End
-          int64  |    object          int64    int64
+          int64  |    str             int64    int64
         -------  ---  ------------  -------  -------
               0  |    chr1                7        9
               1  |    chr1               18       22
@@ -2598,7 +2598,7 @@ class PyRanges(RangeFrame):
 
         >>> r1.set_intersect_overlaps(r2, multiple='first')
           index  |    Chromosome      Start      End
-          int64  |    object          int64    int64
+          int64  |    str             int64    int64
         -------  ---  ------------  -------  -------
               0  |    chr1                7        9
               1  |    chr1               20       22
@@ -2607,7 +2607,7 @@ class PyRanges(RangeFrame):
 
         >>> r1.set_intersect_overlaps(r2)
           index  |    Chromosome      Start      End
-          int64  |    object          int64    int64
+          int64  |    str             int64    int64
         -------  ---  ------------  -------  -------
               0  |    chr1                7        9
               1  |    chr1               20       22
@@ -2658,8 +2658,8 @@ class PyRanges(RangeFrame):
         ...                    "End": [3, 9, 11], "ID": ["a", "b", "c"]})
         >>> gr
           index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
               0  |    chr1                1        3  a
               1  |    chr1                4        9  b
               2  |    chr1               10       11  c
@@ -2669,7 +2669,7 @@ class PyRanges(RangeFrame):
         >>> gr2 = pr.PyRanges({"Chromosome": ["chr1"] * 3, "Start": [2, 2, 9], "End": [3, 9, 10]})
         >>> gr2
           index  |    Chromosome      Start      End
-          int64  |    object          int64    int64
+          int64  |    str             int64    int64
         -------  ---  ------------  -------  -------
               0  |    chr1                2        3
               1  |    chr1                2        9
@@ -2679,7 +2679,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.set_union_overlaps(gr2)
           index  |    Chromosome      Start      End
-          int64  |    object          int64    int64
+          int64  |    str             int64    int64
         -------  ---  ------------  -------  -------
               0  |    chr1                1        9
               1  |    chr1                9       10
@@ -2691,7 +2691,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.set_union_overlaps(gr2).merge_overlaps(slack=1)
           index  |    Chromosome      Start      End
-          int64  |    object          int64    int64
+          int64  |    str             int64    int64
         -------  ---  ------------  -------  -------
               0  |    chr1                1       11
         PyRanges with 1 rows, 3 columns, and 1 index columns.
@@ -2763,7 +2763,7 @@ class PyRanges(RangeFrame):
         ...                  "transcript_id":["t3", "t3", "t2", "t2", "t4", "t5", "t5", "t1"]})
         >>> p
           index  |    Chromosome    Strand      Start      End  transcript_id
-          int64  |    object        object      int64    int64  object
+          int64  |    str           str         int64    int64  str
         -------  ---  ------------  --------  -------  -------  ---------------
               0  |    chr1          +              40       60  t3
               1  |    chr1          +               1       11  t3
@@ -2778,7 +2778,7 @@ class PyRanges(RangeFrame):
 
         >>> p.sort_ranges(natsort=False)
           index  |    Chromosome    Strand      Start      End  transcript_id
-          int64  |    object        object      int64    int64  object
+          int64  |    str           str         int64    int64  str
         -------  ---  ------------  --------  -------  -------  ---------------
               1  |    chr1          +               1       11  t3
               0  |    chr1          +              40       60  t3
@@ -2795,7 +2795,7 @@ class PyRanges(RangeFrame):
 
         >>> p.sort_ranges(use_strand=False, natsort=False)
           index  |    Chromosome    Strand      Start      End  transcript_id
-          int64  |    object        object      int64    int64  object
+          int64  |    str           str         int64    int64  str
         -------  ---  ------------  --------  -------  -------  ---------------
               1  |    chr1          +               1       11  t3
               0  |    chr1          +              40       60  t3
@@ -2812,7 +2812,7 @@ class PyRanges(RangeFrame):
 
         >>> p.sort_ranges()
           index  |    Chromosome    Strand      Start      End  transcript_id
-          int64  |    object        object      int64    int64  object
+          int64  |    str           str         int64    int64  str
         -------  ---  ------------  --------  -------  -------  ---------------
               1  |    chr1          +               1       11  t3
               0  |    chr1          +              40       60  t3
@@ -2829,7 +2829,7 @@ class PyRanges(RangeFrame):
 
         >>> p.sort_ranges(by='transcript_id', natsort=False)
           index  |    Chromosome    Strand      Start      End  transcript_id
-          int64  |    object        object      int64    int64  object
+          int64  |    str           str         int64    int64  str
         -------  ---  ------------  --------  -------  -------  ---------------
               7  |    chr1          +              90      100  t1
               1  |    chr1          +               1       11  t3
@@ -2847,7 +2847,7 @@ class PyRanges(RangeFrame):
         >>> res = p.sort_ranges(natsort=False)
         >>> res.sort_values("transcript_id", kind="stable")
           index  |    Chromosome    Strand      Start      End  transcript_id
-          int64  |    object        object      int64    int64  object
+          int64  |    str           str         int64    int64  str
         -------  ---  ------------  --------  -------  -------  ---------------
               7  |    chr1          +              90      100  t1
               3  |    chr1          -              70       80  t2
@@ -2865,7 +2865,7 @@ class PyRanges(RangeFrame):
         >>> res = p.sort_ranges(natsort=False)
         >>> res.sort_values("transcript_id", kind="stable", ascending=False)
           index  |    Chromosome    Strand      Start      End  transcript_id
-          int64  |    object        object      int64    int64  object
+          int64  |    str           str         int64    int64  str
         -------  ---  ------------  --------  -------  -------  ---------------
               5  |    chr11         +             140      152  t5
               6  |    chr11         +             160      190  t5
@@ -2964,7 +2964,7 @@ class PyRanges(RangeFrame):
         ...                   "transcript_id":["t1", "t1", "t2", "t2", "t3"] })
         >>> p
           index  |      Chromosome  Strand      Start      End  transcript_id
-          int64  |           int64  object      int64    int64  object
+          int64  |           int64  str         int64    int64  str
         -------  ---  ------------  --------  -------  -------  ---------------
               0  |               1  +               1       11  t1
               1  |               1  +              40       60  t1
@@ -2978,7 +2978,7 @@ class PyRanges(RangeFrame):
 
         >>> p.slice_ranges(0, 5)
           index  |      Chromosome  Strand      Start      End  transcript_id
-          int64  |           int64  object      int64    int64  object
+          int64  |           int64  str         int64    int64  str
         -------  ---  ------------  --------  -------  -------  ---------------
               0  |               1  +               1        6  t1
               1  |               1  +              40       45  t1
@@ -2992,7 +2992,7 @@ class PyRanges(RangeFrame):
 
         >>> p.slice_ranges(-10)
           index  |      Chromosome  Strand      Start      End  transcript_id
-          int64  |           int64  object      int64    int64  object
+          int64  |           int64  str         int64    int64  str
         -------  ---  ------------  --------  -------  -------  ---------------
               0  |               1  +               1       11  t1
               1  |               1  +              50       60  t1
@@ -3006,7 +3006,7 @@ class PyRanges(RangeFrame):
 
         >>> p.slice_ranges(0, 15, group_by='transcript_id')
           index  |      Chromosome  Strand      Start      End  transcript_id
-          int64  |           int64  object      int64    int64  object
+          int64  |           int64  str         int64    int64  str
         -------  ---  ------------  --------  -------  -------  ---------------
               0  |               1  +               1       11  t1
               1  |               1  +              40       45  t1
@@ -3020,7 +3020,7 @@ class PyRanges(RangeFrame):
 
         >>> p.slice_ranges(-20, group_by='transcript_id')
           index  |      Chromosome  Strand      Start      End  transcript_id
-          int64  |           int64  object      int64    int64  object
+          int64  |           int64  str         int64    int64  str
         -------  ---  ------------  --------  -------  -------  ---------------
               1  |               1  +              40       60  t1
               2  |               2  -              10       25  t2
@@ -3033,7 +3033,7 @@ class PyRanges(RangeFrame):
 
         >>> p.slice_ranges(0, 15, group_by='transcript_id', use_strand=False)
           index  |      Chromosome  Strand      Start      End  transcript_id
-          int64  |           int64  object      int64    int64  object
+          int64  |           int64  str         int64    int64  str
         -------  ---  ------------  --------  -------  -------  ---------------
               0  |               1  +               1       11  t1
               1  |               1  +              40       45  t1
@@ -3046,7 +3046,7 @@ class PyRanges(RangeFrame):
 
         >>> p.slice_ranges(25, 60, group_by='transcript_id')
           index  |      Chromosome  Strand      Start      End  transcript_id
-          int64  |           int64  object      int64    int64  object
+          int64  |           int64  str         int64    int64  str
         -------  ---  ------------  --------  -------  -------  ---------------
               1  |               1  +              55       60  t1
         PyRanges with 1 rows, 5 columns, and 1 index columns.
@@ -3056,7 +3056,7 @@ class PyRanges(RangeFrame):
 
         >>> p.slice_ranges(3, -3, group_by='transcript_id')
           index  |      Chromosome  Strand      Start      End  transcript_id
-          int64  |           int64  object      int64    int64  object
+          int64  |           int64  str         int64    int64  str
         -------  ---  ------------  --------  -------  -------  ---------------
               0  |               1  +               4       11  t1
               1  |               1  +              40       57  t1
@@ -3071,7 +3071,7 @@ class PyRanges(RangeFrame):
 
         >>> p.slice_ranges(0, 50, group_by='transcript_id', count_introns=True)
           index  |      Chromosome  Strand      Start      End  transcript_id
-          int64  |           int64  object      int64    int64  object
+          int64  |           int64  str         int64    int64  str
         -------  ---  ------------  --------  -------  -------  ---------------
               0  |               1  +               1       11  t1
               1  |               1  +              40       51  t1
@@ -3082,7 +3082,7 @@ class PyRanges(RangeFrame):
 
         >>> p.slice_ranges(0, 50, group_by='transcript_id', count_introns=True, use_strand=False)
           index  |      Chromosome  Strand      Start      End  transcript_id
-          int64  |           int64  object      int64    int64  object
+          int64  |           int64  str         int64    int64  str
         -------  ---  ------------  --------  -------  -------  ---------------
               0  |               1  +               1       11  t1
               1  |               1  +              40       51  t1
@@ -3093,7 +3093,7 @@ class PyRanges(RangeFrame):
 
         >>> p.slice_ranges(-50, -5, group_by='transcript_id', count_introns=True)
           index  |      Chromosome  Strand      Start      End  transcript_id
-          int64  |           int64  object      int64    int64  object
+          int64  |           int64  str         int64    int64  str
         -------  ---  ------------  --------  -------  -------  ---------------
               0  |               1  +              10       11  t1
               1  |               1  +              40       55  t1
@@ -3197,7 +3197,7 @@ class PyRanges(RangeFrame):
         ...                   'End': [6, 9, 7, 12], 'Strand': ['+', '+', '-', '-']})
         >>> gr
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                3        6  +
               1  |    chr1                5        9  +
@@ -3208,7 +3208,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.split_overlaps()
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                3        5  +
               1  |    chr1                5        6  +
@@ -3220,7 +3220,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.split_overlaps(between=True)
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                3        5  +
               1  |    chr1                5        6  +
@@ -3233,7 +3233,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.split_overlaps(use_strand=False)
           index  |    Chromosome      Start      End
-          int64  |    object          int64    int64
+          int64  |    str             int64    int64
         -------  ---  ------------  -------  -------
               0  |    chr1                3        5
               1  |    chr1                5        6
@@ -3245,7 +3245,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.split_overlaps(use_strand=False, between=True)
           index  |    Chromosome      Start      End
-          int64  |    object          int64    int64
+          int64  |    str             int64    int64
         -------  ---  ------------  -------  -------
               0  |    chr1                3        5
               1  |    chr1                5        6
@@ -3259,8 +3259,8 @@ class PyRanges(RangeFrame):
         >>> gr['ID'] = ['a', 'b', 'a', 'c']
         >>> gr
           index  |    Chromosome      Start      End  Strand    ID
-          int64  |    object          int64    int64  object    object
-        -------  ---  ------------  -------  -------  --------  --------
+          int64  |    str             int64    int64  str       str
+        -------  ---  ------------  -------  -------  --------  -----
               0  |    chr1                3        6  +         a
               1  |    chr1                5        9  +         b
               2  |    chr1                5        7  -         a
@@ -3270,8 +3270,8 @@ class PyRanges(RangeFrame):
 
         >>> gr.split_overlaps(use_strand=False, match_by='ID')
           index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
               0  |    chr1                3        5  a
               1  |    chr1                5        6  a
               2  |    chr1                6        7  a
@@ -3327,7 +3327,7 @@ class PyRanges(RangeFrame):
         ...                   'End': [5, 8], 'Strand': ['+', '.']})
         >>> gr
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                1        5  +
               1  |    chr1                6        8  .
@@ -3366,7 +3366,7 @@ class PyRanges(RangeFrame):
         ...                   'End': [5, 8], 'Strand': ['-', '.']})
         >>> gr
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                1        5  -
               1  |    chr1                6        8  .
@@ -3378,7 +3378,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.make_strand_valid()
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                1        5  -
               1  |    chr1                6        8  +
@@ -3389,7 +3389,7 @@ class PyRanges(RangeFrame):
         ...                    'End': [15, 30]})
         >>> gr2
           index  |    Chromosome      Start      End
-          int64  |    object          int64    int64
+          int64  |    str             int64    int64
         -------  ---  ------------  -------  -------
               0  |    chr1                5       15
               1  |    chr1               22       30
@@ -3398,7 +3398,7 @@ class PyRanges(RangeFrame):
 
         >>> gr2.make_strand_valid()
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                5       15  +
               1  |    chr1               22       30  +
@@ -3460,8 +3460,8 @@ class PyRanges(RangeFrame):
         >>> gr2 = pr.PyRanges({"Chromosome": ["chr1"] * 3, "Start": [2, 2, 9], "End": [3, 9, 10]})
         >>> gr
           index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
               0  |    chr1                1        3  a
               1  |    chr1                4        9  b
               2  |    chr1               10       11  c
@@ -3470,7 +3470,7 @@ class PyRanges(RangeFrame):
 
         >>> gr2
           index  |    Chromosome      Start      End
-          int64  |    object          int64    int64
+          int64  |    str             int64    int64
         -------  ---  ------------  -------  -------
               0  |    chr1                2        3
               1  |    chr1                2        9
@@ -3480,8 +3480,8 @@ class PyRanges(RangeFrame):
 
         >>> gr.subtract_overlaps(gr2)
           index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
               0  |    chr1                1        2  a
               2  |    chr1               10       11  c
         PyRanges with 2 rows, 4 columns, and 1 index columns.
@@ -3490,19 +3490,19 @@ class PyRanges(RangeFrame):
         >>> gr['tag'] = ['x', 'y', 'z']
         >>> gr2['tag'] = ['x', 'w', 'z']
         >>> gr
-          index  |    Chromosome      Start      End  ID        tag
-          int64  |    object          int64    int64  object    object
-        -------  ---  ------------  -------  -------  --------  --------
-              0  |    chr1                1        3  a         x
-              1  |    chr1                4        9  b         y
-              2  |    chr1               10       11  c         z
+          index  |    Chromosome      Start      End  ID     tag
+          int64  |    str             int64    int64  str    str
+        -------  ---  ------------  -------  -------  -----  -----
+              0  |    chr1                1        3  a      x
+              1  |    chr1                4        9  b      y
+              2  |    chr1               10       11  c      z
         PyRanges with 3 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes.
 
         >>> gr2
           index  |    Chromosome      Start      End  tag
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
               0  |    chr1                2        3  x
               1  |    chr1                2        9  w
               2  |    chr1                9       10  z
@@ -3510,12 +3510,12 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes.
 
         >>> gr.subtract_overlaps(gr2, match_by="tag")
-          index  |    Chromosome      Start      End  ID        tag
-          int64  |    object          int64    int64  object    object
-        -------  ---  ------------  -------  -------  --------  --------
-              0  |    chr1                1        2  a         x
-              1  |    chr1                4        9  b         y
-              2  |    chr1               10       11  c         z
+          index  |    Chromosome      Start      End  ID     tag
+          int64  |    str             int64    int64  str    str
+        -------  ---  ------------  -------  -------  -----  -----
+              0  |    chr1                1        2  a      x
+              1  |    chr1                4        9  b      y
+              2  |    chr1               10       11  c      z
         PyRanges with 3 rows, 5 columns, and 1 index columns.
         Contains 1 chromosomes.
 
@@ -3559,7 +3559,7 @@ class PyRanges(RangeFrame):
         >>> gr = pr.example_data.ensembl_gtf.get_with_loc_columns(["Feature", "gene_id"])
         >>> gr
         index    |    Chromosome    Start    End      Strand      Feature     gene_id
-        int64    |    category      int64    int64    category    category    object
+        int64    |    category      int64    int64    category    category    str
         -------  ---  ------------  -------  -------  ----------  ----------  ---------------
         0        |    1             11868    14409    +           gene        ENSG00000223972
         1        |    1             11868    14409    +           transcript  ENSG00000223972
@@ -3659,7 +3659,7 @@ class PyRanges(RangeFrame):
         >>> gr = pr.example_data.ensembl_gtf.get_with_loc_columns(["Feature", "gene_name"])
         >>> gr
         index    |    Chromosome    Start    End      Strand      Feature     gene_name
-        int64    |    category      int64    int64    category    category    object
+        int64    |    category      int64    int64    category    category    str
         -------  ---  ------------  -------  -------  ----------  ----------  -----------
         0        |    1             11868    14409    +           gene        DDX11L1
         1        |    1             11868    14409    +           transcript  DDX11L1
@@ -3675,7 +3675,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.tile_ranges(200)
         index    |    Chromosome    Start    End      Strand      Feature     gene_name
-        int64    |    category      int64    int64    category    category    object
+        int64    |    category      int64    int64    category    category    str
         -------  ---  ------------  -------  -------  ----------  ----------  -----------
         0        |    1             11800    12000    +           gene        DDX11L1
         0        |    1             12000    12200    +           gene        DDX11L1
@@ -3691,7 +3691,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.tile_ranges(100, overlap_column="TileOverlap")
         index    |    Chromosome    Start    End      Strand      Feature     gene_name    TileOverlap
-        int64    |    category      int64    int64    category    category    object       float64
+        int64    |    category      int64    int64    category    category    str          float64
         -------  ---  ------------  -------  -------  ----------  ----------  -----------  -------------
         0        |    1             11800    11900    +           gene        DDX11L1      0.32
         0        |    1             11900    12000    +           gene        DDX11L1      1.0
@@ -3768,8 +3768,8 @@ class PyRanges(RangeFrame):
         ...                    'Strand': ["+", "+", "-"], 'Name': ['a', 'a', 'b']})
         >>> gr
           index  |    Chromosome      Start      End  Strand    Name
-          int64  |    object          int64    int64  object    object
-        -------  ---  ------------  -------  -------  --------  --------
+          int64  |    str             int64    int64  str       str
+        -------  ---  ------------  -------  -------  --------  ------
               0  |    chr1                3        9  +         a
               1  |    chr1               10       14  +         a
               2  |    chr1                5        7  -         b
@@ -3778,8 +3778,8 @@ class PyRanges(RangeFrame):
 
         >>> gr.three_end()
           index  |    Chromosome      Start      End  Strand    Name
-          int64  |    object          int64    int64  object    object
-        -------  ---  ------------  -------  -------  --------  --------
+          int64  |    str             int64    int64  str       str
+        -------  ---  ------------  -------  -------  --------  ------
               0  |    chr1                8        9  +         a
               1  |    chr1               13       14  +         a
               2  |    chr1                5        6  -         b
@@ -3788,8 +3788,8 @@ class PyRanges(RangeFrame):
 
         >>> gr.three_end(group_by='Name')
           index  |    Chromosome      Start      End  Strand    Name
-          int64  |    object          int64    int64  object    object
-        -------  ---  ------------  -------  -------  --------  --------
+          int64  |    str             int64    int64  str       str
+        -------  ---  ------------  -------  -------  --------  ------
               1  |    chr1               13       14  +         a
               2  |    chr1                5        6  -         b
         PyRanges with 2 rows, 5 columns, and 1 index columns.
@@ -3797,8 +3797,8 @@ class PyRanges(RangeFrame):
 
         >>> gr.three_end(group_by='Name', ext=1)
           index  |    Chromosome      Start      End  Strand    Name
-          int64  |    object          int64    int64  object    object
-        -------  ---  ------------  -------  -------  --------  --------
+          int64  |    str             int64    int64  str       str
+        -------  ---  ------------  -------  -------  --------  ------
               1  |    chr1               12       15  +         a
               2  |    chr1                4        7  -         b
         PyRanges with 2 rows, 5 columns, and 1 index columns.
@@ -3843,7 +3843,7 @@ class PyRanges(RangeFrame):
         >>> gr = pr.PyRanges(d)
         >>> gr
           index  |    Chromosome      Start      End  Strand       Gene
-          int64  |    object          int64    int64  object      int64
+          int64  |    str             int64    int64  str         int64
         -------  ---  ------------  -------  -------  --------  -------
               0  |    chr1                1        5  +               1
               1  |    chr1                6        8  -               2
@@ -3938,7 +3938,7 @@ class PyRanges(RangeFrame):
         >>> gr = pr.PyRanges(d)
         >>> gr
           index  |    Chromosome      Start      End  Strand      Value
-          int64  |    object          int64    int64  object      int64
+          int64  |    str             int64    int64  str         int64
         -------  ---  ------------  -------  -------  --------  -------
               0  |    chr1                1        7  +              10
               1  |    chr1                4        8  -              20
@@ -4079,7 +4079,7 @@ class PyRanges(RangeFrame):
         >>> gr["Feature"] = ['mRNA', 'CDS', 'CDS']
         >>> gr
           index  |      Chromosome    Start      End  Feature       Gene  function      phase
-          int64  |           int64    int64    int64  object       int64  object        int64
+          int64  |           int64    int64    int64  str          int64  str           int64
         -------  ---  ------------  -------  -------  ---------  -------  ----------  -------
               0  |               1        1        4  mRNA             1  a b               0
               1  |               1        3        6  CDS              2  c                 2
@@ -4099,7 +4099,7 @@ class PyRanges(RangeFrame):
         >>> gr['custom'] = ['AA', 'BB', 'CC']
         >>> gr
           index  |      Chromosome    Start      End  Feature       Gene  function      phase  custom
-          int64  |           int64    int64    int64  object       int64  object        int64  object
+          int64  |           int64    int64    int64  str          int64  str           int64  str
         -------  ---  ------------  -------  -------  ---------  -------  ----------  -------  --------
               0  |               1        1        4  mRNA             1  a b               0  AA
               1  |               1        3        6  CDS              2  c                 2  BB
@@ -4197,7 +4197,7 @@ class PyRanges(RangeFrame):
         >>> gr["tag"] = [11, 22, 33]
         >>> gr
           index  |      Chromosome    Start      End  Feature        tag
-          int64  |           int64    int64    int64  object       int64
+          int64  |           int64    int64    int64  str          int64
         -------  ---  ------------  -------  -------  ---------  -------
               0  |               1        1        4  GENE            11
               1  |               1        3        6  EXON            22
@@ -4388,7 +4388,7 @@ class PyRanges(RangeFrame):
         ...                  'Strand':['+','-']})
         >>> a
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1              100      120  +
               1  |    chr1              200      220  -
@@ -4399,7 +4399,7 @@ class PyRanges(RangeFrame):
 
         >>> a.upstream(10)
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1               90      100  +
               1  |    chr1              220      230  -
@@ -4410,7 +4410,7 @@ class PyRanges(RangeFrame):
 
         >>> a.upstream(10, gap=5)
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1               85       95  +
               1  |    chr1              225      235  -
@@ -4421,7 +4421,7 @@ class PyRanges(RangeFrame):
 
         >>> a.upstream(10, gap=-5)
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1               95      105  +
               1  |    chr1              215      225  -
@@ -4436,8 +4436,8 @@ class PyRanges(RangeFrame):
         ...                   'Tx':['tx1','tx1','tx2','tx2']})
         >>> ex
           index  |    Chromosome      Start      End  Strand    Tx
-          int64  |    object          int64    int64  object    object
-        -------  ---  ------------  -------  -------  --------  --------
+          int64  |    str             int64    int64  str       str
+        -------  ---  ------------  -------  -------  --------  -----
               0  |    chr1                0        5  +         tx1
               1  |    chr1               10       15  +         tx1
               2  |    chr1               30       40  -         tx2
@@ -4450,8 +4450,8 @@ class PyRanges(RangeFrame):
 
         >>> ex.upstream(5, group_by='Tx')
           index  |    Chromosome      Start      End  Strand    Tx
-          int64  |    object          int64    int64  object    object
-        -------  ---  ------------  -------  -------  --------  --------
+          int64  |    str             int64    int64  str       str
+        -------  ---  ------------  -------  -------  --------  -----
               0  |    chr1               -5        0  +         tx1
               3  |    chr1               60       65  -         tx2
         PyRanges with 2 rows, 5 columns, and 1 index columns.
@@ -4523,7 +4523,7 @@ class PyRanges(RangeFrame):
         ...                  'Strand':['+','-']})
         >>> a
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1              100      120  +
               1  |    chr1              200      220  -
@@ -4534,7 +4534,7 @@ class PyRanges(RangeFrame):
 
         >>> a.downstream(10)
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1              120      130  +
               1  |    chr1              190      200  -
@@ -4545,7 +4545,7 @@ class PyRanges(RangeFrame):
 
         >>> a.downstream(10, gap=5)
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1              125      135  +
               1  |    chr1              185      195  -
@@ -4556,7 +4556,7 @@ class PyRanges(RangeFrame):
 
         >>> a.downstream(10, gap=-5)
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1              115      125  +
               1  |    chr1              195      205  -
@@ -4571,8 +4571,8 @@ class PyRanges(RangeFrame):
         ...                   'Tx':['tx1','tx1','tx2','tx2']})
         >>> ex
           index  |    Chromosome      Start      End  Strand    Tx
-          int64  |    object          int64    int64  object    object
-        -------  ---  ------------  -------  -------  --------  --------
+          int64  |    str             int64    int64  str       str
+        -------  ---  ------------  -------  -------  --------  -----
               0  |    chr1                0        5  +         tx1
               1  |    chr1               10       15  +         tx1
               2  |    chr1               30       40  -         tx2
@@ -4582,8 +4582,8 @@ class PyRanges(RangeFrame):
 
         >>> ex.downstream(5, group_by='Tx')
           index  |    Chromosome      Start      End  Strand    Tx
-          int64  |    object          int64    int64  object    object
-        -------  ---  ------------  -------  -------  --------  --------
+          int64  |    str             int64    int64  str       str
+        -------  ---  ------------  -------  -------  --------  -----
               1  |    chr1               15       20  +         tx1
               2  |    chr1               25       30  -         tx2
         PyRanges with 2 rows, 5 columns, and 1 index columns.
@@ -4594,8 +4594,8 @@ class PyRanges(RangeFrame):
 
         >>> ex.downstream(50, group_by='Tx')
           index  |    Chromosome      Start      End  Strand    Tx
-          int64  |    object          int64    int64  object    object
-        -------  ---  ------------  -------  -------  --------  --------
+          int64  |    str             int64    int64  str       str
+        -------  ---  ------------  -------  -------  --------  -----
               1  |    chr1               15       65  +         tx1
               2  |    chr1              -20       30  -         tx2
         PyRanges with 2 rows, 5 columns, and 1 index columns.
@@ -4647,7 +4647,7 @@ class PyRanges(RangeFrame):
         ...                   'End': [5, 8], 'Strand': ['+', '-']})
         >>> gr
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                1        5  +
               1  |    chr1                6        8  -
@@ -4656,7 +4656,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.remove_strand()
           index  |    Chromosome      Start      End
-          int64  |    object          int64    int64
+          int64  |    str             int64    int64
         -------  ---  ------------  -------  -------
               0  |    chr1                1        5
               1  |    chr1                6        8
@@ -4687,7 +4687,7 @@ class PyRanges(RangeFrame):
         ...                   'Strand': ['+', '-']})
         >>> gr
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                0        5  +
               1  |    chr1               10       15  -
@@ -4696,7 +4696,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.flip_strand()
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                0        5  -
               1  |    chr1               10       15  +
@@ -4718,7 +4718,7 @@ class PyRanges(RangeFrame):
 
         # flip + and -
         result = self.copy()
-        result.Strand = result.Strand.map({"+": "-", "-": "+"})
+        result[STRAND_COL] = result[STRAND_COL].map({"+": "-", "-": "+"})
 
         return ensure_pyranges(result)
 
@@ -4806,7 +4806,7 @@ class PyRanges(RangeFrame):
         >>> gs = pr.PyRanges({"Chromosome": [1, 1], "Start": [200, 600], "End": [332, 787], "Strand":['+', '-']})
         >>> gs
           index  |      Chromosome    Start      End  Strand
-          int64  |           int64    int64    int64  object
+          int64  |           int64    int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |               1      200      332  +
               1  |               1      600      787  -
@@ -4817,7 +4817,7 @@ class PyRanges(RangeFrame):
         >>> w['lengths'] = w.lengths() # add lengths column to see the length of the windows
         >>> w
           index  |      Chromosome    Start      End  Strand      lengths
-          int64  |           int64    int64    int64  object        int64
+          int64  |           int64    int64    int64  str           int64
         -------  ---  ------------  -------  -------  --------  ---------
               0  |               1      200      300  +               100
               0  |               1      300      332  +                32
@@ -4828,7 +4828,7 @@ class PyRanges(RangeFrame):
 
         >>> gs.window_ranges(100, use_strand=False)
           index  |      Chromosome    Start      End  Strand
-          int64  |           int64    int64    int64  object
+          int64  |           int64    int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |               1      200      300  +
               0  |               1      300      332  +
@@ -4840,7 +4840,7 @@ class PyRanges(RangeFrame):
         >>> gr2 = pr.example_data.ensembl_gtf.get_with_loc_columns(["Feature", "gene_name"])
         >>> gr2
         index    |    Chromosome    Start    End      Strand      Feature     gene_name
-        int64    |    category      int64    int64    category    category    object
+        int64    |    category      int64    int64    category    category    str
         -------  ---  ------------  -------  -------  ----------  ----------  -----------
         0        |    1             11868    14409    +           gene        DDX11L1
         1        |    1             11868    14409    +           transcript  DDX11L1
@@ -4857,7 +4857,7 @@ class PyRanges(RangeFrame):
         >>> gr2 = pr.example_data.ensembl_gtf.get_with_loc_columns(["Feature", "gene_name"])
         >>> gr2.window_ranges(1000)
         index    |    Chromosome    Start    End      Strand      Feature     gene_name
-        int64    |    category      int64    int64    category    category    object
+        int64    |    category      int64    int64    category    category    str
         -------  ---  ------------  -------  -------  ----------  ----------  -----------
         0        |    1             11868    12868    +           gene        DDX11L1
         0        |    1             12868    13868    +           gene        DDX11L1
@@ -4874,8 +4874,8 @@ class PyRanges(RangeFrame):
         >>> gr3 = pr.PyRanges({'Chromosome':1, 'Strand':list('+++--'), 'Start':[10, 30, 50, 70, 90], 'End':[20, 40, 60, 80, 100], 'ID':list('aaabb')})
         >>> gr3
           index  |      Chromosome  Strand      Start      End  ID
-          int64  |           int64  object      int64    int64  object
-        -------  ---  ------------  --------  -------  -------  --------
+          int64  |           int64  str         int64    int64  str
+        -------  ---  ------------  --------  -------  -------  -----
               0  |               1  +              10       20  a
               1  |               1  +              30       40  a
               2  |               1  +              50       60  a
@@ -4886,8 +4886,8 @@ class PyRanges(RangeFrame):
 
         >>> gr3.window_ranges(8, group_by='ID')
         index    |    Chromosome    Strand    Start    End      ID
-        int64    |    int64         object    int64    int64    object
-        -------  ---  ------------  --------  -------  -------  --------
+        int64    |    int64         str       int64    int64    str
+        -------  ---  ------------  --------  -------  -------  -----
         0        |    1             +         10       18       a
         0        |    1             +         18       20       a
         1        |    1             +         30       36       a
@@ -4904,8 +4904,8 @@ class PyRanges(RangeFrame):
         ...                    'End':[40,20,60,100,80], 'ID':['id1','id1','id1','id2','id2']})
         >>> gr4
           index  |      Chromosome  Strand      Start      End  ID
-          int64  |           int64  object      int64    int64  object
-        -------  ---  ------------  --------  -------  -------  --------
+          int64  |           int64  str         int64    int64  str
+        -------  ---  ------------  --------  -------  -------  -----
               0  |               2  +              30       40  id1
               1  |               2  +              10       20  id1
               2  |               2  +              50       60  id1
@@ -4916,8 +4916,8 @@ class PyRanges(RangeFrame):
 
         >>> gr4.window_ranges(8, group_by='ID').reset_index(drop=True).head(8)
           index  |      Chromosome  Strand      Start      End  ID
-          int64  |           int64  object      int64    int64  object
-        -------  ---  ------------  --------  -------  -------  --------
+          int64  |           int64  str         int64    int64  str
+        -------  ---  ------------  --------  -------  -------  -----
               0  |               2  +              10       18  id1
               1  |               2  +              18       20  id1
               2  |               2  +              30       36  id1
@@ -4930,17 +4930,17 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
 
         >>> gr4.window_ranges(8, group_by='ID', add_window_id=True).reset_index(drop=True).head(8)
-          index  |      Chromosome  Strand      Start      End  ID          window_id
-          int64  |           int64  object      int64    int64  object          int64
-        -------  ---  ------------  --------  -------  -------  --------  -----------
-              0  |               2  +              10       18  id1                 1
-              1  |               2  +              18       20  id1                 2
-              2  |               2  +              30       36  id1                 2
-              3  |               2  +              36       40  id1                 3
-              4  |               2  +              50       54  id1                 3
-              5  |               2  +              54       60  id1                 4
-              6  |               2  -              74       80  id2                 1
-              7  |               2  -              70       74  id2                 2
+          index  |      Chromosome  Strand      Start      End  ID       window_id
+          int64  |           int64  str         int64    int64  str          int64
+        -------  ---  ------------  --------  -------  -------  -----  -----------
+              0  |               2  +              10       18  id1              1
+              1  |               2  +              18       20  id1              2
+              2  |               2  +              30       36  id1              2
+              3  |               2  +              36       40  id1              3
+              4  |               2  +              50       54  id1              3
+              5  |               2  +              54       60  id1              4
+              6  |               2  -              74       80  id2              1
+              7  |               2  -              70       74  id2              2
         PyRanges with 8 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
@@ -4990,14 +4990,14 @@ class PyRanges(RangeFrame):
         >>> gr = pr.PyRanges({"Chromosome": [1], "Start": [895], "Strand": ["+"], "Score": [1], "Score2": [2], "End": [1259]})
         >>> gr
           index  |      Chromosome    Start  Strand      Score    Score2      End
-          int64  |           int64    int64  object      int64     int64    int64
+          int64  |           int64    int64  str         int64     int64    int64
         -------  ---  ------------  -------  --------  -------  --------  -------
               0  |               1      895  +               1         2     1259
         PyRanges with 1 rows, 6 columns, and 1 index columns.
         Contains 1 chromosomes and 1 strands.
         >>> gr.remove_nonloc_columns()
           index  |      Chromosome    Start      End  Strand
-          int64  |           int64    int64    int64  object
+          int64  |           int64    int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |               1      895     1259  +
         PyRanges with 1 rows, 4 columns, and 1 index columns.
@@ -5040,7 +5040,7 @@ class PyRanges(RangeFrame):
         ...                   "Score": [1], "Score2": [2], "End": [1259]})
         >>> gr
           index  |      Chromosome    Start  Strand      Score    Score2      End
-          int64  |           int64    int64  object      int64     int64    int64
+          int64  |           int64    int64  str         int64     int64    int64
         -------  ---  ------------  -------  --------  -------  --------  -------
               0  |               1      895  +               1         2     1259
         PyRanges with 1 rows, 6 columns, and 1 index columns.
@@ -5050,7 +5050,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.get_with_loc_columns(["Score2", "Score", "Score2"])
           index  |      Chromosome    Start      End  Strand      Score2    Score    Score2
-          int64  |           int64    int64    int64  object       int64    int64     int64
+          int64  |           int64    int64    int64  str          int64    int64     int64
         -------  ---  ------------  -------  -------  --------  --------  -------  --------
               0  |               1      895     1259  +                2        1         2
         PyRanges with 1 rows, 7 columns, and 1 index columns.
@@ -5058,7 +5058,7 @@ class PyRanges(RangeFrame):
 
         >>> gr.get_with_loc_columns(["Score2", "Score"], preserve_loc_order=True)
           index  |      Chromosome    Start  Strand      Score2    Score      End
-          int64  |           int64    int64  object       int64    int64    int64
+          int64  |           int64    int64  str          int64    int64    int64
         -------  ---  ------------  -------  --------  --------  -------  -------
               0  |               1      895  +                2        1     1259
         PyRanges with 1 rows, 6 columns, and 1 index columns.
@@ -5137,7 +5137,7 @@ class PyRanges(RangeFrame):
         >>> gr = gr[gr.Feature == "exon"]
         >>> gr
           index  |      Chromosome    Start      End  Strand      Feature     gene_name
-          int64  |        category    int64    int64  category    category    object
+          int64  |        category    int64    int64  category    category    str
         -------  ---  ------------  -------  -------  ----------  ----------  -----------
               2  |               1    11868    12227  +           exon        DDX11L1
               3  |               1    12612    12721  +           exon        DDX11L1
@@ -5151,7 +5151,7 @@ class PyRanges(RangeFrame):
         Contains 1 chromosomes and 2 strands.
         >>> gr.group_cumsum(group_by="gene_name")
           index  |      Chromosome    Start      End  Strand      Feature     gene_name
-          int64  |        category    int64    int64  category    category    object
+          int64  |        category    int64    int64  category    category    str
         -------  ---  ------------  -------  -------  ----------  ----------  -----------
               2  |               1        0      359  +           exon        DDX11L1
               3  |               1      359      468  +           exon        DDX11L1
@@ -5242,8 +5242,8 @@ class PyRanges(RangeFrame):
         >>> r1 = pr.PyRanges({"Chromosome": ["chr1"] * 3, "Start": [5, 20, 40],"End": [10, 30, 50], "ID": ["a", "b", "c"]})
         >>> r1
           index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
               0  |    chr1                5       10  a
               1  |    chr1               20       30  b
               2  |    chr1               40       50  c
@@ -5254,7 +5254,7 @@ class PyRanges(RangeFrame):
         >>> r2 = pr.PyRanges({"Chromosome": ["chr1"] * 4, "Start": [7, 18, 25, 28], "End": [9, 22, 33, 32]})
         >>> r2
           index  |    Chromosome      Start      End
-          int64  |    object          int64    int64
+          int64  |    str             int64    int64
         -------  ---  ------------  -------  -------
               0  |    chr1                7        9
               1  |    chr1               18       22
@@ -5265,8 +5265,8 @@ class PyRanges(RangeFrame):
 
         >>> r1.intersect_overlaps(r2)
           index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
               0  |    chr1                7        9  a
               1  |    chr1               20       22  b
               1  |    chr1               25       30  b
@@ -5276,8 +5276,8 @@ class PyRanges(RangeFrame):
 
         >>> r1.intersect_overlaps(r2, multiple="first")
           index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
               0  |    chr1                7        9  a
               1  |    chr1               20       22  b
         PyRanges with 2 rows, 4 columns, and 1 index columns.
@@ -5285,8 +5285,8 @@ class PyRanges(RangeFrame):
 
         >>> r1.intersect_overlaps(r2, multiple="last")
           index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
               0  |    chr1                7        9  a
               1  |    chr1               28       30  b
         PyRanges with 2 rows, 4 columns, and 1 index columns.
@@ -5632,8 +5632,8 @@ class PyRanges(RangeFrame):
         >>> a = pr.PyRanges(dict(Chromosome="chr1", Start=[2, 10, 20, 40], End=[5, 18, 30, 46], ID=['a', 'a', 'b', 'b']))
         >>> a
           index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
               0  |    chr1                2        5  a
               1  |    chr1               10       18  a
               2  |    chr1               20       30  b
@@ -5643,8 +5643,8 @@ class PyRanges(RangeFrame):
 
         >>> a.complement_ranges('ID', group_sizes_col="ID", chromsizes={"a": 22, "b": 100}, include_first_interval=True)
           index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
               0  |    chr1                0        2  a
               1  |    chr1                5       10  a
               2  |    chr1               18       22  a
@@ -5660,8 +5660,8 @@ class PyRanges(RangeFrame):
 
         >>> a.complement_ranges('ID')
           index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
               0  |    chr1                5       10  a
               1  |    chr1               30       40  b
         PyRanges with 2 rows, 4 columns, and 1 index columns.
@@ -5669,7 +5669,7 @@ class PyRanges(RangeFrame):
 
         >>> a.complement_ranges()
           index  |    Chromosome      Start      End
-          int64  |    object          int64    int64
+          int64  |    str             int64    int64
         -------  ---  ------------  -------  -------
               0  |    chr1                5       10
               1  |    chr1               18       20
@@ -5681,7 +5681,7 @@ class PyRanges(RangeFrame):
 
         >>> a.complement_ranges(chromsizes={'chr1': 10000}, include_first_interval=True)
           index  |    Chromosome      Start      End
-          int64  |    object          int64    int64
+          int64  |    str             int64    int64
         -------  ---  ------------  -------  -------
               0  |    chr1                0        2
               1  |    chr1                5       10
@@ -5693,8 +5693,8 @@ class PyRanges(RangeFrame):
 
         >>> a.complement_ranges('ID', chromsizes={'chr1': 10000}, include_first_interval=True)
           index  |    Chromosome      Start      End  ID
-          int64  |    object          int64    int64  object
-        -------  ---  ------------  -------  -------  --------
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
               0  |    chr1                0        2  a
               1  |    chr1                5       10  a
               2  |    chr1               18    10000  a
@@ -5710,7 +5710,7 @@ class PyRanges(RangeFrame):
         ...                      Strand=['+', '+', '-', '-']))
         >>> b
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                1        5  +
               1  |    chr1               10       18  +
@@ -5721,7 +5721,7 @@ class PyRanges(RangeFrame):
 
         >>> b.complement_ranges(use_strand=True)  # same as b.complement_ranges() because b.strand_valid == True
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                5       10  +
               1  |    chr1               30       40  -
@@ -5730,7 +5730,7 @@ class PyRanges(RangeFrame):
 
         >>> b.complement_ranges(use_strand=False)
           index  |    Chromosome      Start      End
-          int64  |    object          int64    int64
+          int64  |    str             int64    int64
         -------  ---  ------------  -------  -------
               0  |    chr1                5       10
               1  |    chr1               18       20
@@ -5740,7 +5740,7 @@ class PyRanges(RangeFrame):
 
         >>> b.complement_ranges(use_strand=False, chromsizes={'chr1': 10000}, include_first_interval=True)
           index  |    Chromosome      Start      End
-          int64  |    object          int64    int64
+          int64  |    str             int64    int64
         -------  ---  ------------  -------  -------
               0  |    chr1                0        1
               1  |    chr1                5       10
@@ -5755,7 +5755,7 @@ class PyRanges(RangeFrame):
         >>> c = pr.PyRanges(dict(Chromosome="chr1", Start=[1, 5, 8, 10], End=[5, 7, 14, 16]))
         >>> c.complement_ranges()
           index  |    Chromosome      Start      End
-          int64  |    object          int64    int64
+          int64  |    str             int64    int64
         -------  ---  ------------  -------  -------
               0  |    chr1                7        8
         PyRanges with 1 rows, 3 columns, and 1 index columns.
@@ -5839,7 +5839,7 @@ class PyRanges(RangeFrame):
 
         >>> r
           index  |    Chromosome      Start      End  Strand
-          int64  |    object          int64    int64  object
+          int64  |    str             int64    int64  str
         -------  ---  ------------  -------  -------  --------
               0  |    chr1                5        8  +
               1  |    chr1                0        5  -
@@ -5860,7 +5860,7 @@ class PyRanges(RangeFrame):
         >>> r["seq"] = seq
         >>> r
           index  |    Chromosome      Start      End  Strand    seq
-          int64  |    object          int64    int64  object    object
+          int64  |    str             int64    int64  str       object
         -------  ---  ------------  -------  -------  --------  --------
               0  |    chr1                5        8  +         CAT
               1  |    chr1                0        5  -         ATTAC
@@ -5949,7 +5949,7 @@ class PyRanges(RangeFrame):
             gr[sequence_column] = seq.to_numpy()
             seq = gr.groupby(group_by, as_index=True).agg({sequence_column: "".join})[sequence_column]
 
-        return seq
+        return seq.astype(object)
 
     def clip_ranges(
         self: "PyRanges",

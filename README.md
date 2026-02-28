@@ -22,6 +22,13 @@ available at https://pyranges1.readthedocs.io/
 ## Recent Changelog
 
 ```
+# 1.3.2 (27.02.26)
+- pandas 3 compatibility: removed pandas<3 constraint and aligned test matrix/dependencies
+- update doctests/unit test expectations to pandas 3 native formatting (including `str` dtype display)
+- remove dtype display normalization workaround in table rendering
+- fix pandas 3 copy-on-write/read-only array issue in coverage path used by bigwig/rle conversion
+- improve groupby `prod` compatibility across pandas 2/3 edge cases
+
 # 1.3.1 (15.02.26)
 - require ruranges>=0.1.1
 - remove fallback compatibility hack for old ruranges versions lacking `ruranges.numpy`
@@ -99,5 +106,4 @@ For details, visit [https://pyranges1.readthedocs.io/developer_guide.html](https
 ## Cheatsheet
 ![cheatsheet](https://raw.githubusercontent.com/pyranges/pyrangeyes/for_pyranges1_1/images/pyranges_cheatsheet.png)
 (The cheatsheet above was created with pyrangeyes, a companion graphical library:  https://pyrangeyes.readthedocs.io/)
-
 

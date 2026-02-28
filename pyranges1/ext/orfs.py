@@ -74,7 +74,7 @@ def calculate_frame(p: "pr.PyRanges", group_by: str | list[str], frame_col: str 
     ...                   "transcript_id": ["t1","t1","t1","t2","t2"]})
     >>> p
       index  |      Chromosome  Strand      Start      End  transcript_id
-      int64  |           int64  object      int64    int64  object
+      int64  |           int64  str         int64    int64  str
     -------  ---  ------------  --------  -------  -------  ---------------
           0  |               1  +               1       10  t1
           1  |               1  +              31       45  t1
@@ -86,7 +86,7 @@ def calculate_frame(p: "pr.PyRanges", group_by: str | list[str], frame_col: str 
 
     >>> pr.orfs.calculate_frame(p, group_by=['transcript_id'])
       index  |      Chromosome  Strand      Start      End  transcript_id      Frame
-      int64  |           int64  object      int64    int64  object             int64
+      int64  |           int64  str         int64    int64  str                int64
     -------  ---  ------------  --------  -------  -------  ---------------  -------
           0  |               1  +               1       10  t1                     0
           1  |               1  +              31       45  t1                     0
@@ -196,7 +196,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     >>> p = pr.PyRanges({"Chromosome": ['seq1'], "Start":[20], "End":[29], "Strand" : ["+"]})
     >>> p
       index  |    Chromosome      Start      End  Strand
-      int64  |    object          int64    int64  object
+      int64  |    str             int64    int64  str
     -------  ---  ------------  -------  -------  --------
           0  |    seq1               20       29  +
     PyRanges with 1 rows, 4 columns, and 1 index columns.
@@ -216,7 +216,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     >>> ep = pr.orfs.extend_orfs(p, fasta_path="temp.fasta")
     >>> ep
       index  |    Chromosome      Start      End  Strand
-      int64  |    object          int64    int64  object
+      int64  |    str             int64    int64  str
     -------  ---  ------------  -------  -------  --------
           0  |    seq1                8       38  +
     PyRanges with 1 rows, 4 columns, and 1 index columns.
@@ -228,7 +228,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
 
     >>> pr.orfs.extend_orfs(p, fasta_path="temp.fasta", record_extensions=True)
       index  |    Chromosome      Start      End  Strand      extension_up    extension_down
-      int64  |    object          int64    int64  object             int64             int64
+      int64  |    str             int64    int64  str                int64             int64
     -------  ---  ------------  -------  -------  --------  --------------  ----------------
           0  |    seq1                8       38  +                     12                 9
     PyRanges with 1 rows, 6 columns, and 1 index columns.
@@ -238,7 +238,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
 
     >>> pr.orfs.extend_orfs(p, fasta_path="temp.fasta", direction='up')
       index  |    Chromosome      Start      End  Strand
-      int64  |    object          int64    int64  object
+      int64  |    str             int64    int64  str
     -------  ---  ------------  -------  -------  --------
           0  |    seq1                8       29  +
     PyRanges with 1 rows, 4 columns, and 1 index columns.
@@ -249,7 +249,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     >>> ep=pr.orfs.extend_orfs(p, fasta_path="temp.fasta", starts=[])
     >>> ep
       index  |    Chromosome      Start      End  Strand
-      int64  |    object          int64    int64  object
+      int64  |    str             int64    int64  str
     -------  ---  ------------  -------  -------  --------
           0  |    seq1                5       38  +
     PyRanges with 1 rows, 4 columns, and 1 index columns.
@@ -275,8 +275,8 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     ...                   "Strand" : ["-"]*2, "ID":["a", "a"]})
     >>> np
       index  |    Chromosome      Start      End  Strand    ID
-      int64  |    object          int64    int64  object    object
-    -------  ---  ------------  -------  -------  --------  --------
+      int64  |    str             int64    int64  str       str
+    -------  ---  ------------  -------  -------  --------  -----
           0  |    seq2               19       23  -         a
           1  |    seq2               11       13  -         a
     PyRanges with 2 rows, 5 columns, and 1 index columns.
@@ -305,7 +305,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
 
     >>> pr.orfs.extend_orfs(p, fasta_path="temp2.fasta", record_extensions=True)
       index  |    Chromosome      Start      End  Strand      extension_up    extension_down
-      int64  |    object          int64    int64  object             int64             int64
+      int64  |    str             int64    int64  str                int64             int64
     -------  ---  ------------  -------  -------  --------  --------------  ----------------
           0  |    seq1                8       29  +                     12                 0
     PyRanges with 1 rows, 6 columns, and 1 index columns.
@@ -316,7 +316,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     >>> ep=pr.orfs.extend_orfs(p, fasta_path="temp2.fasta", record_extensions=True, keep_off_bounds=True)
     >>> ep
       index  |    Chromosome      Start      End  Strand      extension_up    extension_down
-      int64  |    object          int64    int64  object             int64             int64
+      int64  |    str             int64    int64  str                int64             int64
     -------  ---  ------------  -------  -------  --------  --------------  ----------------
           0  |    seq1                8       41  +                     12                12
     PyRanges with 1 rows, 6 columns, and 1 index columns.
@@ -336,7 +336,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
 
     >>> pr.orfs.extend_orfs(p, fasta_path="temp3.fasta", record_extensions=True)
       index  |    Chromosome      Start      End  Strand      extension_up    extension_down
-      int64  |    object          int64    int64  object             int64             int64
+      int64  |    str             int64    int64  str                int64             int64
     -------  ---  ------------  -------  -------  --------  --------------  ----------------
           0  |    seq1                8       38  +                     12                 9
     PyRanges with 1 rows, 6 columns, and 1 index columns.
@@ -345,7 +345,7 @@ def extend_orfs(  # noqa: C901,PLR0912,PLR0915
     >>> ep = pr.orfs.extend_orfs(p, fasta_path="temp3.fasta", record_extensions=True, keep_off_bounds=True)
     >>> ep
       index  |    Chromosome      Start      End  Strand      extension_up    extension_down
-      int64  |    object          int64    int64  object             int64             int64
+      int64  |    str             int64    int64  str                int64             int64
     -------  ---  ------------  -------  -------  --------  --------------  ----------------
           0  |    seq1                2       38  +                     18                 9
     PyRanges with 1 rows, 6 columns, and 1 index columns.

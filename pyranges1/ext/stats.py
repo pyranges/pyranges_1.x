@@ -142,7 +142,7 @@ def fdr(p_vals: Series) -> Series:
     >>> gr = pr.PyRanges(d)
     >>> gr
       index  |    Chromosome        Start        End  Strand        PValue
-      int64  |    object            int64      int64  object       float64
+      int64  |    str               int64      int64  str          float64
     -------  ---  ------------  ---------  ---------  --------  ----------
           0  |    chr3          146419383  146419483  -         0.00395914
           1  |    chr6           39800100   39800200  +         0.00376005
@@ -153,7 +153,7 @@ def fdr(p_vals: Series) -> Series:
     >>> gr["FDR"] = pr.stats.fdr(gr.PValue)
     >>> gr
       index  |    Chromosome        Start        End  Strand        PValue         FDR
-      int64  |    object            int64      int64  object       float64     float64
+      int64  |    str               int64      int64  str          float64     float64
     -------  ---  ------------  ---------  ---------  --------  ----------  ----------
           0  |    chr3          146419383  146419483  -         0.00395914  0.00593871
           1  |    chr6           39800100   39800200  +         0.00376005  0.0112802
@@ -605,15 +605,15 @@ def simes(
 
     >>> gr = pr.from_string(s)
     >>> gr
-      index  |      Chromosome    Start      End  Strand    Gene         PValue
-      int64  |           int64    int64    int64  object    object      float64
-    -------  ---  ------------  -------  -------  --------  --------  ---------
-          0  |               1       10       20  +         P53         0.0001
-          1  |               1       20       35  +         P53         0.0002
-          2  |               1       30       40  +         P53         0.0003
-          3  |               2       60       65  -         FOX         0.05
-          4  |               2       70       75  -         FOX         1e-07
-          5  |               2       80       90  -         FOX         2.1e-06
+      index  |      Chromosome    Start      End  Strand    Gene       PValue
+      int64  |           int64    int64    int64  str       str       float64
+    -------  ---  ------------  -------  -------  --------  ------  ---------
+          0  |               1       10       20  +         P53       0.0001
+          1  |               1       20       35  +         P53       0.0002
+          2  |               1       30       40  +         P53       0.0003
+          3  |               2       60       65  -         FOX       0.05
+          4  |               2       70       75  -         FOX       1e-07
+          5  |               2       80       90  -         FOX       2.1e-06
     PyRanges with 6 rows, 6 columns, and 1 index columns.
     Contains 2 chromosomes and 2 strands.
 
@@ -625,8 +625,8 @@ def simes(
 
     >>> pr.stats.simes(gr, "Gene", "PValue", keep_position=True)
       index  |      Chromosome    Start      End      Simes  Strand    Gene
-      int64  |           int64    int64    int64    float64  object    object
-    -------  ---  ------------  -------  -------  ---------  --------  --------
+      int64  |           int64    int64    int64    float64  str       str
+    -------  ---  ------------  -------  -------  ---------  --------  ------
           0  |               2       60       90     1e-07   -         FOX
           1  |               1       10       40     0.0001  +         P53
     PyRanges with 2 rows, 6 columns, and 1 index columns.
