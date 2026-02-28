@@ -682,7 +682,7 @@ class RangeFrame(pd.DataFrame):
 
         return InvalidRangesReason.is_invalid_ranges_reasons(self)
 
-    def copy(self, *args, **kwargs) -> "RangeFrame":  # noqa: D102
+    def copy(self, *args, **kwargs) -> "RangeFrame":  # pyright: ignore[reportIncompatibleMethodOverride]  # noqa: D102
         return _mypy_ensure_rangeframe(super().copy(*args, **kwargs))
 
     def drop(self, *args, **kwargs) -> "RangeFrame | None":  # type: ignore[override]  # noqa: D102

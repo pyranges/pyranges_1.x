@@ -541,7 +541,7 @@ def read_gtf_restricted(f: str | Path, skiprows: int | None, nrows: int | None =
         extract = _fetch_gene_transcript_exon_id(df.Attribute)
         extract.columns = pd.Index(["gene_id", "group_by", "exon_number", "exon_id"])
 
-        extract.exon_number = extract.exon_number.astype(float)
+        extract["exon_number"] = extract["exon_number"].astype(float)
 
         extract = extract.set_index(df.index)
         _df = pd.concat([df[cols_to_concat], extract], axis=1, sort=False)

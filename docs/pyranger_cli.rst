@@ -50,7 +50,7 @@ Without further operations, pyranger will print its content to stdout::
    pyranger read_bed sample1.bed
 
     index  |    Chromosome      Start      End  Name      Score     Strand        ThickStart
-    int64  |    category        int64    int64  object    object    category           int64
+    int64  |    category        int64    int64  str    str    category           int64
   -------  ---  ------------  -------  -------  --------  --------  ----------  ------------
         0  |    chr1                1        5  .         .         +                      1
         1  |    chr1                6        8  .         .         -                      2

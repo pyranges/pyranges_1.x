@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import pandas as pd
@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 def _relative_distance(scdf: "RangeFrame", ocdf: "RangeFrame", **_) -> "pd.Series[float]":
     if scdf.empty or ocdf.empty:
-        return pd.Series([], dtype=np.double)
+        return cast("pd.Series[float]", pd.Series([], dtype=np.double))
 
     midpoints_self = ((scdf.Start + scdf.End) / 2).astype(int).sort_values().to_numpy()
     midpoints_other = ((ocdf.Start + ocdf.End) / 2).astype(int).sort_values().to_numpy()
@@ -23,7 +23,7 @@ def _relative_distance(scdf: "RangeFrame", ocdf: "RangeFrame", **_) -> "pd.Serie
     right_idx[right_idx >= len(midpoints_other)] -= 1
 
     if len(right_idx) == 0 or len(left_idx) == 0:
-        return pd.Series([], dtype=np.double)
+        return cast("pd.Series[float]", pd.Series([], dtype=np.double))
 
     right = midpoints_other[right_idx]
 
@@ -35,4 +35,4 @@ def _relative_distance(scdf: "RangeFrame", ocdf: "RangeFrame", **_) -> "pd.Serie
 
     result[np.isnan(result)] = 0
 
-    return pd.Series(result[~np.isinf(result)])
+    return cast("pd.Series[float]", pd.Series(result[~np.isinf(result)]))

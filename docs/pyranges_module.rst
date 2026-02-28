@@ -50,7 +50,7 @@ Most of the data is in the form of PyRanges objects:
 
   >>> pr.example_data.chipseq
   index    |    Chromosome    Start      End        Name      Score    Strand
-  int64    |    category      int64      int64      object    int64    category
+  int64    |    category      int64      int64      str    int64    category
   -------  ---  ------------  ---------  ---------  --------  -------  ----------
   0        |    chr8          28510032   28510057   U0        0        -
   1        |    chr7          107153363  107153388  U0        0        -

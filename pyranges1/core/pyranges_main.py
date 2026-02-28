@@ -4718,7 +4718,7 @@ class PyRanges(RangeFrame):
 
         # flip + and -
         result = self.copy()
-        result.Strand = result.Strand.map({"+": "-", "-": "+"})
+        result[STRAND_COL] = result[STRAND_COL].map({"+": "-", "-": "+"})
 
         return ensure_pyranges(result)
 
