@@ -2250,6 +2250,14 @@ class PyRanges(RangeFrame):
         PyRanges with 3 rows, 9 columns, and 1 index columns.
         Contains 1 chromosomes and 2 strands.
 
+        Touching intervals are not treated as overlapping, so they are reported as nearest intervals with distance 1:
+
+        >>> r1 = pr.PyRanges({"Chromosome": "chr1", "Start": [1], "End": [5], "Strand": ["+"]})
+        >>> r2 = pr.PyRanges({"Chromosome": "chr1", "Start": [5], "End": [10], "Strand": ["+"]})
+        >>> pd.DataFrame(r2.nearest_ranges(r1))
+          Chromosome  Start  End Strand Chromosome_b  Start_b  End_b Strand_b  Distance
+        0       chr1      5   10      +         chr1        1      5        +         1
+
         >>> f1.nearest_ranges(f2, direction='downstream')
           index  |    Chromosome      Start      End  Strand      Chromosome_b      Start_b    End_b  Strand_b      Distance
           int64  |    category        int64    int64  category    str                 int64    int64  str              int64

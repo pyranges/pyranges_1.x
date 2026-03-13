@@ -22,6 +22,10 @@ available at https://pyranges1.readthedocs.io/
 ## Recent Changelog
 
 ```
+# 1.3.3 (13.03.26)
+- nearest_ranges: treat touching intervals as nearest matches with distance 1 instead of overlapping matches
+- document touching-interval nearest behavior in doctests
+
 # 1.3.2 (27.02.26)
 - pandas 3 compatibility: removed pandas<3 constraint and aligned test matrix/dependencies
 - update doctests/unit test expectations to pandas 3 native formatting (including `str` dtype display)
@@ -33,19 +37,6 @@ available at https://pyranges1.readthedocs.io/
 - require ruranges>=0.1.1
 - remove fallback compatibility hack for old ruranges versions lacking `ruranges.numpy`
 - add dtype support tests for unsigned/integer interval inputs (e.g. uint32 issue case)
-
-# 1.2.0 (29.01.26)
-- module name changed from pyranges to pyranges1, to allow co-existing with pyranges (v0) in same env
-
-# 1.1.9 (26.01.26)
-- pandas dependency bound to v2. This is in response to pandas 3.0.0 being released, breaking our doctests.
-
-# 1.1.8 (30.12.25)
-- to_gtf and to_gff3: fix bug where 'phase' (gtf) and 'frame' (gff3) are erroneously added to attributes field
-
-# v1.1.7 (16.12.25)
-- window_ranges: fix sort order issue in  when using by (#98 and #105)
-- window_ranges: added argument add_window_id, updated documentation
 ```
 
 ## Install
@@ -106,4 +97,3 @@ For details, visit [https://pyranges1.readthedocs.io/developer_guide.html](https
 ## Cheatsheet
 ![cheatsheet](https://raw.githubusercontent.com/pyranges/pyrangeyes/for_pyranges1_1/images/pyranges_cheatsheet.png)
 (The cheatsheet above was created with pyrangeyes, a companion graphical library:  https://pyrangeyes.readthedocs.io/)
-
