@@ -1,3 +1,7 @@
+# 1.3.3 (13.03.26)
+- nearest_ranges: treat touching intervals as nearest matches with distance 1 instead of overlapping matches
+- document touching-interval nearest behavior in doctests
+
 # 1.3.2 (27.02.26)
 - pandas 3 compatibility: removed pandas<3 constraint and aligned test matrix/dependencies
 - update doctests/unit test expectations to pandas 3 native formatting (including `str` dtype display)
