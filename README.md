@@ -22,6 +22,10 @@ available at https://pyranges1.readthedocs.io/
 ## Recent Changelog
 
 ```
+# 1.3.4 (14.03.26)
+- accept ; in quotes in gtf attrs
+- also speed up gtf parsing
+
 # 1.3.3 (13.03.26)
 - nearest_ranges: treat touching intervals as nearest matches with distance 1 instead of overlapping matches
 - document touching-interval nearest behavior in doctests
@@ -33,10 +37,6 @@ available at https://pyranges1.readthedocs.io/
 - fix pandas 3 copy-on-write/read-only array issue in coverage path used by bigwig/rle conversion
 - improve groupby `prod` compatibility across pandas 2/3 edge cases
 
-# 1.3.1 (15.02.26)
-- require ruranges>=0.1.1
-- remove fallback compatibility hack for old ruranges versions lacking `ruranges.numpy`
-- add dtype support tests for unsigned/integer interval inputs (e.g. uint32 issue case)
 ```
 
 ## Install
