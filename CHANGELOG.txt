@@ -1,3 +1,7 @@
+# 1.3.4 (14.03.26)
+- accept ; in quotes in gtf attrs
+- also speed up gtf parsing
+
 # 1.3.3 (13.03.26)
 - nearest_ranges: treat touching intervals as nearest matches with distance 1 instead of overlapping matches
 - document touching-interval nearest behavior in doctests

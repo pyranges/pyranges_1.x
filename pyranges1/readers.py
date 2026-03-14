@@ -337,13 +337,14 @@ def read_gtf(
     >>> f = NamedTemporaryFile("w")
     >>> _bytes_written = f.write("\n".join(contents))
     >>> f.flush()
-    >>> pr.read_gtf(f.name)
-      index  |      Chromosome  Source    Feature       Start      End  Score    Strand      Frame    gene_id          ...
-      int64  |        category  str       category      int64    int64  str      category    str      str              ...
-    -------  ---  ------------  --------  ----------  -------  -------  -------  ----------  -------  ---------------  -----
-          0  |               1  havana    gene          11868    14409  .        +           .        ENSG00000223972  ...
-          1  |               1  havana    transcript    11868    14409  .        +           .        ENSG00000223972  ...
-    PyRanges with 2 rows, 20 columns, and 1 index columns. (11 columns not shown: "gene_version", "gene_name", "gene_source", ...).
+    >>> gr = pr.read_gtf(f.name)
+    >>> gr  # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
+      index  |      Chromosome  Source      Feature       Start      End  Score    Strand      Frame       gene_id          ...
+      int64  |        category  category    category      int64    int64  str      category    category    str              ...
+    -------  ---  ------------  ----------  ----------  -------  -------  -------  ----------  ----------  ---------------  -----
+          0  |               1  havana      gene          11868    14409  .        +           .           ENSG00000223972  ...
+          1  |               1  havana      transcript    11868    14409  .        +           .           ENSG00000223972  ...
+    PyRanges with 2 rows, 20 columns, and 1 index columns. ...
     Contains 1 chromosomes and 1 strands.
 
     """
@@ -402,6 +403,13 @@ def read_gtf_full(
 
     """
     dtypes: Mapping = {"Chromosome": "category", "Feature": "category", "Strand": "category"}
+    dtypes: Mapping = {
+        "Chromosome": "category",
+        "Source": "category",
+        "Feature": "category",
+        "Strand": "category",
+        "Frame": "category",
+    }
 
     names = ["Chromosome", "Source", "Feature", "Start", "End", "Score", "Strand", "Frame", "Attribute"]
     path = Path(f)
@@ -429,13 +437,13 @@ def read_gtf_full(
 
     df = pd.concat(dfs, sort=False)
     df.loc[:, "Start"] = df.Start - 1
-
     return ensure_pyranges(df)
 
 
-def parse_kv_fields(line: str) -> list[list[str]]:
+def parse_kv_fields(line: str) -> list[tuple[str, str]]:
     """Parse GTF attribute column."""
-    return [kv.replace('""', '"NA"').replace('"', "").split(None, 1) for kv in line.rstrip("; ").split("; ")]
+    parts = line.split('"')
+    return [(parts[i - 1].rsplit(";", 1)[-1].strip(), parts[i]) for i in range(1, len(parts), 2)]
 
 
 def to_rows(anno: pd.Series, *, ignore_bad: bool = False) -> pd.DataFrame:
@@ -470,10 +478,10 @@ def to_rows_keep_duplicates(anno: pd.Series, *, ignore_bad: bool = False) -> pd.
 
     Examples
     --------
-    >>> anno = pd.Series(["gene DDX11L1; gene sonic; unique hi"])
+    >>> anno = pd.Series(['tag "DDX11L1"; tag "sonic"; unique "hi";'])
     >>> result = to_rows_keep_duplicates(anno)
     >>> result.to_dict(orient="records")
-    [{'gene': 'DDX11L1,sonic', 'unique': 'hi'}]
+    [{'tag': 'DDX11L1,sonic', 'unique': 'hi'}]
 
     """
     rowdicts = []
