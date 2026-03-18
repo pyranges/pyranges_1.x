@@ -22,6 +22,13 @@ available at https://pyranges1.readthedocs.io/
 ## Recent Changelog
 
 ```
+# 1.3.5 (18.03.26)
+- move GTF reading and attribute parsing onto the new `gtfreader>=0.2.0` dependency
+- preserve semicolons inside quoted GTF attributes and keep duplicate quoted attributes in `to_rows_keep_duplicates`
+- read GTF `Source` and `Frame` columns as categorical dtypes
+- update GTF docs and doctests to reflect the new categorical display and supported duplicate-attribute format
+- speed up GTF parsing
+
 # 1.3.4 (14.03.26)
 - accept ; in quotes in gtf attrs
 - also speed up gtf parsing

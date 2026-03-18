@@ -125,7 +125,7 @@ When instancing a PyRanges object they are converted to the python convention.
 
   >>> ensembl_path = pr.example_data.files['ensembl.gtf']  # example file
   >>> gr = pr.read_gtf(ensembl_path)
-  >>> gr  # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
+  >>> gr
   index    |    Chromosome    Source      Feature     Start    End      Score    Strand      Frame       ...
   int64    |    category      category    category    int64    int64    str      category    category    ...
   -------  ---  ------------  ----------  ----------  -------  -------  -------  ----------  ----------  -----
@@ -138,15 +138,8 @@ When instancing a PyRanges object they are converted to the python convention.
   9        |    1             ensembl     exon        133373   133723   .        -           .           ...
   10       |    1             ensembl     exon        129054   129223   .        -           .           ...
   11       |    1             ensembl     exon        120873   120932   .        -           .           ...
-  PyRanges with 12 rows, 23 columns, and 1 index columns. ...
+  PyRanges with 12 rows, 23 columns, and 1 index columns. (15 columns not shown: "gene_id", "gene_version", "gene_name", ...).
   Contains 1 chromosomes and 2 strands.
-  >>> gr.loc[[0, 11], ["Chromosome", "Source", "Feature", "Start", "End", "Score", "Strand", "Frame", "gene_id"]].to_dict(orient="records") == [{'Chromosome': '1', 'Source': 'havana', 'Feature': 'gene', 'Start': 11868, 'End': 14409, 'Score': '.', 'Strand': '+', 'Frame': '.', 'gene_id': 'ENSG00000223972'}, {'Chromosome': '1', 'Source': 'ensembl', 'Feature': 'exon', 'Start': 120873, 'End': 120932, 'Score': '.', 'Strand': '-', 'Frame': '.', 'gene_id': 'ENSG00000238009'}]
-  True
-  >>> gr.dtypes.astype(str).loc[["Chromosome", "Source", "Feature", "Start", "End", "Score", "Strand", "Frame"]].to_dict() == {'Chromosome': 'category', 'Source': 'category', 'Feature': 'category', 'Start': 'int64', 'End': 'int64', 'Score': 'str', 'Strand': 'category', 'Frame': 'category'}
-  True
-  >>> gr.shape
-  (12, 23)
-
 
 To read bam files, the optional bamread-library must be installed, with ::
 
