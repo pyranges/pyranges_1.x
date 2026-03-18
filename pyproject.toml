@@ -98,6 +98,7 @@ deps =
     pytest
     pyright == 1.1.406
     joblib
+    gtfreader >= 0.1.2
     ruranges >= 0.1.2
     # fisher
 commands =
