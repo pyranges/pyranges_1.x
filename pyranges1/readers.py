@@ -3,14 +3,14 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import numpy as np
+import gtfreader
 import pandas as pd
 from natsort import natsorted  # type: ignore[import]
 
 from pyranges1.core.pyranges_helpers import ensure_pyranges
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
+    from collections.abc import Mapping
 
     from pyranges1.core.pyranges_main import PyRanges
 
@@ -240,57 +240,11 @@ def read_bam(
     return ensure_pyranges(df)
 
 
-def _fetch_gene_transcript_exon_id(attribute: pd.Series, annotation: str | None = None) -> pd.DataFrame:
-    no_quotes = attribute.str.replace('"', "").str.replace("'", "")
-
-    df = no_quotes.str.extract(
-        "gene_id.?(.+?);(?:.*group_by.?(.+?);)?(?:.*exon_number.?(.+?);)?(?:.*exon_id.?(.+?);)?",
-        expand=True,
-    )  # .iloc[:, [1, 2, 3]]
-
-    df.columns = pd.Index(["gene_id", "group_by", "exon_number", "exon_id"])
-
-    if annotation == "ensembl":
-        newdfs = []
-        for c in ["gene_id", "group_by", "exon_id"]:
-            r = df[c].astype(str).str.extract(r"(\d+)").astype(float)
-            newdfs.append(r)
-
-        newdf = pd.concat(newdfs, axis=1)
-        newdf.insert(2, "exon_number", df["exon_number"])
-        df = newdf
-
-    return df
-
-
-def find_first_data_line_index(file_path: Path) -> int:
-    """Find the first line that is not a comment."""
-    first_non_comment = 0
-    try:
-        import gzip
-
-        with gzip.open(file_path) as zh:
-            for i, zl in enumerate(zh):
-                if zl.decode()[0] != "#":
-                    first_non_comment = i
-                    break
-    except (OSError, TypeError):  # not a gzipped file, or StringIO
-        fh = file_path.open()
-        for i, line in enumerate(fh):
-            if line[0] != "#":
-                first_non_comment = i
-                break
-        fh.close()
-
-    return first_non_comment
-
-
 def read_gtf(
     f: str | Path,
     /,
     *,
-    nrows: bool | None = None,
-    full: bool = True,
+    nrows: int | None = None,
     duplicate_attr: bool = False,
     ignore_bad: bool = False,
 ) -> "PyRanges":
@@ -300,9 +254,6 @@ def read_gtf(
     ----------
     f : str
         Path to GTF file.
-
-    full : bool, default True
-        Whether to read and interpret the annotation column.
 
     nrows : int, default None
         Number of rows to read. Default None, i.e. all.
@@ -344,32 +295,22 @@ def read_gtf(
     -------  ---  ------------  ----------  ----------  -------  -------  -------  ----------  ----------  ---------------  -----
           0  |               1  havana      gene          11868    14409  .        +           .           ENSG00000223972  ...
           1  |               1  havana      transcript    11868    14409  .        +           .           ENSG00000223972  ...
-    PyRanges with 2 rows, 20 columns, and 1 index columns. ...
+    PyRanges with 2 rows, ...
     Contains 1 chromosomes and 1 strands.
 
     """
-    path = Path(f)
-    _skiprows = find_first_data_line_index(path)
-
-    if full:
-        gr = read_gtf_full(
-            path,
-            nrows=nrows,
-            skiprows=_skiprows,
-            duplicate_attr=duplicate_attr,
-            ignore_bad=ignore_bad,
-        )
-    else:
-        gr = read_gtf_restricted(path, _skiprows, nrows=None)
-
-    return gr
+    return read_gtf_full(
+        Path(f),
+        nrows=nrows,
+        duplicate_attr=duplicate_attr,
+        ignore_bad=ignore_bad,
+    )
 
 
 def read_gtf_full(
     f: str | Path,
     /,
     nrows: int | None = None,
-    skiprows: int = 0,
     chunksize: int = int(1e5),  # for unit-testing purposes
     *,
     duplicate_attr: bool = False,
@@ -385,9 +326,6 @@ def read_gtf_full(
     nrows : int, default None
         Number of rows to read. Default None, i.e. all.
 
-    skiprows : int, default 0
-        Number of rows to skip. Default 0.
-
     chunksize : int, default 100000
         Number of rows to read at a time. Default 100000.
 
@@ -402,75 +340,27 @@ def read_gtf_full(
     PyRanges
 
     """
-    dtypes: Mapping = {"Chromosome": "category", "Feature": "category", "Strand": "category"}
-    dtypes: Mapping = {
-        "Chromosome": "category",
-        "Source": "category",
-        "Feature": "category",
-        "Strand": "category",
-        "Frame": "category",
-    }
-
-    names = ["Chromosome", "Source", "Feature", "Start", "End", "Score", "Strand", "Frame", "Attribute"]
     path = Path(f)
-
-    df_iter = pd.read_csv(
+    skiprows = gtfreader.find_first_data_line_index(path)
+    df = gtfreader.read_gtf_full(
         path,
-        sep="\t",
-        header=None,
-        names=names,
-        dtype=dtypes,
-        chunksize=chunksize,
-        skiprows=skiprows,
         nrows=nrows,
+        skiprows=skiprows,
+        chunksize=chunksize,
+        duplicate_attr=duplicate_attr,
+        ignore_bad=ignore_bad,
     )
-
-    _to_rows = to_rows_keep_duplicates if duplicate_attr else to_rows
-
-    dfs = []
-    for df in df_iter:
-        extra = _to_rows(df.Attribute.astype(str), ignore_bad=ignore_bad)
-        _df = df.drop("Attribute", axis=1)
-        extra = extra.set_index(_df.index)
-        ndf = pd.concat([_df, extra], axis=1, sort=False)
-        dfs.append(ndf)
-
-    df = pd.concat(dfs, sort=False)
-    df.loc[:, "Start"] = df.Start - 1
     return ensure_pyranges(df)
 
 
 def parse_kv_fields(line: str) -> list[tuple[str, str]]:
     """Parse GTF attribute column."""
-    parts = line.split('"')
-    return [(parts[i - 1].rsplit(";", 1)[-1].strip(), parts[i]) for i in range(1, len(parts), 2)]
+    return gtfreader.parse_kv_fields(line)
 
 
 def to_rows(anno: pd.Series, *, ignore_bad: bool = False) -> pd.DataFrame:
     """Parse GTF attribute column into a dataframe of attribute columns."""
-    entry = ""
-    try:
-        row = anno.head(1)
-        for entry in row:
-            str(entry).replace('"', "").replace(";", "").split()
-    except AttributeError:
-        msg = f"Invalid attribute string: {entry}. If the file is in GFF3 format, use pr.read_gff3 instead."
-        raise AttributeError(msg) from AttributeError
-
-    rowdicts = []
-    line = ""
-    try:
-        for line in anno:
-            rowdicts.append(dict(parse_kv_fields(line)))
-    except ValueError:
-        if not ignore_bad:
-            LOGGER.exception(
-                "The following line is not parseable as gtf:\n%s\n\nTo ignore bad lines use ignore_bad=True.",
-                line,
-            )
-            raise
-
-    return pd.DataFrame.from_records(rowdicts)
+    return gtfreader.to_rows(anno, ignore_bad=ignore_bad)
 
 
 def to_rows_keep_duplicates(anno: pd.Series, *, ignore_bad: bool = False) -> pd.DataFrame:
@@ -484,83 +374,7 @@ def to_rows_keep_duplicates(anno: pd.Series, *, ignore_bad: bool = False) -> pd.
     [{'tag': 'DDX11L1,sonic', 'unique': 'hi'}]
 
     """
-    rowdicts = []
-    line = ""
-    try:
-        for line in anno:
-            rowdict = {}
-
-            # rstrip: allows for GFF not having a last ";", or having final spaces
-            for k, v in tuple(parse_kv_fields(line)):
-                if k not in rowdict:
-                    rowdict[k] = [v]
-                else:
-                    rowdict[k].append(v)
-
-            rowdicts.append({k: ",".join(v) if isinstance(v, list) else v for k, v in rowdict.items()})
-    except ValueError:
-        if not ignore_bad:
-            LOGGER.exception(
-                "The following line is not parseable as gtf:\n\n%s\n\nTo ignore bad lines use ignore_bad=True.",
-                line,
-            )
-
-    return pd.DataFrame.from_records(rowdicts)
-
-
-def read_gtf_restricted(f: str | Path, skiprows: int | None, nrows: int | None = None) -> "PyRanges":
-    """Read certain columns from GTF file.
-
-    Seqname - name of the chromosome or scaffold; chromosome names can be given with or without the 'chr' prefix. Important note: the seqname must be one used within Ensembl, i.e. a standard chromosome name or an Ensembl identifier such as a scaffold ID, without any additional content such as species or assembly. See the example GFF output below.
-    # source - name of the program that generated this feature, or the data source (database or project name)
-    feature - feature type name, e.g. Gene, Variation, Similarity
-    start - Start position of the feature, with sequence numbering starting at 1.
-    end - End position of the feature, with sequence numbering starting at 1.
-    score - A floating point value.
-    strand - defined as + (forward) or - (reverse).
-    # frame - One of '0', '1' or '2'. '0' indicates that the first base of the feature is the first base of a codon, '1' that the second base is the first base of a codon, and so on..
-    attribute - A semicolon-separated list of tag-value pairs, providing additional information about each feature.
-
-    """
-    dtypes: Mapping = {"Chromosome": "category", "Feature": "category", "Strand": "category"}
-    path = Path(f)
-    usecols: Sequence[int] = [0, 2, 3, 4, 5, 6, 8]
-
-    df_iter = pd.read_csv(
-        path,
-        sep="\t",
-        comment="#",
-        usecols=np.array(usecols),
-        header=None,
-        names=["Chromosome", "Feature", "Start", "End", "Score", "Strand", "Attribute"],
-        dtype=dtypes,
-        chunksize=int(1e5),
-        skiprows=skiprows if skiprows is not None else False,
-        nrows=nrows,
-    )
-
-    dfs = []
-    for df in df_iter:
-        if sum(df.Score == ".") == len(df):
-            cols_to_concat = ["Chromosome", "Start", "End", "Strand", "Feature"]
-        else:
-            cols_to_concat = ["Chromosome", "Start", "End", "Strand", "Feature", "Score"]
-
-        extract = _fetch_gene_transcript_exon_id(df.Attribute)
-        extract.columns = pd.Index(["gene_id", "group_by", "exon_number", "exon_id"])
-
-        extract["exon_number"] = extract["exon_number"].astype(float)
-
-        extract = extract.set_index(df.index)
-        _df = pd.concat([df[cols_to_concat], extract], axis=1, sort=False)
-
-        dfs.append(_df)
-
-    df = pd.concat(dfs, sort=False)
-
-    df.loc[:, "Start"] = df.Start - 1
-
-    return ensure_pyranges(df)
+    return gtfreader.to_rows_keep_duplicates(anno, ignore_bad=ignore_bad)
 
 
 def to_rows_gff3(anno: pd.Series) -> pd.DataFrame:
@@ -578,8 +392,6 @@ def to_keys_and_values(line: str) -> dict[str, str]:
 def read_gff3(
     f: str | Path,
     nrows: int | None = None,
-    *,
-    full: bool = True,
 ) -> "PyRanges":
     """Read files in the General Feature Format into a PyRanges.
 
@@ -587,9 +399,6 @@ def read_gff3(
     ----------
     f : str
         Path to GFF file.
-
-    full : bool, default True
-        Whether to read and interpret the annotation column.
 
     nrows : int, default None
         Number of rows to read. Default None, i.e. all.
@@ -610,10 +419,6 @@ def read_gff3(
 
     """
     path = Path(f)
-    _skiprows = find_first_data_line_index(path)
-
-    if not full:
-        return read_gtf_restricted(path, _skiprows, nrows=nrows)
 
     dtypes: Mapping = {"Chromosome": "category", "Feature": "category", "Strand": "category"}
 
@@ -627,7 +432,6 @@ def read_gff3(
         names=names,
         dtype=dtypes,
         chunksize=int(1e5),
-        skiprows=_skiprows,
         nrows=nrows,
     )
 
