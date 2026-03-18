@@ -288,7 +288,7 @@ def read_gtf(
     >>> f = NamedTemporaryFile("w")
     >>> _bytes_written = f.write("\n".join(contents))
     >>> f.flush()
-    >>> pr.read_gtf(f.name)
+    >>> pr.read_gtf(f.name)  # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
           index  |      Chromosome  Source      Feature       Start      End  Score    Strand      Frame       gene_id          ...
       int64  |        category  category    category      int64    int64  str      category    category    str              ...
     -------  ---  ------------  ----------  ----------  -------  -------  -------  ----------  ----------  ---------------  -----
