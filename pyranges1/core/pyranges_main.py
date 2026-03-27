@@ -2050,11 +2050,9 @@ class PyRanges(RangeFrame):
             Only merge intervals on same strand.
             The default "auto" means True if PyRanges has valid strands (see .strand_valid).
 
-        count : bool, default False
-            Count intervals in each superinterval.
-
-        count_col : str, default "Count"
-            Name of column with counts.
+        count_col : str or None, default None
+            Name of the column storing the number of intervals merged into each superinterval.
+            If None, no count column is added.
 
         match_by : str or list, default None
             If provided, only intervals with an equal value in column(s) `match_by` may be considered as overlapping.
