@@ -22,6 +22,11 @@ available at https://pyranges1.readthedocs.io/
 ## Recent Changelog
 
 ```
+# 1.3.6 (27.03.26)
+- require `ruranges>=0.1.3`
+- pick up the `ruranges` fix for `contained_intervals_only=True` overlaps when intervals share the same start coordinate
+- fix `merge_overlaps` docs to refer to `count_col` instead of a nonexistent `count` parameter
+
 # 1.3.5 (18.03.26)
 - move GTF reading and attribute parsing onto the new `gtfreader>=0.2.0` dependency
 - preserve semicolons inside quoted GTF attributes and keep duplicate quoted attributes in `to_rows_keep_duplicates`
@@ -54,7 +59,7 @@ Pyranges 1.x requires python ≥3.12. Minimal installation:
 pip install pyranges1
 ```
 
-This installs and requires `ruranges>=0.1.1` automatically.
+This installs and requires `ruranges>=0.1.3` automatically.
 
 Installation including all optional dependencies:
 
