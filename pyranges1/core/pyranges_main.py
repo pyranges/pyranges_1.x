@@ -1159,6 +1159,7 @@ class PyRanges(RangeFrame):
         slack: int = 0,
         suffix: str = JOIN_SUFFIX,
         report_overlap_column: str | None = None,
+        sort_output: bool = True,
     ) -> "PyRanges":
         """Join PyRanges based on genomic overlap.
 
@@ -1388,6 +1389,7 @@ class PyRanges(RangeFrame):
                 slack=slack,
                 suffix=suffix,
                 report_overlap_column=report_overlap_column,
+                sort_output=sort_output,
             )
             .drop(columns=[col + suffix for col in by])
         )
@@ -1909,6 +1911,7 @@ class PyRanges(RangeFrame):
         *,
         slack: int = 0,
         match_by: VALID_BY_TYPES = None,
+        sort_output: bool = True,
     ) -> "PyRanges":
         """Find the maximal disjoint set of intervals.
 
@@ -2029,6 +2032,7 @@ class PyRanges(RangeFrame):
         result = super().max_disjoint_overlaps(
             match_by=prepare_by_single(self, use_strand=use_strand, match_by=match_by),
             slack=slack,
+            sort_output=sort_output,
         )
         return ensure_pyranges(result)
 
@@ -2138,6 +2142,7 @@ class PyRanges(RangeFrame):
         suffix: str = JOIN_SUFFIX,
         exclude_overlaps: bool = False,
         dist_col: str | None = "Distance",
+        sort_output: bool = True,
     ) -> "PyRanges":
         """Find closest interval.
 
@@ -2170,6 +2175,9 @@ class PyRanges(RangeFrame):
 
         dist_col : str or None
             Optional column to store the distance in.
+
+        sort_output : bool, default True
+            Whether to sort nearest-hit pairs by input index before building the result.
 
         Returns
         -------
@@ -2289,6 +2297,7 @@ class PyRanges(RangeFrame):
                 k=k,
                 dist_col=dist_col,
                 direction="any",
+                sort_output=sort_output,
             )
             return ensure_pyranges(res)
 
@@ -2302,6 +2311,7 @@ class PyRanges(RangeFrame):
                 k=k,
                 dist_col=dist_col,
                 direction="forward",
+                sort_output=sort_output,
             )
             res2 = RangeFrame(rev_self).nearest_ranges(
                 other=_other,
@@ -2311,6 +2321,7 @@ class PyRanges(RangeFrame):
                 k=k,
                 dist_col=dist_col,
                 direction="forward",
+                sort_output=sort_output,
             )
         elif direction == NEAREST_UPSTREAM:
             res = RangeFrame(fwd_self).nearest_ranges(
@@ -2321,6 +2332,7 @@ class PyRanges(RangeFrame):
                 k=k,
                 dist_col=dist_col,
                 direction="backward",
+                sort_output=sort_output,
             )
             res2 = RangeFrame(rev_self).nearest_ranges(
                 other=RangeFrame(_other),
@@ -2330,6 +2342,7 @@ class PyRanges(RangeFrame):
                 k=k,
                 dist_col=dist_col,
                 direction="backward",
+                sort_output=sort_output,
             )
         else:
             msg = f"Invalid direction: {direction}"
@@ -2351,6 +2364,7 @@ class PyRanges(RangeFrame):
         contained_intervals_only: bool = False,
         match_by: VALID_BY_TYPES = None,
         invert: bool = False,
+        sort_output: bool = True,
     ) -> "PyRanges":
         """Return overlapping intervals.
 
@@ -2383,6 +2397,9 @@ class PyRanges(RangeFrame):
 
         invert : bool, default False
             If True, return intervals that do not overlap instead, according to all criteria specified
+
+        sort_output : bool, default True
+            Whether to sort overlap pairs by input index before building the result.
 
         Returns
         -------
@@ -2530,6 +2547,7 @@ class PyRanges(RangeFrame):
             slack=slack,
             multiple=multiple_arg,
             contained_intervals_only=contained_intervals_only,
+            sort_output=sort_output,
         )
 
         if invert:
@@ -2542,6 +2560,7 @@ class PyRanges(RangeFrame):
         other: "PyRanges",
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
         multiple: VALID_OVERLAP_TYPE = "all",
+        sort_output: bool = True,
     ) -> "PyRanges":
         """Return set-theoretical intersection.
 
@@ -2627,7 +2646,12 @@ class PyRanges(RangeFrame):
         use_strand = use_strand_from_validated_strand_behavior(self, other, strand_behavior)
         self_clusters = self.merge_overlaps(use_strand=use_strand and self.has_strand)
         other_clusters = other.merge_overlaps(use_strand=use_strand and other.has_strand)
-        result = self_clusters.intersect_overlaps(other_clusters, strand_behavior=strand_behavior, multiple=multiple)
+        result = self_clusters.intersect_overlaps(
+            other_clusters,
+            strand_behavior=strand_behavior,
+            multiple=multiple,
+            sort_output=sort_output,
+        )
         return ensure_pyranges(result.reset_index(drop=True))
 
     def set_union_overlaps(self, other: "PyRanges", strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto") -> "PyRanges":
@@ -2914,6 +2938,7 @@ class PyRanges(RangeFrame):
         use_strand: VALID_USE_STRAND_TYPE = "auto",
         *,
         count_introns: bool = False,
+        sort_output: bool = True,
     ) -> "PyRanges":
         """Return sub-intervals of `self`, cut according to *start* and *end*.
 
@@ -3132,6 +3157,7 @@ class PyRanges(RangeFrame):
                 force_plus_strand=not use_strand,
                 start=start,
                 end=end,
+                sort_output=sort_output,
             )
 
         else:
@@ -3155,8 +3181,9 @@ class PyRanges(RangeFrame):
                 use_strand=use_strand,
                 start=start,
                 end=end,
+                sort_output=sort_output,
             )
-            result = x.intersect_overlaps(result, match_by=by)
+            result = x.intersect_overlaps(result, match_by=by, sort_output=sort_output)
             if not group_by:
                 result = cast("pr.PyRanges", result.drop(columns=[TEMP_TRANSCRIPT_ID_COL]))
 
@@ -3426,6 +3453,7 @@ class PyRanges(RangeFrame):
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
         *,
         match_by: VALID_BY_TYPES = None,
+        sort_output: bool = True,
     ) -> "pr.PyRanges":
         """Subtract intervals, i.e. return non-overlapping subintervals.
 
@@ -3531,6 +3559,7 @@ class PyRanges(RangeFrame):
         gr = super().subtract_overlaps(
             _other,
             match_by=by,
+            sort_output=sort_output,
         )
 
         return ensure_pyranges(gr)
@@ -5206,6 +5235,7 @@ class PyRanges(RangeFrame):
         *,
         multiple: VALID_OVERLAP_TYPE = "all",
         match_by: VALID_BY_TYPES = None,
+        sort_output: bool = True,
     ) -> "PyRanges":
         """Return overlapping subintervals.
 
@@ -5316,6 +5346,7 @@ class PyRanges(RangeFrame):
             _other,
             by=by,
             multiple=multiple,
+            sort_output=sort_output,
         )
 
         return ensure_pyranges(gr)

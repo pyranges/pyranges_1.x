@@ -11,6 +11,7 @@ def _complement_overlaps(
     df2: "RangeFrame",
     by: list[str],
     slack: int | None = None,
+    sort_output: bool = True,
 ) -> "RangeFrame":
     from pyranges1._ruranges import require_ruranges
 
@@ -29,6 +30,7 @@ def _complement_overlaps(
         starts2=df2.Start.to_numpy(),
         ends2=df2.End.to_numpy(),
         slack=slack or 0,
+        sort_output=sort_output,
     )
 
     return ensure_rangeframe(df.take(indices))  # type: ignore[arg-type]

@@ -270,6 +270,7 @@ class RangeFrame(pd.DataFrame):
         *,
         group_by: VALID_BY_TYPES = None,
         slack: int = 0,
+        sort_output: bool = True,
     ) -> "RangeFrame":
         """Return the non-overlaps of self with other.
 
@@ -314,7 +315,7 @@ class RangeFrame(pd.DataFrame):
 
         """
         group_by = arg_to_list(group_by)
-        return _complement_overlaps(self, other, by=group_by, slack=slack)
+        return _complement_overlaps(self, other, by=group_by, slack=slack, sort_output=sort_output)
 
     def join_overlaps(
         self,
@@ -327,6 +328,7 @@ class RangeFrame(pd.DataFrame):
         suffix: str = JOIN_SUFFIX,
         contained_intervals_only: bool = False,
         report_overlap_column: str | None = None,
+        sort_output: bool = True,
     ) -> "RangeFrame":
         """Join RangeFrame objects based on overlapping intervals.
 
@@ -379,6 +381,7 @@ class RangeFrame(pd.DataFrame):
             contained=contained_intervals_only,
             join_type=join_type,
             suffix=suffix,
+            sort_output=sort_output,
         )
 
         if report_overlap_column:
@@ -395,6 +398,7 @@ class RangeFrame(pd.DataFrame):
         *,
         slack: int = 0,
         match_by: VALID_BY_TYPES = None,
+        sort_output: bool = True,
     ) -> "RangeFrame":
         """Find the maximal disjoint set of intervals.
 
@@ -433,6 +437,7 @@ class RangeFrame(pd.DataFrame):
             ends=self[END_COL].to_numpy(),
             groups=factorized,
             slack=slack,
+            sort_output=sort_output,
         )
         return _mypy_ensure_rangeframe(self.take(idx))  # type: ignore[arg-type]
 
@@ -446,6 +451,7 @@ class RangeFrame(pd.DataFrame):
         k: int = 1,
         dist_col: str | None = "Distance",
         direction: VALID_DIRECTION_TYPE = "any",
+        sort_output: bool = True,
     ) -> "RangeFrame":
         """Find closest interval.
 
@@ -501,6 +507,7 @@ class RangeFrame(pd.DataFrame):
             slack=0,
             include_overlaps=not exclude_overlaps,
             direction=direction,
+            sort_output=sort_output,
         )
 
         left = self.take(idx1)  # type: ignore[arg-type]
@@ -524,6 +531,7 @@ class RangeFrame(pd.DataFrame):
         *,
         contained_intervals_only: bool = False,
         match_by: VALID_BY_TYPES = None,
+        sort_output: bool = True,
     ) -> "RangeFrame":
         """Return overlapping intervals.
 
@@ -574,6 +582,7 @@ class RangeFrame(pd.DataFrame):
             slack=slack,
             multiple=multiple,
             contained=contained_intervals_only,
+            sort_output=sort_output,
         )
 
         return _mypy_ensure_rangeframe(result)
@@ -625,6 +634,7 @@ class RangeFrame(pd.DataFrame):
         self: "RangeFrame",
         other: "RangeFrame",
         match_by: VALID_BY_TYPES = None,
+        sort_output: bool = True,
     ) -> "RangeFrame":
         """Subtract intervals, i.e. return non-overlapping subintervals.
 
@@ -667,6 +677,7 @@ class RangeFrame(pd.DataFrame):
             other[END_COL].to_numpy(),
             f1,
             f2,
+            sort_output=sort_output,
         )
 
         output = self.take(idx).copy()  # type: ignore[arg-type]
