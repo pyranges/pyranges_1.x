@@ -25,7 +25,7 @@ def _both_idxs(
     multiple: VALID_OVERLAP_TYPE = "all",
     contained: bool = False,
     slack: int = 0,
-    sort_output: bool = True,
+    preserve_input_order: bool = True,
 ) -> tuple[NDArray[np.int_], NDArray[np.int_]]:
     from pyranges1._ruranges import require_ruranges
 
@@ -42,7 +42,7 @@ def _both_idxs(
         multiple=multiple,
         contained=contained,
         slack=slack,
-        sort_output=sort_output,
+        sort_output=preserve_input_order,
     )
     return idx1, idx2
 
@@ -55,7 +55,7 @@ def _overlap(
     multiple: VALID_OVERLAP_TYPE = "all",
     contained: bool = False,
     slack: int = 0,
-    sort_output: bool = True,
+    preserve_input_order: bool = True,
 ) -> pd.DataFrame:
     idx1, _ = _both_idxs(
         df=df,
@@ -64,7 +64,7 @@ def _overlap(
         multiple=multiple,
         contained=contained,
         slack=slack,
-        sort_output=sort_output,
+        preserve_input_order=preserve_input_order,
     )
     return df.take(idx1)  # type: ignore[]
 
@@ -77,7 +77,7 @@ def _intersect(
     multiple: VALID_OVERLAP_TYPE = "all",
     slack: int = 0,
     contained: bool = False,
-    sort_output: bool = True,
+    preserve_input_order: bool = True,
 ) -> pd.DataFrame:
     idx1, idx2 = _both_idxs(
         df=df,
@@ -86,7 +86,7 @@ def _intersect(
         multiple=multiple,
         contained=contained,
         slack=slack,
-        sort_output=sort_output,
+        preserve_input_order=preserve_input_order,
     )
 
     rf, rf2 = df.take(idx1), df2.take(idx2).loc[:, RANGE_COLS]  # type: ignore[arg-type]

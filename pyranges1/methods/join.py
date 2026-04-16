@@ -20,7 +20,7 @@ def _both_dfs(
     slack: int = 0,
     join_type: VALID_JOIN_TYPE,
     suffix: str,
-    sort_output: bool = True,
+    preserve_input_order: bool = True,
 ) -> pd.DataFrame:
     _self_indexes, _other_indexes = _both_idxs(
         df=df,
@@ -29,7 +29,7 @@ def _both_dfs(
         multiple=multiple,
         contained=contained,
         slack=slack,
-        sort_output=sort_output,
+        preserve_input_order=preserve_input_order,
     )
     expected_columns = [*df.head(0).join(df2.head(0), how="inner", rsuffix=suffix).columns]
     df2.columns = expected_columns[df.shape[1] :]

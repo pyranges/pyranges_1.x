@@ -23,7 +23,7 @@ def _spliced_subseq(
     force_plus_strand: bool = False,
     start: int | Sequence[int] | np.ndarray = 0,
     end: int | Sequence[int] | np.ndarray | None = None,
-    sort_output: bool = True,
+    preserve_input_order: bool = True,
 ) -> pd.DataFrame:
     from pyranges1._ruranges import require_ruranges
 
@@ -44,7 +44,7 @@ def _spliced_subseq(
         start=start,  # type: ignore[type]
         end=end,  # type: ignore[type]
         force_plus_strand=force_plus_strand,
-        sort_output=sort_output,
+        sort_output=preserve_input_order,
     )
 
     outdf = df.take(outidx)  # type: ignore[arg-type]

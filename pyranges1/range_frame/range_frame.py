@@ -270,7 +270,7 @@ class RangeFrame(pd.DataFrame):
         *,
         group_by: VALID_BY_TYPES = None,
         slack: int = 0,
-        sort_output: bool = True,
+        preserve_input_order: bool = True,
     ) -> "RangeFrame":
         """Return the non-overlaps of self with other.
 
@@ -282,21 +282,16 @@ class RangeFrame(pd.DataFrame):
         group_by : str or list, default None
             Column(s) to group by intervals (i.e. exons). If provided, the complement will be calculated for each group.
 
-        use_strand: {"auto", True, False}, default "auto"
-            Whether to return complement separately for intervals on the positive and negative strand.
-            The default "auto" means use strand information if present and valid (see .strand_valid)
-
-        chromsizes : dict or PyRanges or pyfaidx.Fasta
-            If provided, external complement intervals will also be returned, i.e. the intervals corresponding to the
-            beginning of the chromosome up to the first interval and from the last interval to the end of the
-            chromosome. If group_by is provided, these are returned for each group.
-            Format of chromsizes: dict or PyRanges describing the lengths of the chromosomes.
-            pyfaidx.Fasta object is also accepted since it conveniently loads chromosome length
-
         slack : int, default 0
             An integer offset that adjusts the overlap threshold when computing the complement intervals.
             Negative values reduce the required gap between intervals (effectively "shrinking" them), while positive values
             increase the gap threshold.
+
+        preserve_input_order : bool, default True
+            Whether to preserve the original input order in the result.
+
+            If False, rows may be returned in algorithm/output order instead, which can
+            be faster for large results.
 
         Returns
         -------
@@ -315,7 +310,7 @@ class RangeFrame(pd.DataFrame):
 
         """
         group_by = arg_to_list(group_by)
-        return _complement_overlaps(self, other, by=group_by, slack=slack, sort_output=sort_output)
+        return _complement_overlaps(self, other, by=group_by, slack=slack, preserve_input_order=preserve_input_order)
 
     def join_overlaps(
         self,
@@ -328,7 +323,7 @@ class RangeFrame(pd.DataFrame):
         suffix: str = JOIN_SUFFIX,
         contained_intervals_only: bool = False,
         report_overlap_column: str | None = None,
-        sort_output: bool = True,
+        preserve_input_order: bool = True,
     ) -> "RangeFrame":
         """Join RangeFrame objects based on overlapping intervals.
 
@@ -361,6 +356,12 @@ class RangeFrame(pd.DataFrame):
             If provided, add a column with this name reporting the amount of overlap between joined intervals.
             The overlap is computed as the minimum of the end positions minus the maximum of the start positions.
 
+        preserve_input_order : bool, default True
+            Whether to preserve the original input order in the result.
+
+            If False, rows may be returned in algorithm/output order instead, which can
+            be faster for large results.
+
         Returns
         -------
         RangeFrame
@@ -381,7 +382,7 @@ class RangeFrame(pd.DataFrame):
             contained=contained_intervals_only,
             join_type=join_type,
             suffix=suffix,
-            sort_output=sort_output,
+            preserve_input_order=preserve_input_order,
         )
 
         if report_overlap_column:
@@ -398,7 +399,7 @@ class RangeFrame(pd.DataFrame):
         *,
         slack: int = 0,
         match_by: VALID_BY_TYPES = None,
-        sort_output: bool = True,
+        preserve_input_order: bool = True,
     ) -> "RangeFrame":
         """Find the maximal disjoint set of intervals.
 
@@ -414,6 +415,12 @@ class RangeFrame(pd.DataFrame):
 
         match_by : str or list, default None
             If provided, only intervals with an equal value in column(s) `match_by` may be considered as overlapping.
+
+        preserve_input_order : bool, default True
+            Whether to preserve the original input order in the result.
+
+            If False, rows may be returned in algorithm/output order instead, which can
+            be faster for large results.
 
         Returns
         -------
@@ -437,7 +444,7 @@ class RangeFrame(pd.DataFrame):
             ends=self[END_COL].to_numpy(),
             groups=factorized,
             slack=slack,
-            sort_output=sort_output,
+            sort_output=preserve_input_order,
         )
         return _mypy_ensure_rangeframe(self.take(idx))  # type: ignore[arg-type]
 
@@ -451,7 +458,7 @@ class RangeFrame(pd.DataFrame):
         k: int = 1,
         dist_col: str | None = "Distance",
         direction: VALID_DIRECTION_TYPE = "any",
-        sort_output: bool = True,
+        preserve_input_order: bool = True,
     ) -> "RangeFrame":
         """Find closest interval.
 
@@ -480,6 +487,12 @@ class RangeFrame(pd.DataFrame):
         dist_col : str or None
             Optional column to store the distance in.
 
+        preserve_input_order : bool, default True
+            Whether to preserve the original input order in the result.
+
+            If False, rows may be returned in algorithm/output order instead, which can
+            be faster for large results.
+
         Returns
         -------
         RangeFrame
@@ -507,7 +520,7 @@ class RangeFrame(pd.DataFrame):
             slack=0,
             include_overlaps=not exclude_overlaps,
             direction=direction,
-            sort_output=sort_output,
+            sort_output=preserve_input_order,
         )
 
         left = self.take(idx1)  # type: ignore[arg-type]
@@ -531,7 +544,7 @@ class RangeFrame(pd.DataFrame):
         *,
         contained_intervals_only: bool = False,
         match_by: VALID_BY_TYPES = None,
-        sort_output: bool = True,
+        preserve_input_order: bool = True,
     ) -> "RangeFrame":
         """Return overlapping intervals.
 
@@ -559,6 +572,12 @@ class RangeFrame(pd.DataFrame):
         match_by : str or list, default None
             If provided, only overlapping intervals with an equal value in column(s) `match_by` are reported.
 
+        preserve_input_order : bool, default True
+            Whether to preserve the original input order in the result.
+
+            If False, rows may be returned in algorithm/output order instead, which can
+            be faster for large results.
+
         Returns
         -------
         RangeFrame
@@ -582,7 +601,7 @@ class RangeFrame(pd.DataFrame):
             slack=slack,
             multiple=multiple,
             contained=contained_intervals_only,
-            sort_output=sort_output,
+            preserve_input_order=preserve_input_order,
         )
 
         return _mypy_ensure_rangeframe(result)
@@ -634,7 +653,8 @@ class RangeFrame(pd.DataFrame):
         self: "RangeFrame",
         other: "RangeFrame",
         match_by: VALID_BY_TYPES = None,
-        sort_output: bool = True,
+        *,
+        preserve_input_order: bool = True,
     ) -> "RangeFrame":
         """Subtract intervals, i.e. return non-overlapping subintervals.
 
@@ -647,6 +667,12 @@ class RangeFrame(pd.DataFrame):
 
         match_by : str or list, default None
             If provided, only intervals with an equal value in column(s) `match_by` may be considered as overlapping.
+
+        preserve_input_order : bool, default True
+            Whether to preserve the original input order in the result.
+
+            If False, rows may be returned in algorithm/output order instead, which can
+            be faster for large results.
 
         Returns
         -------
@@ -677,7 +703,7 @@ class RangeFrame(pd.DataFrame):
             other[END_COL].to_numpy(),
             f1,
             f2,
-            sort_output=sort_output,
+            sort_output=preserve_input_order,
         )
 
         output = self.take(idx).copy()  # type: ignore[arg-type]
