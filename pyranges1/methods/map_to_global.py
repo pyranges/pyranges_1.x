@@ -97,6 +97,7 @@ def _map_to_global_ruranges(
     local_on: str = "Chromosome",
     keep_id: bool = False,
     keep_loc: bool = False,
+    preserve_input_order: bool = True,
 ) -> "PyRanges":
     """Lift intervals from local_gr to genomic coordinates using global_gr exon annotations.
 
@@ -160,6 +161,7 @@ def _map_to_global_ruranges(
         genome_start2=ex_genome_start,
         genome_end2=ex_genome_end,
         strand2=q_fwd,
+        sort_output=preserve_input_order,
     )
 
     if len(keep_idx) == 0:

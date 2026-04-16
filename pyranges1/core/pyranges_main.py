@@ -795,9 +795,6 @@ class PyRanges(RangeFrame):
         slack : int, default 0
             Temporarily lengthen intervals in self before searching for overlaps.
 
-        keep_nonoverlapping : bool, default True
-            Keep intervals without overlaps.
-
         overlap_col : str, default "Count"
             Name of column with overlap counts.
 
@@ -1159,6 +1156,7 @@ class PyRanges(RangeFrame):
         slack: int = 0,
         suffix: str = JOIN_SUFFIX,
         report_overlap_column: str | None = None,
+        preserve_input_order: bool = True,
     ) -> "PyRanges":
         """Join PyRanges based on genomic overlap.
 
@@ -1202,6 +1200,12 @@ class PyRanges(RangeFrame):
 
         suffix : str or tuple, default "_b"
             Suffix to give overlapping columns in other.
+
+        preserve_input_order : bool, default True
+            Whether to preserve the original input order in the result.
+
+            If False, rows may be returned in algorithm/output order instead, which can
+            be faster for large results.
 
         Returns
         -------
@@ -1388,6 +1392,7 @@ class PyRanges(RangeFrame):
                 slack=slack,
                 suffix=suffix,
                 report_overlap_column=report_overlap_column,
+                preserve_input_order=preserve_input_order,
             )
             .drop(columns=[col + suffix for col in by])
         )
@@ -1909,6 +1914,7 @@ class PyRanges(RangeFrame):
         *,
         slack: int = 0,
         match_by: VALID_BY_TYPES = None,
+        preserve_input_order: bool = True,
     ) -> "PyRanges":
         """Find the maximal disjoint set of intervals.
 
@@ -1933,6 +1939,12 @@ class PyRanges(RangeFrame):
         match_by : str or list, default ``None``
             If provided, only intervals with an equal value in column(s)
             *match_by* may be considered as overlapping.
+
+        preserve_input_order : bool, default True
+            Whether to preserve the original input order in the result.
+
+            If False, rows may be returned in algorithm/output order instead, which can
+            be faster for large results.
 
         Returns
         -------
@@ -2029,6 +2041,7 @@ class PyRanges(RangeFrame):
         result = super().max_disjoint_overlaps(
             match_by=prepare_by_single(self, use_strand=use_strand, match_by=match_by),
             slack=slack,
+            preserve_input_order=preserve_input_order,
         )
         return ensure_pyranges(result)
 
@@ -2138,6 +2151,7 @@ class PyRanges(RangeFrame):
         suffix: str = JOIN_SUFFIX,
         exclude_overlaps: bool = False,
         dist_col: str | None = "Distance",
+        preserve_input_order: bool = True,
     ) -> "PyRanges":
         """Find closest interval.
 
@@ -2170,6 +2184,12 @@ class PyRanges(RangeFrame):
 
         dist_col : str or None
             Optional column to store the distance in.
+
+        preserve_input_order : bool, default True
+            Whether to preserve the original input order in the result.
+
+            If False, rows may be returned in algorithm/output order instead, which can
+            be faster for large results.
 
         Returns
         -------
@@ -2238,6 +2258,30 @@ class PyRanges(RangeFrame):
         PyRanges with 6 rows, 9 columns, and 1 index columns (with 3 index duplicates).
         Contains 1 chromosomes and 2 strands.
 
+        >>> left = pr.PyRanges({"Chromosome": ["chr1", "chr1"], "Start": [10, 1], "End": [14, 2]})
+        >>> right = pr.PyRanges(
+        ...     {"Chromosome": ["chr1", "chr1"], "Start": [4, 1], "End": [6, 6], "Hit": ["first", "second"]}
+        ... )
+        >>> left.nearest_ranges(right, strand_behavior="ignore", dist_col=None)
+          index  |    Chromosome      Start      End  Chromosome_b      Start_b    End_b  Hit_b
+          int64  |    str             int64    int64  str                 int64    int64  str
+        -------  ---  ------------  -------  -------  --------------  ---------  -------  -------
+              0  |    chr1               10       14  chr1                    4        6  first
+              0  |    chr1               10       14  chr1                    1        6  second
+              1  |    chr1                1        2  chr1                    1        6  second
+        PyRanges with 3 rows, 7 columns, and 1 index columns (with 1 index duplicates).
+        Contains 1 chromosomes.
+
+        >>> left.nearest_ranges(right, strand_behavior="ignore", dist_col=None, preserve_input_order=False)
+          index  |    Chromosome      Start      End  Chromosome_b      Start_b    End_b  Hit_b
+          int64  |    str             int64    int64  str                 int64    int64  str
+        -------  ---  ------------  -------  -------  --------------  ---------  -------  -------
+              0  |    chr1               10       14  chr1                    1        6  second
+              0  |    chr1               10       14  chr1                    4        6  first
+              1  |    chr1                1        2  chr1                    1        6  second
+        PyRanges with 3 rows, 7 columns, and 1 index columns (with 1 index duplicates).
+        Contains 1 chromosomes.
+
         >>> f1.nearest_ranges(f2, strand_behavior='ignore', exclude_overlaps=True)
           index  |    Chromosome      Start      End  Strand      Chromosome_b      Start_b    End_b  Strand_b      Distance
           int64  |    category        int64    int64  category    str                 int64    int64  str              int64
@@ -2289,6 +2333,7 @@ class PyRanges(RangeFrame):
                 k=k,
                 dist_col=dist_col,
                 direction="any",
+                preserve_input_order=preserve_input_order,
             )
             return ensure_pyranges(res)
 
@@ -2302,6 +2347,7 @@ class PyRanges(RangeFrame):
                 k=k,
                 dist_col=dist_col,
                 direction="forward",
+                preserve_input_order=preserve_input_order,
             )
             res2 = RangeFrame(rev_self).nearest_ranges(
                 other=_other,
@@ -2311,6 +2357,7 @@ class PyRanges(RangeFrame):
                 k=k,
                 dist_col=dist_col,
                 direction="forward",
+                preserve_input_order=preserve_input_order,
             )
         elif direction == NEAREST_UPSTREAM:
             res = RangeFrame(fwd_self).nearest_ranges(
@@ -2321,6 +2368,7 @@ class PyRanges(RangeFrame):
                 k=k,
                 dist_col=dist_col,
                 direction="backward",
+                preserve_input_order=preserve_input_order,
             )
             res2 = RangeFrame(rev_self).nearest_ranges(
                 other=RangeFrame(_other),
@@ -2330,6 +2378,7 @@ class PyRanges(RangeFrame):
                 k=k,
                 dist_col=dist_col,
                 direction="backward",
+                preserve_input_order=preserve_input_order,
             )
         else:
             msg = f"Invalid direction: {direction}"
@@ -2351,6 +2400,7 @@ class PyRanges(RangeFrame):
         contained_intervals_only: bool = False,
         match_by: VALID_BY_TYPES = None,
         invert: bool = False,
+        preserve_input_order: bool = True,
     ) -> "PyRanges":
         """Return overlapping intervals.
 
@@ -2383,6 +2433,12 @@ class PyRanges(RangeFrame):
 
         invert : bool, default False
             If True, return intervals that do not overlap instead, according to all criteria specified
+
+        preserve_input_order : bool, default True
+            Whether to preserve the original input order in the result.
+
+            If False, rows may be returned in algorithm/output order instead, which can
+            be faster for large results.
 
         Returns
         -------
@@ -2443,6 +2499,26 @@ class PyRanges(RangeFrame):
               2  |    chr2                4        9  b
         PyRanges with 5 rows, 4 columns, and 1 index columns (with 2 index duplicates).
         Contains 2 chromosomes.
+
+        >>> a = pr.PyRanges({"Chromosome": ["chr1", "chr1"], "Start": [5, 1], "End": [7, 3], "ID": ["A", "B"]})
+        >>> b = pr.PyRanges({"Chromosome": ["chr1", "chr1"], "Start": [2, 6], "End": [4, 8]})
+        >>> a.overlap(b, multiple=True)
+          index  |    Chromosome      Start      End  ID
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
+              0  |    chr1                5        7  A
+              1  |    chr1                1        3  B
+        PyRanges with 2 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes.
+
+        >>> a.overlap(b, multiple=True, preserve_input_order=False)
+          index  |    Chromosome      Start      End  ID
+          int64  |    str             int64    int64  str
+        -------  ---  ------------  -------  -------  -----
+              1  |    chr1                1        3  B
+              0  |    chr1                5        7  A
+        PyRanges with 2 rows, 4 columns, and 1 index columns.
+        Contains 1 chromosomes.
 
         >>> gr.overlap(gr2, invert=True)
           index  |    Chromosome      Start      End  ID
@@ -2530,6 +2606,7 @@ class PyRanges(RangeFrame):
             slack=slack,
             multiple=multiple_arg,
             contained_intervals_only=contained_intervals_only,
+            preserve_input_order=preserve_input_order,
         )
 
         if invert:
@@ -2541,7 +2618,9 @@ class PyRanges(RangeFrame):
         self,
         other: "PyRanges",
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
+        *,
         multiple: VALID_OVERLAP_TYPE = "all",
+        preserve_input_order: bool = True,
     ) -> "PyRanges":
         """Return set-theoretical intersection.
 
@@ -2562,6 +2641,12 @@ class PyRanges(RangeFrame):
             The default "all" reports all overlapping subintervals.
             "first" reports only, for each merged self interval, the overlapping 'other' subinterval with smallest Start
             "last" reports only the overlapping subinterval with the biggest End in 'other'
+
+        preserve_input_order : bool, default True
+            Whether to preserve the original input order in the result.
+
+            If False, rows may be returned in algorithm/output order instead, which can
+            be faster for large results.
 
         Returns
         -------
@@ -2627,7 +2712,12 @@ class PyRanges(RangeFrame):
         use_strand = use_strand_from_validated_strand_behavior(self, other, strand_behavior)
         self_clusters = self.merge_overlaps(use_strand=use_strand and self.has_strand)
         other_clusters = other.merge_overlaps(use_strand=use_strand and other.has_strand)
-        result = self_clusters.intersect_overlaps(other_clusters, strand_behavior=strand_behavior, multiple=multiple)
+        result = self_clusters.intersect_overlaps(
+            other_clusters,
+            strand_behavior=strand_behavior,
+            multiple=multiple,
+            preserve_input_order=preserve_input_order,
+        )
         return ensure_pyranges(result.reset_index(drop=True))
 
     def set_union_overlaps(self, other: "PyRanges", strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto") -> "PyRanges":
@@ -2914,6 +3004,7 @@ class PyRanges(RangeFrame):
         use_strand: VALID_USE_STRAND_TYPE = "auto",
         *,
         count_introns: bool = False,
+        preserve_input_order: bool = True,
     ) -> "PyRanges":
         """Return sub-intervals of `self`, cut according to *start* and *end*.
 
@@ -2944,6 +3035,12 @@ class PyRanges(RangeFrame):
         count_introns : bool, default False
             If False (default) `start` and `end` refer to spliced coordinates
             (introns ignored).  If True they refer to unspliced coordinates.
+
+        preserve_input_order : bool, default True
+            Whether to preserve the original input order in the result.
+
+            If False, rows may be returned in algorithm/output order instead, which can
+            be faster for large results.
 
         Returns
         -------
@@ -3132,6 +3229,7 @@ class PyRanges(RangeFrame):
                 force_plus_strand=not use_strand,
                 start=start,
                 end=end,
+                preserve_input_order=preserve_input_order,
             )
 
         else:
@@ -3155,8 +3253,9 @@ class PyRanges(RangeFrame):
                 use_strand=use_strand,
                 start=start,
                 end=end,
+                preserve_input_order=preserve_input_order,
             )
-            result = x.intersect_overlaps(result, match_by=by)
+            result = x.intersect_overlaps(result, match_by=by, preserve_input_order=preserve_input_order)
             if not group_by:
                 result = cast("pr.PyRanges", result.drop(columns=[TEMP_TRANSCRIPT_ID_COL]))
 
@@ -3426,6 +3525,7 @@ class PyRanges(RangeFrame):
         strand_behavior: VALID_STRAND_BEHAVIOR_TYPE = "auto",
         *,
         match_by: VALID_BY_TYPES = None,
+        preserve_input_order: bool = True,
     ) -> "pr.PyRanges":
         """Subtract intervals, i.e. return non-overlapping subintervals.
 
@@ -3443,6 +3543,12 @@ class PyRanges(RangeFrame):
 
         match_by : str or list, default None
             If provided, only intervals with an equal value in column(s) `match_by` may be considered as overlapping.
+
+        preserve_input_order : bool, default True
+            Whether to preserve the original input order in the result.
+
+            If False, rows may be returned in algorithm/output order instead, which can
+            be faster for large results.
 
         Returns
         -------
@@ -3531,6 +3637,7 @@ class PyRanges(RangeFrame):
         gr = super().subtract_overlaps(
             _other,
             match_by=by,
+            preserve_input_order=preserve_input_order,
         )
 
         return ensure_pyranges(gr)
@@ -5206,6 +5313,7 @@ class PyRanges(RangeFrame):
         *,
         multiple: VALID_OVERLAP_TYPE = "all",
         match_by: VALID_BY_TYPES = None,
+        preserve_input_order: bool = True,
     ) -> "PyRanges":
         """Return overlapping subintervals.
 
@@ -5231,6 +5339,12 @@ class PyRanges(RangeFrame):
 
         match_by : str or list, default None
             If provided, only intervals with an equal value in column(s) `match_by` may be considered as overlapping.
+
+        preserve_input_order : bool, default True
+            Whether to preserve the original input order in the result.
+
+            If False, rows may be returned in algorithm/output order instead, which can
+            be faster for large results.
 
         Returns
         -------
@@ -5316,6 +5430,7 @@ class PyRanges(RangeFrame):
             _other,
             by=by,
             multiple=multiple,
+            preserve_input_order=preserve_input_order,
         )
 
         return ensure_pyranges(gr)
