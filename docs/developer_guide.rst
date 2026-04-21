@@ -4,7 +4,7 @@ Developer guide
 Pyranges was originally written by Endre Bakken Stovner under supervision of Pål Sætrom.
 It is now mainly developed by Endre Bakken Stovner and by the Comparative Genomics lab of
 Marco Mariotti. It follows the guidelines for open source software, and external contributors
-are welcome. The code is centralized on github, at https://github.com/pyranges/pyranges_1.x
+are welcome. The code is centralized on github, at https://github.com/pyranges/pyranges1
 
 Bugs and feature requests can be reported as github issues. You may also contribute by submitting
 your own code edits, either to deal with issues or to add new functionalities. Please discuss new
@@ -166,7 +166,7 @@ fixed. At the time of writing, the test commands are these
 	    pytest tests/unit
 
 The up-to-date test commands can be found in the tox section of the repo 
-`pyproject.toml <https://github.com/pyranges/pyranges_1.x/blob/master/pyproject.toml>`_ configuration file. 
+`pyproject.toml <https://github.com/pyranges/pyranges1/blob/master/pyproject.toml>`_ configuration file. 
 
 
 5. Format, lint, type-checking code
@@ -323,7 +323,7 @@ Every now and then, the core development team considers that a new pyranges1 ver
 released. To do so:
 
 - Update the version number in the pyproject.toml file
-- Find the "Build and upload to PyPI" workflow in the left menu of the github actions at `https://github.com/pyranges/pyranges_1.x/actions/ <https://github.com/pyranges/pyranges_1.x/actions/>`_
+- Find the "Build and upload to PyPI" workflow in the left menu of the github actions at `https://github.com/pyranges/pyranges1/actions/ <https://github.com/pyranges/pyranges1/actions/>`_
 - Click the "Run workflow" button on the right
 
 Next, check that everything worked correctly, by confirming that a new pyranges1 installation via

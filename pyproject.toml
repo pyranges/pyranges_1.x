@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyranges1"
-version = "1.3.7"
+version = "1.3.8"
 description = "GenomicRanges for Python."
 requires-python = ">=3.12.0"
 readme = "README.md"
@@ -74,7 +74,7 @@ where = ["."]
 inputs = ['pyranges1']
 
 [project.urls]
-Homepage = "http://github.com/pyranges/pyranges_1.x"
+Homepage = "http://github.com/pyranges/pyranges1"
 
 [tool.tox] # Legacy tox configuration (to be replaced with native tox.ini when supported)
 legacy_tox_ini = """

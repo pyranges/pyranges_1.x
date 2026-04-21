@@ -1,8 +1,8 @@
 Migration guide from v0 to v1
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Pyranges v1.x introduced major changes in data structure and interface.
-This guide is intended to help you migrate your code from v0.x to v1.x.
+Pyranges v1 introduced major changes in data structure and interface.
+This guide is intended to help you migrate your code from v0 to v1.
 
 Useful links:
 

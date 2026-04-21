@@ -9,7 +9,7 @@ It enables intuitive and highly efficient pipelines for genomic analysis.
 
 *"Finally ... This was what Python badly needed for years."* - Heng Li
 
-## Version 1.x
+## Version 1
 This is version 1.x of pyranges. It is a complete rewrite of the original pyranges library, 
 soon to replace the "default" original one (version 0). If you are a v0 user, check the migration guide 
 in the documentation.
@@ -22,6 +22,11 @@ available at https://pyranges1.readthedocs.io/
 ## Recent Changelog
 
 ```
+# 1.3.8 (21.04.26)
+- repo name changed from pyranges_1.x to pyranges1
+- updated references to it
+- fix issue 151 (Proper use of args and kwargs in concat)
+
 # 1.3.7 (16.04.26)
 - require `ruranges>=0.1.4`
 - add `preserve_input_order` to Rust-backed overlap-style operations so large results can skip the extra output reordering step
@@ -58,7 +63,7 @@ available at https://pyranges1.readthedocs.io/
 
 ## Install
 
-Pyranges 1.x requires python ≥3.12. Minimal installation: 
+Pyranges1 requires python ≥3.12. Minimal installation: 
 
 ```bash
 pip install pyranges1
