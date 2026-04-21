@@ -67,7 +67,7 @@ def concat[T: "RangeFrame"](grs: Iterable[T], *args, **kwargs) -> T:
     """
     input_class = assert_all_classes_are_the_same_and_retrieve_it(grs)
 
-    concatenated = input_class(pd.concat([pd.DataFrame(gr) for gr in grs]), *args, **kwargs)
+    concatenated = input_class(pd.concat([pd.DataFrame(gr) for gr in grs], *args, **kwargs))
 
     from pyranges1 import RangeFrame
 
