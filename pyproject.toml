@@ -74,7 +74,7 @@ where = ["."]
 inputs = ['pyranges1']
 
 [project.urls]
-Homepage = "http://github.com/pyranges/pyranges_1.x"
+Homepage = "http://github.com/pyranges/pyranges1"
 
 [tool.tox] # Legacy tox configuration (to be replaced with native tox.ini when supported)
 legacy_tox_ini = """
